@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Defining exceptions in Haskell</title>
+  <meta property="og:title" content="Defining exceptions in Haskell">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="We have various ways of defining exceptions in Haskell, but how do we raise our exception types? Learn how to define exception in Haskell in this post.   ">
+  <meta property="og:description" content="We have various ways of defining exceptions in Haskell, but how do we raise our exception types? Learn how to define exception in Haskell in this post.   ">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;defining-exceptions-in-haskell&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Defining exceptions in Haskell</h1>
+      
+      <p id="page-description">By Chris Done, January 29, 2019</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Defining%20exceptions%20in%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;defining-exceptions-in-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;defining-exceptions-in-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;defining-exceptions-in-haskell&#x2F;&amp;title=Defining%20exceptions%20in%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;defining-exceptions-in-haskell&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>Let’s talk about exceptions. Programs do a thing successfully
+all the time, except sometimes when things didn’t work out. So we
+have “exceptions”, which, like anything fun in programming
+languages, was invented in Lisp in the 60’s .</p>
+<p>They’re not perfect in Haskell. They’re not perfect in any
+language, really. We’re always making adjustments to what we think
+is the best way to handle exceptional circumstances. We’re muddling
+through, as a field. Let’s discuss the options in Haskell.</p>
+<p>There have been <a href=
+"http://www.randomhacks.net/2007/03/10/haskell-8-ways-to-report-errors/">
+other blog posts</a> which discuss how to <em>raise</em> exceptions
+in Haskell–from using the IO exceptions (<code>throw</code>), to
+<code>ExceptT</code>-like monad transformers, to just returning an
+<code>Either Error a</code>–but we’re going to look at how we
+define <em>the exception type</em> itself.</p>
+<h2>Use String</h2>
+<p>A very common way to define exceptions in Haskell is to use the
+<code>String</code> type (aka <code>[Char]</code>)–yes, that list
+of <code>Char</code> that we abuse for everything. There are
+actually many advantages to this:</p>
+<ul>
+<li>The first advantage is that it is built into the Haskell
+language; it’s available from any package anywhere.</li>
+<li>It’s already a human readable error message, by
+definition!</li>
+<li>You can already throw this using the <code>error</code>
+function which comes in the <code>Prelude</code> module .</li>
+<li>Furthermore, many packages in Haskell such as parsec and
+attoparsec, among others, already use the <code>String</code> type
+for providing error messages.</li>
+<li>Any instance of <code>Exception</code> can be converted to a
+<code>String</code> using either <code>show</code> or
+<code>displayException</code> , meaning you can easily include
+other exception types in your representation.</li>
+</ul>
+<p>It’s not all tea and crumpets, though.</p>
+<p>Many existing error messages in the library ecosystem of Haskell
+fail to include key information in their string error message. If
+the error was provided as a data type then it could have included
+what went wrong in the data type, and that would let you access the
+information yourself.</p>
+<p>Consider, e.g.</p>
+<pre><code class="language-haskell">if waterTemp &lt; boilingPoint
+then error "The tea isn't coming!"
+else ...
+</code></pre>
+<p>This message doesn’t tell me why the tea isn’t coming. Is the
+kettle broken? Did someone forget to turn it on? Ideally, this
+error string <em>should</em> say:</p>
+<pre><code class="language-haskell">if waterTemp &lt; idealTemp
+   then error ("The tea isn't coming, water temperature (" ++
+               waterTemp ++ ") is below ideal temp (" ++
+               idealTemp ++ ")".
+   else ...
+</code></pre>
+<p>This message is an improvement because it gives me some details
+about why something failed. But it’s still not ideal.</p>
+<p>Another problem is that you have to construct new messages ahead
+of time, which means that the user of your exception does not have
+the option to display the message how they like, such as in
+different languages (bye, bye, <a href=
+"https://en.wikipedia.org/wiki/Internationalization_and_localization">
+i18n</a>), or with different layouts, or different file formats
+(e.g. generating a JSON message). What if you the user of your
+function wants to display your exception in Mandarin? Or display it
+nicely formatted in HTML?</p>
+<p>Furthermore, sometimes exceptions contain sensitive information,
+like a password or an API key: this might be useful for the
+developer, but it’s not something you always want displayed to the
+whole world, either in log files or to the end-user. With a
+<code>String</code> type, stripping out this information is at best
+a moving target.</p>
+<p>It gets worse. Because it’s a string type, it’s impossible to
+rely on this presentation for a means of inspection. For example,
+if I receive an email from <code>Elizabeth II
+&lt;<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="600f0e0513050c062010010c0103054e070f164e150b">[email&#160;protected]</a>&gt;</code> , I can do an SPF record
+lookup on the domain name’s DNS records to see whether the IP
+sending me that email is a valid sender for that domain.</p>
+<p>But if I use a library to do it, I can get an error like
+this:</p>
+<pre><code class=
+"language-haskell">&gt; queryTXT (Network.DNS.Name "palace.gov.uk")
+*** Exception: user error (res_query(3) failed)
+</code></pre>
+<p>Well, this is true! The query did fail. But I need more
+information than that. It could be that your connection is having
+trouble, it could be that the domain has no SPF record, or it could
+be that the domain name is not valid; if the domain has no SPF
+record, that’s a problem. If my connection is having trouble,
+that’s fine - I can try again later. If this is a string type you
+cannot make that decision.</p>
+<p>Lastly, after all this woe, you do not have exhaustiveness
+checking on a <code>String</code> like you would in a sum type, so
+you don’t know whether you have handled all the available
+cases.</p>
+<p style="text-align: center;"><strong>Click below to&nbsp;learn
+more about a unique offer</strong></p>
+<h2>The mega exception type</h2>
+<p>Another very common way of expressing errors is to use a large
+sum type where every constructor represents a different error case.
+This is used extensively in, for example, http -conduit, stack,
+etc.</p>
+<p>Example <a href=
+"https://hackage.haskell.org/package/http-client-0.5.14/docs/src/Network.HTTP.Client.Types.html#HttpExceptionContent">
+from http -client</a>:</p>
+<pre><code class="language-haskell">data HttpExceptionContent
+   = StatusCodeException (Response ()) S.ByteString
+   | TooManyRedirects [Response L.ByteString]
+   | OverlongHeaders
+   | ResponseTimeout
+   | ...
+</code></pre>
+<p>The advantage of this approach is that all types of exceptions
+are centralised in one location, which includes being able to
+inspect every possible error case when you pattern match (with
+GHC’s exhaustiveness checking), like:</p>
+<pre><code class="language-haskell">catch (makeRequest)
+      (\case
+        StatusCodeException r s -&gt; ...
+        OverlongHeaders -&gt; ...
+        ...)
+</code></pre>
+<p>Additionally, when you look at the exception type <a href=
+"https://hackage.haskell.org/package/http-client-0.5.14/docs/Network-HTTP-Client.html#t:HttpExceptionContent"
+rel="nofollow">in haddock</a> you are able to discern what things
+can go wrong ahead of time. You can also put any relevant data into
+the constructor.</p>
+<p>In other words, this approach is self documenting . It’s
+transparent.</p>
+<p>The <em>disadvantage</em> is that you have to centralise all of
+your work in one place, which requires an extra maintenance burden
+over simply writing an error as a string. And whenever you add a
+new constructor it causes a breaking change to downstream users of
+your library. This may be considered an advantage or disadvantage
+.</p>
+<p>It can also be difficult to add context to your constructors,
+especially if you don’t want to repeat that context in every single
+constructor. For example, in the http -conduit package, it has
+about 30 constructors. You wouldn’t want to copy the same context
+to every constructor. Instead, it’s probably better to have a
+separate exception type which contains the context and then has a
+field for your sum type. In fact, this is the approach taken by the
+http -conduit package in the <a href=
+"https://hackage.haskell.org/package/http-conduit-2.3.2/docs/Network-HTTP-Client-Conduit.html#t:HttpException">
+<code>HttpException</code></a> type:</p>
+<pre><code class="language-haskell">data HttpException
+    = HttpExceptionRequest Request HttpExceptionContent
+    | InvalidUrlException String String
+</code></pre>
+<p>The <code>Request</code> is the context, and the
+<code>HttpExceptionContent</code> is the actual problem that
+occurred.</p>
+<p>One final point: the mega exception type implies some kind of
+completeness; that if you catch this exception type when using a
+library, you’ve handled all possible exceptions. But that’s not
+true, a library can still throw a different exception type. So this
+approach may give people a false sense of security.</p>
+<h2>Individual exception types</h2>
+<p>This approach is similar to the mega exception type except each
+error condition has a separate data type. The advantages of this is
+in the <code>Either</code> case : you know exactly what will go
+wrong because there is only one possible error case for this type
+of exception, whereas in the mega exception type, you can catch the
+type, but then you might have 30 different error conditions that
+could happen. It’s unlikely that all 30 of those error cases could
+go wrong, but you would have to assume they could, because of the
+type.</p>
+<p>For example, if a file doesn’t exist, that’s one type of
+exception. If a directory doesn’t exist, that is another type of
+exception. So a function such as openFile can claim to throw a
+product of these two exception types, the file not existing, or the
+directory not existing, or even that you do not have access to the
+directory, etc.</p>
+<pre><code class=
+"language-haskell">Throws (FileNotFound,DirectoryNotFound,AccessDenied)
+</code></pre>
+<p>The disadvantage is it’s hard to combine them. Product types
+such as tuples don’t really scale. Type signatures also become very
+unwieldy when dozens of different types come into play such as in
+the IO APIs in <code>base</code> . It’s hard to really manage that.
+Just consider the large number of exceptions throwable by
+<code>base</code> .</p>
+<p>Another issue is that users will have to know about all the
+different types of exceptions that can be thrown in order to catch
+everything from your library in the impure <code>throw</code> case
+, whereas in the mega exception case it’s easy to catch everything
+because everything has already been put in one place for you.</p>
+<h2>Abstract exception type</h2>
+<p>This approach is where you have an exception type which is
+entirely opaque and not inspectable except by use of accessors. An
+example of this is the IOError type in Haskell, which is standard
+and used throughout the IO library. For example, the error accessor
+<code>isDoesNotExistError</code> .</p>
+<p>The advantage to this is that you can change the internals
+without breaking the API. Another advantage is that you can easily
+capture the context of an error, because you just put that in an
+accessor .</p>
+<p>Another advantage is that predicates can be applied to more than
+one constructor, such as <code>isFileOpenError</code> ; this could
+be an accessor to indicate that you could not open a file but the
+reason can be more detailed, such as “unable to access directory”,
+“no such file”, or whatever.</p>
+<p>The disadvantage of this is: it’s not self documenting on
+haddock in the way the transparent exception type is, so you’re
+essentially hiding what the different options are from you
+users.</p>
+<p>Plus, maybe you <em>should</em> break your users’ code when you
+change how errors can be thrown; maybe hiding the details just
+makes things worse.</p>
+<h2>Why not both?</h2>
+<p>Another option is to provide both of these things. So, you
+provide a set of constructors but you also provide a set of
+predicates which can be used on these types and other accessors .
+Or even using pattern synonyms to provide a documented accessor
+set, without exposing the internal data type. This would give you
+some flexibility, but I do not know of any example in the wild
+which implements this approach.</p>
+<p>Matt Parsons explores an <a href=
+"https://www.parsonsmatt.org/2018/11/03/trouble_with_typed_errors.html"
+rel="nofollow noopener" target="_blank">approach to errors using
+prisms and generic-lens</a> that’s worth taking a look at.</p>
+<h2>Terminate the program</h2>
+<p>Finally, we can take the C approach and terminate the program,
+set the return code to -1. The disadvantage of this is that you
+will have your Haskell card torn up and you will be banished to
+work on node.js projects forever.</p>
+<h2>Conclusions</h2>
+<p>It seems like the base Haskell packages favor the opaque
+approach, and many standard task libraries use the mega exception
+approach. We’ve discussed the trade-offs. At this point, how to
+model your exceptions is strongly in the category of a judgment
+call than a clear cut decision.</p>
+<p>The only thing that is clear cut to me, is that
+<code>String</code> (or <code>Text</code>) for error messages is
+always the wrong decision, for the reasons outlined above. In
+parser libraries, for example, the old approach has been this one.
+But in more modern libraries, such as <a href=
+"https://hackage.haskell.org/package/megaparsec-7.0.4/docs/Text-Megaparsec.html#t:ParsecT"
+rel="nofollow noopener" target="_blank">megaparsec</a>, the error
+type is provided by the caller of the library. So there isn’t a
+need to decide on a concrete type ahead of time.</p>
+<p>If you need any help with Haskell please <a href=
+"/special-haskell-offer" rel="noopener" target="_blank">contact
+us</a>.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Defining%20exceptions%20in%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;defining-exceptions-in-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;defining-exceptions-in-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;defining-exceptions-in-haskell&#x2F;&amp;title=Defining%20exceptions%20in%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;defining-exceptions-in-haskell&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#5e2d3f323b2d1e382e3d31332e323b2a3b703d3133" targe="_blank"><span class="__cf_email__" data-cfemail="4635272a233506203625292b362a2332236825292b">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Async Exceptions in Haskell, and Rust</title>
+  <meta property="og:title" content="Async Exceptions in Haskell, and Rust">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Haskell and Rust both support asynchronous programming. Haskell includes a feature called async exceptions, which allow cancelling threads, but they come at a cost. See how Rust does the same job, and the relative trade-offs of each approach.">
+  <meta property="og:description" content="Haskell and Rust both support asynchronous programming. Haskell includes a feature called async exceptions, which allow cancelling threads, but they come at a cost. See how Rust does the same job, and the relative trade-offs of each approach.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;async-exceptions-haskell-rust&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Async Exceptions in Haskell, and Rust</h1>
+      
+      <p id="page-description">By Michael Snoyman, December 24, 2019</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Async%20Exceptions%20in%20Haskell%2C%20and%20Rust https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;async-exceptions-haskell-rust&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;async-exceptions-haskell-rust&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;async-exceptions-haskell-rust&#x2F;&amp;title=Async%20Exceptions%20in%20Haskell%2C%20and%20Rust"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;async-exceptions-haskell-rust&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  <p>Before getting started: no, there is no such thing as an async exception in Rust. I'll explain what I mean shortly. Notice the comma in the title :).</p>
+<p>GHC Haskell supports a feature called asynchronous (or async) exceptions. Normal, synchronous exceptions are generated by the currently running code from doing something like trying to read a file that doesn't exist. Asynchronous exceptions are generated from a <em>different</em> thread of execution, either another Haskell green thread, or the runtime system itself.</p>
+<p>Perhaps the best example of using async exception is the <code>timeout</code> function. This function will take a certain number of microseconds and an action to run. If the action completes in that time, all is well. If the action <em>doesn't</em> complete in that time, then the thread running that action receives an async exception.</p>
+<p>Rust does not have exceptions at all, much less async exceptions. (Yes, <code>panic</code>s behave fairly similarly to synchronous exceptions, but we'll ignore those in this context. They aren't relevant.) Rust also doesn't have a green thread-based runtime like Haskell does. There's basically no direct way to compare this async exception concept from Haskell into Rust.</p>
+<p>Or, at least, there wasn't. With Tokio, <code>async/.await</code>, executor, tasks, and futures, the story is quite different. A Haskell green thread looks quite a bit like a Rust task. Suddenly there's a <a href="https://docs.rs/tokio/0.2.6/tokio/time/fn.timeout.html"><code>timeout</code> function in Tokio</a>. This post is going to compare the Haskell async exception mechanism to whatever powers Tokio's <code>timeout</code>. It's going to look at various trade-offs of the two different approaches. And I'll end with my own personal analysis.</p>
+<h2 id="async-exceptions-in-haskell">Async exceptions in Haskell</h2>
+<p>The GHC Haskell runtime provides a green thread system. This means that there is a scheduler which assigns different green threads to actual OS threads to run on. These threads continue operating until they hit yield points. A common example of a yield point would be socket I/O. Take the pseudocode below:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>socket </span><span style="color:#859900;">&lt;-</span><span> openConnection address
+</span><span>send socket </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello world!</span><span style="color:#839496;">&quot; </span><span style="color:#93a1a1;">-- yields
+</span><span>msg </span><span style="color:#859900;">&lt;-</span><span> recv socket </span><span style="color:#93a1a1;">-- yields
+</span><span>putStrLn (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Received message: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show msg)
+</span></code></pre>
+<p>Each time we perform what looks like blocking I/O in Haskell, in reality we are:</p>
+<ul>
+<li>Registering a wakeup call with the scheduler when the socket completes its send or receive</li>
+<li>Putting the current green thread to sleep</li>
+<li>We'll get woken up again when the scheduler has a free OS thread and there is data on the socket</li>
+</ul>
+<p>However, yield points happen far more often than just async I/O. Every time we perform any allocation, GHC automatically inserts a yield point. Since Haskell (unfortunately) tends to do a <em>lot</em> of heap allocation, this means that our code is implicitly littered with huge numbers of yield points. So much so, that we can essentially assume that at any point in our execution, we may hit a yield point.</p>
+<p>And this brings us to async exceptions. Each green thread has its own queue of incoming async exceptions. And at each yield point, the runtime system will check if there are exceptions waiting on that queue. If so, it will pop one off the queue and throw it in the current green thread, where it can either be caught or, ultimately, take down the entire thread.</p>
+<p>My <a href="https://tech.fpcomplete.com/blog/2018/04/async-exception-handling-haskell/">best practice advice</a> is to never <em>recover</em> from an async exception. Instead, you should only ever clean up your resources when an async exception occurs. In other words, if you ever catch an async exception, you may do some cleanup, but then you must immediately rethrow the exception.</p>
+<p>Since an async exception can occur anywhere, we have to be highly paranoid when writing resource-safe code in Haskell. For example, consider this pseudocode:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>h </span><span style="color:#859900;">&lt;-</span><span> openFile fp </span><span style="color:#cb4b16;">WriteMode
+</span><span>setPerms </span><span style="color:#6c71c4;">0o600</span><span> h </span><span style="color:#859900;">`onException`</span><span> closeFile h
+</span><span>useFile h </span><span style="color:#859900;">`finally`</span><span> closeFile h
+</span></code></pre>
+<p>In a world without async exceptions, this is exception safe. We first open the file. If opening throws an exception, then the <code>openFile</code> call itself is responsible for releasing any resources it acquires. Next, if <code>setPerms</code> throws an exception, our <code>onException</code> call ensures that <code>closeFile</code> will close the file handle. And finally, when we call <code>useFile</code>, we use <code>finally</code> to ensure that <code>closeFile</code> will be called regardless of an async exception occurring.</p>
+<p>However, in a world with async exceptions, lots more can go wrong:</p>
+<ul>
+<li>An exception can be generated between the call to <code>openFile</code> and <code>setPerms</code>, where there's not exception handler.</li>
+<li>An exception can be generated between the call to <code>setPerms</code> and <code>useFile</code></li>
+</ul>
+<p>Instead, in Haskell, we have to <em>mask</em> async exceptions, which temporarily stops them from being delivered. The code above could be written as:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>mask </span><span style="color:#859900;">$ \</span><span>restore </span><span style="color:#859900;">-&gt; do
+</span><span>    h </span><span style="color:#859900;">&lt;-</span><span> openFile fp </span><span style="color:#cb4b16;">WriteMode
+</span><span>    setPerms </span><span style="color:#6c71c4;">0o600</span><span> h </span><span style="color:#859900;">`onException`</span><span> closeFile h
+</span><span>    restore (useFile h) </span><span style="color:#859900;">`finally`</span><span> closeFile h
+</span></code></pre>
+<p>However, dealing with masking states is really complicated in general. So instead, we like to use helper functions like <code>bracket</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>bracket (openFile fp </span><span style="color:#cb4b16;">WriteMode</span><span>) closeFile </span><span style="color:#859900;">$ \</span><span>h </span><span style="color:#859900;">-&gt; do
+</span><span>    setPerms </span><span style="color:#6c71c4;">0o600</span><span> h
+</span><span>    useFile h
+</span></code></pre>
+<p>There are many more details around implementation and usage of async exceptions in Haskell, but this is sufficient for our comparison for now.</p>
+<h2 id="canceled-futures-in-rust">Canceled futures in Rust</h2>
+<p>The <code>Future</code> trait in Rust defines an abstraction for anything that can be <code>await</code>ed on. The core function is <code>poll</code>, which works something like this:</p>
+<ul>
+<li>Tell me if you're ready</li>
+<li>If you are ready, great! Tell me the completed value</li>
+<li>If you're not ready, I want to register a <code>Waker</code></li>
+</ul>
+<p>The <code>Waker</code> can then interact with the executor to make sure that the <em>task</em> which is <code>await</code>ing gets woken up when the <code>Future</code> is ready.</p>
+<p>In a simple async application in Rust, you'll have a task that waits on one <code>Future</code> at a time. For example, in pseudocode again:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span>async {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> socket = </span><span style="color:#859900;">open_connection</span><span>(</span><span style="color:#859900;">&amp;</span><span>address);
+</span><span>    socket::send(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello world!</span><span style="color:#839496;">&quot;</span><span>).await;
+</span><span>    </span><span style="color:#268bd2;">let</span><span> msg = socket::recv().await;
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Received message: </span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, msg);
+</span><span>}
+</span></code></pre>
+<p>Each of those <code>await</code>s is a yield point. The executor can allow another task to run, and will wake up the current task when the I/O is complete. This is very similar to the Haskell example I gave above.</p>
+<p>However, unlike Haskell:</p>
+<ul>
+<li>There is no queue of async exceptions sitting and waiting to kill our task</li>
+<li>There are no implicit yield points created by allocation</li>
+</ul>
+<p>If there are no async exceptions, how exactly does a <code>timeout</code> work in Rust? Well, instead of a task waiting for a <em>single</em> <code>Future</code> to complete, it waits for one of two <code>Future</code>s to complete. You can <a href="https://docs.rs/tokio/0.2.6/src/tokio/time/timeout.rs.html#134">check out the code yourself</a>, but the basic idea is:</p>
+<ul>
+<li>Create two <code>Future</code>s
+<ul>
+<li>The action you want to try to run</li>
+<li>A timer that will complete when the timeout has expired</li>
+</ul>
+</li>
+<li>Whenever we <code>poll</code> to see if things are ready:
+<ul>
+<li>Check if the action is ready. If so: yay! Return its result as an <code>Ok</code></li>
+<li>Check if the timer is ready. If so: our timeout has expired, and we should return an <code>Err</code> saying how much time has elapsed.</li>
+<li>If neither is ready, say that we're not ready either and wait to get woken up again</li>
+</ul>
+</li>
+</ul>
+<p>Personally, I think this is a pretty elegant solution to the problem. Like the Haskell solution, it means that the action can only be stopped at a yield point. However, unlike the Haskell solution, yield points will be far less common in a Rust program, since we don't have the implicit sprinkling of yields caused by allocation.</p>
+<p>But now, let's talk about resource management. I made it clear that properly handling resources in the presence of async exceptions in Haskell is tricky. Not so in Rust! The standard way to handle resources is with RAII: you define a data type and stick a <code>Drop</code> on it. And in the world of cancellable <code>Future</code>s, this all works perfectly:</p>
+<ul>
+<li>The <code>Future</code> itself owns any resources it's using</li>
+<li>If the <code>timeout</code> triggers before the action completed, the <code>Future</code> in question is dropped</li>
+<li>When the <code>Future</code> is dropped, the resources it owns are also dropped</li>
+</ul>
+<p>The example below is more verbose than the Haskell equivalent above, but that's because we're defining a synthetic <code>Resource</code> struct. In real life code, such structs would likely already exist.</p>
+<p>NOTE: You'll need at least Rust 1.39 to run the code below, and add a dependency on Tokio with a line like: <code>tokio = { version = &quot;0.2&quot;, features = [&quot;macros&quot;, &quot;time&quot;] }</code>.</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#859900;">use </span><span>tokio::time::{delay_for, timeout};
+</span><span style="color:#859900;">use </span><span>std::time::Duration;
+</span><span>
+</span><span style="color:#268bd2;">struct </span><span style="color:#b58900;">Resource</span><span>;
+</span><span>
+</span><span style="color:#268bd2;">impl </span><span style="color:#b58900;">Resource </span><span>{
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">new</span><span>() -&gt; </span><span style="color:#268bd2;">Self </span><span>{
+</span><span>        </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">acquire</span><span style="color:#839496;">&quot;</span><span>);
+</span><span>        Resource
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#268bd2;">impl </span><span>Drop </span><span style="color:#859900;">for </span><span style="color:#b58900;">Resource </span><span>{
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">drop</span><span>(</span><span style="color:#859900;">&amp;</span><span style="color:#586e75;">mut </span><span style="color:#268bd2;">self</span><span>) {
+</span><span>        </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">release</span><span style="color:#839496;">&quot;</span><span>);
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span>async </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">worker</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> _resource = Resource::new();
+</span><span>    </span><span style="color:#859900;">for</span><span> i </span><span style="color:#859900;">in </span><span style="color:#6c71c4;">1</span><span style="color:#859900;">..</span><span>=</span><span style="color:#6c71c4;">10 </span><span>{
+</span><span>        </span><span style="color:#859900;">delay_for</span><span>(Duration::from_millis(</span><span style="color:#6c71c4;">100</span><span>)).await;
+</span><span>        </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">i == </span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, i);
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#268bd2;">tokio</span><span>::</span><span style="color:#268bd2;">main</span><span>]
+</span><span>async </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Round 1</span><span style="color:#839496;">&quot;</span><span>);
+</span><span>    </span><span style="color:#268bd2;">let</span><span> res = </span><span style="color:#859900;">timeout</span><span>(Duration::from_millis(</span><span style="color:#6c71c4;">2000</span><span>), </span><span style="color:#859900;">worker</span><span>()).await;
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{:?}</span><span style="color:#839496;">&quot;</span><span>, res);
+</span><span>
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#dc322f;">\n\n</span><span style="color:#2aa198;">Round 2</span><span style="color:#839496;">&quot;</span><span>);
+</span><span>    </span><span style="color:#268bd2;">let</span><span> res = </span><span style="color:#859900;">timeout</span><span>(Duration::from_millis(</span><span style="color:#6c71c4;">1000</span><span>), </span><span style="color:#859900;">worker</span><span>()).await;
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{:?}</span><span style="color:#839496;">&quot;</span><span>, res);
+</span><span>
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#dc322f;">\n\n</span><span style="color:#2aa198;">Round 3</span><span style="color:#839496;">&quot;</span><span>);
+</span><span>    </span><span style="color:#268bd2;">let</span><span> res = </span><span style="color:#859900;">timeout</span><span>(Duration::from_millis(</span><span style="color:#6c71c4;">500</span><span>), </span><span style="color:#859900;">worker</span><span>()).await;
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{:?}</span><span style="color:#839496;">&quot;</span><span>, res);
+</span><span>}
+</span></code></pre>
+<h2 id="my-analysis">My analysis</h2>
+<p>The big point in Haskell's favor in all of this is its ability to preempt inside of computations. Whereas Rust's model lets you preempt most I/O actions, there won't be many yield points in other code. This can lead to lots of accidental blocking. There has been <a href="https://www.reddit.com/r/rust/comments/ebfj3x/stop_worrying_about_blocking_the_new_asyncstd/">some</a> <a href="https://www.reddit.com/r/rust/comments/ebpzqx/do_not_stop_worrying_about_blocking_in_async/">discussion</a> recently about possible mitigations of this issue at the executor level.</p>
+<p>Haskell's advantage here is diminished by the fact that, if you have code that does not allocate any memory, you don't get any yield points. However, in practice, this almost never happens. This did <a href="https://github.com/simonmar/async/issues/93">affect some of my coworkers</a> recently, so it's not unheard of. But it's relatively rare, and you can insert yield points back into an optimized application with <a href="https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/using-optimisation.html#ghc-flag--fomit-yields"><code>-fno-omit-yields</code></a>. You can argue that the fact that this <em>sometimes</em> fails spectacularly is even worse.</p>
+<p>I like the fact that, in Rust, you know exactly where your program may simply stop executing. Every time you see a <code>.await</code>, you know &quot;well, it's entirely possible that the executor will just drop me before I come back.&quot; And the fact that ownership, RAII, and dropping solves resource management exactly the same in async and synchronous Rust code is beautiful.</p>
+<p>Haskell pays a lot for the ability to kill threads with async exceptions. Every bit of code that manages resources needs to pay a cost in cognitive overhead. In practice, this truly does lead to a large number of bugs. Figuring out how and when to mask exceptions, and whether to have interruptible or uninterruptible masking (something I didn't really discuss), is another major curve ball. I think proper API design can mitigate a lot of the pain here. But the base library does <em>not</em> contain such API design, and bad practices abound.</p>
+<p>And finally, a question: how important is cancellable tasks/killable threads in practice? Being able to time things out is certainly powerful, in some cases. Racing two actions to see which one completes first? Less valuable in my opinion. I certainly teach it when I give Haskell training, but there were usually more elegant ways to solve the same problem.</p>
+<p>Since I'm stuck with async exceptions, I'll use <code>timeout</code> and <code>race</code> in Haskell, because <em>using</em> them isn't the dangerous part, it's having them in the first place. Were I to design a runtime system for Haskell from the ground up, I'm not sure I'd introduce the concept. It certainly solves some really tricky problems, like interrupting long-running pure code. But I'm not convinced the feature really pulls its weight.</p>
+<p>On the other hand, in Rust, the feature is essentially free. The <code>Future</code> trait was designed to solve a bunch of general problems, and then at the library level it's possible to introduce a solution to cancel tasks. Pretty nifty.</p>
+<p>And finally, where these two languages are the same. They both elegantly and easily solve async I/O problems in general. You get to write blocking-style code without the blocking. And both of them have pretty complicated details under the surface (Haskell: masking, Rust: the <code>poll</code> method) which we can usually, and fortunately, ignore and leave to others to mess around with.</p>
+<h2 id="further-reading">Further reading</h2>
+<p>Feel free to check out our <a href="https://tech.fpcomplete.com/haskell/">Haskell</a> and <a href="https://tech.fpcomplete.com/rust/">Rust</a> homepages for lots more content. If you're interested in learning all about exception handling in Haskell, check out our <a href="https://tech.fpcomplete.com/haskell/tutorial/exceptions/">safe exception handling</a> tutorial. And if you want to learn about <code>async/await</code> in Rust, I'd recommend <a href="https://www.snoyman.com/blog/2019/12/rust-crash-course-08-down-dirty-future">lessons 8 and 9 of the Rust Crash Course</a>.</p>
+<p class="text-center">
+  <a class="button-coral" href="https://www.fpcomplete.com/contact-us/">
+    Set up an engineering consultation
+  </a>
+</p>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Async%20Exceptions%20in%20Haskell%2C%20and%20Rust https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;async-exceptions-haskell-rust&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;async-exceptions-haskell-rust&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;async-exceptions-haskell-rust&#x2F;&amp;title=Async%20Exceptions%20in%20Haskell%2C%20and%20Rust"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;async-exceptions-haskell-rust&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#3a495b565f497a5c4a5955574a565f4e5f14595557" targe="_blank"><span class="__cf_email__" data-cfemail="9fecfef3faecdff9effcf0f2eff3faebfab1fcf0f2">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

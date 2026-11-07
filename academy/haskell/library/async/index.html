@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>async: Asynchronous and Concurrent Programming</title>
+  <meta property="og:title" content="async: Asynchronous and Concurrent Programming">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;library&#x2F;async&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+  
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+<section class="hero grid-bg">
+  <div class="container">
+    <h1>async: Asynchronous and Concurrent Programming
+    </h1></div>
+</section>
+
+
+
+  
+<div class="container py-3">
+  <p>The <a href="https://www.stackage.org/package/async">async package</a> provides
+functionality for performing actions asynchronously, across multiple threads.
+While it's built on top of the <code>forkIO</code> function from base (in
+<code>Control.Concurrent</code>), the async package improves on this in many ways:</p>
+<ul>
+<li>It has graceful and thorough handling of exceptions</li>
+<li>It builds in a way to get results back from a child thread</li>
+<li>There is an <code>STM</code> interface for accessing thread results, providing for a
+convenient way to deal with such things as blocking operations waiting for
+results</li>
+<li>Thread cancelation is made easy and reliable</li>
+<li>For some very common use cases, the <code>race</code> and <code>concurrently</code> functions, as
+well as the <code>Concurrently</code> newtype wrapper, can give you a huge bang for your
+buck.</li>
+</ul>
+<h2 id="tutorial-exercise">Tutorial exercise</h2>
+<p>To help motivate learning, keep in mind this exercise while reading
+through the content below, and try to implement a solution. Write a
+helper function which allows you to pass actions to worker threads,
+and which properly handles exceptions for all of these actions.</p>
+<h2 id="concepts">Concepts</h2>
+<p>There is little cognitive overhead to using this package. The primary datatype
+it exposes is <code>Async</code>. An <code>Async a</code> value represents a separate thread which
+will ultimately generate a value of type <code>a</code>. The package follows some pretty
+standard naming conventions:</p>
+<ul>
+<li><code>async*</code> forks a thread and returns an <code>Async</code> value</li>
+<li><code>withAsync*</code> forks a thread and provides the <code>Async</code> value to the provided
+inner action. The forked thread is killed when the inner action exits.</li>
+<li>You can <code>wait</code> for the result of an <code>Async</code>, <code>poll</code> to check if it's
+complete, or <code>cancel</code> it</li>
+<li>By default, <code>wait</code>ing will rethrow any exceptions thrown by the forked
+thread. Use the variants that say <code>Catch</code> to catch the exceptions.</li>
+<li>Many wait operations have <code>STM</code> variants to make them more easily composable</li>
+</ul>
+<h2 id="concurrently">Concurrently</h2>
+<p>To warm up, we'll start with examples of using <code>concurrently</code>, <code>race</code>, and the
+<code>Concurrently</code> newtype. These are simpler (and more efficient) variants of the
+more general <code>Async</code>-based interface. The general rule with this library is: if
+you can get away with <code>concurrently</code>/<code>race</code>/<code>Concurrently</code>, you should.</p>
+<h3 id="basics">Basics</h3>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack script --resolver lts-12.21
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.Async
+</span><span>
+</span><span style="color:#b58900;">action1 </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO Int
+</span><span>action1 </span><span style="color:#859900;">= do
+</span><span>    threadDelay </span><span style="color:#6c71c4;">500000 </span><span style="color:#93a1a1;">-- just to make it interesting
+</span><span>    return </span><span style="color:#6c71c4;">5
+</span><span>
+</span><span style="color:#b58900;">action2 </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO String
+</span><span>action2 </span><span style="color:#859900;">= do
+</span><span>    threadDelay </span><span style="color:#6c71c4;">1000000
+</span><span>    return </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">action2 result</span><span style="color:#839496;">&quot;
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    res </span><span style="color:#859900;">&lt;-</span><span> concurrently action1 action2
+</span><span>    print (res </span><span style="color:#859900;">::</span><span> (</span><span style="color:#cb4b16;">Int</span><span>, </span><span style="color:#cb4b16;">String</span><span>))
+</span></code></pre>
+<p>As you can see, the <code>concurrently</code> function waits until both operations
+complete, and then returns both results in a tuple. In contrast, the <code>race</code>
+function returns only the first one to complete:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack script --resolver lts-12.21
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.Async
+</span><span>
+</span><span style="color:#b58900;">action1 </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO Int
+</span><span>action1 </span><span style="color:#859900;">= do
+</span><span>    threadDelay </span><span style="color:#6c71c4;">500000 </span><span style="color:#93a1a1;">-- just to make it interesting
+</span><span>    return </span><span style="color:#6c71c4;">5
+</span><span>
+</span><span style="color:#b58900;">action2 </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO String
+</span><span>action2 </span><span style="color:#859900;">= do
+</span><span>    threadDelay </span><span style="color:#6c71c4;">1000000
+</span><span>    return </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">action2 result</span><span style="color:#839496;">&quot;
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    res </span><span style="color:#859900;">&lt;-</span><span> race action1 action2
+</span><span>    print (res </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Either Int String</span><span>)
+</span></code></pre>
+<p>Exercise: what will this program output?</p>
+<p>The <code>Concurrently</code> newtype wrapper uses the <code>concurrently</code> function to
+implement its <code>Applicative</code> instance, and <code>race</code> to implement its <code>Alternative</code>
+instance. We can demonstrate that, though the code will be quite a bit more
+verbose:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack script --resolver lts-12.21
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Applicative
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.Async
+</span><span>
+</span><span style="color:#b58900;">action1 </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO Int
+</span><span>action1 </span><span style="color:#859900;">= do
+</span><span>    threadDelay </span><span style="color:#6c71c4;">500000 </span><span style="color:#93a1a1;">-- just to make it interesting
+</span><span>    return </span><span style="color:#6c71c4;">5
+</span><span>
+</span><span style="color:#b58900;">action2 </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO String
+</span><span>action2 </span><span style="color:#859900;">= do
+</span><span>    threadDelay </span><span style="color:#6c71c4;">1000000
+</span><span>    return </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">action2 result</span><span style="color:#839496;">&quot;
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    res1 </span><span style="color:#859900;">&lt;-</span><span> runConcurrently </span><span style="color:#859900;">$ </span><span style="color:#b58900;">(,)
+</span><span>        </span><span style="color:#859900;">&lt;$&gt; </span><span style="color:#cb4b16;">Concurrently</span><span> action1
+</span><span>        </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Concurrently</span><span> action2
+</span><span>    print (res1 </span><span style="color:#859900;">::</span><span> (</span><span style="color:#cb4b16;">Int</span><span>, </span><span style="color:#cb4b16;">String</span><span>))
+</span><span>
+</span><span>    res2 </span><span style="color:#859900;">&lt;-</span><span> runConcurrently
+</span><span>          </span><span style="color:#859900;">$</span><span> (</span><span style="color:#cb4b16;">Left </span><span style="color:#859900;">&lt;$&gt; </span><span style="color:#cb4b16;">Concurrently</span><span> action1)
+</span><span>        </span><span style="color:#859900;">&lt;|&gt;</span><span> (</span><span style="color:#cb4b16;">Right </span><span style="color:#859900;">&lt;$&gt; </span><span style="color:#cb4b16;">Concurrently</span><span> action2)
+</span><span>    print (res2 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Either Int String</span><span>)
+</span></code></pre>
+<p>While this seems tedious for such an example, the <code>Concurrently</code> newtype can be
+great for larger scale cases, such as when we want to discard some results.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack script --resolver lts-12.21
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.Async
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Foldable </span><span>(</span><span style="color:#b58900;">traverse_</span><span>)
+</span><span>
+</span><span style="color:#859900;">type </span><span style="color:#cb4b16;">Score </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Int
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Person </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Person FilePath Score
+</span><span>
+</span><span style="color:#b58900;">people </span><span style="color:#859900;">::</span><span> [</span><span style="color:#268bd2;">Person</span><span>]
+</span><span>people </span><span style="color:#859900;">=
+</span><span>    [ </span><span style="color:#cb4b16;">Person </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">alice.txt</span><span style="color:#839496;">&quot; </span><span style="color:#6c71c4;">50
+</span><span>    , </span><span style="color:#cb4b16;">Person </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">bob.txt</span><span style="color:#839496;">&quot; </span><span style="color:#6c71c4;">60
+</span><span>    , </span><span style="color:#cb4b16;">Person </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">charlie.txt</span><span style="color:#839496;">&quot; </span><span style="color:#6c71c4;">70
+</span><span>    ]
+</span><span>
+</span><span style="color:#93a1a1;">-- | This function returns a unit value that we don&#39;t care about. Using
+</span><span style="color:#93a1a1;">-- concurrently on two such actions would give us ((), ()).
+</span><span style="color:#b58900;">writePerson </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Person </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>writePerson (</span><span style="color:#cb4b16;">Person</span><span> fp score) </span><span style="color:#859900;">=</span><span> writeFile fp (show score)
+</span><span>
+</span><span style="color:#93a1a1;">-- | Let&#39;s write lots of people to their respective files in parallel, instead
+</span><span style="color:#93a1a1;">-- of sequentially.
+</span><span style="color:#b58900;">writePeople </span><span style="color:#859900;">::</span><span> [</span><span style="color:#268bd2;">Person</span><span>] </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>writePeople </span><span style="color:#859900;">=</span><span> runConcurrently </span><span style="color:#859900;">.</span><span> traverse_ (</span><span style="color:#cb4b16;">Concurrently </span><span style="color:#859900;">.</span><span> writePerson)
+</span><span>
+</span><span style="color:#93a1a1;">-- Note: traverse_ is just mapM_ for Applicative instead instead of Monad.
+</span><span style="color:#93a1a1;">-- Remember, Concurrently is _not_ a Monad instance.
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> writePeople people
+</span></code></pre>
+<h3 id="exceptions">Exceptions</h3>
+<p>When either child thread throws an exception, that exception is thrown to the
+other thread:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack script --resolver lts-12.21
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.Async
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Exception
+</span><span>
+</span><span style="color:#b58900;">action1 </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO Int
+</span><span>action1 </span><span style="color:#859900;">=</span><span> error </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">action1 errored</span><span style="color:#839496;">&quot;
+</span><span>
+</span><span style="color:#b58900;">action2 </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO String
+</span><span>action2 </span><span style="color:#859900;">=</span><span> handle onErr </span><span style="color:#859900;">$ do
+</span><span>    threadDelay </span><span style="color:#6c71c4;">500000
+</span><span>    return </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">action2 completed</span><span style="color:#839496;">&quot;
+</span><span>  </span><span style="color:#859900;">where
+</span><span>    onErr e </span><span style="color:#859900;">= do
+</span><span>        putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">action2 was killed by: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> displayException e
+</span><span>        throwIO (e </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">SomeException</span><span>)
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    res </span><span style="color:#859900;">&lt;-</span><span> concurrently action1 action2
+</span><span>    print res
+</span></code></pre>
+<p>You'll get some interleaving of output most likely since string-based I/O work
+character-by-character, but you should get the idea from running this.</p>
+<p>Exercises:</p>
+<ul>
+<li>Use <code>Data.Text.IO</code> instead of string-based I/O to avoid the interleaved output</li>
+<li>Replace <code>concurrently</code> with <code>race</code>. What result do you get?</li>
+</ul>
+<h3 id="companion-infinite-threads">Companion infinite threads</h3>
+<p>There's a neat trick you can accomplish with <code>race</code> when you want a companion
+thread to continue running as long as the main thread is in operation:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack script --resolver lts-12.21
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.Async
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Exception
+</span><span>
+</span><span style="color:#93a1a1;">-- | Print successive numbers to stdout. Notice how it returns @a@ instead of
+</span><span style="color:#93a1a1;">-- @()@. This lets the type system know that, under normal circumstances, this
+</span><span style="color:#93a1a1;">-- function will never exit.
+</span><span style="color:#b58900;">counter </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO a
+</span><span>counter </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">let</span><span> loop i </span><span style="color:#859900;">= do
+</span><span>            putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">counter: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show i
+</span><span>            threadDelay </span><span style="color:#6c71c4;">1000000
+</span><span>            loop </span><span style="color:#859900;">$!</span><span> i </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1
+</span><span>     </span><span style="color:#859900;">in</span><span> loop </span><span style="color:#6c71c4;">1
+</span><span>
+</span><span style="color:#93a1a1;">-- | This function will continue to run counter with whatever action you&#39;ve
+</span><span style="color:#93a1a1;">-- provided, and stop running counter once that action exits. If by some chance
+</span><span style="color:#93a1a1;">-- counter throws an exception, it will take down your thread as well.
+</span><span style="color:#b58900;">withCounter </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO a
+</span><span>withCounter inner </span><span style="color:#859900;">= do
+</span><span>    res </span><span style="color:#859900;">&lt;-</span><span> race counter inner
+</span><span>    </span><span style="color:#859900;">case</span><span> res </span><span style="color:#859900;">of
+</span><span>        </span><span style="color:#cb4b16;">Left</span><span> x </span><span style="color:#859900;">-&gt;</span><span> assert </span><span style="color:#cb4b16;">False</span><span> x
+</span><span>        </span><span style="color:#cb4b16;">Right</span><span> x </span><span style="color:#859900;">-&gt;</span><span> return x
+</span><span>
+</span><span style="color:#93a1a1;">-- More succintly
+</span><span style="color:#93a1a1;">-- withCounter = fmap (either id id) . race counter
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Before withCounter</span><span style="color:#839496;">&quot;
+</span><span>    threadDelay </span><span style="color:#6c71c4;">2000000
+</span><span>    withCounter </span><span style="color:#859900;">$ do
+</span><span>        threadDelay </span><span style="color:#6c71c4;">2000000
+</span><span>        putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Inside withCounter</span><span style="color:#839496;">&quot;
+</span><span>        threadDelay </span><span style="color:#6c71c4;">2000000
+</span><span>    threadDelay </span><span style="color:#6c71c4;">2000000
+</span><span>    putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">After withCounter</span><span style="color:#839496;">&quot;
+</span><span>    threadDelay </span><span style="color:#6c71c4;">2000000
+</span><span>    putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Exiting!</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>Exercises:</p>
+<ul>
+<li>Why does the <code>assert False</code> never get triggered (aka, why does <code>race</code> never
+return a <code>Left</code> value)?</li>
+<li>In the &quot;more succinct&quot; version of the code, how does the <code>either id id</code>
+accomplish the same job as the pattern matching?</li>
+<li>Extra credit: could you replace one of the <code>id</code>s in <code>either id id</code> with
+<code>Data.Void.absurd</code>?</li>
+</ul>
+<p><strong>Advanced</strong> While it's nice to be able to run companion threads, it can be
+restricting to require that your main thread live in <code>IO</code>. Perhaps you want to
+have your main thread live in some monad transformer stack on top of <code>IO</code>
+instead. Using the powerful (and complex) monad-control package, we can capture
+the monadic state to make this work.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack script --resolver lts-12.21
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> FlexibleContexts #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.Async
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Exception
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.Reader
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.Trans.Control
+</span><span>
+</span><span style="color:#93a1a1;">-- | Print successive numbers to stdout. Notice how it returns @a@ instead of
+</span><span style="color:#93a1a1;">-- @()@. This lets the type system know that, under normal circumstances, this
+</span><span style="color:#93a1a1;">-- function will never exit.
+</span><span style="color:#b58900;">counter </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO a
+</span><span>counter </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">let</span><span> loop i </span><span style="color:#859900;">= do
+</span><span>            putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">counter: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show i
+</span><span>            threadDelay </span><span style="color:#6c71c4;">1000000
+</span><span>            loop </span><span style="color:#859900;">$!</span><span> i </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1
+</span><span>     </span><span style="color:#859900;">in</span><span> loop </span><span style="color:#6c71c4;">1
+</span><span>
+</span><span style="color:#93a1a1;">-- | This function will continue to run counter with whatever action you&#39;ve
+</span><span style="color:#93a1a1;">-- provided, and stop running counter once that action exits. If by some chance
+</span><span style="color:#93a1a1;">-- counter throws an exception, it will take down your thread as well.
+</span><span style="color:#b58900;">withCounter </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">MonadBaseControl IO m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">m a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m a
+</span><span>withCounter inner </span><span style="color:#859900;">=</span><span> control </span><span style="color:#859900;">$ \</span><span>runInIO </span><span style="color:#859900;">-&gt; do
+</span><span>    res </span><span style="color:#859900;">&lt;-</span><span> race counter (runInIO inner)
+</span><span>    </span><span style="color:#859900;">case</span><span> res </span><span style="color:#859900;">of
+</span><span>        </span><span style="color:#cb4b16;">Left</span><span> x </span><span style="color:#859900;">-&gt;</span><span> assert </span><span style="color:#cb4b16;">False</span><span> x
+</span><span>        </span><span style="color:#cb4b16;">Right</span><span> x </span><span style="color:#859900;">-&gt;</span><span> return x
+</span><span>
+</span><span style="color:#93a1a1;">-- More succintly
+</span><span style="color:#93a1a1;">-- withCounter = fmap (either id id) . race counter
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Before withCounter</span><span style="color:#839496;">&quot;
+</span><span>    threadDelay </span><span style="color:#6c71c4;">2000000
+</span><span>    flip runReaderT </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">some string</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">$</span><span> withCounter </span><span style="color:#859900;">$ do
+</span><span>        liftIO </span><span style="color:#859900;">$</span><span> threadDelay </span><span style="color:#6c71c4;">2000000
+</span><span>        str </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>        liftIO </span><span style="color:#859900;">$</span><span> putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Inside withCounter, str == </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> str
+</span><span>        liftIO </span><span style="color:#859900;">$</span><span> threadDelay </span><span style="color:#6c71c4;">2000000
+</span><span>    threadDelay </span><span style="color:#6c71c4;">2000000
+</span><span>    putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">After withCounter</span><span style="color:#839496;">&quot;
+</span><span>    threadDelay </span><span style="color:#6c71c4;">2000000
+</span><span>    putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Exiting!</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<h2 id="async">Async</h2>
+<p>Sometimes you need a bit more control than is offered by the
+<code>Concurrently</code> family. In those cases, you'll want to use the <code>Async</code>
+type and its associated functions. The core type for all of this is:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">data </span><span style="color:#cb4b16;">Async</span><span> a
+</span></code></pre>
+<p>This represents an action running in a different thread which, if
+successful, will give a result of type <code>a</code>. There are lots of things
+you can do to interact with that thread:</p>
+<ul>
+<li>See if it's still running</li>
+<li>Wait for it to finish</li>
+<li>Get its result</li>
+<li>Kill it early</li>
+</ul>
+<p>Most of this is pretty straightforward, but there are three possibly
+surprising things worth pointing out right off the bat:</p>
+<ol>
+<li>I used the phrase &quot;if successful&quot; above. It's possible that the
+action will instead <em>fail</em> with a runtime exception. Therefore, any
+function which gets a result also needs to deal with a possible
+<code>SomeException</code>. As you'll see, a number of the functions here deal
+with that case by simply rethrowing that exception in the calling
+thread.</li>
+<li>In order to allow for more composability (as we'll see later), the
+ability to query a thread's status can be performed from within an
+<code>STM</code> transaction. Most (if not all) of these <code>STM</code> functions also
+have <code>IO</code> variants, but that's just for user convenience.</li>
+<li>Killing a thread early, or canceling it, involves throwing it an
+async exception. If your action misbehaves with async exceptions,
+canceling may fail. We'll demonstrate that below, but I recommend
+checking out the
+<a href="https://haskell-lang.org/library/safe-exceptions">safe-exceptions tutorial</a>
+for advice on doing this right.</li>
+</ol>
+<p>But before we can get into details, let's just see the launching of
+some basic <code>Async</code>s.</p>
+<h3 id="launching">Launching</h3>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack script --resolver lts-12.21
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent </span><span>(</span><span style="color:#b58900;">threadDelay</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.Async
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Say
+</span><span>
+</span><span style="color:#b58900;">talker </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>talker str </span><span style="color:#859900;">=</span><span> forever </span><span style="color:#859900;">$ do
+</span><span>  sayString str
+</span><span>  threadDelay </span><span style="color:#6c71c4;">500000
+</span><span>
+</span><span style="color:#b58900;">getResult </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO Int
+</span><span>getResult </span><span style="color:#859900;">= do
+</span><span>  sayString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Doing some big computation...</span><span style="color:#839496;">&quot;
+</span><span>  threadDelay </span><span style="color:#6c71c4;">2000000
+</span><span>  sayString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Done!</span><span style="color:#839496;">&quot;
+</span><span>  return </span><span style="color:#6c71c4;">42
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  async1 </span><span style="color:#859900;">&lt;-</span><span> async </span><span style="color:#859900;">$</span><span> talker </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">async</span><span style="color:#839496;">&quot;
+</span><span>  withAsync (talker </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">withAsync</span><span style="color:#839496;">&quot;</span><span>) </span><span style="color:#859900;">$ \</span><span>async2 </span><span style="color:#859900;">-&gt; do
+</span><span>    async3 </span><span style="color:#859900;">&lt;-</span><span> async getResult
+</span><span>
+</span><span>    res </span><span style="color:#859900;">&lt;-</span><span> poll async3
+</span><span>    </span><span style="color:#859900;">case</span><span> res </span><span style="color:#859900;">of
+</span><span>      </span><span style="color:#cb4b16;">Nothing </span><span style="color:#859900;">-&gt;</span><span> sayString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">getResult still running</span><span style="color:#839496;">&quot;
+</span><span>      </span><span style="color:#cb4b16;">Just</span><span> (</span><span style="color:#cb4b16;">Left</span><span> e) </span><span style="color:#859900;">-&gt;</span><span> sayString </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">getResult failed: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show e
+</span><span>      </span><span style="color:#cb4b16;">Just</span><span> (</span><span style="color:#cb4b16;">Right</span><span> x) </span><span style="color:#859900;">-&gt;</span><span> sayString </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">getResult finished: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show x
+</span><span>
+</span><span>    res </span><span style="color:#859900;">&lt;-</span><span> waitCatch async3
+</span><span>    </span><span style="color:#859900;">case</span><span> res </span><span style="color:#859900;">of
+</span><span>      </span><span style="color:#cb4b16;">Left</span><span> e </span><span style="color:#859900;">-&gt;</span><span> sayString </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">getResult failed: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show e
+</span><span>      </span><span style="color:#cb4b16;">Right</span><span> x </span><span style="color:#859900;">-&gt;</span><span> sayString </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">getResult finished: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show x
+</span><span>
+</span><span>    res </span><span style="color:#859900;">&lt;-</span><span> wait async3
+</span><span>    sayString </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">getResult finished: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show (res </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>)
+</span><span>
+</span><span>  sayString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">withAsync talker should be dead, but not async</span><span style="color:#839496;">&quot;
+</span><span>  threadDelay </span><span style="color:#6c71c4;">2000000
+</span><span>
+</span><span>  sayString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Now killing async talker</span><span style="color:#839496;">&quot;
+</span><span>  cancel async1
+</span><span>
+</span><span>  threadDelay </span><span style="color:#6c71c4;">2000000
+</span><span>  sayString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Goodbye!</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>This demonstrates the two most common ways of launching an <code>Async</code>:</p>
+<ul>
+<li>The <code>async</code> function will launch a new <code>Async</code> without any plans to
+kill the thread. It's your responsibility to do so if you wish,
+explicitly, via <code>cancel</code></li>
+<li><code>withAsync</code> will launch a thread and run an action with that thread
+running. When the supplied action finishes, that thread is
+<code>cancel</code>ed.</li>
+</ul>
+<p>The advantage of <code>withAsync</code> is that it is exception safe.</p>
+<p><strong>Exercise</strong> Implement your own <code>withAsync</code> using <code>bracket</code>, <code>async</code>,
+and <code>cancel</code>.</p>
+<p>This also demonstrated three of the most popular functions for
+querying an <code>Async</code>'s status:</p>
+<ul>
+<li><code>poll</code> checks if a thread is still running. If it's complete, it
+gives you a <code>Just</code> with <code>Either</code> the <code>SomeException</code> it failed with,
+or the result.</li>
+<li><code>waitCatch</code> will block until the thread exits, and then give you
+<code>Either</code> the <code>SomeException</code> or the result.</li>
+<li><code>wait</code> also blocks, but in the case of a <code>SomeException</code> will throw
+it as a runtime exception.</li>
+</ul>
+<p><strong>Exercise</strong> Implement <code>wait</code> in terms of <code>waitCatch</code>. Can you
+efficiently implement <code>waitCatch</code> in terms of <code>poll</code>?</p>
+<p>In general, you should prefer <code>withAsync</code> in place of <code>async</code> to avoid
+having unneeded threads running. If you specifically need a thread to
+outlive a certain block, then <code>async</code> is the right function to use.</p>
+<h3 id="composing-in-stm">Composing in STM</h3>
+<p>Let's simplify our example above a bit, and instead of using the <code>IO</code>
+variants of the functions, use the <code>STM</code> functions. This should look
+pretty familiar:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack script --resolver lts-12.21
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent </span><span>(</span><span style="color:#b58900;">threadDelay</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.Async
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.STM
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Say
+</span><span>
+</span><span style="color:#b58900;">getResult </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO Int
+</span><span>getResult </span><span style="color:#859900;">= do
+</span><span>  sayString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Doing some big computation...</span><span style="color:#839496;">&quot;
+</span><span>  threadDelay </span><span style="color:#6c71c4;">2000000
+</span><span>  sayString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Done!</span><span style="color:#839496;">&quot;
+</span><span>  return </span><span style="color:#6c71c4;">42
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> withAsync getResult </span><span style="color:#859900;">$ \</span><span>a </span><span style="color:#859900;">-&gt; do
+</span><span>  res </span><span style="color:#859900;">&lt;-</span><span> atomically </span><span style="color:#859900;">$</span><span> pollSTM a
+</span><span>
+</span><span>  </span><span style="color:#859900;">case</span><span> res </span><span style="color:#859900;">of
+</span><span>    </span><span style="color:#cb4b16;">Nothing </span><span style="color:#859900;">-&gt;</span><span> sayString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">getResult still running</span><span style="color:#839496;">&quot;
+</span><span>    </span><span style="color:#cb4b16;">Just</span><span> (</span><span style="color:#cb4b16;">Left</span><span> e) </span><span style="color:#859900;">-&gt;</span><span> sayString </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">getResult failed: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show e
+</span><span>    </span><span style="color:#cb4b16;">Just</span><span> (</span><span style="color:#cb4b16;">Right</span><span> x) </span><span style="color:#859900;">-&gt;</span><span> sayString </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">getResult finished: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show x
+</span><span>
+</span><span>  res </span><span style="color:#859900;">&lt;-</span><span> atomically </span><span style="color:#859900;">$</span><span> waitCatchSTM a
+</span><span>  </span><span style="color:#859900;">case</span><span> res </span><span style="color:#859900;">of
+</span><span>    </span><span style="color:#cb4b16;">Left</span><span> e </span><span style="color:#859900;">-&gt;</span><span> sayString </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">getResult failed: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show e
+</span><span>    </span><span style="color:#cb4b16;">Right</span><span> x </span><span style="color:#859900;">-&gt;</span><span> sayString </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">getResult finished: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show x
+</span><span>
+</span><span>  res </span><span style="color:#859900;">&lt;-</span><span> atomically </span><span style="color:#859900;">$</span><span> waitSTM a
+</span><span>  sayString </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">getResult finished: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show (res </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>)
+</span></code></pre>
+<p>All we've done is append <code>STM</code> to the function names and stick an
+<code>atomically</code> at the front. On its own, this isn't too exciting, just
+informative.</p>
+<p><strong>Exercise</strong> Implement both <code>waitCatchSTM</code> and <code>waitSTM</code> in terms of
+<code>pollSTM</code></p>
+<p><strong>Exercise</strong> Now implement <code>pollSTM</code> in terms of <code>waitCatchSTM</code>.</p>
+<p>So what's so great about this STM business? For one, it can allow us
+to do more sophisticated queries, like racing two <code>Async</code>s:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack script --resolver lts-12.21
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Applicative </span><span>(</span><span style="color:#b58900;">(&lt;|&gt;)</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent </span><span>(</span><span style="color:#b58900;">threadDelay</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.Async
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.STM
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Say
+</span><span>
+</span><span style="color:#b58900;">getResult1 </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO Int
+</span><span>getResult1 </span><span style="color:#859900;">= do
+</span><span>  sayString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Doing some big computation...</span><span style="color:#839496;">&quot;
+</span><span>  threadDelay </span><span style="color:#6c71c4;">2000000
+</span><span>  sayString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Done!</span><span style="color:#839496;">&quot;
+</span><span>  return </span><span style="color:#6c71c4;">42
+</span><span>
+</span><span style="color:#b58900;">getResult2 </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO Int
+</span><span>getResult2 </span><span style="color:#859900;">= do
+</span><span>  sayString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Doing some smaller computation...</span><span style="color:#839496;">&quot;
+</span><span>  threadDelay </span><span style="color:#6c71c4;">1000000
+</span><span>  sayString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Done!</span><span style="color:#839496;">&quot;
+</span><span>  return </span><span style="color:#6c71c4;">41
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  res </span><span style="color:#859900;">&lt;-</span><span> withAsync getResult1 </span><span style="color:#859900;">$ \</span><span>a1 </span><span style="color:#859900;">-&gt;
+</span><span>         withAsync getResult2 </span><span style="color:#859900;">$ \</span><span>a2 </span><span style="color:#859900;">-&gt;
+</span><span>         atomically </span><span style="color:#859900;">$</span><span> waitSTM a1 </span><span style="color:#859900;">&lt;|&gt;</span><span> waitSTM a2
+</span><span>
+</span><span>  sayString </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">getResult finished: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show (res </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>)
+</span></code></pre>
+<p>Yes, in this case using the <code>race</code> function would make more sense, but
+as problems grow in complexity, this flexibility will be important.</p>
+<p><strong>Exercise</strong> Identify the behavior of this program if <code>getResult2</code>
+throws an exception. Can you modify the code so that, if either of the
+threads completes successfully, we get a result?</p>
+<h3 id="breaking-async-exceptions">Breaking async exceptions</h3>
+<p>Look at how easy it is to break our program completely:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack script --resolver lts-12.21
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent </span><span>(</span><span style="color:#b58900;">threadDelay</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.Async
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Exception
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Say
+</span><span>
+</span><span style="color:#b58900;">evil </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>evil </span><span style="color:#859900;">=</span><span> forever </span><span style="color:#859900;">$ do
+</span><span>  eres </span><span style="color:#859900;">&lt;-</span><span> try </span><span style="color:#859900;">$</span><span> threadDelay </span><span style="color:#6c71c4;">1000000
+</span><span>  sayShow (eres </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Either SomeException </span><span style="color:#b58900;">()</span><span>)
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> withAsync evil </span><span style="color:#859900;">$</span><span> const </span><span style="color:#859900;">$</span><span> return </span><span style="color:#b58900;">()
+</span></code></pre>
+<p>This code will loop forever, since the <code>cancel</code> call's exception is
+caught by the <code>try</code> and execution continues indefinitely. This is
+<em>very bad code</em>, don't do this!</p>
+<p><strong>Exercise</strong> Switch the import from <code>Control.Exception</code> to
+<code>UnliftIO.Exception</code>. What happens? Why?</p>
+<h3 id="linking">Linking</h3>
+<p>Let's say you want to run some kind of a background processing
+thread. You want to kick it off, leave it running, and essentially
+forget all about it. However, if that thread goes down for some
+reason, you need to ensure that your main thread goes down too. Such a
+situation makes a lot of sense, for example, with a job queue.</p>
+<p>To make this work, you can use the <code>link</code> function, which ensures that
+if your <code>Async</code> ends with an exception, that exception is rethrown to
+the main thread.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack script --resolver lts-12.21
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent </span><span>(</span><span style="color:#b58900;">threadDelay</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.Async
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.STM
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad </span><span>(</span><span style="color:#b58900;">forever</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Say </span><span>(</span><span style="color:#b58900;">say</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Text </span><span>(</span><span style="color:#268bd2;">Text</span><span>)
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Work </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Work Text </span><span style="color:#93a1a1;">-- intentionally lazy, you&#39;ll see why below
+</span><span>
+</span><span style="color:#b58900;">jobQueue </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">TChan Work </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO a
+</span><span>jobQueue chan </span><span style="color:#859900;">=</span><span> forever </span><span style="color:#859900;">$ do
+</span><span>  </span><span style="color:#cb4b16;">Work</span><span> t </span><span style="color:#859900;">&lt;-</span><span> atomically </span><span style="color:#859900;">$</span><span> readTChan chan
+</span><span>  say t
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  chan </span><span style="color:#859900;">&lt;-</span><span> newTChanIO
+</span><span>  a </span><span style="color:#859900;">&lt;-</span><span> async </span><span style="color:#859900;">$</span><span> jobQueue chan
+</span><span>  link a
+</span><span>  forever </span><span style="color:#859900;">$ do
+</span><span>    atomically </span><span style="color:#859900;">$ do
+</span><span>      writeTChan chan </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Work </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello</span><span style="color:#839496;">&quot;
+</span><span>      writeTChan chan </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Work</span><span> undefined
+</span><span>      writeTChan chan </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Work </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">World</span><span style="color:#839496;">&quot;
+</span><span>    threadDelay </span><span style="color:#6c71c4;">1000000
+</span></code></pre>
+<p><strong>Question</strong> What's the behavior without the <code>link</code> call?</p>
+<p><strong>Question</strong> What's the behavior if <code>Work</code> was strict in its <code>Text</code>?
+How about if we forced evaluation with <code>writeTChan chan $! Work $! undefined</code>?</p>
+<p><strong>Exercise</strong> Rewrite this program to use <code>race</code> instead of <code>async</code> and
+<code>link</code>.</p>
+<h2 id="lifted">Lifted</h2>
+<p>All of the functions in <code>Control.Concurrent.Async</code> live in either the
+<code>STM</code> or <code>IO</code> types. Many of the <code>IO</code> functions—like
+<code>cancel</code>—could be lifted to <code>MonadIO</code> with a simple <code>liftIO</code>
+call. However, many others, like <code>async</code>, cannot (since they have the
+<code>IO</code> type appearing as an input, otherwise known as <em>negative
+position</em>). That would seem to exclude the possibility of using monad
+transformers.</p>
+<p>We can make usage of a transformer like <code>ReaderT</code> work by manually
+wrapping/unwrapping its constructor. Let's adapt the <code>jobQueue</code>
+example from above to use a <code>ReaderT</code> and see how that goes:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack script --resolver lts-12.21
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent </span><span>(</span><span style="color:#b58900;">threadDelay</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.Async
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.STM
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad </span><span>(</span><span style="color:#b58900;">forever</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Say </span><span>(</span><span style="color:#b58900;">say</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Text </span><span>(</span><span style="color:#268bd2;">Text</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.Reader
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Work </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Work Text
+</span><span>
+</span><span style="color:#b58900;">jobQueue </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">ReaderT</span><span> (</span><span style="color:#268bd2;">TChan Work</span><span>) </span><span style="color:#268bd2;">IO a
+</span><span>jobQueue </span><span style="color:#859900;">=</span><span> forever </span><span style="color:#859900;">$ do
+</span><span>  chan </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  </span><span style="color:#cb4b16;">Work</span><span> t </span><span style="color:#859900;">&lt;-</span><span> liftIO </span><span style="color:#859900;">$</span><span> atomically </span><span style="color:#859900;">$</span><span> readTChan chan
+</span><span>  say t
+</span><span>
+</span><span style="color:#b58900;">inner </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">ReaderT</span><span> (</span><span style="color:#268bd2;">TChan Work</span><span>) </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>inner </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ReaderT </span><span style="color:#859900;">$ \</span><span>chan </span><span style="color:#859900;">-&gt; do
+</span><span>  race_ (runReaderT jobQueue chan) </span><span style="color:#859900;">$</span><span> flip runReaderT chan </span><span style="color:#859900;">$ do
+</span><span>    forever </span><span style="color:#859900;">$ do
+</span><span>      chan </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>      liftIO </span><span style="color:#859900;">$</span><span> atomically </span><span style="color:#859900;">$ do
+</span><span>        writeTChan chan </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Work </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello</span><span style="color:#839496;">&quot;
+</span><span>        writeTChan chan </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Work</span><span> undefined
+</span><span>        writeTChan chan </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Work </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">World</span><span style="color:#839496;">&quot;
+</span><span>      liftIO </span><span style="color:#859900;">$</span><span> threadDelay </span><span style="color:#6c71c4;">1000000
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  chan </span><span style="color:#859900;">&lt;-</span><span> newTChanIO
+</span><span>  runReaderT inner chan
+</span></code></pre>
+<p>Workable, but tedious. Fortunately, the <code>unliftio</code> package provides a
+version of the async API which is lifted to many more monads. Let's
+see how a simple change in import lets us write much nicer code.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack script --resolver lts-12.21
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">UnliftIO.Async
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">UnliftIO.Concurrent </span><span>(</span><span style="color:#b58900;">threadDelay</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">UnliftIO.STM
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad </span><span>(</span><span style="color:#b58900;">forever</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Say </span><span>(</span><span style="color:#b58900;">say</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Text </span><span>(</span><span style="color:#268bd2;">Text</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.Reader
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Work </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Work Text
+</span><span>
+</span><span style="color:#b58900;">jobQueue </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">ReaderT</span><span> (</span><span style="color:#268bd2;">TChan Work</span><span>) </span><span style="color:#268bd2;">IO a
+</span><span>jobQueue </span><span style="color:#859900;">=</span><span> forever </span><span style="color:#859900;">$ do
+</span><span>  chan </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  </span><span style="color:#cb4b16;">Work</span><span> t </span><span style="color:#859900;">&lt;-</span><span> liftIO </span><span style="color:#859900;">$</span><span> atomically </span><span style="color:#859900;">$</span><span> readTChan chan
+</span><span>  say t
+</span><span>
+</span><span style="color:#b58900;">inner </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">ReaderT</span><span> (</span><span style="color:#268bd2;">TChan Work</span><span>) </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>inner </span><span style="color:#859900;">= do
+</span><span>  race_ jobQueue </span><span style="color:#859900;">$ do
+</span><span>    forever </span><span style="color:#859900;">$ do
+</span><span>      chan </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>      liftIO </span><span style="color:#859900;">$</span><span> atomically </span><span style="color:#859900;">$ do
+</span><span>        writeTChan chan </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Work </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello</span><span style="color:#839496;">&quot;
+</span><span>        writeTChan chan </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Work</span><span> undefined
+</span><span>        writeTChan chan </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Work </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">World</span><span style="color:#839496;">&quot;
+</span><span>      liftIO </span><span style="color:#859900;">$</span><span> threadDelay </span><span style="color:#6c71c4;">1000000
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  chan </span><span style="color:#859900;">&lt;-</span><span> newTChanIO
+</span><span>  runReaderT inner chan
+</span></code></pre>
+<p>All of the <code>runReaderT</code>/<code>ReaderT</code> mess in <code>inner</code> completely
+disappeared.</p>
+<p>This will work for any monad stack which is an instance of
+<code>MonadUnliftIO</code>, which allows for transformers like <code>ReaderT</code> or
+<code>IdentityT</code>, but disallows transformers like <code>StateT</code> and <code>WriterT</code> as
+they will result in discarded monadic state. Imagine a function like
+<code>concurrently (put 5) (put 6)</code>. Which state will survive? It's frankly
+arbitrary, and there are three valid options to consider:</p>
+<ul>
+<li>The first one</li>
+<li>The second one</li>
+<li>Discard both states</li>
+</ul>
+<p>Using <code>UnliftIO.Async</code> as a drop in replacement for
+<code>Control.Concurrent.Async</code> is straightforward, the only API change to
+be aware of is that the <code>Async</code> data type will take an extra type
+paramter for the underlying monad. This API is also exported directly
+from the <code>RIO</code> module, so if you're using <code>rio</code>, you're all set!</p>
+<h2 id="section-exercises">Section exercises</h2>
+<p>Modify the program below so that it completes in under 10 seconds,
+without modifying <code>expensiveComputation</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Test.Hspec
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad </span><span>(</span><span style="color:#b58900;">replicateM</span><span>)
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">App </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>  { appCounter </span><span style="color:#859900;">:: !</span><span>(</span><span style="color:#cb4b16;">TVar Int</span><span>)
+</span><span>  }
+</span><span>
+</span><span style="color:#b58900;">expensiveComputation </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO App Int
+</span><span>expensiveComputation </span><span style="color:#859900;">= do
+</span><span>  app </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  </span><span style="color:#93a1a1;">-- I&#39;m not actually an expensive computation, but I play one on TV
+</span><span>  delayVar </span><span style="color:#859900;">&lt;-</span><span> registerDelay </span><span style="color:#6c71c4;">1000000
+</span><span>  atomically </span><span style="color:#859900;">$ do
+</span><span>    readTVar delayVar </span><span style="color:#859900;">&gt;&gt;=</span><span> checkSTM
+</span><span>    </span><span style="color:#859900;">let</span><span> var </span><span style="color:#859900;">=</span><span> appCounter app
+</span><span>    modifyTVar&#39; var (</span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1</span><span>)
+</span><span>    readTVar var
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> hspec </span><span style="color:#859900;">$</span><span> it </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">works</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">$ do
+</span><span>  app </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">App </span><span style="color:#859900;">&lt;$&gt;</span><span> newTVarIO </span><span style="color:#6c71c4;">0
+</span><span>  res </span><span style="color:#859900;">&lt;-</span><span> runRIO app </span><span style="color:#859900;">$</span><span> replicateM </span><span style="color:#6c71c4;">10</span><span> expensiveComputation
+</span><span>  sum res </span><span style="color:#859900;">`shouldBe`</span><span> sum [</span><span style="color:#6c71c4;">1</span><span style="color:#859900;">..</span><span style="color:#6c71c4;">10</span><span>]
+</span></code></pre>
+<p><strong>QUESTION</strong> Why is the <code>sum</code> necessary to get the tests to pass?</p>
+<p>Next, modify the following similar program so that the test passes in
+under 10 seconds, by only changing the line specified:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Test.Hspec
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad </span><span>(</span><span style="color:#b58900;">replicateM</span><span>)
+</span><span>
+</span><span style="color:#b58900;">expensiveComputation </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">MonadIO m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m Int
+</span><span>expensiveComputation input </span><span style="color:#859900;">= do
+</span><span>  threadDelay </span><span style="color:#6c71c4;">1000000
+</span><span>  pure input
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> hspec </span><span style="color:#859900;">$</span><span> it </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">works</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">$ do
+</span><span>  </span><span style="color:#93a1a1;">-- Modify only the following line
+</span><span>  res </span><span style="color:#859900;">&lt;-</span><span> for [</span><span style="color:#6c71c4;">1</span><span style="color:#859900;">..</span><span style="color:#6c71c4;">10</span><span>] expensiveComputation
+</span><span>
+</span><span>  </span><span style="color:#93a1a1;">-- Don&#39;t change this, it&#39;s cheating! :)
+</span><span>  res </span><span style="color:#859900;">`shouldBe`</span><span> [</span><span style="color:#6c71c4;">1</span><span style="color:#859900;">..</span><span style="color:#6c71c4;">10</span><span>]
+</span></code></pre>
+<p><strong>QUESTION</strong> Why is <code>sum</code> not necessary in this code?</p>
+<p>Next, implement the <code>sumConcurrently</code> function below.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Test.Hspec
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad </span><span>(</span><span style="color:#b58900;">replicateM</span><span>)
+</span><span>
+</span><span style="color:#b58900;">expensiveComputation </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">MonadIO m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m Int
+</span><span>expensiveComputation input </span><span style="color:#859900;">= do
+</span><span>  threadDelay </span><span style="color:#6c71c4;">1000000
+</span><span>  pure input
+</span><span>
+</span><span>sumConcurrently
+</span><span>  </span><span style="color:#859900;">::</span><span> (a </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">IO Int</span><span>)
+</span><span>  </span><span style="color:#859900;">-&gt;</span><span> [a]
+</span><span>  </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">IO Int
+</span><span>sumConcurrently f list </span><span style="color:#859900;">=</span><span> _
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> hspec </span><span style="color:#859900;">$</span><span> it </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">works</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">$ do
+</span><span>  res </span><span style="color:#859900;">&lt;-</span><span> sumConcurrently expensiveComputation [</span><span style="color:#6c71c4;">1</span><span style="color:#859900;">..</span><span style="color:#6c71c4;">10</span><span>]
+</span><span>  res </span><span style="color:#859900;">`shouldBe`</span><span> sum [</span><span style="color:#6c71c4;">1</span><span style="color:#859900;">..</span><span style="color:#6c71c4;">10</span><span>]
+</span></code></pre>
+<p><strong>SOLUTION</strong> There are a few ways of implementing
+<code>sumConcurrently</code>. However, one way that avoids unnecessary lists by
+leveraging commutativity of addition is:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>sumConcurrently
+</span><span>  </span><span style="color:#859900;">::</span><span> (a </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">IO Int</span><span>)
+</span><span>  </span><span style="color:#859900;">-&gt;</span><span> [a]
+</span><span>  </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">IO Int
+</span><span>sumConcurrently f list </span><span style="color:#859900;">= do
+</span><span>  totalVar </span><span style="color:#859900;">&lt;-</span><span> newTVarIO </span><span style="color:#6c71c4;">0
+</span><span>  forConcurrently_ list </span><span style="color:#859900;">$ \</span><span>a </span><span style="color:#859900;">-&gt; do
+</span><span>    int </span><span style="color:#859900;">&lt;-</span><span> f a
+</span><span>    atomically </span><span style="color:#859900;">$</span><span> modifyTVar&#39; totalVar (</span><span style="color:#859900;">+</span><span> int)
+</span><span>  atomically </span><span style="color:#859900;">$</span><span> readTVar totalVar
+</span></code></pre>
+<p>Another set of exercises: implement the <code>replicateConcurrently_</code> function using:</p>
+<ul>
+<li><code>mapConcurrently_</code></li>
+<li>The <code>Concurrently</code> newtype wrapper</li>
+<li><code>concurrently_</code></li>
+<li><code>withAsync</code></li>
+</ul>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Test.Hspec
+</span><span>
+</span><span style="color:#93a1a1;">-- Use mapConcurrently_ here
+</span><span style="color:#b58900;">rc1 </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">() -&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>rc1 </span><span style="color:#859900;">=</span><span> undefined
+</span><span>
+</span><span style="color:#93a1a1;">-- Use the Concurrently newtype here
+</span><span style="color:#b58900;">rc2 </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">() -&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>rc2 </span><span style="color:#859900;">=</span><span> undefined
+</span><span>
+</span><span style="color:#93a1a1;">-- Use concurrently_ here
+</span><span style="color:#b58900;">rc3 </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">() -&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>rc3 </span><span style="color:#859900;">=</span><span> undefined
+</span><span>
+</span><span style="color:#93a1a1;">-- Use withAsync here
+</span><span style="color:#b58900;">rc4 </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">() -&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>rc4 </span><span style="color:#859900;">=</span><span> undefined
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> hspec </span><span style="color:#859900;">$ do
+</span><span>  </span><span style="color:#859900;">let</span><span> rcs </span><span style="color:#859900;">=
+</span><span>        [ (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">replicateConcurrently_</span><span style="color:#839496;">&quot;</span><span>, replicateConcurrently_)
+</span><span>        , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">using mapConcurrently_</span><span style="color:#839496;">&quot;</span><span>, rc1)
+</span><span>        , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">using Concurrently (the newtype)</span><span style="color:#839496;">&quot;</span><span>, rc2)
+</span><span>        , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">using concurrently_ (the function)</span><span style="color:#839496;">&quot;</span><span>, rc3)
+</span><span>        , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">using withAsync</span><span style="color:#839496;">&quot;</span><span>, rc4)
+</span><span>        ]
+</span><span>  for_ rcs </span><span style="color:#859900;">$ \</span><span>(name, rc) </span><span style="color:#859900;">-&gt;</span><span> it name </span><span style="color:#859900;">$ do
+</span><span>    resVar </span><span style="color:#859900;">&lt;-</span><span> newTVarIO </span><span style="color:#6c71c4;">0
+</span><span>    rc </span><span style="color:#6c71c4;">10 </span><span style="color:#859900;">$</span><span> atomically </span><span style="color:#859900;">$</span><span> modifyTVar&#39; resVar (</span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1</span><span>)
+</span><span>    atomically (readTVar resVar) </span><span style="color:#859900;">`shouldReturn` </span><span style="color:#6c71c4;">10
+</span></code></pre>
+<p><strong>SOLUTION</strong></p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Test.Hspec
+</span><span>
+</span><span style="color:#93a1a1;">-- Use mapConcurrently_ here
+</span><span style="color:#b58900;">rc1 </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">() -&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>rc1 count action </span><span style="color:#859900;">=</span><span> mapConcurrently_ (const action) [</span><span style="color:#6c71c4;">1</span><span style="color:#859900;">..</span><span>count]
+</span><span>
+</span><span style="color:#93a1a1;">-- Use the Concurrently newtype here
+</span><span style="color:#b58900;">rc2 </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">() -&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>rc2 count action </span><span style="color:#859900;">=</span><span> runConcurrently </span><span style="color:#859900;">$</span><span> sequenceA_ </span><span style="color:#859900;">$</span><span> replicate count (</span><span style="color:#cb4b16;">Concurrently</span><span> action)
+</span><span>
+</span><span style="color:#93a1a1;">-- Use concurrently_ here
+</span><span style="color:#b58900;">rc3 </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">() -&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>rc3 count0 action </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">let</span><span> loop </span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">=</span><span> action
+</span><span>        loop count </span><span style="color:#859900;">=</span><span> concurrently_ action </span><span style="color:#859900;">$</span><span> loop </span><span style="color:#859900;">$</span><span> count </span><span style="color:#859900;">- </span><span style="color:#6c71c4;">1
+</span><span>     </span><span style="color:#859900;">in</span><span> loop count0
+</span><span>
+</span><span style="color:#93a1a1;">-- Use withAsync here
+</span><span style="color:#b58900;">rc4 </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">() -&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>rc4 count0 action </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">let</span><span> loop </span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">=</span><span> action
+</span><span>        loop count </span><span style="color:#859900;">=</span><span> withAsync action </span><span style="color:#859900;">$ \</span><span>thread </span><span style="color:#859900;">-&gt; do
+</span><span>          loop </span><span style="color:#859900;">$</span><span> count </span><span style="color:#859900;">- </span><span style="color:#6c71c4;">1
+</span><span>          wait thread
+</span><span>     </span><span style="color:#859900;">in</span><span> loop count0
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> hspec </span><span style="color:#859900;">$ do
+</span><span>  </span><span style="color:#859900;">let</span><span> rcs </span><span style="color:#859900;">=
+</span><span>        [ (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">replicateConcurrently_</span><span style="color:#839496;">&quot;</span><span>, replicateConcurrently_)
+</span><span>        , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">using mapConcurrently_</span><span style="color:#839496;">&quot;</span><span>, rc1)
+</span><span>        , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">using Concurrently (the newtype)</span><span style="color:#839496;">&quot;</span><span>, rc2)
+</span><span>        , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">using concurrently_ (the function)</span><span style="color:#839496;">&quot;</span><span>, rc3)
+</span><span>        , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">using withAsync</span><span style="color:#839496;">&quot;</span><span>, rc4)
+</span><span>        ]
+</span><span>  for_ rcs </span><span style="color:#859900;">$ \</span><span>(name, rc) </span><span style="color:#859900;">-&gt;</span><span> it name </span><span style="color:#859900;">$ do
+</span><span>    resVar </span><span style="color:#859900;">&lt;-</span><span> newTVarIO </span><span style="color:#6c71c4;">0
+</span><span>    rc </span><span style="color:#6c71c4;">10 </span><span style="color:#859900;">$</span><span> atomically </span><span style="color:#859900;">$</span><span> modifyTVar&#39; resVar (</span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1</span><span>)
+</span><span>    atomically (readTVar resVar) </span><span style="color:#859900;">`shouldReturn` </span><span style="color:#6c71c4;">10
+</span></code></pre>
+<p>Final exercise: implement <code>mapConcurrently</code> using <code>mapConcurrently_</code>.</p>
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#6d1e0c01081e2d0b1d0e02001d01081908430e0200" targe="_blank"><span class="__cf_email__" data-cfemail="fd8e9c91988ebd9b8d9e92908d91988998d39e9290">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

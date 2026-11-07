@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Announcing: the new unliftio library</title>
+  <meta property="og:title" content="Announcing: the new unliftio library">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Learn about the brand new unliftio library, a new, simplified approach to running transformer actions in IO">
+  <meta property="og:description" content="Learn about the brand new unliftio library, a new, simplified approach to running transformer actions in IO">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;announcing-new-unliftio-library&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Announcing: the new unliftio library</h1>
+      
+      <p id="page-description">By Michael Snoyman, July 17, 2017</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Announcing%3A%20the%20new%20unliftio%20library https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;announcing-new-unliftio-library&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;announcing-new-unliftio-library&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;announcing-new-unliftio-library&#x2F;&amp;title=Announcing%3A%20the%20new%20unliftio%20library"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;announcing-new-unliftio-library&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>For the past few years, Francesco Mazzoli and I have discussed
+issues around monad transformers—and the need to run their actions
+in <code>IO</code>—on a fairly regular basis. I wrote the
+monad-unlift library a while ago to try and address these concerns.
+But recent work I did in Stack on the <a href=
+"/blog/2017/07/stacks-new-extensible-snapshots">extensible
+snapshots</a> branch demonstrated some of the shortcomings
+Francesco had mentioned to me. This is also in line with
+conclusions I was reaching from code review and training I've been
+doing, as I've <a href=
+"/blog/2017/06/readert-design-pattern">mentioned</a> <a href=
+"/blog/2017/06/tale-of-two-brackets">recently</a>.</p>
+<p>Putting that all together: last week we finally bit the bullet
+and put together a new pair of libraries:</p>
+<ul>
+<li><a href=
+"https://www.stackage.org/package/unliftio-core">unliftio-core</a>
+defines the <code>MonadUnliftIO</code> typeclass, provides
+instances for <code>base</code> and <code>transformers</code>, and
+provides a few helper functions, with no additional
+dependencies.</li>
+<li><a href=
+"https://haskell-lang.org/library/unliftio">unliftio</a> provides a
+"batteries included" set of unlifted functions for exceptions,
+timeouts, async, and more</li>
+</ul>
+<p>This should be considered an experimental release, with some
+changes already planned. Instead of repeating myself, I'm going to
+copy in the README from <code>unliftio</code> for the remainder of
+this post, which includes more details on using these libraries,
+comparison with alternatives, and plans for future changes.</p>
+<p><b>NOTE</b> If you're reading this in the future, please check
+out the README from the packages themselves in the links above. The
+content below will not be updated with changes to the
+libraries.</p>
+<hr>
+<h2 id="unliftio">unliftio</h2>
+<p>Provides the core <code>MonadUnliftIO</code> typeclass, a number
+of common instances, and a collection of common functions working
+with it. Not sure what the <code>MonadUnliftIO</code> typeclass is
+all about? Read on!</p>
+<p><b>NOTE</b> This library is young, and will likely undergo some
+serious changes over time. It's also very lightly tested. That
+said: the core concept of <code>MonadUnliftIO</code> has been
+refined for years and is pretty solid, and even though the code
+here is lightly tested, the vast majority of it is simply apply
+<code>withUnliftIO</code> to existing functionality. Caveat emptor
+and all that.</p>
+<h2 id="quickstart">Quickstart</h2>
+<ul>
+<li>Replace imports like <code>Control.Exception</code> with
+<code>UnliftIO.Exception</code>. Yay, your <code>catch</code> and
+<code>finally</code> are more powerful and safer!</li>
+<li>Similar with <code>Control.Concurrent.Async</code> with
+<code>UnliftIO.Async</code></li>
+<li>Or go all in and import <code>UnliftIO</code></li>
+<li>Naming conflicts: let <code>unliftio</code> win</li>
+<li>Drop the deps on <code>monad-control</code>,
+<code>lifted-base</code>, and <code>exceptions</code></li>
+<li>Compilation failures? You may have just avoided subtle runtime
+bugs</li>
+</ul>
+<p>Sound like magic? It's not. Keep reading!</p>
+<h2 id="unlifting-in-2-minutes">Unlifting in 2 minutes</h2>
+<p>Let's say I have a function:</p>
+<pre><span class="hs-definition">readFile</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">FilePath</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">ByteString</span></pre>
+<p>But I'm writing code inside a function that uses <code>ReaderT
+Env IO</code>, not just plain <code>IO</code>. How can I call my
+<code>readFile</code> function in that context? One way is to
+manually unwrap the <code>ReaderT</code> data constructor:</p>
+<pre><span class="hs-definition">myReadFile</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">FilePath</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-conid">Env</span> <span class="hs-conid">IO</span> <span class=
+"hs-conid">ByteString</span>
+<span class="hs-definition">myReadFile</span> <span class=
+"hs-varid">fp</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">ReaderT</span> <span class="hs-varop">$</span> <span class="hs-keyglyph">\</span><span class="hs-sel">_env</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">readFile</span> <span class="hs-varid">fp</span></pre>
+<p>But having to do this regularly is tedious, and ties our code to
+a specific monad transformer stack. Instead, many of us would use
+<code>MonadIO</code>:</p>
+<pre><span class="hs-definition">myReadFile</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadIO</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">FilePath</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">ByteString</span>
+<span class="hs-definition">myReadFile</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">liftIO</span> <span class=
+"hs-varop">.</span> <span class="hs-varid">readFile</span></pre>
+<p>But now let's play with a different function:</p>
+<pre><span class="hs-definition">withBinaryFile</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">FilePath</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IOMode</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Handle</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">a</span></pre>
+<p>We want a function with signature:</p>
+<pre><span class="hs-definition">myWithBinaryFile</span>
+    <span class="hs-keyglyph">::</span> <span class=
+"hs-conid">FilePath</span>
+    <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IOMode</span>
+    <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Handle</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-conid">Env</span> <span class="hs-conid">IO</span> <span class=
+"hs-varid">a</span><span class="hs-layout">)</span>
+    <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-conid">Env</span> <span class="hs-conid">IO</span> <span class=
+"hs-varid">a</span></pre>
+<p>If I squint hard enough, I can accomplish this directly with the
+<code>ReaderT</code> constructor via:</p>
+<pre><span class=
+"hs-definition">myWithBinaryFile</span> <span class=
+"hs-varid">fp</span> <span class=
+"hs-varid">mode</span> <span class="hs-varid">inner</span> <span class="hs-keyglyph">=</span>
+  <span class="hs-conid">ReaderT</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">env</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">withBinaryFile</span>
+    <span class="hs-varid">fp</span>
+    <span class="hs-varid">mode</span>
+    <span class="hs-layout">(</span><span class=
+"hs-keyglyph">\</span><span class="hs-varid">h</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">runReaderT</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">inner</span> <span class="hs-varid">h</span><span class=
+"hs-layout">)</span> <span class="hs-varid">env</span><span class=
+"hs-layout">)</span></pre>
+<p>I dare you to try to and accomplish this with
+<code>MonadIO</code> and <code>liftIO</code>. It simply can't be
+done. (If you're looking for the technical reason, it's because
+<code>IO</code> appears in <a href=
+"/blog/2016/11/covariance-contravariance">negative/argument
+position</a> in <code>withBinaryFile</code>.)</p>
+<p>However, with <code>MonadUnliftIO</code>, this is possible:</p>
+<pre><span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Monad</span><span class=
+"hs-varop">.</span><span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class="hs-conid">Unlift</span>
+
+<span class="hs-definition">myWithBinaryFile</span>
+    <span class="hs-keyglyph">::</span> <span class=
+"hs-conid">MonadUnliftIO</span> <span class="hs-varid">m</span>
+    <span class="hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">FilePath</span>
+    <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IOMode</span>
+    <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Handle</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span>
+    <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span>
+<span class="hs-definition">myWithBinaryFile</span> <span class=
+"hs-varid">fp</span> <span class=
+"hs-varid">mode</span> <span class="hs-varid">inner</span> <span class="hs-keyglyph">=</span>
+  <span class="hs-varid">withRunInIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">runInIO</span> <span class="hs-keyglyph">-&gt;</span>
+  <span class="hs-varid">withBinaryFile</span>
+    <span class="hs-varid">fp</span>
+    <span class="hs-varid">mode</span>
+    <span class="hs-layout">(</span><span class=
+"hs-keyglyph">\</span><span class="hs-varid">h</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">runInIO</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">inner</span> <span class="hs-varid">h</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span></pre>
+<p>That's it, you now know the entire basis of this library.</p>
+<h2 id="how-common-is-this-problem">How common is this
+problem?</h2>
+<p>This pops up in a number of places. Some examples:</p>
+<ul>
+<li>Proper exception handling, with functions like
+<code>bracket</code>, <code>catch</code>, and
+<code>finally</code></li>
+<li>Working with <code>MVar</code>s via <code>modifyMVar</code> and
+similar</li>
+<li>Using the <code>timeout</code> function</li>
+<li>Installing callback handlers (e.g., do you want to do <a href=
+"https://www.stackage.org/package/monad-logger">logging</a> in a
+signal handler?).</li>
+</ul>
+<p>This also pops up when working with libraries which are
+monomorphic on <code>IO</code>, even if they could be written more
+extensibly.</p>
+<h2 id="examples">Examples</h2>
+<p>Reading through the codebase here is likely the best example to
+see how to use <code>MonadUnliftIO</code> in practice. And for many
+cases, you can simply add the <code>MonadUnliftIO</code> constraint
+and then use the pre-unlifted versions of functions (like
+<code>UnliftIO.Exception.catch</code>). But ultimately, you'll
+probably want to use the typeclass directly. The type class has
+only one method -- <code>askUnliftIO</code>:</p>
+<pre><span class="hs-keyword">newtype</span> <span class=
+"hs-conid">UnliftIO</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">UnliftIO</span> <span class=
+"hs-layout">{</span> <span class=
+"hs-varid">unliftIO</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-keyword">forall</span> <span class=
+"hs-varid">a</span><span class="hs-varop">.</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">a</span> <span class=
+"hs-layout">}</span>
+
+<span class="hs-keyword">class</span> <span class=
+"hs-conid">MonadIO</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">MonadUnliftIO</span> <span class=
+"hs-varid">m</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">askUnliftIO</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-varid">m</span> <span class="hs-layout">(</span><span class=
+"hs-conid">UnliftIO</span> <span class=
+"hs-varid">m</span><span class="hs-layout">)</span></pre>
+<p><code>askUnliftIO</code> gives us a function to run arbitrary
+computation in <code>m</code> in <code>IO</code>. Thus the
+"unlift": it's like <code>liftIO</code>, but the other way
+around.</p>
+<p>Here are some sample typeclass instances:</p>
+<pre><span class="hs-keyword">instance</span> <span class=
+"hs-conid">MonadUnliftIO</span> <span class=
+"hs-conid">IO</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">askUnliftIO</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">return</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">UnliftIO</span> <span class=
+"hs-varid">id</span><span class="hs-layout">)</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">MonadUnliftIO</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">MonadUnliftIO</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">IdentityT</span> <span class=
+"hs-varid">m</span><span class="hs-layout">)</span> <span class=
+"hs-keyword">where</span>
+  <span class="hs-varid">askUnliftIO</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">IdentityT</span> <span class="hs-varop">$</span>
+                <span class=
+"hs-varid">withUnliftIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">u</span> <span class="hs-keyglyph">-&gt;</span>
+                <span class="hs-varid">return</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">UnliftIO</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">unliftIO</span> <span class=
+"hs-varid">u</span> <span class="hs-varop">.</span> <span class=
+"hs-varid">runIdentityT</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">MonadUnliftIO</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">MonadUnliftIO</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-varid">r</span> <span class="hs-varid">m</span><span class=
+"hs-layout">)</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">askUnliftIO</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">r</span> <span class="hs-keyglyph">-&gt;</span>
+                <span class=
+"hs-varid">withUnliftIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">u</span> <span class="hs-keyglyph">-&gt;</span>
+                <span class="hs-varid">return</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">UnliftIO</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">unliftIO</span> <span class=
+"hs-varid">u</span> <span class="hs-varop">.</span> <span class=
+"hs-varid">flip</span> <span class=
+"hs-varid">runReaderT</span> <span class=
+"hs-varid">r</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span></pre>
+<p>Note that:</p>
+<ul>
+<li>The <code>IO</code> instance does not actually do any lifting
+or unlifting, and therefore it can use <code>id</code></li>
+<li><code>IdentityT</code> is essentially just wrapping/unwrapping
+its data constructor, and then recursively calling
+<code>withUnliftIO</code> on the underlying monad.</li>
+<li><code>ReaderT</code> is just like <code>IdentityT</code>, but
+it captures the reader environment when starting.</li>
+</ul>
+<p>We can use <code>askUnliftIO</code> to unlift a function:</p>
+<pre><span class="hs-definition">timeout</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadUnliftIO</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Maybe</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span>
+<span class="hs-definition">timeout</span> <span class=
+"hs-varid">x</span> <span class="hs-varid">y</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">u</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">askUnliftIO</span>
+  <span class="hs-conid">System</span><span class=
+"hs-varop">.</span><span class=
+"hs-conid">Timeout</span><span class="hs-varop">.</span><span class="hs-varid">timeout</span> <span class="hs-varid">x</span> <span class="hs-varop">$</span> <span class="hs-varid">unliftIO</span> <span class="hs-varid">u</span> <span class="hs-varid">y</span></pre>
+<p>or more concisely using <code>withRunIO</code>:</p>
+<pre><span class="hs-definition">timeout</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadUnliftIO</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Maybe</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span>
+<span class="hs-definition">timeout</span> <span class=
+"hs-varid">x</span> <span class="hs-varid">y</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">withRunInIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">run</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Timeout</span><span class=
+"hs-varop">.</span><span class="hs-varid">timeout</span> <span class="hs-varid">x</span> <span class="hs-varop">$</span> <span class="hs-varid">run</span> <span class="hs-varid">y</span></pre>
+<p>This is a common pattern: use <code>withRunInIO</code> to
+capture a run function, and then call the original function with
+the user-supplied arguments, applying <code>run</code> as
+necessary. <code>withRunIO</code> takes care of invoking
+<code>unliftIO</code> for us.</p>
+<p>However, if we want to use the run function with different
+types, we must use <code>askUnliftIO</code>:</p>
+<pre><span class="hs-definition">race</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadUnliftIO</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">b</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Either</span> <span class=
+"hs-varid">a</span> <span class="hs-varid">b</span><span class=
+"hs-layout">)</span>
+<span class="hs-definition">race</span> <span class=
+"hs-varid">a</span> <span class="hs-varid">b</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">u</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">askUnliftIO</span>
+  <span class="hs-varid">liftIO</span> <span class=
+"hs-layout">(</span><span class="hs-conid">A</span><span class=
+"hs-varop">.</span><span class="hs-varid">race</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">unliftIO</span> <span class=
+"hs-varid">u</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-varid">unliftIO</span> <span class=
+"hs-varid">u</span> <span class="hs-varid">b</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span></pre>
+<p>or more idiomatically <code>withUnliftIO</code>:</p>
+<pre><span class="hs-definition">race</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadUnliftIO</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">b</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Either</span> <span class=
+"hs-varid">a</span> <span class="hs-varid">b</span><span class=
+"hs-layout">)</span>
+<span class="hs-definition">race</span> <span class=
+"hs-varid">a</span> <span class="hs-varid">b</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">withUnliftIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">u</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">A</span><span class="hs-varop">.</span><span class=
+"hs-varid">race</span> <span class="hs-layout">(</span><span class=
+"hs-varid">unliftIO</span> <span class=
+"hs-varid">u</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-varid">unliftIO</span> <span class=
+"hs-varid">u</span> <span class="hs-varid">b</span><span class=
+"hs-layout">)</span></pre>
+<p>This works just like <code>withRunIO</code>, except we use
+<code>unliftIO u</code> instead of <code>run</code>, which is
+polymorphic. You <i>could</i> get away with multiple
+<code>withRunInIO</code> calls here instead, but this approach is
+idiomatic and may be more performant (depending on
+optimizations).</p>
+<p>And finally, a more complex usage, when unlifting the
+<code>mask</code> function. This function needs to unlift vaues to
+be passed into the <code>restore</code> function, and then
+<code>liftIO</code> the result of the <code>restore</code>
+function.</p>
+<pre><span class="hs-definition">mask</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadUnliftIO</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-layout">(</span><span class=
+"hs-keyword">forall</span> <span class=
+"hs-varid">a</span><span class="hs-varop">.</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">b</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">b</span>
+<span class="hs-definition">mask</span> <span class=
+"hs-varid">f</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">withUnliftIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">u</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Exception</span><span class="hs-varop">.</span><span class="hs-varid">mask</span> <span class="hs-varop">$</span> <span class="hs-keyglyph">\</span><span class="hs-varid">unmask</span> <span class="hs-keyglyph">-&gt;</span>
+  <span class="hs-varid">unliftIO</span> <span class=
+"hs-varid">u</span> <span class="hs-varop">$</span> <span class=
+"hs-varid">f</span> <span class="hs-varop">$</span> <span class=
+"hs-varid">liftIO</span> <span class=
+"hs-varop">.</span> <span class=
+"hs-varid">unmask</span> <span class=
+"hs-varop">.</span> <span class=
+"hs-varid">unliftIO</span> <span class="hs-varid">u</span></pre>
+<h2 id="limitations">Limitations</h2>
+<p>Not all monads which can be an instance of <code>MonadIO</code>
+can be instances of <code>MonadUnliftIO</code>, due to the
+<code>MonadUnliftIO</code> laws (described in the Haddocks for the
+typeclass). This prevents instances for a number of classes of
+transformers:</p>
+<ul>
+<li>Transformers using continuations (e.g., <code>ContT</code>,
+<code>ConduitM</code>, <code>Pipe</code>)</li>
+<li>Transformers with some monadic state (e.g.,
+<code>StateT</code>, <code>WriterT</code>)</li>
+<li>Transformers with multiple exit points (e.g.,
+<code>ExceptT</code> and its ilk)</li>
+</ul>
+<p>In fact, there are two specific classes of transformers that
+this approach does work for:</p>
+<ul>
+<li>Transformers with no context at all (e.g.,
+<code>IdentityT</code>, <code>NoLoggingT</code>)</li>
+<li>Transformers with a context but no state (e.g.,
+<code>ReaderT</code>, <code>LoggingT</code>)</li>
+</ul>
+<p>This may sound restrictive, but this restriction is fully
+intentional. Trying to unlift actions in stateful monads leads to
+unpredictable behavior. For a long and exhaustive example of this,
+see <a href="/blog/2017/06/tale-of-two-brackets">A Tale of Two
+Brackets</a>, which was a large motivation for writing this
+library.</p>
+<h2 id="comparison-to-other-approaches">Comparison to other
+approaches</h2>
+<p>You may be thinking "Haven't I seen a way to do
+<code>catch</code> in <code>StateT</code>?" You almost certainly
+have. Let's compare this approach with alternatives. (For an older
+but more thorough rundown of the options, see <a href=
+"https://www.yesodweb.com/blog/2014/06/exceptions-transformers">Exceptions
+and monad transformers</a>.)</p>
+<p>There are really two approaches to this problem:</p>
+<ul>
+<li>Use a set of typeclasses for the specific functionality we care
+about. This is the approach taken by the <code>exceptions</code>
+package with <code>MonadThrow</code>, <code>MonadCatch</code>, and
+<code>MonadMask</code>. (Earlier approaches include
+<code>MonadCatchIO-mtl</code> and
+<code>MonadCatchIO-transformers</code>.)</li>
+<li>Define a generic typeclass that allows any control structure to
+be unlifted. This is the approach taken by the
+<code>monad-control</code> package. (Earlier approaches include
+<code>monad-peel</code> and <code>neither</code>.)</li>
+</ul>
+<p>The first style gives extra functionality in allowing instances
+that have nothing to do with runtime exceptions (e.g., a
+<code>MonadCatch</code> instance for <code>Either</code>). This is
+arguably a good thing. The second style gives extra functionality
+in allowing more operations to be unlifted (like threading
+primitives, not supported by the <code>exceptions</code>
+package).</p>
+<p>Another distinction within the generic typeclass family is
+whether we unlift to just <code>IO</code>, or to arbitrary base
+monads. For those familiar, this is the distinction between the
+<code>MonadIO</code> and <code>MonadBase</code> typeclasses.</p>
+<p>This package's main objection to all of the above approaches is
+that they work for too many monads, and provide
+difficult-to-predict behavior for a number of them (arguably: plain
+wrong behavior). For example, in <code>lifted-base</code> (built on
+top of <code>monad-control</code>), the <code>finally</code>
+operation will discard mutated state coming from the cleanup
+action, which is usually not what people expect.
+<code>exceptions</code> has <i>different</i> behavior here, which
+is arguably better. But we're arguing here that we should disallow
+all such ambiguity at the type level.</p>
+<p>So comparing to other approaches:</p>
+<h3 id="monad-unlift">monad-unlift</h3>
+<p>Throwing this one out there now: the <code>monad-unlift</code>
+library is built on top of <code>monad-control</code>, and uses
+fairly sophisticated type level features to restrict it to only the
+safe subset of monads. The same approach is taken by
+<code>Control.Concurrent.Async.Lifted.Safe</code> in the
+<code>lifted-async</code> package. Two problems with this:</p>
+<ul>
+<li>The complicated type level functionality can confuse GHC in
+some cases, making it difficult to get code to compile.</li>
+<li>We don't have an ecosystem of functions like
+<code>lifted-base</code> built on top of it, making it likely
+people will revert to the less safe cousin functions.</li>
+</ul>
+<h3 id="monad-control">monad-control</h3>
+<p>The main contention until now is that unlifting in a transformer
+like <code>StateT</code> is unsafe. This is not universally true:
+if only one action is being unlifted, no ambiguity exists. So, for
+example, <code>try :: IO a -&gt; IO (Either e a)</code> can safely
+be unlifted in <code>StateT</code>, while <code>finally :: IO a
+-&gt; IO b -&gt; IO a</code> cannot.</p>
+<p><code>monad-control</code> allows us to unlift both styles. In
+theory, we could write a variant of <code>lifted-base</code> that
+never does state discards, and let <code>try</code> be more general
+than <code>finally</code>. In other words, this is an advantage of
+<code>monad-control</code> over <code>MonadUnliftIO</code>. We've
+avoided providing any such extra typeclass in this package though,
+for two reasons:</p>
+<ul>
+<li><code>MonadUnliftIO</code> is a simple typeclass, easy to
+explain. We don't want to complicated matters
+(<code>MonadBaseControl</code> is a notoriously difficult to
+understand typeclass). This simplicity is captured by the laws for
+<code>MonadUnliftIO</code>, which make the behavior of the run
+functions close to that of the already familiar <code>lift</code>
+and <code>liftIO</code>.</li>
+<li>Having this kind of split would be confusing in user code, when
+suddenly <code>finally</code> is not available to us. We would
+rather encourage <a href=
+"/blog/2017/06/readert-design-pattern">good practices</a> from the
+beginning.</li>
+</ul>
+<p>Another distinction is that <code>monad-control</code> uses the
+<code>MonadBase</code> style, allowing unlifting to arbitrary base
+monads. In this package, we've elected to go with
+<code>MonadIO</code> style. This limits what we can do (e.g., no
+unlifting to <code>STM</code>), but we went this way because:</p>
+<ul>
+<li>In practice, we've found that the vast majority of cases are
+dealing with <code>IO</code></li>
+<li>The split in the ecosystem between constraints like
+<code>MonadBase IO</code> and <code>MonadIO</code> leads to
+significant confusion, and <code>MonadIO</code> is by far the more
+common constraints (with the typeclass existing in
+<code>base</code>)</li>
+</ul>
+<h3 id="exceptions">exceptions</h3>
+<p>One thing we lose by leaving the <code>exceptions</code>
+approach is the ability to model both pure and side-effecting (via
+<code>IO</code>) monads with a single paradigm. For example, it can
+be pretty convenient to have <code>MonadThrow</code> constraints
+for parsing functions, which will either return an
+<code>Either</code> value or throw a runtime exception. That said,
+there are detractors of that approach:</p>
+<ul>
+<li>You lose type information about which exception was thrown</li>
+<li>There is ambiguity about <i>how</i> the exception was returned
+in a constraint like <code>(MonadIO m, MonadThrow m</code>)</li>
+</ul>
+<p>The latter could be addressed by defining a law such as
+<code>throwM = liftIO . throwIO</code>. However, we've decided in
+this library to go the route of encouraging <code>Either</code>
+return values for pure functions, and using runtime exceptions in
+<code>IO</code> otherwise. (You're of course free to also return
+<code>IO (Either e a)</code>.)</p>
+<p>By losing <code>MonadCatch</code>, we lose the ability to define
+a generic way to catch exceptions in continuation based monads
+(such as <code>ConduitM</code>). Our argument here is that those
+monads can freely provide their own catching functions. And in
+practice, long before the <code>MonadCatch</code> typeclass
+existed, <code>conduit</code> provided a <code>catchC</code>
+function.</p>
+<p>In exchange for the <code>MonadThrow</code> typeclass, we
+provide helper functions to convert <code>Either</code> values to
+runtime exceptions in this package. And the <code>MonadMask</code>
+typeclass is now replaced fully by <code>MonadUnliftIO</code>,
+which like the <code>monad-control</code> case limits which monads
+we can be working with.</p>
+<h2 id="async-exception-safety">Async exception safety</h2>
+<p>The <code>safe-exceptions</code> package builds on top of the
+<code>exceptions</code> package and provides intelligent behavior
+for dealing with asynchronous exceptions, a common pitfall. This
+library provides a set of exception handling functions with the
+same async exception behavior as that library. You can consider
+this library a drop-in replacement for
+<code>safe-exceptions</code>. In the future, we may reimplement
+<code>safe-exceptions</code> to use <code>MonadUnliftIO</code>
+instead of <code>MonadCatch</code> and <code>MonadMask</code>.</p>
+<h2 id="package-split">Package split</h2>
+<p>The <code>unliftio-core</code> package provides just the
+typeclass with minimal dependencies (just <code>base</code> and
+<code>transformers</code>). If you're writing a library, we
+recommend depending on that package to provide your instances. The
+<code>unliftio</code> package is a "batteries loaded" library
+providing a plethora of pre-unlifted helper functions. It's a good
+choice for importing, or even for use in a custom prelude.</p>
+<h2 id="orphans">Orphans</h2>
+<p>The <code>unliftio</code> package currently provides orphan
+instances for types from the <code>resourcet</code> and
+<code>monad-logger</code> packages. This is not intended as a
+long-term solution; once <code>unliftio</code> is deemed more
+stable, the plan is to move those instances into the respective
+libraries and remove the dependency on them here.</p>
+<p>If there are other temporary orphans that should be added,
+please bring it up in the issue tracker or send a PR, but we'll
+need to be selective about adding dependencies.</p>
+<h2 id="future-questions">Future questions</h2>
+<ul>
+<li>Should we extend the set of functions exposed in
+<code>UnliftIO.IO</code> to include things like
+<code>hSeek</code>?</li>
+<li>Are there other libraries that deserve to be unlifted
+here?</li>
+</ul>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Announcing%3A%20the%20new%20unliftio%20library https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;announcing-new-unliftio-library&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;announcing-new-unliftio-library&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;announcing-new-unliftio-library&#x2F;&amp;title=Announcing%3A%20the%20new%20unliftio%20library"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;announcing-new-unliftio-library&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#295a48454c5a694f594a464459454c5d4c074a4644" targe="_blank"><span class="__cf_email__" data-cfemail="5c2f3d30392f1c3a2c3f33312c30392839723f3331">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

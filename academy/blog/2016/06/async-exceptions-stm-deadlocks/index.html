@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>async exceptions, STM, and deadlocks</title>
+  <meta property="og:title" content="async exceptions, STM, and deadlocks">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;06&#x2F;async-exceptions-stm-deadlocks&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>async exceptions, STM, and deadlocks</h1>
+      
+      <p id="page-description">By Michael Snoyman, June 20, 2016</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=async%20exceptions%2C%20STM%2C%20and%20deadlocks https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;06&#x2F;async-exceptions-stm-deadlocks&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;06&#x2F;async-exceptions-stm-deadlocks&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;06&#x2F;async-exceptions-stm-deadlocks&#x2F;&amp;title=async%20exceptions%2C%20STM%2C%20and%20deadlocks"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;06&#x2F;async-exceptions-stm-deadlocks&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>For a change of pace, I wanted to cover a simple topic:
+asynchronous exceptions, and how they interact with Software
+Transactional Memory and <code>MVar</code>s, as well as the GHC
+runtime system's deadlock detection. As fate would have it, the
+topics in question occurred twice in the past month, once in a
+<a href="https://github.com/snoyberg/yaml/issues/86">bug report
+against the yaml package</a>, and once in a major refactoring of FP
+Complete's distributed computation platform. I'll focus on the
+first since it's an easier case to explain, but I'll try to explain
+the second (and jucier) one too.</p>
+<p>To get this started off nicely, I'll share an interesting piece
+of code and its output. If you're playing along at home, try
+guessing what the output of this program will be, and if your guess
+is different from the actual output, try to predict why. Hopefully,
+by the end of this post, it will be clear (although still perhaps
+surprising).</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --resolver ghc-7.10.3 runghc</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Concurrent</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Exception</span>
+
+<span class="hs-definition">mayThrow1</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">mayThrow2</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">mayThrow3</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">Int</span>
+
+<span class="hs-definition">mayThrow1</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">return</span> <span class="hs-num">5</span> <span class=
+"hs-comment">-- nope, don't throw</span>
+
+<span class="hs-definition">mayThrow2</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">error</span> <span class=
+"hs-str">"throw a normal exception"</span>
+
+<span class="hs-definition">mayThrow3</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">var</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">newEmptyMVar</span>
+    <span class="hs-varid">takeMVar</span> <span class=
+"hs-varid">var</span> <span class=
+"hs-comment">-- BlockedIndefinitelyOnMVar, always!</span>
+
+<span class="hs-comment">-- implements the idea from:</span>
+<span class=
+"hs-comment">-- https://www.schoolofhaskell.com/user/snoyberg/general-haskell/exceptions/catching-all-exceptions</span>
+<span class="hs-comment">--</span>
+<span class=
+"hs-comment">-- Don't use the async package, which already works around the bug</span>
+<span class="hs-comment">-- I'm demonstrating!</span>
+<span class="hs-definition">tryAny</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Either</span> <span class=
+"hs-conid">SomeException</span> <span class=
+"hs-varid">a</span><span class="hs-layout">)</span>
+<span class="hs-definition">tryAny</span> <span class=
+"hs-varid">action</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">var</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">newEmptyMVar</span>
+    <span class="hs-varid">uninterruptibleMask_</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">forkIOWithUnmask</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">restore</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+        <span class="hs-varid">res</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">try</span> <span class="hs-varop">$</span> <span class=
+"hs-varid">restore</span> <span class="hs-varid">action</span>
+        <span class="hs-varid">putMVar</span> <span class=
+"hs-varid">var</span> <span class="hs-varid">res</span>
+    <span class="hs-varid">takeMVar</span> <span class=
+"hs-varid">var</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">tryAny</span> <span class=
+"hs-varid">mayThrow1</span> <span class=
+"hs-varop">&gt;&gt;=</span> <span class="hs-varid">print</span>
+    <span class="hs-varid">tryAny</span> <span class=
+"hs-varid">mayThrow2</span> <span class=
+"hs-varop">&gt;&gt;=</span> <span class="hs-varid">print</span>
+    <span class="hs-varid">tryAny</span> <span class=
+"hs-varid">mayThrow3</span> <span class=
+"hs-varop">&gt;&gt;=</span> <span class="hs-varid">print</span>
+
+    <span class="hs-varid">putStrLn</span> <span class=
+"hs-str">"done!"</span></pre>
+<p>And actual output:</p>
+<pre><code>Right 5
+Left throw a normal exception
+example1.hs: thread blocked indefinitely in an MVar operation</code></pre>
+<p>To clarify, that last line of output means that the program
+itself exited because a <code>BlockedIndefinitelyOnMVar</code>
+exception was thrown to the main thread and was not caught. Also,
+this is possibly the first time I've written an interesting code
+example for a blog post that uses only the base package :)</p>
+<h2 id="synchronous-vs-asynchronous-exceptions">Synchronous vs
+asynchronous exceptions</h2>
+<p>There are two* ways an exception can be thrown in Haskell:</p>
+<ul>
+<li>
+<p><b>Synchronous</b> exceptions are generated by the current
+thread. What's important about these is that we generally want to
+be able to recover from them. For example, if you try to read from
+a file, and the file doesn't exist, you may wish to use some
+default value instead of having your program exit, or perhaps
+prompt the user for a different file location.</p>
+</li>
+<li>
+<p><b>Asynchronous</b> exceptions are thrown by either a different
+user thread, or by the runtime system itself. For example, in the
+<code>async</code> package, <code>race</code> will kill the
+longer-running thread with an asynchronous exception. Similarly,
+the <code>timeout</code> function will kill an action which has run
+for too long. And <i>epic foreshadowment</i> the runtime system
+will kill threads which appear to be deadlocked on
+<code>MVar</code>s or <code>STM</code> actions.</p>
+<p>In contrast to synchronous exceptions, we almost never want to
+recover from asynchronous exceptions. In fact, this is a common
+mistake in Haskell code, and from what I've seen has been the
+largest source of confusion and concern amongst users when it comes
+to Haskell's runtime exception system.</p>
+</li>
+</ul>
+<p>Alright, got that? Catch the synchronous ones and recover, never
+recover from asynchronous exceptions**.</p>
+<p>* You could argue that creating an exception in a pure value,
+via functions like <code>error</code> and <code>undefined</code>,
+is a third category. We're going to ignore that for now.</p>
+<p>** You may be wondering "why make it possible to catch async
+exceptions if we can't recover from them?" The answer is that we
+still want to be able to perform cleanup actions, like closing file
+handles. This is the topic of the aforementioned upcoming blog
+post.</p>
+<h2 id="catching-all-exceptions">Catching all exceptions</h2>
+<p>Quite a few years ago, I wrote a <a href=
+"https://www.schoolofhaskell.com/user/snoyberg/general-haskell/exceptions/catching-all-exceptions">
+School of Haskell article</a> on how to catch all exceptions. I'm
+not going to rehash that article here, since (1) the content is
+still current, and (2) I'll likely be sharing a new blog post in a
+few days with a newer approach. But the gist of it is that if we
+want to catch all synchronous exceptions in an action without
+catching asynchronous ones, we run that action in a separate
+thread, and then grab the result from that thread using a mutable
+variable. The SoH article uses the async package, which hides away
+some of the details. However, the core idea is easy enough to
+express as I did above:</p>
+<pre><span class="hs-definition">tryAny</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Either</span> <span class=
+"hs-conid">SomeException</span> <span class=
+"hs-varid">a</span><span class="hs-layout">)</span>
+<span class="hs-definition">tryAny</span> <span class=
+"hs-varid">action</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">var</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">newEmptyMVar</span>
+    <span class="hs-varid">uninterruptibleMask_</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">forkIOWithUnmask</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">restore</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+        <span class="hs-varid">res</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">try</span> <span class="hs-varop">$</span> <span class=
+"hs-varid">restore</span> <span class="hs-varid">action</span>
+        <span class="hs-varid">putMVar</span> <span class=
+"hs-varid">var</span> <span class="hs-varid">res</span>
+    <span class="hs-varid">takeMVar</span> <span class=
+"hs-varid">var</span></pre>
+<p>Let's address some important points in the design of this
+function, since it has to step quite carefully around asynchronous
+exceptions:</p>
+<ul>
+<li>We use <code>forkIOWithUnmask</code> to ensure that the newly
+created thread has asynchronous exceptions masked. This means that
+we will receive no async exceptions in the new thread, until we
+wrap an exception with the <code>restore</code> function.</li>
+<li>We restore the user's <code>action</code>, meaning async
+exceptions can be received there. But we wrap that <code>restore
+action</code> with a <code>try</code>, catching all synchronous and
+asynchronous exceptions.</li>
+<li>Since outside of the <code>try</code> we still have all async
+exceptions masked, there's nothing preventing the
+<code>putMVar</code> call in the child thread from being called.
+This means that, in all cases of the <code>action</code>
+terminating, the <code>putMVar</code> will ensure that the
+<code>var</code> is filled up.</li>
+<li>The <code>takeMVar</code> in the parent thread will block until
+the child thread completes. And since we're guaranteed that the
+<code>var</code> will always be filled once the <code>action</code>
+terminates, we seem (once again, <i>epic foreshadowment</i>) to be
+guaranteed that the <code>takeMVar</code> call will always wait for
+<code>action</code> to somehow terminate, and once it's terminated
+will return either the exception is died with or the success
+result.</li>
+</ul>
+<h2 id="deadlock-protection">Deadlock protection</h2>
+<p>Alright, I've foreshadowed enough already, I'm guessing
+everyone's figured out where the problem is going to come. Sure
+enough, if we look at the program I started this post with, we see
+that <code>tryAny mayThrow3 &gt;&gt;= print</code> does not catch
+the exception generated by <code>mayThrow3</code>, but instead
+itself dies from GHC's deadlock protection
+(<code>BlockedIndefinitelyInMVar</code>). Simon Marlow explained
+the reason for this to me twice, once in <a href=
+"https://www.oreilly.com/library/view/parallel-and-concurrent/9781449335939/">his (really
+really good) book</a>, and once when I raised <a href=
+"https://github.com/simonmar/async/issues/14">issue #14 on
+async</a> because I hadn't been smart enough to connect the dots
+from the book to my <a href=
+"https://github.com/ndmitchell/hlint/issues/73">actual issue</a>.
+As long as I'm linking so much to Github, you may also like seeing
+<a href="https://github.com/simonmar/async/pull/15">my pull request
+to work around issue #14</a>.</p>
+<p>Don't worry, I'm not going to make you read all of that. The
+summary is pretty simple: GHC's run time system has very
+straightforward deadlock detection. When it finds a group of
+threads that are all blocked on blocking mutable variables
+(<code>MVar</code>s or <code>STM</code> variables), and finds that
+no other threads have references to the variables it question, it
+determines that all of the threads are deadlocked, and sends all of
+them asynchronous exceptions (either
+<code>BlockedIndefinitelyOnMVar</code> or
+<code>BlockedIndefinitelyOnSTM</code>).</p>
+<p>So let's analyze <code>tryAny mayThrow3</code> in excruciating
+detail. The series of events here is:</p>
+<ol>
+<li>Create a new empty <code>MVar</code> to allow the child thread
+to pass back the result of <code>mayThrow3</code> to the parent
+thread.</li>
+<li>Fork a new child thread (yes, exceptions are masked, but that's
+not terribly important for us).</li>
+<li>Back in the parent thread: block waiting for that empty
+<code>MVar</code> to get filled.</li>
+<li>In the child thread, set up <code>try</code> to catch all
+exceptions, and then run the user's action (with async exceptions
+unmasked).</li>
+<li>As it happens, I carefully crafted <code>mayThrow3</code> to
+deadlock on an <code>MVar</code>. So now the child thread can't
+make progress, and is fully deadlocked.</li>
+</ol>
+<p>OK, the stage is set: the main thread is blocked on an
+<code>MVar</code> for the result. As I proved above, we know for a
+fact that this <code>MVar</code> will ultimately be filled with the
+result of the user action, once the user action completes or dies
+with an exception. However, <i>GHC doesn't know this</i>, it just
+sees the main thread blocked on an <code>MVar</code> action, and
+that only the main thread and child thread have references to that
+variable.</p>
+<p>In the child thread, we've created a new <code>MVar</code>
+deadlock. This is a true and legitimate deadlock (if you don't
+believe me, go back and look at the implementation of
+<code>mayThrow3</code>). So GHC decides that both the main thread
+and the child thread are currently blocked on <code>MVar</code>
+actions, and there is no other thread that can unblock either of
+them. And GHC is correct. However, the next part is the unfortunate
+part:</p>
+<p><b>GHC kills both threads with an asynchronous
+exceptions</b></p>
+<p>Why is this unfortunate? Because we know that if the child
+thread receives the async exception, it will exit, the result
+<code>MVar</code> will get filled, and the main thread can complete
+successfully. That's exactly the behavior we want, but not the
+behavior GHC is able to deliver to us.</p>
+<h2 id="the-workaround">The workaround</h2>
+<p>The workaround I'm about to demonstrate is not elegant, and it
+leaves a bad taste in my mouth. If anyone has a better idea, let me
+know. The idea is this: we know that there's no legitimate reason
+for the <code>takeMVar</code> inside <code>tryAny</code> to be
+killed with a <code>BlockedIndefinitelyOnMVar</code>, even if GHC
+doesn't know that. So we outsmart GHC by catching and ignoring that
+specific exception. And just in case our logic is wrong and there's
+a flawed implementation here, we only catch-and-ignore a fixed
+number of times (arbitrary choice: 10) to avoid creating a real
+deadlock.</p>
+<p>I've added a <a href=
+"https://github.com/jcristovao/enclosed-exceptions/pull/9/commits/079ff1041c0849d38c2617913eb4e539121326a8">
+commit for enclosed-exceptions</a> that implements this behavior,
+but for the lazy, here's a simplified version of it:</p>
+<pre><span class="hs-definition">tryAny</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Either</span> <span class=
+"hs-conid">SomeException</span> <span class=
+"hs-varid">a</span><span class="hs-layout">)</span>
+<span class="hs-definition">tryAny</span> <span class=
+"hs-varid">action</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">var</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">newEmptyMVar</span>
+    <span class="hs-varid">uninterruptibleMask_</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">forkIOWithUnmask</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">restore</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+        <span class="hs-varid">res</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">try</span> <span class="hs-varop">$</span> <span class=
+"hs-varid">restore</span> <span class="hs-varid">action</span>
+        <span class="hs-varid">putMVar</span> <span class=
+"hs-varid">var</span> <span class="hs-varid">res</span>
+    <span class="hs-varid">retryCount</span> <span class=
+"hs-num">10</span> <span class="hs-layout">(</span><span class=
+"hs-varid">takeMVar</span> <span class=
+"hs-varid">var</span><span class="hs-layout">)</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">retryCount</span> <span class=
+"hs-varid">cnt0</span> <span class=
+"hs-varid">action</span> <span class="hs-keyglyph">=</span>
+        <span class="hs-varid">loop</span> <span class=
+"hs-varid">cnt0</span>
+      <span class="hs-keyword">where</span>
+        <span class="hs-varid">loop</span> <span class=
+"hs-num">0</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">action</span>
+        <span class="hs-varid">loop</span> <span class=
+"hs-varid">cnt</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">action</span> <span class="hs-varop">`catch`</span>
+            <span class="hs-keyglyph">\</span><span class=
+"hs-conid">BlockedIndefinitelyOnMVar</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">loop</span> <span class="hs-layout">(</span><span class=
+"hs-varid">cnt</span> <span class=
+"hs-comment">-</span> <span class="hs-num">1</span><span class=
+"hs-layout">)</span></pre>
+<p>Swallow the bit of vomit rising in the back of your throat, try
+this out in the original program, and see if it solves the issue.
+You should see the following output:</p>
+<pre><code>Right 5
+Left throw a normal exception
+Left thread blocked indefinitely in an MVar operation
+done!</code></pre>
+<p>Note that the "thread blocked" has actually been caught, and the
+final <code>done!</code> line is actually printed.</p>
+<h2 id="problem-with-stm-based-tryany">Problem with STM-based
+tryAny</h2>
+<p><code>tryAny</code> was already implemented safely in terms of
+the async package, which uses <code>STM</code> in place of
+<code>MVar</code>s as we did here. Mitchell Rosen came up with a
+<a href="https://github.com/snoyberg/yaml/issues/86">really
+convincing demonstration</a> for why we shouldn't use STM for this
+purpose. To quote, with the program:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --resolver lts-6.3 runghc --package yaml</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Concurrent</span><span class="hs-varop">.</span><span class="hs-conid">STM</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Yaml</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">mval</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">atomically</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">return</span> <span class=
+"hs-varop">$!</span> <span class=
+"hs-varid">decode</span> <span class="hs-str">""</span><span class=
+"hs-layout">)</span>
+    <span class="hs-varid">print</span> <span class=
+"hs-layout">(</span><span class="hs-varid">mval</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Maybe</span> <span class=
+"hs-conid">Value</span><span class="hs-layout">)</span></pre>
+<p>We get the rather surprising output:</p>
+<pre>
+<code>Control.Concurrent.STM.atomically was nested</code></pre>
+<p>The reason is that <code>decode</code> is calling a bunch of
+<code>IO</code> functions as FFI calls to the libyaml library, and
+is wrapped in <code>unsafePerformIO</code> to make the morally-pure
+YAML-decoding action not live in <code>IO</code>. Under the
+surface, it uses <code>tryAny</code> to avoid unexpected exceptions
+from breaking out of the <code>unsafePerformIO</code> dungeon it
+lives in. That's all well and good, but now if you use
+<code>decode</code> inside an <code>atomically</code> block, you
+have two layers of <code>STM</code> occurring, which is strictly
+forbidden.</p>
+<p><b>Extra credit</b> Figure out why I needed to use
+<code>$!</code> to make this fail.</p>
+<h2 id="our-distributed-computing-problem">Our distributed
+computing problem</h2>
+<p>This problem arose about two months ago, and is far more
+complicated than the examples I've discussed until now. In fact,
+I've so far been unsuccessful at reproducing this with a minimal
+test case, which is definitely annoying. Nonetheless, I can explain
+what basically happened:</p>
+<ol>
+<li>Have a queue of work items to be performed, represented by a
+<code>TChan</code></li>
+<li>Have one thread (filler) grabbing work items from somewhere
+(like a socket) and putting them on the <code>TChan</code></li>
+<li>Have another thread (worker) grabbing work items and performing
+them</li>
+<li>The filler has logic to detect when no more items are incoming,
+and exits</li>
+<li>Run these two threads together using the <code>race</code>
+function, which guarantees that once the filler exits, the worker
+will be killed too</li>
+</ol>
+<p>Unfortunately, this runs into the same problem I described
+above, at least in some circumstances. The thread calling
+<code>race</code> is blocked on an <code>MVar</code> under the
+surface, which filler and worker both have access to. filler
+completes, puts something in the <code>MVar</code>, and then
+disappears, losing its reference to the <code>MVar</code> and the
+<code>TChan</code>. Meanwhile, worker is still blocked waiting on
+the <code>TChan</code>, to which only it has access now, resulting
+in a deadlock condition.</p>
+<p>In our application, we ended up with a situation where the
+worker thread was deadlocked on the <code>TChan</code>, and the
+thread calling <code>race</code> was blocked on the
+<code>MVar</code>. It's a slightly more complicated case than this
+though, since in the simple <code>race</code> case, the thread
+calling <code>race</code> doesn't actually get blocked on the
+<code>MVar</code>. Nonetheless, it's another interesting case where
+the deadlock prevention kills too many threads.</p>
+<p>Fortunately for our application, there's a very simple - and
+more robust - solution, which I recommend to anyone doing this kind
+of concurrent programming. The problem was that our worker thread
+had no logic to terminate itself, and instead just waited to be
+killed by <code>race</code>. Instead, we switched over to a
+closeable <code>TChan</code> implementation, where the filler
+thread could explicitly closed out the <code>TChan</code> and then
+the worker would kill itself instead of waiting around for an async
+exception.</p>
+<p>So to leave this blog post with some recommendations, and a
+small amount of extra foreshadowment (fourth time getting to use
+that word in one blog post!):</p>
+<ul>
+<li>Explicit exit conditions are better than implicit ones</li>
+<li>Avoid relying on async exceptions for control flow if you
+can</li>
+<li>Relying on the deadlock detection to clean up your messes is a
+bad idea</li>
+<li>And even if you don't want the deadlock detection to clean up
+your messes, it may try to do so for you badly anyway</li>
+</ul>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=async%20exceptions%2C%20STM%2C%20and%20deadlocks https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;06&#x2F;async-exceptions-stm-deadlocks&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;06&#x2F;async-exceptions-stm-deadlocks&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;06&#x2F;async-exceptions-stm-deadlocks&#x2F;&amp;title=async%20exceptions%2C%20STM%2C%20and%20deadlocks"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;06&#x2F;async-exceptions-stm-deadlocks&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#6b180a070e182b0d1b0804061b070e1f0e45080406" targe="_blank"><span class="__cf_email__" data-cfemail="acdfcdc0c9dfeccadccfc3c1dcc0c9d8c982cfc3c1">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

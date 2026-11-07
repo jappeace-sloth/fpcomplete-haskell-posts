@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Announce: safe-exceptions, for async exception safety</title>
+  <meta property="og:title" content="Announce: safe-exceptions, for async exception safety">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;06&#x2F;announce-safe-exceptions&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Announce: safe-exceptions, for async exception safety</h1>
+      
+      <p id="page-description">By Michael Snoyman, June 29, 2016</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Announce%3A%20safe-exceptions%2C%20for%20async%20exception%20safety https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;06&#x2F;announce-safe-exceptions&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;06&#x2F;announce-safe-exceptions&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;06&#x2F;announce-safe-exceptions&#x2F;&amp;title=Announce%3A%20safe-exceptions%2C%20for%20async%20exception%20safety"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;06&#x2F;announce-safe-exceptions&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>This blog post is an initial announcement of a new package,
+<a href=
+"https://www.stackage.org/package/safe-exceptions">safe-exceptions</a>
+(and <a href=
+"https://github.com/fpco/safe-exceptions#readme">Github repo</a>).
+This is a follow up to a number of comments I made in <a href=
+"/blog/2016/06/async-exceptions-stm-deadlocks">last week's blog
+post</a>. To quote the README:</p>
+<blockquote>
+<p><i>Safe, consistent, and easy exception handling</i></p>
+<p>Runtime exceptions - as exposed in <code>base</code> by the
+<code>Control.Exception</code> module - have long been an
+intimidating part of the Haskell ecosystem. This package, and this
+README for the package, are intended to overcome this. By providing
+an API that encourages best practices, and explaining the corner
+cases clearly, the hope is to turn what was previously something
+scary into an aspect of Haskell everyone feels safe using.</p>
+</blockquote>
+<p>This is an initial release of the package. I fully expect the
+library to expand in the near future, and in particular there are
+two open issues for decisions that need to be made in the short
+term. I'm releasing the package in its current state since:</p>
+<ol>
+<li>I think it's useful as-is</li>
+<li>I'm hoping to get feedback on how to improve it</li>
+</ol>
+<p>On the second point, I've created
+a survey to get feedback on the interruptible/uninterruptible
+issue and the <code>throw</code> naming issue. Both are described
+in this blog post.</p>
+<p>I'm hoping this library can bring some sanity and comfort to
+people dealing with <code>IO</code> and wanting to ensure proper
+exception handling! Following is the content of the README, which
+can also be <a href=
+"https://github.com/fpco/safe-exceptions#readme">read on
+Github</a>.</p>
+<h2 id="goals">Goals</h2>
+<p>This package provides additional safety and simplicity versus
+<code>Control.Exception</code> by having its functions recognize
+the difference between synchronous and asynchronous exceptions. As
+described below, synchronous exceptions are treated as
+<i>recoverable</i>, allowing you to catch and handle them as well
+as clean up after them, whereas asynchronous exceptions can only be
+cleaned up after. In particular, this library prevents you from
+making the following mistakes:</p>
+<ul>
+<li>Catching and swallowing an asynchronous exception</li>
+<li>Throwing an asynchronous exception synchronously</li>
+<li>Throwing a synchronous exception asynchronously</li>
+<li>Swallowing asynchronous exceptions via failing cleanup
+handlers</li>
+</ul>
+<h2 id="quickstart">Quickstart</h2>
+<p>This section is intended to give you the bare minimum
+information to use this library (and Haskell runtime exceptions in
+general) correctly.</p>
+<ul>
+<li>Import the <code>Control.Exception.Safe</code> module. Do
+<i>not</i> import <code>Control.Exception</code> itself, which
+lacks the safety guarantees that this library adds. Same applies to
+<code>Control.Monad.Catch</code>.</li>
+<li>If something can go wrong in your function, you can report this
+with the <code>throw</code>. (For compatible naming, there are
+synonyms for this of <code>throwIO</code> and
+<code>throwM</code>.)</li>
+<li>If you want to catch a specific type of exception, use
+<code>catch</code>, <code>handle</code>, or <code>try</code>.</li>
+<li>If you want to recover from <i>anything</i> that may go wrong
+in a function, use <code>catchAny</code>, <code>handleAny</code>,
+or <code>tryAny</code>.</li>
+<li>If you want to launch separate threads and kill them
+externally, you should use the <a href=
+"https://www.stackage.org/package/async">async package</a>.</li>
+<li>Unless you really know what you're doing, avoid the following
+functions:
+<ul>
+<li><code>catchAsync</code></li>
+<li><code>handleAsync</code></li>
+<li><code>tryAsync</code></li>
+<li><code>impureThrow</code></li>
+<li><code>throwTo</code></li>
+</ul>
+</li>
+<li>
+<p>If you need to perform some allocation or cleanup of resources,
+use one of the following functions (and <i>don't</i> use the
+<code>catch</code>/<code>handle</code>/<code>try</code> family of
+functions):</p>
+<ul>
+<li><code>onException</code></li>
+<li><code>withException</code></li>
+<li><code>bracket</code></li>
+<li><code>bracket_</code></li>
+<li><code>finally</code></li>
+<li><code>bracketOnError</code></li>
+<li><code>bracketOnError_</code></li>
+</ul>
+</li>
+</ul>
+<p>Hopefully this will be able to get you up-and-running
+quickly.</p>
+<p><i>Request to readers</i>: if there are specific workflows that
+you're unsure of how to accomplish with this library, please ask so
+we can develop a more full-fledged cookbook as a companion to this
+file.</p>
+<h2 id="terminology">Terminology</h2>
+<p>We're going to define three different versions of exceptions.
+Note that these definitions are based on <i>how the exception is
+thrown</i>, not based on <i>what the exception itself is</i>:</p>
+<ul>
+<li>
+<p><b>Synchronous</b> exceptions are generated by the current
+thread. What's important about these is that we generally want to
+be able to recover from them. For example, if you try to read from
+a file, and the file doesn't exist, you may wish to use some
+default value instead of having your program exit, or perhaps
+prompt the user for a different file location.</p>
+</li>
+<li>
+<p><b>Asynchronous</b> exceptions are thrown by either a different
+user thread, or by the runtime system itself. For example, in the
+<code>async</code> package, <code>race</code> will kill the
+longer-running thread with an asynchronous exception. Similarly,
+the <code>timeout</code> function will kill an action which has run
+for too long. And the runtime system will kill threads which appear
+to be deadlocked on <code>MVar</code>s or <code>STM</code>
+actions.</p>
+<p>In contrast to synchronous exceptions, we almost never want to
+recover from asynchronous exceptions. In fact, this is a common
+mistake in Haskell code, and from what I've seen has been the
+largest source of confusion and concern amongst users when it comes
+to Haskell's runtime exception system.</p>
+</li>
+<li>
+<p><b>Impure</b> exceptions are hidden inside a pure value, and
+exposed by forcing evaluation of that value. Examples are
+<code>error</code>, <code>undefined</code>, and
+<code>impureThrow</code>. Additionally, incomplete pattern matches
+can generate impure exceptions. Ultimately, when these pure values
+are forced and the exception is exposed, it is thrown as a
+synchronous exception.</p>
+<p>Since they are ultimately thrown as synchronous exceptions, when
+it comes to handling them, we want to treat them in all ways like
+synchronous exceptions. Based on the comments above, that means we
+want to be able to recover from impure exceptions.</p>
+</li>
+</ul>
+<h2 id="why-catch-asynchronous-exceptions">Why catch asynchronous
+exceptions?</h2>
+<p>If we never want to be able to recover from asynchronous
+exceptions, why do we want to be able to catch them at all? The
+answer is for <i>resource cleanup</i>. For both sync and async
+exceptions, we would like to be able to acquire resources - like
+file descriptors - and register a cleanup function which is
+guaranteed to be run. This is exemplified by functions like
+<code>bracket</code> and <code>withFile</code>.</p>
+<p>So to summarize:</p>
+<ul>
+<li>All synchronous exceptions should be recoverable</li>
+<li>All asynchronous exceptions should not be recoverable</li>
+<li>In both cases, cleanup code needs to work reliably</li>
+</ul>
+<h2 id="determining-sync-vs-async">Determining sync vs async</h2>
+<p>Unfortunately, GHC's runtime system provides no way to determine
+if an exception was thrown synchronously or asynchronously, but
+this information is vitally important. There are two general
+approaches to dealing with this:</p>
+<ul>
+<li>
+<p>Run an action in a separate thread, don't give that thread's ID
+to anyone else, and assume that any exception that kills it is a
+synchronous exception. This approach is covered in the School of
+Haskell article <a href=
+"https://www.schoolofhaskell.com/user/snoyberg/general-haskell/exceptions/catching-all-exceptions">
+catching all exceptions</a>, and is provided by the <a href=
+"https://www.stackage.org/package/enclosed-exceptions">enclosed-exceptions</a>
+package.</p>
+</li>
+<li>
+<p>Make assumptions based on the type of an exception, assuming
+that certain exception types are only thrown synchronously and
+certain only asynchronously.</p>
+</li>
+</ul>
+<p>Both of these approaches have downsides. For the downsides of
+the type-based approach, see the caveats section at the end. The
+problems with the first are more interesting to us here:</p>
+<ul>
+<li>It's much more expensive to fork a thread every time we want to
+deal with exceptions</li>
+<li>It's not fully reliable: it's possible for the thread ID of the
+forked thread to leak somewhere, or the runtime system to send it
+an async exception</li>
+<li>While this works for actions living in <code>IO</code>, it gets
+trickier for pure functions and monad transformer stacks. The
+latter issue is solved via monad-control and the exceptions
+packages. The former issue, however, means that it's impossible to
+provide a universal interface for failure for pure and impure
+actions. This may seem esoteric, and if so, don't worry about it
+too much.</li>
+</ul>
+<p>Therefore, this package takes the approach of trusting type
+information to determine if an exception is asynchronous or
+synchronous. The details are less interesting to a user, but the
+basics are: we leverage the extensible extension system in GHC and
+state that any extension type which is a child of
+<code>SomeAsyncException</code> is an async exception. All other
+exception types are assumed to be synchronous.</p>
+<h2 id="handling-of-sync-vs-async-exceptions">Handling of sync vs
+async exceptions</h2>
+<p>Once we're able to distinguish between sync and async
+exceptions, and we know our goals with sync vs async, how we handle
+things is pretty straightforward:</p>
+<ul>
+<li>If the user is trying to install a cleanup function (such as
+with <code>bracket</code> or <code>finally</code>), we don't care
+if the exception is sync or async: call the cleanup function and
+then rethrow the exception.</li>
+<li>If the user is trying to catch an exception and recover from
+it, only catch sync exceptions and immediately rethrow async
+exceptions.</li>
+</ul>
+<p>With this explanation, it's useful to consider async exceptions
+as "stronger" or more severe than sync exceptions, as the next
+section will demonstrate.</p>
+<h2 id="exceptions-in-cleanup-code">Exceptions in cleanup code</h2>
+<p>One annoying corner case is: what happens if, when running a
+cleanup function after an exception was thrown, the cleanup
+function <i>itself</i> throws an exception. For this, we'll
+consider <code>action `onException` cleanup</code>. There are four
+different possibilities:</p>
+<ul>
+<li><code>action</code> threw sync, <code>cleanup</code> threw
+sync</li>
+<li><code>action</code> threw sync, <code>cleanup</code> threw
+async</li>
+<li><code>action</code> threw async, <code>cleanup</code> threw
+sync</li>
+<li><code>action</code> threw async, <code>cleanup</code> threw
+async</li>
+</ul>
+<p>Our guiding principle is: we cannot hide a more severe exception
+with a less severe exception. For example, if <code>action</code>
+threw a sync exception, and then <code>cleanup</code> threw an
+async exception, it would be a mistake to rethrow the sync
+exception thrown by <code>action</code>, since it would allow the
+user to recover when that is not desired.</p>
+<p>Therefore, this library will always throw an async exception if
+either the action or cleanup thows an async exception. Other than
+that, the behavior is currently undefined as to which of the two
+exceptions will be thrown. The library reserves the right to throw
+away either of the two thrown exceptions, or generate a new
+exception value completely.</p>
+<h2 id="typeclasses">Typeclasses</h2>
+<p>The <a href=
+"https://www.stackage.org/package/exceptions">exceptions
+package</a> provides an abstraction for throwing, catching, and
+cleaning up from exceptions for many different monads. This library
+leverages those type classes to generalize our functions.</p>
+<h2 id="naming">Naming</h2>
+<p>There are a few choices of naming that differ from the base
+libraries:</p>
+<ul>
+<li><code>throw</code> in this library is for synchronously
+throwing within a monad, as opposed to in base where
+<code>throwIO</code> serves this purpose and <code>throw</code> is
+for impure throwing. This library provides <code>impureThrow</code>
+for the latter case, and also provides convenience synonyms
+<code>throwIO</code> and <code>throwM</code> for
+<code>throw</code>.</li>
+<li>The <code>catch</code> function in this package will not catch
+async exceptions. Please use <code>catchAsync</code> if you really
+want to catch those, though it's usually better to use a function
+like <code>bracket</code> or <code>withException</code> which
+ensure that the thrown exception is rethrown.</li>
+</ul>
+<h2 id="caveats">Caveats</h2>
+<p>Let's talk about the caveats to keep in mind when using this
+library.</p>
+<h3 id="checked-vs-unchecked">Checked vs unchecked</h3>
+<p>There is a big debate and difference of opinion regarding
+checked versus unchecked exceptions. With checked exceptions, a
+function states explicitly exactly what kinds of exceptions it can
+throw. With unchecked exceptions, it simply says "I can throw some
+kind of exception." Java is probably the most famous example of a
+checked exception system, with many other languages (including C#,
+Python, and Ruby) having unchecked exceptions.</p>
+<p>As usual, Haskell makes this interesting. Runtime exceptions are
+most assuredly unchecked: all exceptions are converted to
+<code>SomeException</code> via the <code>Exception</code>
+typeclass, and function signatures do not state which specific
+exception types can be thrown (for more on this, see next caveat).
+Instead, this information is relegated to documentation, and
+unfortunately is often not even covered there.</p>
+<p>By contrast, approaches like <code>ExceptT</code> and
+<code>EitherT</code> are very explicit in the type of exceptions
+that can be thrown. The cost of this is that there is extra
+overhead necessary to work with functions that can return different
+types of exceptions, usually by wrapping all possible exceptions in
+a sum type.</p>
+<p>This library isn't meant to settle the debate on checked vs
+unchecked, but rather to bring sanity to Haskell's runtime
+exception system. As such, this library is decidedly in the
+unchecked exception camp, purely by virtue of the fact that the
+underlying mechanism is as well.</p>
+<h3 id="explicit-vs-implicit">Explicit vs implicit</h3>
+<p>Another advantage of the
+<code>ExceptT</code>/<code>EitherT</code> approach is that you are
+explicit in your function signature that a function may fail.
+However, the reality of Haskell's standard libraries are that many,
+if not the vast majority, of <code>IO</code> actions can throw some
+kind of exception. In fact, once async exceptions are considered,
+<i>every</i> <code>IO</code> action can throw an exception.</p>
+<p>Once again, this library deals with the status quo of runtime
+exceptions being ubiquitous, and gives the rule: you should
+consider the <code>IO</code> type as meaning <i>both</i> that a
+function modifies the outside world, <i>and</i> may throw an
+exception (and, based on the previous caveat, may throw <i>any
+type</i> of exception it feels like).</p>
+<p>There are attempts at alternative approaches here, such as
+<a href=
+"https://www.stackage.org/package/unexceptionalio">unexceptionalio</a>.
+Again, this library isn't making a value statement on one approach
+versus another, but rather trying to make today's runtime
+exceptions in Haskell better.</p>
+<h3 id="type-based-differentiation">Type-based differentiation</h3>
+<p>As explained above, this library makes heavy usage of type
+information to differentiate between sync and async exceptions.
+While the approach used is fairly well respected in the Haskell
+ecosystem today, it's certainly not universal, and definitely not
+enforced by the <code>Control.Exception</code> module. In
+particular, <code>throwIO</code> will allow you to synchronously
+throw an exception with an asynchronous type, and
+<code>throwTo</code> will allow you to asynchronously throw an
+exception with a synchronous type.</p>
+<p>The functions in this library prevent that from happening via
+exception type wrappers, but if an underlying library does
+something surprising, the functions here may not work correctly.
+Further, even when using this library, you may be surprised by the
+fact that <code>throw Foo `catch` (\Foo -&gt; ...)</code> won't
+actually trigger the exception handler if <code>Foo</code> looks
+like an asynchronous exception.</p>
+<p>The ideal solution is to make a stronger distinction in the core
+libraries themselves between sync and async exceptions.</p>
+<h3 id="deadlock-detection-exceptions">Deadlock detection
+exceptions</h3>
+<p>Two exceptions types which are handled surprisingly are
+<code>BlockedIndefinitelyOnMVar</code> and
+<code>BlockedIndefinitelyOnSTM</code>. Even though these exceptions
+are thrown asynchronously by the runtime system, for our purposes
+we treat them as synchronous. The reasons are twofold:</p>
+<ul>
+<li>There is a specific action taken in the local thread - blocking
+on a variable which will never change - which causes the exception
+to be raised. This makes their behavior very similar to synchronous
+exceptions. In fact, one could argue that a function like
+<code>takeMVar</code> is synchronously throwing
+<code>BlockedIndefinitelyOnMVar</code></li>
+<li>By our standards of recoverable vs non-recoverable, these
+exceptions certainly fall into the recoverable category. Unlike an
+intentional kill signal from another thread or the user (via
+Ctrl-C), we would like to be able to detect that we entered a
+deadlock condition and do something intelligent in an
+application.</li>
+</ul>
+<h2 id="possible-future-changes">Possible future changes</h2>
+<h3 id="interruptible-vs-uninterruptible-masking">Interruptible vs
+uninterruptible masking</h3>
+<p>This discussion is now being tracked at:
+https://github.com/fpco/safe-exceptions/issues/3</p>
+<p>In <code>Control.Exception</code>, allocation functions and
+cleanup handlers in combinators like <code>bracket</code> are
+masked using the (interruptible) <code>mask</code> function, in
+contrast to <code>uninterruptibleMask</code>. There have been some
+debates about the correctness of this in the past, notably <a href=
+"https://mail.haskell.org/pipermail/libraries/2014-September/023675.html">
+a libraries mailing list discussion kicked off by Eyal Lotem</a>.
+It seems that general consensus is:</p>
+<ul>
+<li><code>uninterruptibleMask</code> is a better choice</li>
+<li>But changing the core library like this would potentially break
+too many programs</li>
+</ul>
+<p>In its current version, this library uses <code>mask</code>
+(interruptible) for allocation functions and
+<code>uninterruptibleMask</code> cleanup handlers. This is a
+debatable decision (and one worth debating!). An example of
+alternatives would be:</p>
+<ul>
+<li>Use <code>uninterruptibleMask</code> for both allocation and
+cleanup pieces</li>
+<li>Match <code>Control.Exception</code>'s behavior</li>
+<li>Provide two versions of each function, or possibly two
+modules</li>
+</ul>
+<h3 id="naming-of-the-synchronous-monadic-throwing-function">Naming
+of the synchronous monadic throwing function</h3>
+<p>We may decide to rename <code>throw</code> to something else at
+some point. Please see
+https://github.com/fpco/safe-exceptions/issues/4</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Announce%3A%20safe-exceptions%2C%20for%20async%20exception%20safety https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;06&#x2F;announce-safe-exceptions&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;06&#x2F;announce-safe-exceptions&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;06&#x2F;announce-safe-exceptions&#x2F;&amp;title=Announce%3A%20safe-exceptions%2C%20for%20async%20exception%20safety"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;06&#x2F;announce-safe-exceptions&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#95e6f4f9f0e6d5f3e5f6faf8e5f9f0e1f0bbf6faf8" targe="_blank"><span class="__cf_email__" data-cfemail="6310020f0610230513000c0e130f0617064d000c0e">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Safe exception handling</title>
+  <meta property="og:title" content="Safe exception handling">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;tutorial&#x2F;exceptions&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+  
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+<section class="hero grid-bg">
+  <div class="container">
+    <h1>Safe exception handling
+    </h1></div>
+</section>
+
+
+
+  
+<div class="container py-3">
+  <p>Exception handling can be a bit of a black art in most programming
+languages with runtime exceptions. Haskell's situation is even more
+complicated by the presence of <em>asynchronous exceptions</em> (described
+below). On top of that, the functions provided in the
+<code>Control.Exception</code> module make it particularly difficult to get all
+of the details right.</p>
+<p>This tutorial provides instruction on how to do things the right way
+in Haskell. It's a good idea to understand all of the gory details
+under the surface as well, though you can get far without those
+details. There is a blog post, webcast recording, and set of slides
+available providing an in-depth look at all of this called <a href="https://tech.fpcomplete.com/blog/2018/04/async-exception-handling-haskell/">Async
+Exception Handling in
+Haskell</a>.</p>
+<p>In this tutorial, we're going to focus on:</p>
+<ul>
+<li>What &quot;safe exception handling&quot; means, at a high level</li>
+<li>Which functions to use</li>
+<li>Common patterns</li>
+<li>Pitfalls to avoid</li>
+</ul>
+<p>What we won't do here:</p>
+<ul>
+<li>Cover the full motivation for the design of the libraries in question</li>
+<li>Debate the merits of runtime exceptions</li>
+<li>Debate the merits of asynchronous exceptions</li>
+</ul>
+<h2 id="unliftio-exception"><code>UnliftIO.Exception</code></h2>
+<p>Instead of using the <code>Control.Exception</code> module, we recommend using the
+<code>UnliftIO.Exception</code> module from the <a href="https://tech.fpcomplete.com/haskell/library/unliftio/"><code>unliftio</code></a> package. It provides
+two important advantages over <code>Control.Exception</code>:</p>
+<ul>
+<li>It works in more monads than just <code>IO</code> by using the <code>MonadIO</code> and
+<code>MonadUnliftIO</code> typeclasses, see <a href="https://tech.fpcomplete.com/haskell/library/unliftio/">the <code>unliftio</code>
+library</a> for more information</li>
+<li>It handles asynchronous exceptions better, as we'll describe below</li>
+</ul>
+<p>The contents of the <code>UnliftIO.Exception</code> module are reexported from both the <code>UnliftIO</code>
+and <code>RIO</code> modules (see <a href="https://tech.fpcomplete.com/haskell/library/rio/">the <code>rio</code> library</a>). For our
+examples, we're simply going to use <code>RIO</code>.</p>
+<h2 id="what-is-safe-exception-handling">What is safe exception handling?</h2>
+<p>The definition we're going to use is &quot;all resources are cleaned up
+promptly despite the presence of an exception.&quot; It's easiest to see
+what safe exception handling is by counterexample. Try to identify
+what is unsafe here:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">foo </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO Result
+</span><span>foo </span><span style="color:#859900;">= do
+</span><span>  resource </span><span style="color:#859900;">&lt;-</span><span> openResource
+</span><span>  result </span><span style="color:#859900;">&lt;-</span><span> useResource resource
+</span><span>  closeResource resource
+</span><span>  pure result
+</span></code></pre>
+<p>If <code>useResource</code> throws an exception, then <code>closeResource</code> will never
+be called, which would be unsafe resource handling. In reality, we
+could ensure that the garbage collector cleans up the resources for
+us, but that fails our &quot;promptly&quot; requirement, since we have no
+guarantees of when the garbage collector will know it can clean up the
+resource. For some resources like file descriptors, this can easily
+cause your entire program to crash.</p>
+<p>If you're familiar with most languages with runtime exceptions, you
+may think that the following is safe:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">foo </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO Result
+</span><span>foo </span><span style="color:#859900;">= do
+</span><span>  resource </span><span style="color:#859900;">&lt;-</span><span> openResource
+</span><span>  eitherResult </span><span style="color:#859900;">&lt;-</span><span> try </span><span style="color:#859900;">$</span><span> useResource resource
+</span><span>  closeResource resource
+</span><span>  </span><span style="color:#859900;">case</span><span> eitherResult </span><span style="color:#859900;">of
+</span><span>    </span><span style="color:#cb4b16;">Left</span><span> e </span><span style="color:#859900;">-&gt;</span><span> throwIO e
+</span><span>    </span><span style="color:#cb4b16;">Right</span><span> result </span><span style="color:#859900;">-&gt;</span><span> pure result
+</span></code></pre>
+<p>Firstly, the above code won't compile (we'll see why in the next
+section). However, even if we fix it so that it <em>does</em> compile, it's
+still broken. Haskell's runtime system includes <em>asynchronous
+exceptions</em>. These allow other threads to kill our thread. In <a href="https://tech.fpcomplete.com/haskell/library/async/">the
+async library</a>, we use this to create useful functions
+like <code>race</code>. But in exception handling, these are a real pain. In the
+code above, an async exception could be received after the <code>try</code>
+completes but before the <code>closeResource</code> call.</p>
+<p>Even helpful functions like <code>finally</code> aren't sufficient in this
+case. As an exercise, try to figure out how asynchronous exceptions
+could cause <code>closeResource</code> to not be called in this code:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">foo </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO Result
+</span><span>foo </span><span style="color:#859900;">= do
+</span><span>  resource </span><span style="color:#859900;">&lt;-</span><span> openResource
+</span><span>  finally
+</span><span>    (useResource resource)
+</span><span>    (closeResource resource)
+</span></code></pre>
+<p><strong>Solution</strong> In this case, an asynchronous exception could be received
+between the call to <code>openResource</code> finishing and <code>finally</code>
+beginning. The correct way to use this is to use the <code>bracket</code>
+function (which we'll go into more detail on below):</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">foo </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO Result
+</span><span>foo </span><span style="color:#859900;">=</span><span> bracket openResource closeResource useResource
+</span></code></pre>
+<p>You can also address this with explicit usage of low level <em>exception
+masking</em> functions. We're explicitly not going to cover that in this
+tutorial, since it's error prone and rarely needed. Try to stick to
+the functions we discuss, like <code>catch</code> and <code>bracket</code>. The in depth
+blog post linked above provides the full gory details if desired.</p>
+<h2 id="how-to-throw-exceptions">How to throw exceptions</h2>
+<p>There are three different ways exceptions can be thrown in Haskell:</p>
+<ul>
+<li>Synchronously thrown: an exception is generated from <code>IO</code> code and
+thrown inside a single thread</li>
+<li>Asynchronously thrown: an exception is thrown from one thread to
+another thread to cause it to terminate early</li>
+<li>Impurely thrown: an exception is generated from pure code, and gets
+thrown when a thunk is forced</li>
+</ul>
+<p>Asynchronous throwing is the odd man out here, so let's ignore it for
+the moment. When it comes to synchronous throwing, we use the
+<code>throwIO</code> function (or something built on top of it). For example:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#93a1a1;">-- boilerplate, we&#39;ll get to this in a bit
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">MyException </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">MyException
+</span><span>  </span><span style="color:#859900;">deriving</span><span> (</span><span style="color:#268bd2;">Show</span><span>, </span><span style="color:#268bd2;">Typeable</span><span>)
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Exception MyException
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> runSimpleApp </span><span style="color:#859900;">$ do
+</span><span>  logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This will be called</span><span style="color:#839496;">&quot;
+</span><span>  throwIO </span><span style="color:#cb4b16;">MyException
+</span><span>  logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This will never be called</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>By contrast, the <code>impureThrow</code> function creates a value which, when
+forced, will throw an exception. For example:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#93a1a1;">-- boilerplate, we&#39;ll get to this in a bit
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">MyException </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">MyException
+</span><span>  </span><span style="color:#859900;">deriving</span><span> (</span><span style="color:#268bd2;">Show</span><span>, </span><span style="color:#268bd2;">Typeable</span><span>)
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Exception MyException
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> runSimpleApp </span><span style="color:#859900;">$ do
+</span><span>  logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This will be called</span><span style="color:#839496;">&quot;
+</span><span>  </span><span style="color:#859900;">let</span><span> x </span><span style="color:#859900;">=</span><span> impureThrow </span><span style="color:#cb4b16;">MyException
+</span><span>  logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This will also be called</span><span style="color:#839496;">&quot;
+</span><span>  </span><span style="color:#859900;">if</span><span> x </span><span style="color:#93a1a1;">-- forces evaluation
+</span><span>    </span><span style="color:#859900;">then</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This will never be called</span><span style="color:#839496;">&quot;
+</span><span>    </span><span style="color:#859900;">else</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Neither will this</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>A common example of impure exceptions you'll see in Haskell code is
+the <code>error</code> function. And in fact, sometimes it even looks and behaves
+like <code>throwIO</code>, such as:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> runSimpleApp </span><span style="color:#859900;">$ do
+</span><span>  logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This will be called</span><span style="color:#839496;">&quot;
+</span><span>  error </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Impure or synchronous exception</span><span style="color:#839496;">&quot;
+</span><span>  logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Will this be called?</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>It seems like <code>error</code> is the same as <code>throwIO</code> here. But it's <em>ever so
+slightly</em> different. What's actually happening is that <code>error &quot;...&quot;</code>
+is receiving the type <code>RIO SimpleApp ()</code>. Then that action is forced,
+which generates a synchronous exception.</p>
+<p>The important point for our purposes here: once an impure exception is
+forced, we treat it as a synchronous exception in every way. Which
+brings us to the next bit.</p>
+<h3 id="sync-vs-async">Sync vs async</h3>
+<p>There's a fundamental difference between how we handle synchronous
+versus asynchronous exceptions. A sync exception means <em>something went
+wrong locally</em>. We're free to clean up after ourselves, or fully
+recover. For example, if I try to read a file, and get a &quot;does not
+exist&quot; exception, it's valid to either rethrow the exception and give
+up, or to print a warning and continue running with some default
+value. For example:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> runSimpleApp </span><span style="color:#859900;">$ do
+</span><span>  </span><span style="color:#859900;">let</span><span> fp </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">myfile.txt</span><span style="color:#839496;">&quot;
+</span><span>  message </span><span style="color:#859900;">&lt;-</span><span> readFileUtf8 fp </span><span style="color:#859900;">`catchIO` \</span><span>e </span><span style="color:#859900;">-&gt; do
+</span><span>    logWarn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Could not open </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;</span><span> fromString fp </span><span style="color:#859900;">&lt;&gt; </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;</span><span> displayShow e
+</span><span>    pure </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This is the default message</span><span style="color:#839496;">&quot;
+</span><span>  logInfo </span><span style="color:#859900;">$</span><span> display message
+</span></code></pre>
+<p>An asynchronous exception is totally different. It is a demand from
+outside of our control to shut down as soon as possible. If we were to
+catch such an exception and recover from it, we would be breaking the
+expectations of the thread that tried to shut us down. Instead, with
+asynchronous exceptions, exception handling best practices tell us we're allowed to clean up, but not
+recover. For example, the <code>timeout</code> function uses asynchronous
+exceptions. What should the expected behavior here be?</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span>oneSecond, fiveSeconds </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int
+</span><span>oneSecond </span><span style="color:#859900;">= </span><span style="color:#6c71c4;">1000000
+</span><span>fiveSeconds </span><span style="color:#859900;">= </span><span style="color:#6c71c4;">5000000
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> runSimpleApp </span><span style="color:#859900;">$ do
+</span><span>  res </span><span style="color:#859900;">&lt;-</span><span> timeout oneSecond </span><span style="color:#859900;">$ do
+</span><span>    logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Inside the timeout</span><span style="color:#839496;">&quot;
+</span><span>    res </span><span style="color:#859900;">&lt;-</span><span> tryAny </span><span style="color:#859900;">$</span><span> threadDelay fiveSeconds </span><span style="color:#859900;">`finally`
+</span><span>      logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Inside the finally</span><span style="color:#839496;">&quot;
+</span><span>    logInfo </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Result: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;</span><span> displayShow res
+</span><span>  logInfo </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">After timeout: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;</span><span> displayShow res
+</span></code></pre>
+<p>Bad async exception handling would allow the &quot;Result: &quot; message to
+print. We don't want that to happen! Instead, we allow the <code>finally</code>
+cleanup call to occur and then immediately exit. This ensures that
+resource cleanup can happen (ensuring exception safety), while
+disallowing large delays from async exceptions.</p>
+<p>In sum, our goals are:</p>
+<ul>
+<li>Synchronous exceptions: allow both recovery and cleanup</li>
+<li>Asynchronous exceptions: allow cleanup, but disallow recovery</li>
+</ul>
+<p>We'll see how the functions in <code>UnliftIO.Exception</code> fall into these two categories.</p>
+<h2 id="exception-types">Exception types</h2>
+<p>In addition to how we throw exceptions, there's also the issue of the
+types of exceptions. This may be surprising, but the Haskell exception
+system is modeled off of Java-style Object Oriented inheritance
+(shocking, I know). There's a typeclass, <code>Exception</code>, and a data type
+<code>SomeException</code> which is the ancestor of all exceptions.</p>
+<p>How do you get OO-style inheritance into Haskell? Like this:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">data </span><span style="color:#cb4b16;">SomeException </span><span style="color:#859900;">=</span><span> forall e</span><span style="color:#859900;">. </span><span style="color:#cb4b16;">Exception</span><span> e </span><span style="color:#859900;">=&gt; </span><span style="color:#cb4b16;">SomeException</span><span> e
+</span><span>
+</span><span style="color:#859900;">class</span><span> (</span><span style="color:#268bd2;">Typeable e</span><span>, </span><span style="color:#859900;">Show </span><span style="color:#268bd2;">e</span><span>) =&gt; </span><span style="color:#268bd2;">Exception e </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#b58900;">toException </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">e </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">SomeException
+</span><span>  </span><span style="color:#b58900;">fromException </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">SomeException </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Maybe e
+</span><span>  </span><span style="color:#b58900;">displayException </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">e </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">String </span><span style="color:#93a1a1;">-- for pretty display purposes
+</span></code></pre>
+<p>Here's how this works: in order for a type to be an exception, it must
+be possible to convert a value of that type into a <code>SomeException</code>
+value (using the <code>toException</code> method). It must also be possible to
+attempt to convert a <code>SomeException</code> into your type from
+<code>fromException</code>, though that conversion may fail. And finally,
+<code>SomeException</code> is nothing more than an existential type saying &quot;I've
+got something which is a instance of the <code>Exception</code> typeclass.</p>
+<p>Still confused? Don't worry, that's normal. Let's see an example of
+defining a simple exception type:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Typeable </span><span>(</span><span style="color:#b58900;">cast</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">MyException </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">MyException
+</span><span>  </span><span style="color:#859900;">deriving</span><span> (</span><span style="color:#268bd2;">Show</span><span>, </span><span style="color:#268bd2;">Typeable</span><span>)
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Exception MyException </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#93a1a1;">-- these are the default implementations, so you can simply omit
+</span><span>  </span><span style="color:#93a1a1;">-- them
+</span><span>  toException e </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">SomeException</span><span> e
+</span><span>  fromException (</span><span style="color:#cb4b16;">SomeException</span><span> e) </span><span style="color:#859900;">=</span><span> cast e </span><span style="color:#93a1a1;">-- uses Typeable
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=
+</span><span>  runSimpleApp </span><span style="color:#859900;">$
+</span><span>  throwIO </span><span style="color:#cb4b16;">MyException </span><span style="color:#859900;">`catch` \</span><span style="color:#cb4b16;">MyException </span><span style="color:#859900;">-&gt;
+</span><span>  logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">I caught my own exception!</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>This uses the <code>Typeable</code> typeclass, which allows for runtime type
+analysis, which is what makes all of this magic work. Love it or hate
+it, this is at the core of the exception handling mechanism in
+Haskell.</p>
+<p>We can also create hierarchies of exceptions. In my experience, these
+aren't actually used that often (outside of async exceptions, which
+we'll get to in a bit).</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> ScopedTypeVariables #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Typeable </span><span>(</span><span style="color:#b58900;">cast</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Parent </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Parent1 Child1 </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Parent2 Child2
+</span><span>  </span><span style="color:#859900;">deriving</span><span> (</span><span style="color:#268bd2;">Show</span><span>, </span><span style="color:#268bd2;">Typeable</span><span>)
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Exception Parent
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Child1 </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Child1
+</span><span>  </span><span style="color:#859900;">deriving</span><span> (</span><span style="color:#268bd2;">Show</span><span>, </span><span style="color:#268bd2;">Typeable</span><span>)
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Exception Child1 </span><span style="color:#859900;">where
+</span><span>  toException </span><span style="color:#859900;">=</span><span> toException </span><span style="color:#859900;">. </span><span style="color:#cb4b16;">Parent1 </span><span style="color:#93a1a1;">-- cast up through the Parent type
+</span><span>  fromException se </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">case</span><span> fromException se </span><span style="color:#859900;">of
+</span><span>      </span><span style="color:#cb4b16;">Just</span><span> (</span><span style="color:#cb4b16;">Parent1</span><span> c) </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Just</span><span> c
+</span><span>      _ </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Nothing
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Child2 </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Child2
+</span><span>  </span><span style="color:#859900;">deriving</span><span> (</span><span style="color:#268bd2;">Show</span><span>, </span><span style="color:#268bd2;">Typeable</span><span>)
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Exception Child2 </span><span style="color:#859900;">where
+</span><span>  toException </span><span style="color:#859900;">=</span><span> toException </span><span style="color:#859900;">. </span><span style="color:#cb4b16;">Parent2 </span><span style="color:#93a1a1;">-- cast up through the Parent type
+</span><span>  fromException se </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">case</span><span> fromException se </span><span style="color:#859900;">of
+</span><span>      </span><span style="color:#cb4b16;">Just</span><span> (</span><span style="color:#cb4b16;">Parent2</span><span> c) </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Just</span><span> c
+</span><span>      _ </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Nothing
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> runSimpleApp </span><span style="color:#859900;">$ do
+</span><span>  throwIO </span><span style="color:#cb4b16;">Child1 </span><span style="color:#859900;">`catch`</span><span> (</span><span style="color:#859900;">\</span><span>(_ </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">SomeException</span><span>) </span><span style="color:#859900;">-&gt;</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Caught it!</span><span style="color:#839496;">&quot;</span><span>)
+</span><span>  throwIO </span><span style="color:#cb4b16;">Child1 </span><span style="color:#859900;">`catch`</span><span> (</span><span style="color:#859900;">\</span><span>(_ </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Parent</span><span>) </span><span style="color:#859900;">-&gt;</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Caught it again!</span><span style="color:#839496;">&quot;</span><span>)
+</span><span>  throwIO </span><span style="color:#cb4b16;">Child1 </span><span style="color:#859900;">`catch`</span><span> (</span><span style="color:#859900;">\</span><span>(_ </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Child1</span><span>) </span><span style="color:#859900;">-&gt;</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">One more catch!</span><span style="color:#839496;">&quot;</span><span>)
+</span><span>  throwIO </span><span style="color:#cb4b16;">Child1 </span><span style="color:#859900;">`catch`</span><span> (</span><span style="color:#859900;">\</span><span>(_ </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Child2</span><span>) </span><span style="color:#859900;">-&gt;</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Missed!</span><span style="color:#839496;">&quot;</span><span>)
+</span></code></pre>
+<p>In this case, both <code>Child1</code> and <code>Child2</code> are children of the <code>Parent</code>
+type, and <code>Parent</code> is a child of the <code>SomeException</code> type. Therefore,
+if we throw a <code>Child1</code>, catching a <code>SomeException</code> or a <code>Parent</code> will
+catch the <code>Child1</code>. However, trying to catch a <code>Child2</code> will <em>not</em>
+catch the <code>Child1</code>, and the exception will escape.</p>
+<p>Which brings us to...</p>
+<h3 id="type-ambiguity">Type ambiguity</h3>
+<p>Why doesn't this compile?</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">foo </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>foo </span><span style="color:#859900;">= do
+</span><span>  resource </span><span style="color:#859900;">&lt;-</span><span> openResource
+</span><span>  eitherResult </span><span style="color:#859900;">&lt;-</span><span> try </span><span style="color:#859900;">$</span><span> useResource resource
+</span><span>  closeResource resource
+</span><span>  </span><span style="color:#859900;">case</span><span> eitherResult </span><span style="color:#859900;">of
+</span><span>    </span><span style="color:#cb4b16;">Left</span><span> e </span><span style="color:#859900;">-&gt;</span><span> throwIO e
+</span><span>    </span><span style="color:#cb4b16;">Right</span><span> result </span><span style="color:#859900;">-&gt;</span><span> pure result
+</span></code></pre>
+<p>The type of <code>try</code> is (slightly simplified):</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">try </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Exception e </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">IO a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO</span><span> (</span><span style="color:#268bd2;">Either e a</span><span>)
+</span></code></pre>
+<p>Notice the type variable <code>e</code>. <code>try</code> will catch whichever type of
+exception you ask it to. But if you're unclear about which exception
+type you care about, the compiler will complain about ambiguous
+types. That's why, in our hierarchical exception above, I turned on
+<code>ScopedTypeVariables</code> and included signatures like <code> `catch` (\(_ :: Child1) -&gt;</code>.</p>
+<p>We'll discuss in the recovering section below some common practices
+around catching exceptions.</p>
+<h3 id="async-exceptions">Async exceptions</h3>
+<p>Previously, we pointed out that the difference between a synchronous
+and asynchronous exception is how they are thrown (via <code>throwIO</code> or
+<code>throwTo</code>). Unfortunately, there's no way to determine when catching
+an exception how it was thrown, making it difficult to live up to our
+goals above to never recover from an async exception. Fortunately, we
+have a workaround: use a different type for async exceptions!</p>
+<p>Using the hierarchical exception mechanism above, we have a new data
+type, <code>SomeAsyncException</code>, which is a child of <code>SomeException</code>. All
+exceptions which are thrown asynchronously must be a child of that
+exception type. And conversely, asynchronous exceptions must <em>not</em> be
+thrown synchronously. The <code>UnliftIO.Exception</code> module has quite a few
+safeguards in place to ensure both of these conditions are met.
+Please see the &quot;Async
+Exception Handling in Haskell&quot; article above for the gory details.</p>
+<p>Upshot of all of this:</p>
+<ul>
+<li>If you define your own exception type for asynchronous exceptions,
+make it a child of <code>SomeAsyncException</code>. (Note: this is a pretty
+unusual thing to do.)</li>
+<li>If you define your own exception type for synchronous exceptions,
+don't make it a child of <code>SomeAsyncException</code>.</li>
+<li>The functions we'll mention below for cleaning up and recovering are
+able to determine whether an exception is sync or async based on its
+type.</li>
+</ul>
+<p>Cool? Awesome! That's quite enough backstory. Let's start covering
+usage of the API.</p>
+<h2 id="throwing">Throwing</h2>
+<p>We're not going to talk about using async exceptions to kill other
+threads, since we're not talking about concurrent
+programming. Instead, please check out the <a href="https://tech.fpcomplete.com/haskell/library/async/">async
+library</a> and the <code>race</code> and <code>cancel</code> functions it
+provides. Instead, we're going to focus on synchronous exception
+throwing.</p>
+<p>The most basic function for this is:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">throwIO </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">MonadIO m</span><span>, </span><span style="color:#268bd2;">Exception e</span><span>) </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">e </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m a
+</span></code></pre>
+<p>Given any value which is an instance of <code>Exception</code>, you can throw it
+as a runtime exception for any monad which is a <code>MonadIO</code>
+instance. This works for built in exception types, as well as any you
+define yourself.</p>
+<p>Sometimes you want to use synchronous exceptions but don't want to go
+through the overhead of defining your own exception type. In those
+cases, you can use the helper:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">throwString </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">MonadIO m</span><span>, </span><span style="color:#268bd2;">HasCallStack</span><span>) </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m a
+</span></code></pre>
+<p><code>throwString</code> looks pretty similar to <code>error</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">error </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasCallStack </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a
+</span></code></pre>
+<p>The difference is that the former throws a synchronous exception of type <code>StringException</code>,
+whereas the latter creates a thunk which, when evaluated, throws a
+synchronous exception of type <code>ErrorCall</code>. To demonstrate the difference:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>throwString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">foo</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">IO </span><span style="color:#b58900;">() </span><span style="color:#93a1a1;">-- throws an exception
+</span><span>error </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">foo</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">IO </span><span style="color:#b58900;">() </span><span style="color:#93a1a1;">-- throws an exception, because the thunk is evaluated
+</span><span>throwString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">foo</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">`seq`</span><span> pure </span><span style="color:#b58900;">() </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">IO </span><span style="color:#b58900;">() </span><span style="color:#93a1a1;">-- doesn&#39;t throw an exception!
+</span><span>error </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">foo</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">`seq`</span><span> pure </span><span style="color:#b58900;">() </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">IO </span><span style="color:#b58900;">() </span><span style="color:#93a1a1;">-- does throw an exception!
+</span><span>throwString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">foo</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">:: </span><span style="color:#b58900;">() </span><span style="color:#93a1a1;">-- type error
+</span><span>error </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">foo</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">:: </span><span style="color:#b58900;">() </span><span style="color:#93a1a1;">-- compiles, and when evaluated will throw an exception
+</span></code></pre>
+<p>Typically, we advise away from exceptions in pure code, and thus
+<code>error</code> is best avoided. But <em>if</em> you really want an exception in pure
+code, you can also use <code>impureThrow</code>, which lets you use your own
+exception type:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">impureThrow </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Exception e </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">e </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a
+</span></code></pre>
+<h2 id="cleaning-up">Cleaning up</h2>
+<p>Cleaning up allows you to define some action which should be run when
+an exception occurs. However, after your action is run, the exception
+will be rethrown. In other words, when cleaning up, you <em>cannot
+recover</em> from an exception. This makes cleanup functions safe to use
+with asynchronous exceptions.</p>
+<p>The simplest cleanup function is <code>finally</code>, which ensures that an
+action is run whether or not an exception is thrown:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> runSimpleApp </span><span style="color:#859900;">$ do
+</span><span>  logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This will print first</span><span style="color:#839496;">&quot;
+</span><span>  throwString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This will print last as an error message</span><span style="color:#839496;">&quot;
+</span><span>    </span><span style="color:#859900;">`finally`</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This will print second</span><span style="color:#839496;">&quot;
+</span><span>  logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This will never print</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>Similar is the <code>onException</code> function, which will only run its second
+argument if the first argument exited with an exception.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> runSimpleApp </span><span style="color:#859900;">$ do
+</span><span>  logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This will print first</span><span style="color:#839496;">&quot;
+</span><span>    </span><span style="color:#859900;">`onException`</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This will never print</span><span style="color:#839496;">&quot;
+</span><span>  throwString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This will print last as an error message</span><span style="color:#839496;">&quot;
+</span><span>    </span><span style="color:#859900;">`onException`</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">But this will print second</span><span style="color:#839496;">&quot;
+</span><span>  logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This will never print</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>And the most commonly used of this cleanup functions is likely
+<code>bracket</code>. <code>bracket</code> is so popular that there's even a style of
+functions called &quot;the bracket pattern.&quot; <code>bracket</code> takes a resource
+allocation function, a resource cleanup function, and a function to
+use the resource, and ensures that cleanup occurs. It looks like:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>bracket
+</span><span>  </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">MonadUnliftIO</span><span> m
+</span><span>  </span><span style="color:#859900;">=&gt;</span><span> m a </span><span style="color:#93a1a1;">-- ^ allocate
+</span><span>  </span><span style="color:#859900;">-&gt;</span><span> (a </span><span style="color:#859900;">-&gt;</span><span> m b) </span><span style="color:#93a1a1;">-- ^ cleanup
+</span><span>  </span><span style="color:#859900;">-&gt;</span><span> (a </span><span style="color:#859900;">-&gt;</span><span> m c) </span><span style="color:#93a1a1;">-- ^ use
+</span><span>  </span><span style="color:#859900;">-&gt;</span><span> m c
+</span></code></pre>
+<p><strong>Exercise</strong> Implement a <code>withBinaryFile</code> function (specialized to
+<code>IO</code> for simplicity) using <code>bracket</code>, <code>hClose</code>, and
+<code>System.IO.openBinaryFile</code>.</p>
+<p>There are a few other functions available, like
+<code>withException</code>. Overall, these functions are fairly easy to
+understand, but take some experience to know how to use correctly.</p>
+<h2 id="recovering">Recovering</h2>
+<p>The exception recovery functions allow you to catch an exception and
+prevent it from propagating higher up the call stack. These functions
+only work on synchronous exceptions; they will totally ignore
+asynchronous exceptions. We'll start with the <code>try</code> family of
+functions, and then introduce the very similar <code>catch</code> and <code>handle</code>
+families.</p>
+<p>The basic function is <code>try</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">try </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">MonadUnliftIO m</span><span>, </span><span style="color:#268bd2;">Exception e</span><span>) </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">m a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m</span><span> (</span><span style="color:#268bd2;">Either e a</span><span>)
+</span></code></pre>
+<p>If the provided action was successful, it will return a <code>Right</code>,
+otherwise it will return a <code>Left</code>. And if the provided action throws a
+different type of exception than expected, that exception will be
+rethrown.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> runSimpleApp </span><span style="color:#859900;">$ do
+</span><span>  res1 </span><span style="color:#859900;">&lt;-</span><span> try </span><span style="color:#859900;">$</span><span> throwString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This will be caught</span><span style="color:#839496;">&quot;
+</span><span>  logInfo </span><span style="color:#859900;">$</span><span> displayShow (res1 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Either StringException </span><span style="color:#b58900;">()</span><span>)
+</span><span>
+</span><span>  res2 </span><span style="color:#859900;">&lt;-</span><span> try </span><span style="color:#859900;">$</span><span> pure </span><span style="color:#b58900;">()
+</span><span>  logInfo </span><span style="color:#859900;">$</span><span> displayShow (res2 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Either StringException </span><span style="color:#b58900;">()</span><span>)
+</span><span>
+</span><span>  res3 </span><span style="color:#859900;">&lt;-</span><span> try </span><span style="color:#859900;">$</span><span> throwString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This will be caught</span><span style="color:#839496;">&quot;
+</span><span>  logInfo </span><span style="color:#859900;">$</span><span> displayShow (res3 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Either SomeException </span><span style="color:#b58900;">()</span><span>)
+</span><span>
+</span><span>  res4 </span><span style="color:#859900;">&lt;-</span><span> try </span><span style="color:#859900;">$</span><span> throwString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This will *not* be caught</span><span style="color:#839496;">&quot;
+</span><span>  logInfo </span><span style="color:#859900;">$</span><span> displayShow (res4 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Either IOException </span><span style="color:#b58900;">()</span><span>)
+</span></code></pre>
+<p>Having to specify the type of exception you want can be tedious, so
+there are two helper functions that address common cases. The <code>tryIO</code>
+function is specialized to <code>IOException</code>, which is the type used by
+many function in standard libraries which perform I/O. For example:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> runSimpleApp </span><span style="color:#859900;">$ do
+</span><span>  result </span><span style="color:#859900;">&lt;-</span><span> tryIO </span><span style="color:#859900;">$</span><span> readFileUtf8 </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">does-not-exist</span><span style="color:#839496;">&quot;
+</span><span>  </span><span style="color:#859900;">case</span><span> result </span><span style="color:#859900;">of
+</span><span>    </span><span style="color:#cb4b16;">Left</span><span> e </span><span style="color:#859900;">-&gt;</span><span> logError </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Error reading file: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;</span><span> displayShow e
+</span><span>    </span><span style="color:#cb4b16;">Right</span><span> text </span><span style="color:#859900;">-&gt;</span><span> logInfo </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">That&#39;s surprising... </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;</span><span> display text
+</span></code></pre>
+<p>Notice how, in the above, we didn't need any explicit type
+signatures. The type of <code>e</code> is constrained to be <code>IOException</code>.</p>
+<p>The other helper function is <code>tryAny</code>, which constraints the exception
+to be <code>SomeException</code>. As we discussed above, <code>SomeException</code> is the
+parent exception type in the hierarchy, and therefore this function
+will catch <em>all</em> synchronous exceptions. We can replace <code>tryIO</code> with
+<code>tryAny</code> above, and the error message will remain unchanged.</p>
+<p>One more aspect of the <code>try</code> family: remember those pesky impure
+exceptions? Well, it's possible for them to leak through. For example:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> runSimpleApp </span><span style="color:#859900;">$ do
+</span><span>  result1 </span><span style="color:#859900;">&lt;-</span><span> tryAny </span><span style="color:#859900;">$</span><span> error </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This will be caught</span><span style="color:#839496;">&quot;
+</span><span>  </span><span style="color:#859900;">case</span><span> result1 </span><span style="color:#859900;">of
+</span><span>    </span><span style="color:#cb4b16;">Left</span><span> _ </span><span style="color:#859900;">-&gt;</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Exception was caught</span><span style="color:#839496;">&quot;
+</span><span>    </span><span style="color:#cb4b16;">Right </span><span style="color:#b58900;">() </span><span style="color:#859900;">-&gt;</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">How was this successful?!?</span><span style="color:#839496;">&quot;
+</span><span>
+</span><span>  result2 </span><span style="color:#859900;">&lt;-</span><span> tryAny </span><span style="color:#859900;">$</span><span> pure </span><span style="color:#859900;">$</span><span> error </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This will escape!</span><span style="color:#839496;">&quot;
+</span><span>  </span><span style="color:#859900;">case</span><span> result2 </span><span style="color:#859900;">of
+</span><span>    </span><span style="color:#cb4b16;">Left</span><span> _ </span><span style="color:#859900;">-&gt;</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Exception was caught</span><span style="color:#839496;">&quot;
+</span><span>    </span><span style="color:#cb4b16;">Right </span><span style="color:#b58900;">() </span><span style="color:#859900;">-&gt;</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">How was this successful?!?</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>In the first case, the impure exception was forced, turned into a
+synchronous exception, and caught by <code>tryAny</code>. In the second case,
+however, we wrapped up the impure exception with <code>pure</code>, preventing it
+from being forced. As far as <code>tryAny</code> is concerned, the second action
+succeeded! Then, when we try to pattern match on <code>result2</code>, we force
+the impure exception hiding inside the <code>Right</code>.</p>
+<p>To work around this, we have the <code>tryAnyDeep</code> function, which forces
+the value using <code>NFData</code>. Swapping out <code>tryAny</code> with <code>tryAnyDeep</code> will
+result in both exceptions being caught.</p>
+<p>Once you understand how to use <code>try</code>, using <code>catch</code> and <code>handle</code> is
+basically the same thing. Instead of returning an <code>Either</code> value, you
+provide these functions with actions to perform with the exception if
+one occurs. The type signatures are:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">catch </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">MonadUnliftIO m</span><span>, </span><span style="color:#268bd2;">Exception e</span><span>) </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">m a </span><span style="color:#859900;">-&gt;</span><span> (</span><span style="color:#268bd2;">e </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m a</span><span>) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m a
+</span><span style="color:#b58900;">handle </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">MonadUnliftIO m</span><span>, </span><span style="color:#268bd2;">Exception e</span><span>) </span><span style="color:#859900;">=&gt;</span><span> (</span><span style="color:#268bd2;">e </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m a</span><span>) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m a
+</span></code></pre>
+<p><code>handle</code> is just <code>catch</code> with the order of arguments reversed. These
+functions come with all the variations of <code>try</code> mentioned aboved
+(e.g. <code>catchIO</code>, <code>handleAny</code>). Feel free to use whichever is the most
+convenient.</p>
+<p><strong>Exercise</strong> Implement <code>catch</code> and <code>handle</code> in terms of <code>try</code>, and
+implement <code>try</code> in terms of <code>catch</code>.</p>
+<h2 id="exceptions-best-practices">Exceptions best practices</h2>
+<p>NOTE: This was originally in a <a href="https://tech.fpcomplete.com/blog/2016/11/exceptions-best-practices-haskell/">separate blog post</a>.</p>
+<p>Now that you understand how to work with exceptions, let's give some guidelines on best practices in Haskell. This is an opinionated set of guidelines. It ties in closely with our recommended approach in <a href="https://tech.fpcomplete.com/haskell/library/rio/">the <code>rio</code> library</a>.</p>
+<ul>
+<li>The Haskell runtime system allows any <code>IO</code> action to throw runtime exceptions. Many common library functions throw runtime exceptions. There is no indication at the type level if something throws an exception. You should assume that, unless explicitly documented otherwise, all actions may throw an exception.</li>
+<li>It's not worth trying to fight the system and make all possible error cases explicit. Other languages, like Rust, go this route, and it works well in practice. But that's because it's an ethos throughout the entire ecosystem. In Haskell, you're fighting against the current.</li>
+<li>As a result: making large sum types containing all possible exceptions, and wrapping all your <code>IO</code> code in <code>ExceptT</code>, is a major anti-pattern. It has three major downsides:
+<ul>
+<li>It slows down your code.</li>
+<li>It introduces confusion: your type signatures imply that it has only one way to fail (the explicit error case), but in reality runtime exceptions still exist.</li>
+<li>It becomes much harder to use combinators like <code>concurrently</code> safely due to <a href="https://www.youtube.com/watch?v=KZIN9f9rI34">monadic state</a>.</li>
+</ul>
+</li>
+<li>Exception to the above rule: it can sometimes be convenient for small blocks of code to use <code>ExceptT</code> or <code>MaybeT</code> to avoid deeply nested code blocks.</li>
+<li>Avoid explicit masking of exceptions like the plague. It is fraught with disaster. Use higher level combinators. And do not attempt to &quot;fix&quot; async exceptions by masking your entire code base. Again: you're fighting against the Haskell ecosystem!</li>
+<li>Use custom exception types with nice <code>displayException</code> implementations whenever possible.</li>
+<li>Don't be afraid to throw a runtime exception from your code if something exceptional happens. Ideally, document this case.</li>
+<li>On the other hand, if a failure is not really exceptional, represent it in the return type. For example: a <code>lookup</code> in a <code>Map</code> shouldn't throw a runtime exception, it should return a <code>Maybe</code> value.</li>
+<li>The line between exceptional and non-exceptional is pretty blurry in many cases, so use your best judgement based on your domain.</li>
+</ul>
+<h2 id="going-deeper">Going deeper</h2>
+<p>This is a relatively high level overview of exception handling in
+Haskell. As mentioned, the trick is to get a lot of practice using the
+functions above. And if you're interested in getting a much deeper
+intuition, please check out <a href="https://tech.fpcomplete.com/blog/2018/04/async-exception-handling-haskell/">Async Exception Handling in
+Haskell</a>.</p>
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#1b687a777e685b7d6b7874766b777e6f7e35787476" targe="_blank"><span class="__cf_email__" data-cfemail="394a58555c4a795f495a565449555c4d5c175a5654">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

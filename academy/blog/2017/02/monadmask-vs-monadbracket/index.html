@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>MonadMask vs MonadBracket</title>
+  <meta property="og:title" content="MonadMask vs MonadBracket">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="The exceptions package has a MonadMask typeclass. Is it the right abstraction, or do we need something different?">
+  <meta property="og:description" content="The exceptions package has a MonadMask typeclass. Is it the right abstraction, or do we need something different?">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;02&#x2F;monadmask-vs-monadbracket&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>MonadMask vs MonadBracket</h1>
+      
+      <p id="page-description">By Michael Snoyman, February  6, 2017</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=MonadMask%20vs%20MonadBracket https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;02&#x2F;monadmask-vs-monadbracket&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;02&#x2F;monadmask-vs-monadbracket&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;02&#x2F;monadmask-vs-monadbracket&#x2F;&amp;title=MonadMask%20vs%20MonadBracket"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;02&#x2F;monadmask-vs-monadbracket&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>The <a href=
+"https://www.stackage.org/package/exceptions"><code>exceptions</code>
+package</a> provides three typeclasses for generalizing exception
+handling to monads beyond <code>IO</code>:</p>
+<ul>
+<li><code>MonadThrow</code> is for monads which allow reporting an
+exception</li>
+<li><code>MonadCatch</code> is for monads which <i>also</i> allow
+catching a throw exception</li>
+<li><code>MonadMask</code> is for monads which <i>also</i> allow
+safely acquiring resources in the presence of asynchronous
+exceptions</li>
+</ul>
+<p>For reference, these are defined as:</p>
+<pre><span class="hs-keyword">class</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-conid">MonadThrow</span> <span class="hs-varid">m</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">throwM</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Exception</span> <span class=
+"hs-varid">e</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-varid">e</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span>
+
+<span class="hs-keyword">class</span> <span class=
+"hs-conid">MonadThrow</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">MonadCatch</span> <span class=
+"hs-varid">m</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">catch</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Exception</span> <span class=
+"hs-varid">e</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-varid">e</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span>
+
+<span class="hs-keyword">class</span> <span class=
+"hs-conid">MonadCatch</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">MonadMask</span> <span class=
+"hs-varid">m</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">mask</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-layout">(</span><span class=
+"hs-keyword">forall</span> <span class=
+"hs-varid">a</span><span class="hs-varop">.</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">b</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">b</span>
+  <span class="hs-varid">uninterruptibleMask</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-layout">(</span><span class=
+"hs-keyword">forall</span> <span class=
+"hs-varid">a</span><span class="hs-varop">.</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">b</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">b</span></pre>
+<p>This breakdown of the typeclasses is fully intentional, as each
+added capability excludes some class of monads, e.g.:</p>
+<ul>
+<li><code>Maybe</code> is a valid instance of
+<code>MonadThrow</code>, but since it throws away information on
+the exception that was thrown, it cannot be a
+<code>MonadCatch</code></li>
+<li>Continuation-based monads like <code>Conduit</code> are capable
+of catching synchronously thrown exceptions and are therefore valid
+<code>MonadCatch</code> instances, but cannot provide guarantees of
+safe resource cleanup (which is why the <code>resourcet</code>
+package exists), and are therefore not <code>MonadMask</code>
+instances</li>
+</ul>
+<p>However, there are two tightly related questions around
+<code>MonadMask</code> which trip people up a lot:</p>
+<ul>
+<li>Why is there no instance for <code>MonadMask</code> for
+<code>EitherT</code> (or its new synonym <code>ExceptT</code>)?
+It's certainly possible to safely acquire resources within an
+<code>EitherT</code> transformer (see below for an example).</li>
+<li>It seems perfectly reasonable to define an instance of
+<code>MonadMask</code> for a monad like <code>Conduit</code>, as
+its only methods are <code>mask</code> and
+<code>uninterruptibleMask</code>, which can certainly be
+implemented in a way that respects the types. The same applies to
+<code>EitherT</code> for that matter.</li>
+</ul>
+<p>Let's look at the docs for the <code>MonadMask</code> typeclass
+for a little more insight:</p>
+<blockquote>
+<p>Instances should ensure that, in the following code:</p>
+<p><code>f `finally` g</code></p>
+<p>The action g is called regardless of what occurs within f,
+including async exceptions.</p>
+</blockquote>
+<p>Well, this makes sense: <code>finally</code> is a good example
+of a function that guarantees cleanup in the event of any
+exception, so we'd want this (fairly straightforward) constraint to
+be met. The thing is, the <code>finally</code> function is not part
+of the <code>MonadMask</code> typeclass, but is instead defined on
+its own as (doing some aggressive inlining):</p>
+<pre><span class="hs-definition">finally</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadMask</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">b</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span>
+<span class="hs-definition">finally</span> <span class=
+"hs-varid">action</span> <span class=
+"hs-varid">finalizer</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">mask</span> <span class="hs-varop">$</span> <span class=
+"hs-keyglyph">\</span><span class=
+"hs-varid">unmasked</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">result</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">unmasked</span> <span class=
+"hs-varid">action</span> <span class=
+"hs-varop">`catch`</span> <span class=
+"hs-keyglyph">\</span><span class="hs-varid">e</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">finalizer</span>
+    <span class="hs-varid">throwM</span> <span class=
+"hs-layout">(</span><span class="hs-varid">e</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">SomeException</span><span class="hs-layout">)</span>
+  <span class="hs-varid">finalizer</span>
+  <span class="hs-varid">return</span> <span class=
+"hs-varid">result</span></pre>
+<p>Let's specialize the type signature to the <code>ExceptT MyError
+IO</code> type:</p>
+<pre><span class="hs-definition">finally</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">ExceptT</span> <span class=
+"hs-conid">MyError</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">a</span>
+        <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">ExceptT</span> <span class=
+"hs-conid">MyError</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">b</span>
+        <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">ExceptT</span> <span class=
+"hs-conid">MyError</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">a</span></pre>
+<p>If we remember that <code>ExceptT</code> is defined as:</p>
+<pre><span class="hs-keyword">newtype</span> <span class=
+"hs-conid">ExceptT</span> <span class=
+"hs-varid">e</span> <span class="hs-varid">m</span> <span class=
+"hs-varid">a</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">ExceptT</span> <span class=
+"hs-layout">(</span><span class="hs-varid">m</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Either</span> <span class=
+"hs-varid">e</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span></pre>
+<p>We can rewrite that signature to put the <code>IO</code> on the
+outside with an explicit <code>Either</code> return value. Inlining
+the <code>Monad</code> instance for <code>ExceptT</code> into the
+above implementation of <code>finally</code>, we get:</p>
+<pre><span class="hs-definition">finally</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Either</span> <span class=
+"hs-conid">MyError</span> <span class=
+"hs-varid">a</span><span class="hs-layout">)</span>
+        <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Either</span> <span class=
+"hs-conid">MyError</span> <span class=
+"hs-varid">b</span><span class="hs-layout">)</span>
+        <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Either</span> <span class=
+"hs-conid">MyError</span> <span class=
+"hs-varid">a</span><span class="hs-layout">)</span>
+<span class="hs-definition">finally</span> <span class=
+"hs-varid">action</span> <span class=
+"hs-varid">finalizer</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">mask</span> <span class="hs-varop">$</span> <span class=
+"hs-keyglyph">\</span><span class=
+"hs-varid">unmasked</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">eresult</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">unmasked</span> <span class=
+"hs-varid">action</span> <span class=
+"hs-varop">`catch`</span> <span class=
+"hs-keyglyph">\</span><span class="hs-varid">e</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">finalizer</span>
+    <span class="hs-varid">throwM</span> <span class=
+"hs-layout">(</span><span class="hs-varid">e</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">SomeException</span><span class="hs-layout">)</span>
+  <span class="hs-keyword">case</span> <span class=
+"hs-varid">eresult</span> <span class="hs-keyword">of</span>
+    <span class="hs-conid">Left</span> <span class=
+"hs-varid">err</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">return</span> <span class=
+"hs-layout">(</span><span class="hs-conid">Left</span> <span class=
+"hs-varid">err</span><span class="hs-layout">)</span>
+    <span class="hs-conid">Right</span> <span class=
+"hs-varid">result</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+      <span class="hs-varid">finalizer</span>
+      <span class="hs-varid">return</span> <span class=
+"hs-varid">result</span></pre>
+<p>(I took some shortcuts in this implementation to focus on the
+bad part, take it as an exercise to the reader to make a fully
+faithful implementation of this function.)</p>
+<p>With this inlined implementation, the problem becomes much
+easier to spot. We run <code>action</code>, which may result in a
+runtime exception. If it does, our <code>catch</code> function
+kicks in, we run the finalizer, and rethrow the exception,
+awesome.</p>
+<p>If there's no runtime exception, we have <i>two</i> cases to
+deal with: the result is either <code>Right</code> or
+<code>Left</code>. In the case of <code>Right</code>, we run our
+finalizer and return the result. Awesome.</p>
+<p>But the problem is in the <code>Left</code> case. Notice how
+we're not running the finalizer at all, which is clearly
+problematic behavior. I'm not pointing out anything new here, as
+this has been well known in the Haskell world, with packages like
+<code>MonadCatchIO-transformers</code> in the past.</p>
+<p>Just as importantly, I'd like to point out that it's
+<i>exceedingly trivial</i> to write a correct version of
+<code>finally</code> for the <code>IO (Either MyError a)</code>
+case, and therefore for the <code>ExceptT MyError IO a</code> case
+as well:</p>
+<pre><span class="hs-definition">finally</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Either</span> <span class=
+"hs-conid">MyError</span> <span class=
+"hs-varid">a</span><span class="hs-layout">)</span>
+        <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Either</span> <span class=
+"hs-conid">MyError</span> <span class=
+"hs-varid">b</span><span class="hs-layout">)</span>
+        <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Either</span> <span class=
+"hs-conid">MyError</span> <span class=
+"hs-varid">a</span><span class="hs-layout">)</span>
+<span class="hs-definition">finally</span> <span class=
+"hs-varid">action</span> <span class=
+"hs-varid">finalizer</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">mask</span> <span class="hs-varop">$</span> <span class=
+"hs-keyglyph">\</span><span class=
+"hs-varid">unmasked</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">eresult</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">unmasked</span> <span class=
+"hs-varid">action</span> <span class=
+"hs-varop">`catch`</span> <span class=
+"hs-keyglyph">\</span><span class="hs-varid">e</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">finalizer</span>
+    <span class="hs-varid">throwM</span> <span class=
+"hs-layout">(</span><span class="hs-varid">e</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">SomeException</span><span class="hs-layout">)</span>
+  <span class="hs-varid">finalizer</span>
+  <span class="hs-varid">return</span> <span class=
+"hs-varid">eresult</span></pre>
+<p>While this may look identical to the original, unspecialized
+version we have in terms of <code>MonadMask</code> and
+<code>MonadCatch</code>, there's an important difference: the monad
+used in the <code>do</code>-notation is <code>IO</code>, not
+<code>ExceptT</code>, and therefore the presence of a
+<code>Left</code> return value no longer has any special effect on
+control flow.</p>
+<p>There are arguments to be had about the proper behavior to be
+displayed when the finalizer has some error condition, but I'm
+conveniently eliding that point right now. The point is: we can
+implement it when specializing <code>Either</code> or
+<code>ExceptT</code>.</p>
+<h2 id="enter-monadbracket">Enter MonadBracket</h2>
+<p>A few weeks ago I was <a href=
+"https://github.com/haskell-foundation/foundation/pull/189">working
+on a pull request</a> for the foundation package, adding a
+<code>ResourceT</code> transformer. At the time, foundation didn't
+have anything like <code>MonadMask</code>, so I needed to create
+such a typeclass. I could have gone with something matching the
+exceptions package; instead, I went for the following:</p>
+<pre><span class="hs-keyword">class</span> <span class=
+"hs-conid">MonadCatch</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">MonadBracket</span> <span class=
+"hs-varid">m</span> <span class="hs-keyword">where</span>
+    <span class=
+"hs-comment">-- | A generalized version of the standard bracket function which</span>
+    <span class=
+"hs-comment">-- allows distinguishing different exit cases.</span>
+    <span class="hs-varid">generalBracket</span>
+        <span class="hs-keyglyph">::</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span>
+        <span class="hs-comment">-- ^ acquire some resource</span>
+        <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">b</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-varid">ignored1</span><span class="hs-layout">)</span>
+        <span class=
+"hs-comment">-- ^ cleanup, no exception thrown</span>
+        <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">E</span><span class="hs-varop">.</span><span class=
+"hs-conid">SomeException</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-varid">ignored2</span><span class="hs-layout">)</span>
+        <span class=
+"hs-comment">-- ^ cleanup, some exception thrown. The exception will be rethrown</span>
+        <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">b</span><span class=
+"hs-layout">)</span>
+        <span class=
+"hs-comment">-- ^ inner action to perform with the resource</span>
+        <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">b</span></pre>
+<p>This is a generalization of the <code>bracket</code> function.
+Importantly, it allows you to provide different cleanup functions
+for the success and failure cases. It also provides you with more
+information for cleanup, namely the exception that occured or the
+success value.</p>
+<p>I think this is a better abstraction than
+<code>MonadMask</code>:</p>
+<ul>
+<li>It allows for a natural and trivial definition of all of the
+cleanup combinators (<code>bracket</code>, <code>finally</code>,
+<code>onException</code>, etc) in terms of this one primitive.</li>
+<li>The primitive can be defined with full knowledge of the
+implementation details of the monad in question.</li>
+<li>It makes invalid instances of <code>MonadBracket</code> look
+"obviously wrong" instead of just being accidentally wrong.</li>
+</ul>
+<p>We can fiddle around with the exact definition of
+<code>generalBracket</code>. For example, with the type signature
+above, there is no way to create an instance for
+<code>ExceptT</code>, since in the case of a <code>Left</code>
+return value from the action:</p>
+<ul>
+<li>We won't have a runtime exception to pass to the exceptional
+cleanup function</li>
+<li>We won't have a success value to pass to the success cleanup
+function</li>
+</ul>
+<p>This can easily be fixed by replacing:</p>
+<pre><span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">b</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-varid">ignored1</span><span class="hs-layout">)</span>
+<span class=
+"hs-comment">-- ^ cleanup, no exception thrown</span></pre>
+<p>with</p>
+<pre><span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-varid">ignored1</span><span class="hs-layout">)</span>
+<span class=
+"hs-comment">-- ^ cleanup, no exception thrown</span></pre>
+<p>The point is: this formulation can allow for more valid
+instances, make it clearer why some instances don't exist, and
+prevent people from accidentally creating broken, buggy
+instances.</p>
+<p>Note that I'm not actually proposing any changes to the
+exceptions package right now, I'm merely commenting on this new
+point in the design space. Backwards compatibility is something we
+need to seriously consider before rolling out changes.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=MonadMask%20vs%20MonadBracket https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;02&#x2F;monadmask-vs-monadbracket&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;02&#x2F;monadmask-vs-monadbracket&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;02&#x2F;monadmask-vs-monadbracket&#x2F;&amp;title=MonadMask%20vs%20MonadBracket"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;02&#x2F;monadmask-vs-monadbracket&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#4231232e2731022432212d2f322e2736276c212d2f" targe="_blank"><span class="__cf_email__" data-cfemail="087b69646d7b486e786b676578646d7c6d266b6765">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

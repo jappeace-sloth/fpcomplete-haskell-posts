@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Pinpointing deadlocks in Haskell</title>
+  <meta property="og:title" content="Pinpointing deadlocks in Haskell">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="This blog post introduces a new technique that takes advantage of Haskell Run Time System (RTS) and timeout function in order to locate exact line where a deadlock occurs in the code. It also describes how to debug concurrent programs in Haskell using Dining Philosophers problem as an example.">
+  <meta property="og:description" content="This blog post introduces a new technique that takes advantage of Haskell Run Time System (RTS) and timeout function in order to locate exact line where a deadlock occurs in the code. It also describes how to debug concurrent programs in Haskell using Dining Philosophers problem as an example.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;05&#x2F;pinpointing-deadlocks-in-haskell&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Pinpointing deadlocks in Haskell</h1>
+      
+      <p id="page-description">By Alexey Kuleshevich, May  9, 2018</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Pinpointing%20deadlocks%20in%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;05&#x2F;pinpointing-deadlocks-in-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;05&#x2F;pinpointing-deadlocks-in-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;05&#x2F;pinpointing-deadlocks-in-haskell&#x2F;&amp;title=Pinpointing%20deadlocks%20in%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;05&#x2F;pinpointing-deadlocks-in-haskell&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>Concurrent programming is hard! I still remember the moment of
+my introduction to multi-threaded programming at the University of
+New Mexico, our professor grabbed his head and said: “Here be
+demons!”. There are all sorts of issues that arise in a concurrent
+setup, such as race conditions, starvation, deadlocks, data
+corruption, you name it. All of these are also applicable to
+Haskell, and in this post, I would like to introduce a simple yet
+very effective way to track down deadlocks.</p>
+<h2>Motivation</h2>
+<p>Unlike imperative programming languages, functional languages
+have a huge advantage in parallelization of computation, it just
+comes naturally and almost problem free from the property of
+referential transparency. Haskell adds an even bigger advantage,
+namely its type system, it will give you guarantees that
+computation can indeed be safely parallelized. Recently I've been
+working on a parallel array processing library <a href=
+"https://github.com/lehins/massiv" rel="noopener" target=
+"_blank">massiv</a> that can take advantage of all that power. In
+order for computation to be balanced among all cores equivalently
+and automatically, custom scheduler had to be implemented that
+would manage all that work, which is not a trivial task no matter
+what the language.</p>
+<p>There are some amazing libraries available that can save you
+from the world of hurt that I'd like to recommend for
+multi-threaded programming right off the bat: <a href=
+"https://www.stackage.org/package/stm" rel="noopener" target=
+"_blank">stm</a>, <a href="https://www.stackage.org/package/async"
+rel="noopener" target="_blank">async</a> and <a href=
+"https://www.stackage.org/package/unliftio" rel="noopener" target=
+"_blank">unliftio</a>. Unfortunately, the task I had at hand would
+not have become easier if I used any of those libraries, plus I
+wanted to keep dependency footprint to a minimum, so the only thing
+that I was left with was the <code>MVar</code> primitive. While
+working on the scheduler, despite all of the hard thinking, I did
+get myself in a situation of an occasional, but consistent
+deadlock. The nature of the deadlock isn't really important to this
+discussion, but what is important is how deadlocks do usually look
+in Haskell and how do we track them down. Neither of the above
+mentioned libraries actually prevent deadlocks from occurring, but
+the method described here on locating them is very simple and will
+work regardless if you use any third party libraries or not.</p>
+<h2>Blocking variables</h2>
+<p>There are two mutable variables that you can actually block a
+thread on in GHC, either an <code>MVar</code> or a
+<code>TVar</code>. It is almost guaranteed that GHC's Runtime
+System (RTS) will actually detect when you are blocked on such a
+variable that isn't referenced by any other thread that is still
+making progress, which would mean that it can't be unblocked, and
+for that reason it will throw either
+<code>BlockedIndefinitelyOnMVar</code> or
+<code>BlockedIndefinitelyOnSTM</code> exception, depending on what
+type of variable you are blocked on. This is how they look like in
+the terminal:</p>
+<pre><code>thread blocked indefinitely in an MVar operation
+</code></pre>
+<p>or</p>
+<pre><code>thread blocked indefinitely in an STM transaction
+</code></pre>
+<p>This is very impressive, considering that in most other
+languages you normally end up with a forever hanging process that
+must be brutally killed. At the same time, this exception doesn't
+tell us where exactly in our code the deadlock actually happened,
+and that's a problem. We do know all the functions in our code that
+do the blocking, such as <code>takeMVar</code>,
+<code>putMVar</code>, <code>readMVar</code>, etc. Therefore we can
+positively identify all locations where this exception could have
+originated from. If there are one or two occurrences of those
+blocking functions in the code, there is probably no need for any
+clever techniques in figuring out the location, but when there are
+a bunch of them, it is easy to get to the point of desperation.</p>
+<p>The process of pinpointing deadlock locations isn't automatic,
+but it is simple and reliable. All we need to do is
+<code>catch</code> above mentioned exceptions, and it will tell us
+exactly where the deadlock came from:</p>
+<pre><code class="haskell">import Control.Exception
+import Say
+
+hasLocked :: String -&gt; IO a -&gt; IO a
+hasLocked msg action =
+  action `catches`
+  [ Handler $ \exc@BlockedIndefinitelyOnMVar -&gt; sayString ("[MVar]: " ++ msg) &gt;&gt; throwIO exc
+  , Handler $ \exc@BlockedIndefinitelyOnSTM -&gt; sayString ("[STM]: " ++ msg) &gt;&gt; throwIO exc
+  ]
+</code></pre>
+<p>Besides the deadlock detection, there is something else special
+about these two exceptions, they are both thrown like asynchronous
+exceptions, but they aren't considered as such. The reason why we
+can think of them as synchronous is because we know exact locations
+where they can occur, and this is the fact that we can abuse to
+locate our deadlocks.</p>
+<p>If in doubt, here is an easy way to check if an exception is
+considered asynchronous:</p>
+<pre><code class="haskell">λ&gt; import Control.Exception
+λ&gt; asyncExceptionFromException (toException BlockedIndefinitelyOnMVar) :: Maybe BlockedIndefinitelyOnMVar
+Nothing
+λ&gt; asyncExceptionFromException (toException AllocationLimitExceeded) :: Maybe AllocationLimitExceeded
+Just allocation limit exceeded </code></pre>
+<h2><img alt="Five Philosophers" height="207" sizes=
+"(max-width: 200px) 100vw, 200px" src=
+"/images/hubspot/66a6d2d03d69c3c83953adea3a69da62eee5c5f84fdf0abcc56cd0969a7e6ccd.png"
+srcset=
+"/images/hubspot/082522b6c3b716a762cf761c4fc716a1467040324a208a90e49acee2f83fa476.png 100w, /images/hubspot/66a6d2d03d69c3c83953adea3a69da62eee5c5f84fdf0abcc56cd0969a7e6ccd.png 200w, /images/hubspot/fe032149202060cb100505db0f5a63fd2337e2f6b86ac9d09881531b78b75b81.png 300w, /images/hubspot/780aa245321c153d1b9ed5321dd1e565d5b681e38deba87a938075b59dd4de44.png 400w, /images/hubspot/a65c3a11f6732bc9f1f080dceda98ca523b4ac7e48ed532d917049e8d2654b35.png 500w, /images/hubspot/900ea14bcec9e5d263205a91bd3ad2ae13d819d72a145a29eee758cb64115d2c.png 600w"
+style="width: 200px; float: right; margin: 0px 10px 10px;" width=
+"200"></h2>
+<p>In order to understand exceptions better and to recognize the
+distinction between the two kinds I hig<span style=
+"letter-spacing: -0.005em;">hly recommended reading Michael
+Snoyman's recent blog post</span> <a href=
+"/blog/2018/04/async-exception-handling-haskell" rel="noopener"
+style="letter-spacing: -0.005em;" target="_blank">Asynchronous
+Exception Handling in Haskell</a><span style=
+"letter-spacing: -0.005em;">.</span></p>
+<h2>Dining Philosophers</h2>
+<p>Best way to understand a concept is to see it in action, so
+let's look at a simple but meaningful example. Consider this
+incorrect implementation of the famous <a href=
+"https://en.wikipedia.org/wiki/Dining_philosophers_problem" rel=
+"noopener" target="_blank">Dining philosophers problem</a>:</p>
+<pre><code class="haskell">import Control.Concurrent
+import Say
+
+main :: IO ()
+main = do
+  forks &lt;- mapM (\i -&gt; (,) i &lt;$&gt; newMVar ()) [1..5]
+  mapM_ forkIO $ zipWith3 philosopher [2..] forks (tail forks)
+  philosopher 1 (last forks) (head forks)
+
+philosopher :: Int -&gt; (Int, MVar ()) -&gt; (Int, MVar ()) -&gt; IO ()
+philosopher num (_, forkLeft) (_, forkRight) = dine
+  where
+    dine = do
+      sayString $ mkMsg num "thinking..."
+      pickupForks forkLeft forkRight
+      sayString $ mkMsg num "eating..."
+      threadDelay 100000
+      putDownForks forkLeft forkRight
+      dine
+
+pickupForks :: MVar () -&gt; MVar () -&gt; IO ()
+pickupForks f1 f2 = do
+  takeMVar f1
+  threadDelay 10000
+  takeMVar f2
+
+putDownForks :: MVar () -&gt; MVar () -&gt; IO ()
+putDownForks f1 f2 = putMVar f1 () &gt;&gt; putMVar f2 ()
+
+mkMsg :: Int -&gt; String -&gt; String
+mkMsg num str = "Philosopher " ++ show num ++ " is " ++ str
+</code></pre>
+<p>If you run the program above you will eventually run into a
+deadlock. Normally, it might take a while for that to happen, but
+careful placement of <code>threadDelay</code>s triggers it
+instantaneously.</p>
+<pre><code class=
+"bash">$ stack exec --package say -- ghc philosophers.hs -threaded -with-rtsopts='-N'
+$ ./philosophers
+Philosopher 1 is thinking...
+Philosopher 3 is thinking...
+Philosopher 4 is thinking...
+Philosopher 5 is thinking...
+Philosopher 2 is thinking...
+example: thread blocked indefinitely in an MVar operation
+</code></pre>
+<p>We know exactly where the problem is, but let's pretend that we
+need to debug it. Looking at our <code>philosophers</code> function
+it is obvious that it is either <code>pickupForks</code> or
+<code>putDownForks</code> function that is at fault because both of
+them use blocking <code>takeMVar</code> and <code>putMVar</code>
+functions. Let's wrap around places of interest with our new tricky
+<code>hasLocked</code> function:</p>
+<pre><code class=
+"haskell">philosopher :: Int -&gt; (Int, MVar ()) -&gt; (Int, MVar ()) -&gt; IO ()
+philosopher num (_, forkLeft) (_, forkRight) = dine
+  where
+    dine = do
+      sayString $ mkMsg num "thinking..."
+      hasLocked (mkMsg num "DEADLOCKED on picking up forks") $
+        pickupForks forkLeft forkRight
+      sayString $ mkMsg num "eating..."
+      threadDelay 100000
+      hasLocked (mkMsg num "DEADLOCKED on putting down forks") $
+        putDownForks forkLeft forkRight
+      dine
+</code></pre>
+<p>Compiling the program as before and running it will reveal that
+all of our philosophers get deadlocked when trying to pickup a
+fork:</p>
+<pre><code class="bash">$ ./philosophers
+Philosopher 1 is thinking...
+Philosopher 2 is thinking...
+Philosopher 4 is thinking...
+Philosopher 5 is thinking...
+Philosopher 3 is thinking...
+[MVar]: Philosopher 5 is DEADLOCKED on picking up forks
+[MVar]: Philosopher 2 is DEADLOCKED on picking up forks
+[MVar]: Philosopher 3 is DEADLOCKED on picking up forks
+[MVar]: Philosopher 4 is DEADLOCKED on picking up forks
+[MVar]: Philosopher 1 is DEADLOCKED on picking up forks
+example: thread blocked indefinitely in an MVar operation
+</code></pre>
+<p>From then on we can move the <code>hasLocked</code> function
+deeper down the invocation tree to individual <code>takeMVar</code>
+functions in order to see exactly where the deadlock occurs.</p>
+<h2>Timeout</h2>
+<p>It is important to understand that the approach described in
+this blog post isn't foolproof and it's best to use it for
+debugging purposes only. Consider this minor change to our
+incorrect implementation. Instead of making all threads participate
+in the algorithm, we'll have our main thread do nothing but
+occasionally look at the <code>MVar</code>s, without doing anything
+to unblock them:</p>
+<pre><code class="haskell">main = do
+  forks &lt;- mapM (\i -&gt; (,) i &lt;$&gt; newMVar ()) [1..5]
+  mapM_ forkIO $ zipWith3 philosopher [1..] forks (tail forks ++ [head forks])
+  let wait = do
+        _areEmpty &lt;- and &lt;$&gt; mapM (isEmptyMVar . snd) forks
+        threadDelay 10000000 &gt;&gt; wait
+  wait
+</code></pre>
+<p>This as well will result in a deadlock, but RTS has no way of
+knowing that, since the reference to <code>forks</code> is kept
+around in the main thread due to the usage of
+<code>isEmptyMVar</code>.</p>
+<p>There is a workaround that can cope with such situations though.
+If we know that our thread shouldn't be blocking for more than some
+short period of time, then we can further wrap around our
+<code>hasLocked</code> function with a timeout:</p>
+<pre><code>import System.Timeout
+
+hasLockedTimely :: Int -&gt; String -&gt; IO a -&gt; IO a
+hasLockedTimely n msg action =
+  timeout n (hasLocked msg action) &gt;&gt;=
+  maybe (sayString ("[Timeout]: " ++ msg) &gt;&gt; throwIO Deadlock) return
+</code></pre>
+<p>This time we'll wrap around the actual action of picking up a
+fork:</p>
+<pre>
+<code>pickupForks :: Int -&gt; MVar () -&gt; MVar () -&gt; IO ()
+pickupForks num f1 f2 = do
+  let mkMsg' fork = mkMsg num "DEADLOCKED on picking up " ++ fork
+  hasLockedTimely 1000000 (mkMsg' "left fork") $ takeMVar f1
+  threadDelay 100000
+  hasLockedTimely 1000000 (mkMsg' "right fork") $ takeMVar f2
+</code></pre>
+<p>And sure enough, we now know the exact places where our program
+has deadlocked:</p>
+<pre><code>$ ./philosophers
+Philosopher 5 is thinking...
+Philosopher 1 is thinking...
+Philosopher 3 is thinking...
+Philosopher 2 is thinking...
+Philosopher 4 is thinking...
+[Timeout]: Philosopher 5 is DEADLOCKED on picking up right fork
+philosophers: no threads to run:  infinite loop or deadlock?
+[Timeout]: Philosopher 2 is DEADLOCKED on picking up right fork
+[Timeout]: Philosopher 4 is DEADLOCKED on picking up right fork
+[Timeout]: Philosopher 3 is DEADLOCKED on picking up right fork
+philosophers: no threads to run:  infinite loop or deadlock?
+[Timeout]: Philosopher 1 is DEADLOCKED on picking up right fork
+philosophers: no threads to run:  infinite loop or deadlock?
+philosophers: no threads to run:  infinite loop or deadlock?
+philosophers: no threads to run:  infinite loop or deadlock?
+^C
+</code></pre>
+<p>Just to verify that our trick doesn't interfere with correct
+functionality we'll apply the Dijkstra's solution:</p>
+<pre><code class=
+"haskell">philosopher :: Int -&gt; (Int, MVar ()) -&gt; (Int, MVar ()) -&gt; IO ()
+philosopher num (leftNum, forkLeft) (rightNum, forkRight) = dine
+  where
+    dine = do
+      sayString $ mkMsg num "thinking..."
+      if leftNum &lt; rightNum
+        then pickupForks num forkLeft forkRight
+        else pickupForks num forkRight forkLeft
+      sayString $ mkMsg num "eating..."
+      threadDelay 100000
+      putDownForks forkLeft forkRight
+      dine
+</code></pre>
+<p>And now all of our dining philosophers can happily enjoy their
+spaghetti for all eternity:</p>
+<pre><code>$ ./philosophers
+Philosopher 2 is thinking...
+Philosopher 3 is thinking...
+Philosopher 4 is thinking...
+Philosopher 5 is thinking...
+Philosopher 1 is thinking...
+Philosopher 5 is eating...
+Philosopher 5 is thinking...
+Philosopher 4 is eating...
+Philosopher 4 is thinking...
+Philosopher 3 is eating...
+Philosopher 5 is eating...
+Philosopher 3 is thinking...
+Philosopher 2 is eating...
+Philosopher 5 is thinking...
+Philosopher 4 is eating...
+Philosopher 2 is thinking...
+Philosopher 4 is thinking...
+Philosopher 1 is eating...
+Philosopher 1 is thinking...
+...(never stops)
+</code></pre>
+<p>As a further improvement to this technique, say if it is ever to
+become a part of some library, it would be useful to utilize
+<code>TemplateHaskell</code> in order to report the exact location
+in the code automatically, instead of inferring it from a custom
+message. Alternatively, we could use <code>HasCallStack</code>,
+which sounds like a much better approach, and may even be something
+that could get added to GHC itself without any significant breaking
+compatibility.</p>
+<h2>Conclusion</h2>
+<p>To sum it up, there is no need to be banging your head on a
+table when there is a deadlock in the code, with a bit of effort we
+can rely on GHC to point it out for us. Naturally, this is only one
+of many problems that can get in a way when writing concurrent
+programs, and despite that this technique proved itself pretty
+reliable, it can't point out logic errors and tell us the exact
+reason why the program reached a deadlock. We have experienced
+software engineers that can tackle problems like that with
+pleasure. Feel free to <a href="/contact-us" rel="noopener" target=
+"_blank">reach out to us</a> for any Haskell programming, no matter
+how easy or hard your project might be. Also, you can find more
+helpful reading materials in our <a href="/haskell-syllabus" rel=
+"noopener" target="_blank">Haskell Syllabus</a>&nbsp;as well as
+another blog post related to this topic:&nbsp;<a href=
+"/blog/2016/06/async-exceptions-stm-deadlocks" rel="noopener"
+target="_blank">Async Exceptions, STM, and Deadlocks.</a></p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Pinpointing%20deadlocks%20in%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;05&#x2F;pinpointing-deadlocks-in-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;05&#x2F;pinpointing-deadlocks-in-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;05&#x2F;pinpointing-deadlocks-in-haskell&#x2F;&amp;title=Pinpointing%20deadlocks%20in%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;05&#x2F;pinpointing-deadlocks-in-haskell&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#1261737e7761527462717d7f627e7766773c717d7f" targe="_blank"><span class="__cf_email__" data-cfemail="d9aab8b5bcaa99bfa9bab6b4a9b5bcadbcf7bab6b4">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>
