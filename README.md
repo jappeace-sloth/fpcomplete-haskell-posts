@@ -32,10 +32,19 @@ rendering as `index.txt`. Stylesheets and images were not archived.
 - `manifest.tsv`: directory, date, author, title, original URL, Wayback capture
   timestamp and why the page was selected.
 
-Dates come from the byline on the post. For two posts whose captures have no
-byline, the month comes from the dated URL the post had on www.fpcomplete.com.
-The bylines and the `/blog/YYYY/MM/` URLs disagree by about a month on 16 posts;
-the byline is used.
+Dates and authors come from the byline on the post. Three dates are set by hand:
+
+- `blog/haskell-web-server-in-5mb` and `blog/specifying-dependencies` have no
+  byline in their captures, so they get the month from the dated URL the post
+  had on www.fpcomplete.com, and no author.
+- `blog/bitrot-free-scripts` has a byline of August 11, 2015, but the post uses
+  `lts-6.11`, which Stackage published on 2016-08-10, and its URL is
+  `/blog/2016/08/`. It is dated 2016-08-11.
+
+On 15 other posts the `/blog/YYYY/MM/` URL month is later than the byline: by
+one month on 12 posts, two months on 2 and three months on 1
+(`blog/haskell-from-c`). Nothing in those posts contradicts the byline, so the
+byline is used.
 
 ## Selection
 
