@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Monte carlo analysis in Haskell</title>
+  <meta property="og:title" content="Monte carlo analysis in Haskell">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;03&#x2F;monte-carlo-haskell&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Monte carlo analysis in Haskell</h1>
+      
+      <p id="page-description">By Michael Snoyman, March 20, 2014</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Monte%20carlo%20analysis%20in%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;03&#x2F;monte-carlo-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;03&#x2F;monte-carlo-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;03&#x2F;monte-carlo-haskell&#x2F;&amp;title=Monte%20carlo%20analysis%20in%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;03&#x2F;monte-carlo-haskell&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>A common analytic task is the monte carlo simulation. This
+involves sampling large numbers of random values in order to come
+to some kind of conclusion.</p>
+<p>Random numbers are often thought of as a weak point in purely
+functional languages. In a purely functional language like Haskell,
+we keep a strict separation between pure and impure functions.
+Since by its very nature, a function generating a random value
+generates different values each time it's called, we're forced to
+move it into the impure world. At that point, it may seem like
+we've lost a lot of our claimed benefits from purity.</p>
+<p>This blog post is intended to demonstrate that, with the right
+choice of libraries, we're able to have our cake and eat it too:
+write pure code for the pure parts of our program and keep
+side-effects contained. We'll also explore how Haskell's type
+system allows us to write even more concise code than dynamically
+typed languages, not to mention most statically typed languages,
+and how we can move from using gigabytes of memory to just a few
+tens of kilobytes.</p>
+<h2 id="calculating-pi">Calculating pi</h2>
+<p>For demonstration purposes, we want to start with a simple monte
+carlo simulation: estimating the value of pi. To do this, we'll
+focus on a 1-by-1 square, and imagine that the bottom-left corner
+(i.e., the origin) is the center of a unit circle (i.e., radius of
+1). For any point in that square, we can determine if it falls
+inside the unit circle by calculating its distance from that
+bottom-left corner. In other words, for a point (x, y), if x*x +
+y*y &lt; 1, we're inside the circle. Otherwise we're not.</p>
+<svg height="200" width="200">
+<circle cx="100" cy="100" fill="#990" r="100" style=
+"fill-opacity:0.5"></circle>
+<rect fill="#099" height="100" style="fill-opacity:0.5" width="100"
+x="100" y="0"></rect>
+</svg>
+<p>Now comes the monte carlo simulation. We need to generate random
+points in that square, and check if they're in the circle. We
+determine the probability that one of these random points is in the
+circle, and use this to estimate the area of the unit circle which
+intersects with our square. Since this is one quarter of the entire
+circle, our probability will actually estimate pi divided by 4,
+since the area of the unit circle is pi.</p>
+<h2 id="let39s-get-imperative">Let's get imperative</h2>
+<p>We want to start off with a baseline approach to the problem. A
+common tool in quant research is Python, together with the Numpy
+and Scipy libraries. Let's see how they might be used to come up
+with a solution:</p>
+<pre><code class="python">from numpy import average
+from scipy import rand
+
+print average([x[0]*x[0]+x[1]*x[1]&lt;1 for x in rand(10000000,2)])*4</code></pre>
+<p>Note: While I'm not an expert in Numpy and Scipy, this example
+was provided to me by someone who uses those tools regularly. If
+there's a problem in the code or my explanation of it, please let
+me know.</p>
+<p>The real magic here is the <code>rand</code> function. It will
+generate a matrix with the given dimensions, filled with random
+numbers. We pass in two parameters: 10,000,000 to be the number of
+experiments to perform, and 2, since each experiment needs two
+random values (an x and y coordinate). Our program then uses a list
+comprehension to iterate over the 10 million two-length vectors,
+and for each vector, determines if the distance from the origin is
+less than one. Our boolean result is implicitly converted to a 0 or
+1, we get the average, and multiply by 4. When run on my system, I
+get the result: 3.1413928.</p>
+<h3 id="the-problem">The problem</h3>
+<p>The problem with this approach is memory usage: the entire 20
+million member matrix is kept in memory at the same time! My system
+ended up using 250MB of memory to perform this calculation. But the
+problem is worse than that, since the memory use will grow linearly
+as we increase our sample size!</p>
+<p>We can fairly easily solve our memory problem, by going to an
+explicit for loop:</p>
+<pre><code class="python">import random
+
+count = 100000000
+successes = 0
+
+for i in xrange(count):
+    x = random.random()
+    y = random.random()
+    if x*x + y*y &lt; 1:
+        successes += 1
+
+print 4.*successes/count</code></pre>
+<p>In comparison to the previous code, this program runs in about
+3MB of memory, but has twice the run time. (Recommendations for
+improvement are welcome.)</p>
+<p>While the code isn't <i>complicated</i>, it is pretty tedious.
+And maybe this is just the Haskeller in me, but I got seriously
+tripped up by the need to use <code>1.0</code> instead of just
+<code>1</code> when summing up <code>successes</code>. Initially, I
+just used <code>1</code>, which resulted in my answer always being
+0, since Python performed integer division instead of floating
+point division. It's certainly a strange feeling to get a type
+error at runtime!</p>
+<p>So we now have two Pythonic approaches to the problem: a
+concise, fast, memory-inefficient version, and a longer, slower,
+memory-efficient version.</p>
+<p><b>UPDATE</b> There are some great comments on the Python code
+below. I'm going to leave the original content of this post
+unmodified, but recommend readers look at the comments for
+clarifications.</p>
+<h2 id="enter-haskell-and-iap">Enter Haskell, and IAP</h2>
+<p>Let's see how Haskell, and in particular FP Complete's
+Integrated Analysis Platform (IAP), would address this problem. One
+of the most common complaints we hear from people about their
+current analysis tools is their inability to deal well with large
+data sets. As such, we've designed our tool with constant memory
+analyses as a primary goal. In order to do that, we use the
+<code>conduit</code> library, which is one of Haskell's streaming
+data libraries.</p>
+<p>The nice thing about a streaming data library like conduit is
+that, not only does is make it easy to keep only the bare minimum
+data in memory at a time, but it's also designed around separating
+pure and impure code. This was one of the areas of concern we
+raised at the beginning of our blog post. So let's see how IAP and
+conduit allow us to solve the problem:</p>
+<p>(Note: If you're viewing this on fpcomplete.com, you can run the
+code in the page. Since the School of Haskell servers do not
+perform optimized builds, the run time is longer than what you can
+expect from a proper compiled build.)</p>
+<pre><code class=
+"haskell active">{-# LANGUAGE ExtendedDefaultRules, NoMonomorphismRestriction #-}
+import Conduit
+
+main = do
+    let cnt = 10000000
+    successes &lt;- sourceRandomN cnt $$ lengthIfC (\(x, y) -&gt; x*x + y*y &lt; 1)
+    print $ successes / cnt * 4</code></pre>
+<p><b>NOTE</b> If you want to play with this code in the IDE,
+please click on the "Open in IDE" button above, go to the settings
+page, and change the environment from Stable to Unstable. We're
+using some bleeding-edge packages in this example.</p>
+<p>We start off with some language extensions. These give us the
+same environment as the IAP itself works in, essentially turning
+off some stricter type rules to allow for more experimentation. We
+then import the <code>Conduit</code> library, and start off our
+<code>main</code> function.</p>
+<p>The first and third lines in our <code>main</code> function
+should be pretty straight-forward: we define how many simulations
+we want to perform on line one, and print out our estimate of pi on
+line three. All of the work happens on line two. Since this is the
+first time we're looking at conduit in this blog, we'll take it
+slowly.</p>
+<p>When we use conduit, we create a data <i>pipeline</i>. In a
+pipeline, we need some data <i>source</i> (also known as a
+producer), a data <i>sink</i> (also known as a consumer), and some
+optional transformers (not used in this example). Our source is the
+function:</p>
+<pre><span class="hs-definition">sourceRandomN</span> <span class=
+"hs-varid">cnt</span></pre>
+<p>This function allocates a new random number generator, and then
+generates a stream of <code>cnt</code> random values. Unlike
+Scipy's <code>rand</code> function, it does <i>not</i> create an
+in-memory vector. Instead, each new random value is produced on
+demand.</p>
+<p>Our sink is a little bit more complicated:</p>
+<pre><span class="hs-definition">lengthIfC</span> <span class=
+"hs-layout">(</span><span class="hs-keyglyph">\</span><span class=
+"hs-layout">(</span><span class="hs-varid">x</span><span class=
+"hs-layout">,</span> <span class="hs-varid">y</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">x</span><span class="hs-varop">*</span><span class=
+"hs-varid">x</span> <span class="hs-varop">+</span> <span class=
+"hs-varid">y</span><span class="hs-varop">*</span><span class=
+"hs-varid">y</span> <span class="hs-varop">&lt;</span> <span class=
+"hs-num">1</span><span class="hs-layout">)</span></pre>
+<p><code>lengthIfC</code> is a function which will determine the
+length of its input stream which satisfies some test. (If you're
+familiar with Excel, think of <code>countif</code>.) Its parameter
+is a function which returns a <code>Bool</code>. And thanks to
+Haskell's light-weight lambda syntax, we can easily define our
+function inline.</p>
+<p>Once we have our source and sink, we use conduit's connect
+operator (<code>$$</code>) to plug them together and produce a
+final result- in this case, the number of random points that fall
+inside our unit circle.</p>
+<p>When I run this program on my system, it takes 44KB of memory.
+If I increase the sample size to 100 million or higher, it
+<i>still</i> takes just 44KB of memory, living up to the promise of
+constant memory usage. And as an added bonus, our program also runs
+significantly faster: in my test, the Scipy program took 19.620s,
+and the Haskell program took 0.812s.</p>
+<h2 id="the-benefits-of-a-type-system">The benefits of a type
+system</h2>
+<p>In our Scipy version of the program, we had to explicitly state
+that we wanted to have two values generated for each simulation via
+the second parameter to the <code>rand</code> function. In the
+Python explicit iteration version, we called <code>random</code>
+twice in each iteration of the loop. How does the Haskell program
+know to generate two values, and not just one? The answer is
+embedded in our lambda function:</p>
+<pre><span class="hs-layout">(</span><span class=
+"hs-comment">{-hi-}</span><span class=
+"hs-keyglyph">\</span><span class="hs-layout">(</span><span class=
+"hs-varid">x</span><span class="hs-layout">,</span> <span class=
+"hs-varid">y</span><span class="hs-layout">)</span><span class=
+"hs-comment">{-/hi-}</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">x</span><span class="hs-varop">*</span><span class=
+"hs-varid">x</span> <span class="hs-varop">+</span> <span class=
+"hs-varid">y</span><span class="hs-varop">*</span><span class=
+"hs-varid">y</span> <span class="hs-varop">&lt;</span> <span class=
+"hs-num">1</span><span class="hs-layout">)</span></pre>
+<p>We declared that our lambda function takes a pair of values.
+That's all Haskell needs to know: the type inferencer automatically
+determines from here that the input to the data sink must be a pair
+of values, and if the input must be a pair of values, the output of
+the data source must <i>also</i> be a pair of values. And here's
+the really cool part: <code>sourceRandomN</code> is a polymorphic
+function, and can generate many different types of random values.
+So if we modified our program to instead take three random, it
+would still work.</p>
+<p>If you're wondering about how this happens, it's all powered by
+the <code>Variate</code> typeclass, which has an instance for each
+different type of random value that can be generated. There are
+instance for <code>Double</code>, <code>Int</code>, and a number of
+other numeric types, plus instances for pairs, 3-tuples, and
+4-tuples. So if you wanted to write a program that required a
+random <code>Int</code>, <code>Double</code>, and
+<code>Bool</code>, it will work. (And if you need more than 4
+values, you can use nested tuples.)</p>
+<p>This begs another question: how does Haskell know to use
+<code>Double</code>s in our analysis? This is once again type
+inferencing helping us out, and determining that we needed a
+floating point type. The default floating point type is
+<code>Double</code>, so that's what Haskell uses.</p>
+<p>Compare all that to Python, where accidentally replacing
+<code>1.0</code> with <code>1</code> results in a garbage result
+from the program.</p>
+<h3 id="rewrite-rules">Rewrite rules</h3>
+<p>One other powerful feature that plays into our performance here
+is <i>rewrite rules</i>. These are instructions we can give to the
+Haskell compiler to say: "you're about to do X, but it would be
+faster to do it a different way." A simple example of a rewrite
+rule would be to replace something like:</p>
+<pre><code>sum [x..y]</code></pre>
+<p>with the <a href=
+"https://mathworld.wolfram.com/ArithmeticSeries.html">mathematically
+identical</a>:</p>
+<pre><code>(x+y)*(y-x+1)/2</code></pre>
+<p>Many Haskell libraries- conduit included- use rewrite rules to
+get rid of intermediate data structures, and thereby let you as a
+user write high-level code while generating more efficient machine
+code.</p>
+<p>Part of our upcoming IAP work will be researching even more ways
+to fuse away data structures in conduit. The great advantage of
+that is that you'll be able to start writing code today, and as the
+rewrite rules improve, your code will speed up automatically.</p>
+<h2 id="a-solution-that-scales">A solution that scales</h2>
+<p>For a problem as simple as the one we've described, it's not
+really that difficult to write a solution with most any language.
+Even a straight C solution can easily be done in under 15 lines of
+code. The question is: how does it handle the large problems?</p>
+<p>We're designing IAP to make it easy and natural to compose
+smaller programs into larger solutions. By basing everything on
+constant-memory operations, we're hoping to help our users avoid
+running up against a brick wall when their data sets suddenly jump
+in size by three orders of magnitude. In other words, we believe
+the first solution you write will be able to be extended to more
+complicated problems, and much larger data sets.</p>
+<p>Stay tuned to this blog for more demonstrations of our upcoming
+IAP product. And if you have questions about how IAP could fit into
+your research and analysis platforms, please feel free to <a href=
+"/index">contact out support team</a>.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Monte%20carlo%20analysis%20in%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;03&#x2F;monte-carlo-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;03&#x2F;monte-carlo-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;03&#x2F;monte-carlo-haskell&#x2F;&amp;title=Monte%20carlo%20analysis%20in%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;03&#x2F;monte-carlo-haskell&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#d5a6b4b9b0a695b3a5b6bab8a5b9b0a1b0fbb6bab8" targe="_blank"><span class="__cf_email__" data-cfemail="1665777a736556706675797b667a7362733875797b">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

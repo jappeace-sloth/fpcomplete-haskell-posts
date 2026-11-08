@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Comparative Concurrency with Haskell</title>
+  <meta property="og:title" content="Comparative Concurrency with Haskell">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;11&#x2F;comparative-concurrency-with-haskell&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Comparative Concurrency with Haskell</h1>
+      
+      <p id="page-description">By Michael Snoyman, November 22, 2016</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Comparative%20Concurrency%20with%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;11&#x2F;comparative-concurrency-with-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;11&#x2F;comparative-concurrency-with-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;11&#x2F;comparative-concurrency-with-haskell&#x2F;&amp;title=Comparative%20Concurrency%20with%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;11&#x2F;comparative-concurrency-with-haskell&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>Last week, I was at <a href=
+"https://devcontlvx.events.co.il/">DevConTLV X</a> and attended a
+<a href=
+"https://devcontlvx.events.co.il/presentations/4129-4-languages-in-4-hours">
+workshop</a> by <a href="https://twitter.com/mraaroncruz">Aaron
+Cruz</a>. While the title was a bit of a lie (it wasn't four hours,
+and we didn't do a chat app), it was a great way to see some basics
+of concurrency in different languages. Of course, that made me all
+the more curious to add Haskell to the mix.</p>
+<p>I've provided multiple different implementations of this program
+in Haskell, focusing on different approaches (matching the
+approaches of the other languages, highly composable code, and raw
+efficiency). These examples are intended to be run and experimented
+with. The only requirement is that you <a href=
+"https://haskell-lang.org/get-started">install the Haskell build
+tool Stack</a>. You can <a href=
+"https://www.stackage.org/stack/windows-x86_64-installer">download
+a Windows installer</a>, or on OS X and Linux run:</p>
+<pre>
+<code>curl -sSL https://get.haskellstack.org/ | sh</code></pre>
+<p>We'll start with approaches very similar to other languages like
+Go and Rust, and then dive into techniques like Software
+Transactional Memory which provide a much improved concurrency
+experience for more advanced workflows. Finally we'll dive into the
+async library, which provides some very high-level functions for
+writing concurrent code in a robust manner.</p>
+<p>Unfortunately I don't have access to the source code for the
+other languages right now, so I can't provide a link to it. If
+anyone has such code (or wants to write up some examples for other
+lanugages), please <a href="https://twitter.com/snoyberg">let me
+know</a> so I can add a link.</p>
+<h2 id="the-problem">The problem</h2>
+<p>We want to spawn a number of worker threads which will each
+sleep for a random period of time, grab an integer off of a shared
+work queue, square it, and put the result back on a result queue.
+Meanwhile, a master thread will fill up the work queue with
+integers, and read and print results.</p>
+<h2 id="running-the-examples">Running the examples</h2>
+<p>Once you've installed Stack, you can save each code snippet into
+a file with a <code>.hs</code> extension (like
+<code>concurrency.hs</code>), and then run it with <code>stack
+concurrency.hs</code>. If you're on OS X or Linux, you can
+also:</p>
+<pre><code>chmod +x concurrency.hs
+./concurrency.hs</code></pre>
+<p>The first run will take a bit longer as it downloads the GHC
+compiler and installs library dependencies, but subsequent runs
+will be able to use the cached results. You can <a href=
+"https://haskell-lang.org/tutorial/stack-script">read more about
+scripting with Haskell</a>.</p>
+<h2 id="channels">Channels</h2>
+<p>Most of the other language examples used some form of channels.
+We'll begin with a channel-based implementation for a convenient
+comparison to other language implementations. As you'll see,
+Haskell's channel-based concurrency is quite similar to what you'd
+experience in languages like Go and Elixir.</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --install-ghc --resolver lts-6.23 runghc --package random</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Concurrent</span> <span class="hs-layout">(</span><span class="hs-varid">forkIO</span><span class="hs-layout">,</span> <span class="hs-varid">threadDelay</span><span class="hs-layout">,</span> <span class="hs-varid">readChan</span><span class="hs-layout">,</span> <span class="hs-varid">writeChan</span><span class="hs-layout">,</span> <span class="hs-varid">newChan</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Monad</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">forever</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Random</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">randomRIO</span><span class="hs-layout">)</span>
+
+<span class=
+"hs-comment">-- The following type signature is optional. Haskell has type</span>
+<span class=
+"hs-comment">-- inference, which makes most explicit signatures unneeded. We</span>
+<span class=
+"hs-comment">-- usually include them at the top level for easier reading.</span>
+<span class="hs-definition">workerCount</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">workloadCount</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">minDelay</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">maxDelay</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">workerCount</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-num">250</span>
+<span class="hs-definition">workloadCount</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-num">10000</span>
+<span class="hs-definition">minDelay</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-num">250000</span> <span class=
+"hs-comment">-- in microseconds, == 0.25 seconds</span>
+<span class="hs-definition">maxDelay</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-num">750000</span> <span class=
+"hs-comment">--                  == 0.75 seconds</span>
+
+<span class=
+"hs-comment">-- Launch a worker thread. We take in the request and response</span>
+<span class=
+"hs-comment">-- channels to communicate on, as well as the ID of this</span>
+<span class=
+"hs-comment">-- worker. forkIO launches an action in a new thread, and forever</span>
+<span class=
+"hs-comment">-- repeats the given action indefinitely.</span>
+<span class="hs-definition">worker</span> <span class=
+"hs-varid">requestChan</span> <span class=
+"hs-varid">responseChan</span> <span class=
+"hs-varid">workerId</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">forkIO</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">forever</span> <span class=
+"hs-varop">$</span> <span class="hs-keyword">do</span>
+    <span class=
+"hs-comment">-- Get a random delay value between the min and max delays</span>
+    <span class="hs-varid">delay</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">randomRIO</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">minDelay</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">maxDelay</span><span class="hs-layout">)</span>
+    <span class=
+"hs-comment">-- Delay this thread by that many microseconds</span>
+    <span class="hs-varid">threadDelay</span> <span class=
+"hs-varid">delay</span>
+    <span class=
+"hs-comment">-- Read the next item off of the request channel</span>
+    <span class="hs-varid">int</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">readChan</span> <span class=
+"hs-varid">requestChan</span>
+    <span class=
+"hs-comment">-- Write the response to the response channel</span>
+    <span class="hs-varid">writeChan</span> <span class=
+"hs-varid">responseChan</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">workerId</span><span class=
+"hs-layout">,</span> <span class="hs-varid">int</span> <span class=
+"hs-varop">*</span> <span class="hs-varid">int</span><span class=
+"hs-layout">)</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class=
+"hs-comment">-- Create our communication channels</span>
+    <span class="hs-varid">requestChan</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">newChan</span>
+    <span class="hs-varid">responseChan</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">newChan</span>
+
+    <span class=
+"hs-comment">-- Spawn off our worker threads. mapM_ performs the given action</span>
+    <span class=
+"hs-comment">-- on each value in the list, which in this case is the</span>
+    <span class="hs-comment">-- identifiers for each worker.</span>
+    <span class="hs-varid">mapM_</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">worker</span> <span class=
+"hs-varid">requestChan</span> <span class=
+"hs-varid">responseChan</span><span class=
+"hs-layout">)</span> <span class="hs-keyglyph">[</span><span class=
+"hs-num">1</span><span class="hs-keyglyph">..</span><span class=
+"hs-varid">workerCount</span><span class="hs-keyglyph">]</span>
+
+    <span class=
+"hs-comment">-- Define a helper function to handle each integer in the workload</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-varid">perInteger</span> <span class=
+"hs-varid">int</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+            <span class=
+"hs-comment">-- Write the current item to the request channel</span>
+            <span class="hs-varid">writeChan</span> <span class=
+"hs-varid">requestChan</span> <span class="hs-varid">int</span>
+            <span class=
+"hs-comment">-- Read the result off of the response channel</span>
+            <span class="hs-layout">(</span><span class=
+"hs-varid">workerId</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">square</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">readChan</span> <span class=
+"hs-varid">responseChan</span>
+            <span class=
+"hs-comment">-- Print out a little message</span>
+            <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">concat</span>
+                <span class="hs-keyglyph">[</span> <span class=
+"hs-str">"Worker #"</span>
+                <span class="hs-layout">,</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">workerId</span>
+                <span class="hs-layout">,</span> <span class=
+"hs-str">": square of "</span>
+                <span class="hs-layout">,</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">int</span>
+                <span class="hs-layout">,</span> <span class=
+"hs-str">" is "</span>
+                <span class="hs-layout">,</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">square</span>
+                <span class="hs-keyglyph">]</span>
+
+    <span class=
+"hs-comment">-- Now let's loop over all of the integers in our workload</span>
+    <span class="hs-varid">mapM_</span> <span class=
+"hs-varid">perInteger</span> <span class=
+"hs-keyglyph">[</span><span class="hs-num">1</span><span class=
+"hs-keyglyph">..</span><span class=
+"hs-varid">workloadCount</span><span class=
+"hs-keyglyph">]</span></pre>
+<p>This is a pretty direct translation of how you would do things
+in a language like Go or Erlang/Elixir. We've replaced
+<code>for</code>-loops with <code>map</code>s, but otherwise things
+are pretty similar.</p>
+<p>There's a major limitation in this implementation,
+unfortunately. In the master thread, our <code>perInteger</code>
+function is responsible for providing requests to the workers.
+However, it will only provide one work item at a time and then
+block for a response. This means that we are effectively limiting
+ourselves to one concurrent request. We'll address this in various
+ways in the next few examples.</p>
+<h2 id="compare-and-swap">Compare-and-swap</h2>
+<p>It turns out in this case, we can use a lighter-weight
+alternative to a channel for the requests. Instead, we can just put
+all of our requests into an <code>IORef</code> - which is the basic
+mutable variable type in Haskell - and then pop requests off of the
+list inside that variable. Veterans of concurrency bugs will be
+quick to point out the read/write race condition you'd usually
+expect:</p>
+<ol>
+<li>Thread A reads the list from the variable</li>
+<li>Thread B reads the list from the variable</li>
+<li>Thread A pops the first item off the list and writes the rest
+to the variable</li>
+<li>Thread B pops the first item off the list and writes the rest
+to the variable</li>
+</ol>
+<p>In this scenario, both threads A and B will end up with the same
+request to work on, which is certainly <i>not</i> our desired
+behavior. However, Haskell provides built-in compare-and-swap
+functionality, allowing us to guarantee that our read and write are
+<i>atomic operations</i>. This only works for a subset of Haskell
+functionality (specifically, the <i>pure</i> subset which does not
+have I/O side effects), which fortunately our
+pop-an-element-from-a-list falls into. Let's see the code.</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --install-ghc --resolver lts-6.23 runghc --package random</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Concurrent</span> <span class="hs-layout">(</span><span class="hs-varid">forkIO</span><span class="hs-layout">,</span> <span class="hs-varid">threadDelay</span><span class="hs-layout">,</span> <span class="hs-varid">writeChan</span><span class="hs-layout">,</span> <span class="hs-varid">readChan</span><span class="hs-layout">,</span> <span class="hs-varid">newChan</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">IORef</span> <span class=
+"hs-layout">(</span><span class="hs-varid">atomicModifyIORef</span><span class="hs-layout">,</span> <span class="hs-varid">newIORef</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Monad</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">replicateM_</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Random</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">randomRIO</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">workerCount</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-num">250</span>
+<span class="hs-definition">workloadCount</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-num">10000</span>
+<span class="hs-definition">minDelay</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-num">250000</span>
+<span class="hs-definition">maxDelay</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-num">750000</span>
+
+<span class="hs-definition">worker</span> <span class=
+"hs-varid">requestsRef</span> <span class=
+"hs-varid">responseChan</span> <span class=
+"hs-varid">workerId</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">forkIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyword">do</span>
+    <span class=
+"hs-comment">-- Define a function to loop on the available integers in the</span>
+    <span class="hs-comment">-- requests reference.</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-varid">loop</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+            <span class="hs-varid">delay</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">randomRIO</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">minDelay</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">maxDelay</span><span class="hs-layout">)</span>
+            <span class="hs-varid">threadDelay</span> <span class=
+"hs-varid">delay</span>
+
+            <span class=
+"hs-comment">-- atomicModifyIORef is our compare-and-swap function. We</span>
+            <span class=
+"hs-comment">-- give it a reference, and a function that works on the</span>
+            <span class=
+"hs-comment">-- contained value. That function returns a pair of the</span>
+            <span class=
+"hs-comment">-- new value for the reference, and a return value.</span>
+            <span class="hs-varid">mint</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">atomicModifyIORef</span> <span class=
+"hs-varid">requestsRef</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">requests</span> <span class="hs-keyglyph">-&gt;</span>
+                <span class=
+"hs-comment">-- Let's see if we have anything to work with...</span>
+                <span class="hs-keyword">case</span> <span class=
+"hs-varid">requests</span> <span class="hs-keyword">of</span>
+                    <span class=
+"hs-comment">-- Empty list, so no requests! Put an empty list</span>
+                    <span class=
+"hs-comment">-- back in and return Nothing</span>
+                    <span class="hs-conid">[]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-conid">[]</span><span class=
+"hs-layout">,</span> <span class=
+"hs-conid">Nothing</span><span class="hs-layout">)</span>
+                    <span class=
+"hs-comment">-- We have something. Put the tail of the list</span>
+                    <span class=
+"hs-comment">-- back in the reference, and return the new item.</span>
+                    <span class="hs-varid">int</span><span class=
+"hs-conop">:</span><span class="hs-varid">rest</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-varid">rest</span><span class=
+"hs-layout">,</span> <span class=
+"hs-conid">Just</span> <span class="hs-varid">int</span><span class="hs-layout">)</span>
+
+            <span class=
+"hs-comment">-- Now we'll see what to do next based on whether or not</span>
+            <span class=
+"hs-comment">-- we got something from the requests reference.</span>
+            <span class="hs-keyword">case</span> <span class=
+"hs-varid">mint</span> <span class="hs-keyword">of</span>
+                <span class=
+"hs-comment">-- No more requests, stop looping</span>
+                <span class="hs-conid">Nothing</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">return</span> <span class="hs-conid">()</span>
+                <span class="hs-comment">-- Got one, so...</span>
+                <span class="hs-conid">Just</span> <span class=
+"hs-varid">int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+                    <span class=
+"hs-comment">-- Write the response to the response channel</span>
+                    <span class=
+"hs-varid">writeChan</span> <span class=
+"hs-varid">responseChan</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">workerId</span><span class=
+"hs-layout">,</span> <span class="hs-varid">int</span><span class=
+"hs-layout">,</span> <span class="hs-varid">int</span> <span class=
+"hs-varop">*</span> <span class="hs-varid">int</span><span class=
+"hs-layout">)</span>
+                    <span class=
+"hs-comment">-- And loop again</span>
+                    <span class="hs-varid">loop</span>
+
+    <span class="hs-comment">-- Kick off the loop</span>
+    <span class="hs-varid">loop</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class=
+"hs-comment">-- Create our request reference and response channel</span>
+    <span class="hs-varid">requestsRef</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">newIORef</span> <span class=
+"hs-keyglyph">[</span><span class="hs-num">1</span><span class=
+"hs-keyglyph">..</span><span class=
+"hs-varid">workloadCount</span><span class="hs-keyglyph">]</span>
+    <span class="hs-varid">responseChan</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">newChan</span>
+
+    <span class="hs-varid">mapM_</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">worker</span> <span class=
+"hs-varid">requestsRef</span> <span class=
+"hs-varid">responseChan</span><span class=
+"hs-layout">)</span> <span class="hs-keyglyph">[</span><span class=
+"hs-num">1</span><span class="hs-keyglyph">..</span><span class=
+"hs-varid">workerCount</span><span class="hs-keyglyph">]</span>
+
+    <span class=
+"hs-comment">-- We know how many responses to expect, so ask for exactly that</span>
+    <span class="hs-comment">-- many with replicateM_.</span>
+    <span class="hs-varid">replicateM_</span> <span class=
+"hs-varid">workloadCount</span> <span class=
+"hs-varop">$</span> <span class="hs-keyword">do</span>
+        <span class=
+"hs-comment">-- Read the result off of the response channel</span>
+        <span class="hs-layout">(</span><span class=
+"hs-varid">workerId</span><span class=
+"hs-layout">,</span> <span class="hs-varid">int</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">square</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">readChan</span> <span class=
+"hs-varid">responseChan</span>
+        <span class=
+"hs-comment">-- Print out a little message</span>
+        <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">concat</span>
+            <span class="hs-keyglyph">[</span> <span class=
+"hs-str">"Worker #"</span>
+            <span class="hs-layout">,</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">workerId</span>
+            <span class="hs-layout">,</span> <span class=
+"hs-str">": square of "</span>
+            <span class="hs-layout">,</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">int</span>
+            <span class="hs-layout">,</span> <span class=
+"hs-str">" is "</span>
+            <span class="hs-layout">,</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">square</span>
+            <span class="hs-keyglyph">]</span></pre>
+<p>Compare-and-swap operations can be significantly more efficient
+than using true concurrency datatypes (like the <code>Chan</code>s
+we saw above, or Software Transactional Memory). But they are also
+limiting, and don't compose nicely. Use them when you need a
+performance edge, or have some other reason to prefer an
+<code>IORef</code>.</p>
+<p>Compared to our channels example, there are some differences in
+behavior:</p>
+<ul>
+<li>In the channels example, our workers looped forever, whereas
+here they have an explicit stop condition. In reality, the Haskell
+runtime will automatically kill worker threads that are blocked on
+a channel without any writer. However, we'll see how to use
+closable channels in a later example.</li>
+<li>The channels example would only allow one request on the
+request channel at a time. This is similar to some of the examples
+from other languages, but defeats the whole purpose of concurrency:
+only one worker will be occupied at any given time. This
+<code>IORef</code> approach allows multiple workers to have work
+items at once. (Again, we'll see how to achieve this with channels
+in a bit.)</li>
+</ul>
+<p>You may be concerned about memory usage: won't holding that
+massive list of integers in memory all at once be expensive? Not at
+all: Haskell is a <i>lazy</i> language, meaning that the list will
+be constructed on demand. Each time a new element is asked for, it
+will be allocated, and then can be immediately garbage
+collected.</p>
+<h2 id="software-transactional-memory">Software Transactional
+Memory</h2>
+<p>One of the most powerful concurrency techniques available in
+Haskell is Software Transactional Memory (STM). It allows us to
+have mutable variables, and to make modifications to them
+atomically. For example, consider this little snippet from a
+theoretical bank account application:</p>
+<pre><span class="hs-definition">transferFunds</span> <span class=
+"hs-varid">from</span> <span class=
+"hs-varid">to</span> <span class="hs-varid">amt</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">atomically</span> <span class=
+"hs-varop">$</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">fromOrig</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">readTVar</span> <span class="hs-varid">from</span>
+    <span class="hs-varid">toOrig</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">readTVar</span> <span class="hs-varid">to</span>
+    <span class="hs-varid">writeTVar</span> <span class=
+"hs-varid">from</span> <span class="hs-layout">(</span><span class=
+"hs-varid">fromOrig</span> <span class=
+"hs-comment">-</span> <span class="hs-varid">amt</span><span class=
+"hs-layout">)</span>
+    <span class="hs-varid">writeTVar</span> <span class=
+"hs-varid">to</span> <span class="hs-layout">(</span><span class=
+"hs-varid">toOrig</span> <span class=
+"hs-varop">+</span> <span class="hs-varid">amt</span><span class=
+"hs-layout">)</span></pre>
+<p>In typically concurrent style, this would be incredibly unsafe:
+it's entirely possible for another thread to modify the
+<code>from</code> or <code>to</code> bank account values between
+the time our thread reads and writes them. However, with STM, we
+are guaranteed <i>atomicity</i>. STM will keep a ledger of changes
+made during an atomic transaction, and then attempt to commit them
+all at once. If any of the variables references have modified
+during the transaction, the ledger will be rolled back and tried
+again. And like <code>atomicModifyIORef</code> from above, Haskell
+disallows side-effects inside a transaction, so that this retry
+behavior cannot be observed from the outside world.</p>
+<p>To stress this point: <b>Haskell's STM can eliminate the
+possibility for race conditions and deadlocks from many common
+concurrency patterns, greatly simplifying your code</b>. The leg-up
+that Haskell has over other languages in the concurrency space is
+the ability to take something that looks like calamity and make it
+safe.</p>
+<p>We're going to switch our channels from above to STM channels.
+For the request channel, we'll use a bounded, closable channel
+(<code>TBMChan</code>). Bounding the size of the channel prevents
+us from loading too many values into memory at once, and using a
+closable channel allows us to tell our workers to exit.</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">{- stack --install-ghc --resolver lts-6.23 runghc
+    --package random --package stm-chans
+-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Concurrent</span> <span class="hs-layout">(</span><span class="hs-varid">forkIO</span><span class="hs-layout">,</span> <span class="hs-varid">threadDelay</span><span class="hs-layout">,</span> <span class="hs-varid">readChan</span><span class="hs-layout">,</span> <span class="hs-varid">writeChan</span><span class="hs-layout">,</span> <span class="hs-varid">newChan</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Concurrent</span><span class="hs-varop">.</span><span class="hs-conid">STM</span> <span class="hs-layout">(</span><span class="hs-varid">atomically</span><span class="hs-layout">,</span> <span class="hs-varid">writeTChan</span><span class="hs-layout">,</span> <span class="hs-varid">readTChan</span><span class="hs-layout">,</span> <span class="hs-varid">newTChan</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Concurrent</span><span class="hs-varop">.</span><span class="hs-conid">STM</span><span class="hs-varop">.</span><span class="hs-conid">TBMChan</span> <span class="hs-layout">(</span><span class="hs-varid">readTBMChan</span><span class="hs-layout">,</span> <span class="hs-varid">writeTBMChan</span><span class="hs-layout">,</span> <span class="hs-varid">newTBMChan</span><span class="hs-layout">,</span> <span class="hs-varid">closeTBMChan</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Monad</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">replicateM_</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Random</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">randomRIO</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">workerCount</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-num">250</span>
+<span class="hs-definition">workloadCount</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-num">10000</span>
+<span class="hs-definition">minDelay</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-num">250000</span> <span class=
+"hs-comment">-- in microseconds, == 0.25 seconds</span>
+<span class="hs-definition">maxDelay</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-num">750000</span> <span class=
+"hs-comment">--                  == 0.75 seconds</span>
+
+<span class="hs-definition">worker</span> <span class=
+"hs-varid">requestChan</span> <span class=
+"hs-varid">responseChan</span> <span class=
+"hs-varid">workerId</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">forkIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyword">do</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-varid">loop</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+            <span class="hs-varid">delay</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">randomRIO</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">minDelay</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">maxDelay</span><span class="hs-layout">)</span>
+            <span class="hs-varid">threadDelay</span> <span class=
+"hs-varid">delay</span>
+
+            <span class=
+"hs-comment">-- Interact with the STM channels atomically</span>
+            <span class="hs-varid">toContinue</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">atomically</span> <span class=
+"hs-varop">$</span> <span class="hs-keyword">do</span>
+                <span class=
+"hs-comment">-- Get the next request, if the channel is open</span>
+                <span class="hs-varid">mint</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">readTBMChan</span> <span class=
+"hs-varid">requestChan</span>
+                <span class="hs-keyword">case</span> <span class=
+"hs-varid">mint</span> <span class="hs-keyword">of</span>
+                    <span class=
+"hs-comment">-- Channel is closed, do not continue</span>
+                    <span class=
+"hs-conid">Nothing</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">return</span> <span class="hs-conid">False</span>
+                    <span class=
+"hs-comment">-- Channel is open and we have a request</span>
+                    <span class="hs-conid">Just</span> <span class=
+"hs-varid">int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+                        <span class=
+"hs-comment">-- Write the response to the response channel</span>
+                        <span class=
+"hs-varid">writeTChan</span> <span class=
+"hs-varid">responseChan</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">workerId</span><span class=
+"hs-layout">,</span> <span class="hs-varid">int</span><span class=
+"hs-layout">,</span> <span class="hs-varid">int</span> <span class=
+"hs-varop">*</span> <span class="hs-varid">int</span><span class=
+"hs-layout">)</span>
+                        <span class=
+"hs-comment">-- And yes, please continue</span>
+                        <span class=
+"hs-varid">return</span> <span class="hs-conid">True</span>
+            <span class="hs-keyword">if</span> <span class=
+"hs-varid">toContinue</span>
+                <span class="hs-keyword">then</span> <span class=
+"hs-varid">loop</span>
+                <span class="hs-keyword">else</span> <span class=
+"hs-varid">return</span> <span class="hs-conid">()</span>
+
+    <span class="hs-comment">-- Kick it off!</span>
+    <span class="hs-varid">loop</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class=
+"hs-comment">-- Create our communication channels. We're going to ensure the</span>
+    <span class=
+"hs-comment">-- request channel never gets more than twice the size of the</span>
+    <span class=
+"hs-comment">-- number of workers to avoid high memory usage.</span>
+    <span class="hs-varid">requestChan</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">atomically</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">newTBMChan</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">workerCount</span> <span class=
+"hs-varop">*</span> <span class="hs-num">2</span><span class=
+"hs-layout">)</span>
+    <span class="hs-varid">responseChan</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">atomically</span> <span class="hs-varid">newTChan</span>
+
+    <span class="hs-varid">mapM_</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">worker</span> <span class=
+"hs-varid">requestChan</span> <span class=
+"hs-varid">responseChan</span><span class=
+"hs-layout">)</span> <span class="hs-keyglyph">[</span><span class=
+"hs-num">1</span><span class="hs-keyglyph">..</span><span class=
+"hs-varid">workerCount</span><span class="hs-keyglyph">]</span>
+
+    <span class=
+"hs-comment">-- Fill up the request channel in a dedicated thread</span>
+    <span class="hs-varid">forkIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyword">do</span>
+        <span class="hs-varid">mapM_</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">atomically</span> <span class=
+"hs-varop">.</span> <span class=
+"hs-varid">writeTBMChan</span> <span class=
+"hs-varid">requestChan</span><span class=
+"hs-layout">)</span> <span class="hs-keyglyph">[</span><span class=
+"hs-num">1</span><span class="hs-keyglyph">..</span><span class=
+"hs-varid">workloadCount</span><span class="hs-keyglyph">]</span>
+        <span class="hs-varid">atomically</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">closeTBMChan</span> <span class=
+"hs-varid">requestChan</span>
+
+    <span class="hs-varid">replicateM_</span> <span class=
+"hs-varid">workloadCount</span> <span class=
+"hs-varop">$</span> <span class="hs-keyword">do</span>
+        <span class=
+"hs-comment">-- Read the result off of the response channel</span>
+        <span class="hs-layout">(</span><span class=
+"hs-varid">workerId</span><span class=
+"hs-layout">,</span> <span class="hs-varid">int</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">square</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">atomically</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">readTChan</span> <span class=
+"hs-varid">responseChan</span>
+        <span class=
+"hs-comment">-- Print out a little message</span>
+        <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">concat</span>
+            <span class="hs-keyglyph">[</span> <span class=
+"hs-str">"Worker #"</span>
+            <span class="hs-layout">,</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">workerId</span>
+            <span class="hs-layout">,</span> <span class=
+"hs-str">": square of "</span>
+            <span class="hs-layout">,</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">int</span>
+            <span class="hs-layout">,</span> <span class=
+"hs-str">" is "</span>
+            <span class="hs-layout">,</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">square</span>
+            <span class="hs-keyglyph">]</span></pre>
+<p>Overall, this looked pretty similar to our previous channels,
+which isn't surprising given the relatively basic usage of
+concurrency going on here. However, using STM is a good default
+choice in Haskell applications, due to how easy it is to build up
+complex concurrent programs with it.</p>
+<h2 id="address-corner-cases">Address corner cases</h2>
+<p>Alright, we've tried mirroring how examples in other languages
+work, given a taste of compare-and-swap, and explored the basics of
+STM. Now let's make our code more robust. The examples here - and
+those for other languages - often take some shortcuts. For example,
+what happens if one of the worker threads encounters an error? When
+our workload is simply "square a number," that's not a concern, but
+with more complex workloads this is very much expected.</p>
+<p>Our first example, as mentioned above, didn't allow for true
+concurrency, since it kept the channel size down to 1. And all of
+our examples have made one other assumption: the number of results
+expected. In many real-world applications, one request may result
+in 0, 1, or many result values. So to sum up, let's create an
+example with the following behavior:</p>
+<ul>
+<li>If <i>any</i> of the threads involved abort exceptionally, take
+down the whole computation, leaving no threads alive</li>
+<li>Make sure that multiple workers can work in parallel</li>
+<li>Let the workers exit successfully when there are no more
+requests available</li>
+<li>Keep printing results until all worker threads exit.</li>
+</ul>
+<p>We have one final tool in our arsenal that we haven't used yet:
+<a href="https://haskell-lang.org/library/async">the async
+library</a>, which provides some incredibly useful concurrency
+tools. Arguably, the most generally useful functions there are
+<code>concurrently</code> (which runs two actions in separate
+threads, as we'll describe in the comments below), and
+<code>mapConcurrently</code>, which applies
+<code>concurrently</code> over a list of values.</p>
+<p>This example is how I'd recommend implementing this algorithm in
+practice: it uses solid library functions, accounts for exceptions,
+and is easy to extend for more complicated use cases.</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">{- stack --install-ghc --resolver lts-6.23 runghc
+    --package random --package async --package stm-chans
+-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Concurrent</span> <span class="hs-layout">(</span><span class="hs-varid">threadDelay</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Concurrent</span><span class="hs-varop">.</span><span class="hs-conid">Async</span> <span class="hs-layout">(</span><span class="hs-varid">mapConcurrently</span><span class="hs-layout">,</span> <span class="hs-varid">concurrently</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Concurrent</span><span class="hs-varop">.</span><span class="hs-conid">STM</span> <span class="hs-layout">(</span><span class="hs-varid">atomically</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Concurrent</span><span class="hs-varop">.</span><span class="hs-conid">STM</span><span class="hs-varop">.</span><span class="hs-conid">TBMChan</span> <span class="hs-layout">(</span><span class="hs-varid">readTBMChan</span><span class="hs-layout">,</span> <span class="hs-varid">writeTBMChan</span><span class="hs-layout">,</span> <span class="hs-varid">newTBMChan</span><span class="hs-layout">,</span> <span class="hs-varid">closeTBMChan</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Random</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">randomRIO</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">workerCount</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-num">250</span>
+<span class="hs-definition">workloadCount</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-num">10000</span>
+<span class="hs-definition">minDelay</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-num">250000</span> <span class=
+"hs-comment">-- in microseconds, == 0.25 seconds</span>
+<span class="hs-definition">maxDelay</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-num">750000</span> <span class=
+"hs-comment">--                  == 0.75 seconds</span>
+
+<span class=
+"hs-comment">-- Not meaningfully changed from above, just some slight style</span>
+<span class=
+"hs-comment">-- tweaks. Compare and contrast with the previous version if desired</span>
+<span class="hs-comment">-- :)</span>
+<span class="hs-definition">worker</span> <span class=
+"hs-varid">requestChan</span> <span class=
+"hs-varid">responseChan</span> <span class=
+"hs-varid">workerId</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-varid">loop</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+            <span class="hs-varid">delay</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">randomRIO</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">minDelay</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">maxDelay</span><span class="hs-layout">)</span>
+            <span class="hs-varid">threadDelay</span> <span class=
+"hs-varid">delay</span>
+
+            <span class="hs-varid">mint</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">atomically</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">readTBMChan</span> <span class=
+"hs-varid">requestChan</span>
+            <span class="hs-keyword">case</span> <span class=
+"hs-varid">mint</span> <span class="hs-keyword">of</span>
+                <span class="hs-conid">Nothing</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">return</span> <span class="hs-conid">()</span>
+                <span class="hs-conid">Just</span> <span class=
+"hs-varid">int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+                    <span class=
+"hs-varid">atomically</span> <span class="hs-varop">$</span>
+                        <span class=
+"hs-varid">writeTBMChan</span> <span class=
+"hs-varid">responseChan</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">workerId</span><span class=
+"hs-layout">,</span> <span class="hs-varid">int</span><span class=
+"hs-layout">,</span> <span class="hs-varid">int</span> <span class=
+"hs-varop">*</span> <span class="hs-varid">int</span><span class=
+"hs-layout">)</span>
+                    <span class="hs-varid">loop</span>
+    <span class="hs-varid">loop</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class=
+"hs-comment">-- Create our communication channels. Now the response channel is</span>
+    <span class="hs-comment">-- also bounded and closable.</span>
+    <span class="hs-varid">requestChan</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">atomically</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">newTBMChan</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">workerCount</span> <span class=
+"hs-varop">*</span> <span class="hs-num">2</span><span class=
+"hs-layout">)</span>
+    <span class="hs-varid">responseChan</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">atomically</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">newTBMChan</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">workerCount</span> <span class=
+"hs-varop">*</span> <span class="hs-num">2</span><span class=
+"hs-layout">)</span>
+
+    <span class=
+"hs-comment">-- We're going to have three main threads. Let's define them all</span>
+    <span class=
+"hs-comment">-- here. Note that we're _defining_ an action to be run, not</span>
+    <span class=
+"hs-comment">-- running it yet! We'll run them below.</span>
+    <span class="hs-keyword">let</span>
+        <span class=
+"hs-comment">-- runWorkers is going to run all of the worker threads</span>
+        <span class="hs-varid">runWorkers</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+            <span class=
+"hs-comment">-- mapConcurrently runs each function in a separate thread</span>
+            <span class=
+"hs-comment">-- with a different argument from the list, and then waits</span>
+            <span class=
+"hs-comment">-- for them all to finish. If any of them throw an</span>
+            <span class=
+"hs-comment">-- exception, all of the other threads are killed, and</span>
+            <span class=
+"hs-comment">-- then the exception is rethrown.</span>
+            <span class=
+"hs-varid">mapConcurrently</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">worker</span> <span class=
+"hs-varid">requestChan</span> <span class=
+"hs-varid">responseChan</span><span class=
+"hs-layout">)</span> <span class="hs-keyglyph">[</span><span class=
+"hs-num">1</span><span class="hs-keyglyph">..</span><span class=
+"hs-varid">workerCount</span><span class="hs-keyglyph">]</span>
+            <span class=
+"hs-comment">-- Workers are all done, so close the response channel</span>
+            <span class="hs-varid">atomically</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">closeTBMChan</span> <span class=
+"hs-varid">responseChan</span>
+
+        <span class=
+"hs-comment">-- Fill up the request channel, exactly the same as before</span>
+        <span class="hs-varid">fillRequests</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+            <span class="hs-varid">mapM_</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">atomically</span> <span class=
+"hs-varop">.</span> <span class=
+"hs-varid">writeTBMChan</span> <span class=
+"hs-varid">requestChan</span><span class=
+"hs-layout">)</span> <span class="hs-keyglyph">[</span><span class=
+"hs-num">1</span><span class="hs-keyglyph">..</span><span class=
+"hs-varid">workloadCount</span><span class="hs-keyglyph">]</span>
+            <span class="hs-varid">atomically</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">closeTBMChan</span> <span class=
+"hs-varid">requestChan</span>
+
+        <span class="hs-comment">-- Print each result</span>
+        <span class="hs-varid">printResults</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+            <span class=
+"hs-comment">-- Grab a response if available</span>
+            <span class="hs-varid">mres</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">atomically</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">readTBMChan</span> <span class=
+"hs-varid">responseChan</span>
+            <span class="hs-keyword">case</span> <span class=
+"hs-varid">mres</span> <span class="hs-keyword">of</span>
+                <span class=
+"hs-comment">-- No response available, so exit</span>
+                <span class="hs-conid">Nothing</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">return</span> <span class="hs-conid">()</span>
+                <span class=
+"hs-comment">-- We got a response, so...</span>
+                <span class="hs-conid">Just</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">workerId</span><span class=
+"hs-layout">,</span> <span class="hs-varid">int</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">square</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+                    <span class="hs-comment">-- Print it...</span>
+                    <span class=
+"hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">concat</span>
+                        <span class=
+"hs-keyglyph">[</span> <span class="hs-str">"Worker #"</span>
+                        <span class=
+"hs-layout">,</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">workerId</span>
+                        <span class=
+"hs-layout">,</span> <span class="hs-str">": square of "</span>
+                        <span class=
+"hs-layout">,</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">int</span>
+                        <span class=
+"hs-layout">,</span> <span class="hs-str">" is "</span>
+                        <span class=
+"hs-layout">,</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">square</span>
+                        <span class="hs-keyglyph">]</span>
+                    <span class="hs-comment">-- And loop!</span>
+                    <span class="hs-varid">printResults</span>
+
+    <span class=
+"hs-comment">-- Now that we've defined our actions, we can use concurrently to</span>
+    <span class=
+"hs-comment">-- run all of them. This works just like mapConcurrently: it forks</span>
+    <span class=
+"hs-comment">-- a thread for each action and waits for all threads to exit</span>
+    <span class=
+"hs-comment">-- successfully. If any thread dies with an exception, the other</span>
+    <span class=
+"hs-comment">-- threads are killed and the exception is rethrown.</span>
+    <span class="hs-varid">runWorkers</span> <span class=
+"hs-varop">`concurrently`</span> <span class=
+"hs-varid">fillRequests</span> <span class=
+"hs-varop">`concurrently`</span> <span class=
+"hs-varid">printResults</span>
+
+    <span class="hs-varid">return</span> <span class=
+"hs-conid">()</span></pre>
+<p>By using the high level <code>concurrently</code> and
+<code>mapConcurrently</code> functions, we avoid any possibility of
+orphaned threads, and get automatic exception handling and
+cancelation functionality.</p>
+<h2 id="why-haskell">Why Haskell</h2>
+<p>As you can see, Haskell offers many tools for advanced
+concurrency. At the most basic level, <code>Chan</code>s and
+<code>forkIO</code> give you pretty similar behavior to what other
+languages provide. However, <code>IORef</code>s with
+compare-and-swap provide a cheap concurrency primitive not
+available in most other languages. And the combination of STM and
+the <code>async</code> package is a toolset that to my knowledge
+has no equal in other languages. The fact that side-effects are
+explicit in Haskell allows us to do many advanced feats that
+wouldn't be possible elsewhere.</p>
+<p>We've only just barely scratched the surface of what you can do
+with Haskell. If you're interested in learning more, please
+<a href="/haskell-syllabus">check out our Haskell Syllabus</a> for
+a recommended learning route. There's also lots of content on the
+<a href="https://haskell-lang.org/get-started">haskell-lang get
+started page</a>. And if you want to learn more about concurrency,
+check out <a href="https://haskell-lang.org/library/async">the
+async tutorial</a>.</p>
+<p>FP Complete also provides corporate and group webinar training
+sessions. Please <a href="/training">check out our training
+page</a> for more information, or see our <a href=
+"/consulting">consulting page</a> for how we can help your team
+succeed with devops and functional programming.</p>
+<p class="text-center"><a class="button-coral" href=
+"/contact-us/">Contact FP Complete</a></p>
+<h2 id="advanced-questions">Advanced questions</h2>
+<p>We skirted some more advanced topics above, but for the curious,
+let me address some points:</p>
+<ul>
+<li>
+<p>In our first example, we use <code>forever</code> to ensure that
+our workers would never exit. But once they had no more work to do,
+what happens to them? The Haskell runtime is smart enough to notice
+in general when a channel has no more writers, and will
+automatically send an asynchronous exception to a thread which is
+trying to read from such a channel. This works well enough for a
+demo, but is not recommended practice:</p>
+<ol>
+<li>It's possible, though unlikely, that the runtime system won't
+be able to figure out that your thread should be killed</li>
+<li>It's much harder to follow the logic of a program which has no
+explicit exit case</li>
+<li>Using exceptions for control flow is generally a risk endeavor,
+and in the worst case, can <a href=
+"/blog/2016/06/async-exceptions-stm-deadlocks">lead to very
+unexpected bugs</a></li>
+</ol>
+</li>
+<li>
+<p>For the observant Haskeller, our definitions of
+<code>runWorkers</code> and <code>fillRequests</code> in the last
+example may look dangerous. Specifically: what happens if one of
+those actions throws an exception before closing the channel? The
+other threads reading from the channel will be blocked
+indefinitely! Well, three things:</p>
+<ol>
+<li>As just described, the runtime system will likely be able to
+kill the thread if needed</li>
+<li>However, because of the way we structured our program, it won't
+matter: if either of these actions dies, it will take down the
+others, so no one will end up blocked on a channel read</li>
+<li>
+<p>Nonetheless, I strongly recommend being exception-safe in all
+cases (I'm <a href=
+"/blog/2016/11/exceptions-best-practices-haskell">kind of obsessed
+with it</a>), so a better way to implement these functions would be
+with <code>finally</code>, e.g.:</p>
+<pre> <span class="hs-varid">fillRequests</span> <span class=
+"hs-keyglyph">=</span>
+     <span class="hs-varid">mapM_</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">atomically</span> <span class=
+"hs-varop">.</span> <span class=
+"hs-varid">writeTBMChan</span> <span class=
+"hs-varid">requestChan</span><span class=
+"hs-layout">)</span> <span class="hs-keyglyph">[</span><span class=
+"hs-num">1</span><span class="hs-keyglyph">..</span><span class=
+"hs-varid">workloadCount</span><span class="hs-keyglyph">]</span>
+         <span class="hs-varop">`finally`</span> <span class=
+"hs-varid">atomically</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">closeTBMChan</span> <span class=
+"hs-varid">requestChan</span><span class=
+"hs-layout">)</span></pre></li>
+</ol>
+</li>
+<li>
+<p>This post was explicitly about <i>concurrency</i>, or running
+multiple I/O actions at the same time. I avoided talking about the
+very much related topic of parallelism, which is speeding up a
+computation by performing work on multiple cores. In other
+languages, the distinction between these is minor. In Haskell, with
+our separation between purity and impurity, parallelism can often
+be achieved with something as simple as replacing <code>map</code>
+with <code>parMap</code> (parallel map).</p>
+<p>That said, it's certainly possible - and common - to implement
+parallelism via concurrency. In order to make that work, we would
+need to force evaluation of the result value (<code>int *
+int</code>) before writing it to the channel. This could be
+achieved with something like:</p>
+<pre><span class="hs-keyword">let</span> <span class=
+"hs-varop">!</span><span class=
+"hs-varid">result</span> <span class="hs-keyglyph">=</span> <span class="hs-varid">int</span> <span class="hs-varop">*</span> <span class="hs-varid">int</span>
+<span class="hs-definition">writeChan</span> <span class=
+"hs-varid">responseChan</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">workerId</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">result</span><span class="hs-layout">)</span></pre>
+<p>The <code>!</code> is called a bang pattern, and indicates that
+evaluation should be forced immediately.</p>
+</li>
+</ul>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Comparative%20Concurrency%20with%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;11&#x2F;comparative-concurrency-with-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;11&#x2F;comparative-concurrency-with-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;11&#x2F;comparative-concurrency-with-haskell&#x2F;&amp;title=Comparative%20Concurrency%20with%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;11&#x2F;comparative-concurrency-with-haskell&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#d4a7b5b8b1a794b2a4b7bbb9a4b8b1a0b1fab7bbb9" targe="_blank"><span class="__cf_email__" data-cfemail="285b49444d5b684e584b474558444d5c4d064b4745">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

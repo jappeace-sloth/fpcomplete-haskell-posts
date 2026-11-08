@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Primitive Haskell</title>
+  <meta property="og:title" content="Primitive Haskell">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;tutorial&#x2F;primitive-haskell&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+  
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+<section class="hero grid-bg">
+  <div class="container">
+    <h1>Primitive Haskell
+    </h1></div>
+</section>
+
+
+
+  
+<div class="container py-3">
+  <p>The point of this chapter is to help you peel back some of the layers of
+abstraction in Haskell coding, with the goal of understanding things like
+primitive operations, evaluation order, and mutation. Some concepts covered
+here are generally &quot;common knowledge&quot; in the community, while others are less
+well understood. The goal is to cover the entire topic in a cohesive manner. If
+a specific section seems like it's not covering anything you don't already
+know, skim through it and move on to the next one.</p>
+<p>While this chapter is called &quot;Primitive Haskell,&quot; the topics are very much
+GHC-specific. I avoided calling it &quot;Primitive GHC&quot; for fear of people assuming
+it was about the internals of GHC itself. To be clear: these topics apply to
+anyone compiling their Haskell code using the GHC compiler.</p>
+<p>Note that we will not be fully covering all topics here. There is a &quot;further
+reading&quot; section at the end of this chapter with links for more details.</p>
+<h2 id="let-s-do-addition">Let's do addition</h2>
+<p>Let's start with a really simple question: tell me how GHC deals with the
+expression <code>1 + 2</code>. What <em>actually</em> happens inside GHC? Well, that's a bit of a
+trick question, since the expression is polymorphic. Let's instead use the more
+concrete expression <code>1 + 2 :: Int</code>.</p>
+<p>The <code>+</code> operator is actually a method of <a href="https://www.stackage.org/haddock/lts-1.0/base-4.7.0.2/Prelude.html#t:Num">the <code>Num</code> type class</a>, so we need to look at <a href="https://www.stackage.org/haddock/lts-1.0/base-4.7.0.2/src/GHC-Num.html#Num">the <code>Num Int</code> instance</a>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">instance  </span><span style="color:#268bd2;">Num Int  </span><span style="color:#859900;">where
+</span><span>    </span><span style="color:#cb4b16;">I</span><span># x </span><span style="color:#859900;">+ </span><span style="color:#cb4b16;">I</span><span># y </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">I</span><span># (x </span><span style="color:#859900;">+</span><span># y)
+</span></code></pre>
+<p>Huh... well <em>that</em> looks somewhat magical. Now we need to understand both the
+<code>I#</code> constructor and the <code>+#</code> operator (and what's with the hashes all of a
+sudden?). If we <a href="https://www.stackage.org/snapshot/lts-1.0/hoogle?q=I%23">do a Hoogle
+search</a>, we can easily
+<a href="https://www.stackage.org/haddock/lts-1.0/ghc-prim-0.3.1.0/GHC-Types.html#t:Int">find the relevant
+docs</a>,
+which leads us to the following definition:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">data </span><span style="color:#cb4b16;">Int </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">I</span><span># </span><span style="color:#cb4b16;">Int</span><span>#
+</span></code></pre>
+<p>So our first lesson: the <code>Int</code> data type you've been using since you first
+started with Haskell isn't magical at all, it's defined just like any other
+algebraic data type... except for those hashes. We can also <a href="https://www.stackage.org/snapshot/lts-1.0/hoogle?q=%2B%23">search for
+<code>+#</code></a>, and end up at
+<a href="https://www.stackage.org/haddock/lts-1.0/ghc-prim-0.3.1.0/GHC-Prim.html#v:-43--35-">some
+documentation</a>
+giving the type:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">+</span><span># </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span># </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Int</span><span># </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Int</span><span>#
+</span></code></pre>
+<p>Now that we know all the types involved, go back and look at the <code>Num</code> instance
+I quoted above, and make sure you feel comfortable that all the types add up
+(no pun intended). Hurrah, we now understand exactly how addition of <code>Int</code>s
+works. Right?</p>
+<p>Well, not so fast. The Haddocks for <code>+#</code> have a very convenient source link...
+which (apparently due to a Haddock bug) doesn't actually work. However, it's
+easy enough <a href="https://www.stackage.org/haddock/lts-1.0/ghc-prim-0.3.1.0/src/GHC-Prim.html#line-1386">to find the correct hyperlinked
+source</a>.
+And now we see the implementation of <code>+#</code>, which is:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">infixl </span><span style="color:#6c71c4;">6 </span><span style="color:#859900;">+</span><span>#
+</span><span>(</span><span style="color:#859900;">+</span><span>#) </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span># </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Int</span><span># </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Int</span><span>#
+</span><span>(</span><span style="color:#859900;">+</span><span>#) </span><span style="color:#859900;">= let</span><span> x </span><span style="color:#859900;">=</span><span> x </span><span style="color:#859900;">in</span><span> x
+</span></code></pre>
+<p>That doesn't look like addition, does it? In fact, <code>let x = x in x</code> is another
+way of saying bottom, or <code>undefined</code>, or infinite loop. We have now officially
+entered the world of primops.</p>
+<h2 id="primops">primops</h2>
+<p>primops, short for primary operations, are core pieces of functionality
+provided by GHC itself. They are the magical boundary between &quot;things we do in
+Haskell itself&quot; and &quot;things which our implementation provides.&quot; This division
+is actually quite elegant; as we already explored, the standard <code>+</code> operator
+and <code>Int</code> data type you're used to are actually themselves defined in normal
+Haskell code, which provides many benefits: you get standard type class
+support, laziness, etc. We'll explore some of that in more detail later.</p>
+<p>Look at <a href="https://www.stackage.org/haddock/lts-1.0/ghc-prim-0.3.1.0/src/GHC-Prim.html">the implementation of other functions in
+<code>GHC.Prim</code></a>;
+they're <em>all</em> defined as <code>let x = x in x</code>. When GHC reaches a call to one of
+these primops, it automatically replaces it with the real implementation for
+you, which will be some assembly code, LLVM code, or something similar.</p>
+<p>You may be wondering: why bother with this dummy implementation at all? The
+sole reason is to give Haddock documentation for the primops a place to live.
+GHC.Prim is processed by Haddock more or less like any other module; but is
+effectively ignored by GHC itself.</p>
+<p>Why do all of these functions end in a <code>#</code>? That's called the magic hash
+(enabled by the <code>MagicHash</code> language extension), and it is a convention to
+distinguish boxed and unboxed types and operations. Which, of course, brings us
+to our next topic.</p>
+<h2 id="unboxed-types">Unboxed types</h2>
+<p>The <code>I#</code> constructor is actually just a normal data constructor in Haskell,
+which happens to end with a magic hash. However, <code>Int#</code> is <em>not</em> a normal
+Haskell data type. In <code>GHC.Prim</code>, we can see that it's implementation is:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">data </span><span style="color:#cb4b16;">Int</span><span>#
+</span></code></pre>
+<p>Which, like everything else in <code>GHC.Prim</code> is really a lie. In fact, it's
+provided by the implementation, and is in fact a normal <code>long int</code> from C
+(32-bit or 64-bit, depending on architecture). We can see something even
+funnier about it in GHCi:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>&gt; :k Int
+</span><span>Int :: *
+</span><span>&gt; :k Int#
+</span><span>Int# :: #
+</span></code></pre>
+<p>That's right, <code>Int#</code> has a different <em>kind</em> than normal Haskell datatypes: <code>#</code>.
+To quote <a href="https://downloads.haskell.org/~ghc/7.8.3/docs/html/users_guide/primitives.html">the GHC
+docs</a>:</p>
+<blockquote>
+<p>Most types in GHC are boxed, which means that values of that type are
+represented by a pointer to a heap object. The representation of a Haskell
+<code>Int</code>, for example, is a two-word heap object. An unboxed type, however, is
+represented by the value itself, no pointers or heap allocation are involved.</p>
+</blockquote>
+<p>See those docs for more information on distinctions between boxed and unboxed
+types. It is vital to understand those differences when working with unboxed
+values. However, we're not going to go into those details now. Instead, let's
+sum up what we've learnt so far:</p>
+<ul>
+<li><code>Int</code> addition is just normal Haskell code in a typeclass</li>
+<li><code>Int</code> itself is a normal Haskell datatype</li>
+<li>GHC provides <code>Int#</code> and <code>+#</code> as an unboxed <code>long int</code> and addition on that type, respectively. This is exported by <code>GHC.Prim</code>, but the real implementation is &quot;inside&quot; GHC.</li>
+<li>An <code>Int</code> contains an <code>Int#</code>, which is an unboxed type.</li>
+<li>Addition of <code>Int</code>s takes advantage of the <code>+#</code> primop.</li>
+</ul>
+<h2 id="more-addition">More addition</h2>
+<p>Alright, we understand basic addition! Let's make things a bit more
+complicated. Consider the program:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>main </span><span style="color:#859900;">= do
+</span><span>    </span><span style="color:#859900;">let</span><span> x </span><span style="color:#859900;">= </span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">2
+</span><span>        y </span><span style="color:#859900;">= </span><span style="color:#6c71c4;">3 </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">4
+</span><span>    print x
+</span><span>    print y
+</span></code></pre>
+<p>We know for certain that the program will first print <code>3</code>, and then print <code>7</code>.
+But let me ask you a different question. Which operation will GHC perform
+first: <code>1 + 2</code> or <code>3 + 4</code>? If you guessed <code>1 + 2</code>, you're <em>probably</em> right, but
+not necessarily! Thanks to referential transparency, GHC is fully within its
+rights to rearrange evaluation of those expressions and add <code>3 + 4</code> before
+<code>1 + 2</code>. Since neither expression depends on the result of the other, we
+know that it is irrelevant which evaluation occurs first.</p>
+<p>Note: This is covered in much more detail on the GHC wiki's <a href="https://www.haskell.org/haskellwiki/Evaluation_order_and_state_tokens">evaluation order
+and state
+tokens</a>
+page.</p>
+<p>That begs the question: if GHC is free to rearrange evaluation like that, how
+could I say in the previous paragraph that the program will always print <code>3</code>
+before printing <code>7</code>? After all, it doesn't appear that <code>print y</code> uses the
+result of <code>print x</code> at all, so we not rearrange the calls? To answer that, we
+again need to unwrap some layers of abstraction. First, let's evaluate and
+inline <code>x</code> and <code>y</code> and get rid of the <code>do</code>-notation sugar. We end up with the
+program:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>main </span><span style="color:#859900;">=</span><span> print </span><span style="color:#6c71c4;">3 </span><span style="color:#859900;">&gt;&gt;</span><span> print </span><span style="color:#6c71c4;">7
+</span></code></pre>
+<p>We know that <code>print 3</code> and <code>print 7</code> each have type <code>IO ()</code>, so the <code>&gt;&gt;</code> operator being used comes from the <code>Monad IO</code> instance. Before we can understand that, though, we need to look at <a href="https://www.stackage.org/haddock/lts-1.0/ghc-prim-0.3.1.0/src/GHC-Types.html#IO">the definition of <code>IO</code> itself</a></p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">IO</span><span> a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">IO</span><span> (</span><span style="color:#cb4b16;">State</span><span># </span><span style="color:#cb4b16;">RealWorld </span><span style="color:#859900;">-&gt;</span><span> (# </span><span style="color:#cb4b16;">State</span><span># </span><span style="color:#cb4b16;">RealWorld</span><span>, a #))
+</span></code></pre>
+<p>We have a few things to understand about this line. Firstly,
+<a href="https://www.stackage.org/haddock/lts-1.0/ghc-prim-0.3.1.0/GHC-Prim.html#t:State-35-"><code>State#</code></a>
+and
+<a href="https://www.stackage.org/haddock/lts-1.0/ghc-prim-0.3.1.0/GHC-Prim.html#t:RealWorld"><code>RealWorld</code></a>.
+For now, just pretend like they are a single type; we'll see when we get to
+<code>ST</code> why <code>State#</code> has a type parameter.</p>
+<p>The other thing to understand is that <code>(# ... #)</code> syntax. That's an <em>unboxed
+tuple</em>, and it's a way of returning multiple values from a function. Unlike a
+normal, boxed tuple, unboxed tuples involve no extra allocation and create no
+thunks.</p>
+<p>So <code>IO</code> takes a real world state, and gives you back a real world state and
+some value. And that right there is how we model side effects and mutation in a
+referentially transparent language. You may have heard the description of <code>IO</code>
+as &quot;taking the world and giving you a new one back.&quot; What we're doing here is
+threading a specific state token through a series of function calls. By
+creating a dependency on the result of a previous function, we are able to
+ensure evaluation order, yet still remain purely functional.</p>
+<p>Let's see this in action, by coming back to our example from above. We're now
+ready to look at <a href="https://www.stackage.org/haddock/lts-1.0/base-4.7.0.2/src/GHC-Base.html">the <code>Monad IO</code>
+instance</a>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">instance  </span><span style="color:#268bd2;">Monad IO  </span><span style="color:#859900;">where
+</span><span>    </span><span style="color:#b58900;">(&gt;&gt;) </span><span style="color:#859900;">=</span><span> thenIO
+</span><span>
+</span><span style="color:#b58900;">thenIO </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO b </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO b
+</span><span>thenIO (</span><span style="color:#cb4b16;">IO</span><span> m) k </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">IO </span><span style="color:#859900;">$ \</span><span> s </span><span style="color:#859900;">-&gt; case</span><span> m s </span><span style="color:#859900;">of</span><span> (# new_s, _ #) </span><span style="color:#859900;">-&gt;</span><span> unIO k new_s
+</span><span>
+</span><span style="color:#b58900;">unIO </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO a </span><span style="color:#859900;">-&gt;</span><span> (</span><span style="color:#268bd2;">State</span><span># </span><span style="color:#268bd2;">RealWorld </span><span style="color:#859900;">-&gt;</span><span> (# </span><span style="color:#268bd2;">State</span><span># </span><span style="color:#268bd2;">RealWorld</span><span>, </span><span style="color:#268bd2;">a</span><span> #))
+</span><span>unIO (</span><span style="color:#cb4b16;">IO</span><span> a) </span><span style="color:#859900;">=</span><span> a
+</span></code></pre>
+<p>(Yes, I changed things a bit to make them easier to understand. As an exercise,
+compare that this version is in fact equivalent to what is actually defined in
+<code>GHC.Base</code>.)</p>
+<p>Let's inline these definitions into <code>print 3 &gt;&gt; print 7</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>main </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">IO </span><span style="color:#859900;">$ \</span><span>s0 </span><span style="color:#859900;">-&gt;
+</span><span>    </span><span style="color:#859900;">case</span><span> unIO (print </span><span style="color:#6c71c4;">3</span><span>) s0 </span><span style="color:#859900;">of
+</span><span>        (# s1, res1 #) </span><span style="color:#859900;">-&gt;</span><span> unIO (print </span><span style="color:#6c71c4;">7</span><span>) s1
+</span></code></pre>
+<p>Notice how, even though we ignore the <em>result</em> of <code>print 3</code> (the <code>res1</code>
+value), we still depend on the new state token <code>s1</code> when we evaluate <code>print 7</code>,
+which forces the order of evaluation to first evaluate <code>print 3</code> and then
+evaluate <code>print 7</code>.</p>
+<p>If you look through <code>GHC.Prim</code>, you'll see that a number of primitive
+operations are defined in terms of <code>State# RealWorld</code> or <code>State# s</code>, which
+allows us to force evaluation order.</p>
+<p><strong>Exercise</strong>: implement a function <code>getMaskingState :: IO Int</code> using the
+<code>getMaskingState#</code> primop and the <code>IO</code> data constructor.</p>
+<h2 id="the-st-monad">The ST monad</h2>
+<p>Let's compare the definitions of the <code>IO</code> and <a href="https://www.stackage.org/haddock/lts-1.0/base-4.7.0.2/src/GHC-ST.html#ST"><code>ST</code></a> types:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">IO</span><span>   a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">IO</span><span> (</span><span style="color:#cb4b16;">State</span><span># </span><span style="color:#cb4b16;">RealWorld </span><span style="color:#859900;">-&gt;</span><span> (# </span><span style="color:#cb4b16;">State</span><span># </span><span style="color:#cb4b16;">RealWorld</span><span>, a #))
+</span><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">ST</span><span> s a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ST</span><span> (</span><span style="color:#cb4b16;">State</span><span># s         </span><span style="color:#859900;">-&gt;</span><span> (# </span><span style="color:#cb4b16;">State</span><span># s,         a #))
+</span></code></pre>
+<p>Well <em>that</em> looks oddly similar. Said more precisely, <code>IO</code> is isomorphic to <code>ST RealWorld</code>. <code>ST</code> works under the exact same principles as <code>IO</code> for threading
+state through, which is why we're able to have things like mutable references
+in the <code>ST</code> monad.</p>
+<p>By using an uninstantiated <code>s</code> value, we can ensure that we aren't &quot;cheating&quot;
+and running arbitrary <code>IO</code> actions inside an <code>ST</code> action. Instead, we just have
+&quot;local state&quot; modifications, for some definition of local state. The details of
+using <code>ST</code> correctly and the Rank2Types approach to <code>runST</code> are interesting,
+but beyond the scope of this chapter, so we'll stop discussing them here.</p>
+<p>Since <code>ST RealWorld</code> is isomorphic to <code>IO</code>, we should be able to convert
+between the two of them. <code>base</code> does in fact <a href="https://www.stackage.org/haddock/lts-1.0/base-4.7.0.2/Control-Monad-ST.html#v:stToIO">provide the
+<code>stToIO</code></a>
+function.</p>
+<p><strong>Exercise</strong>: write a pair of functions to convert between <code>IO a</code> and <code>ST RealWorld a</code>.</p>
+<p><strong>Exercise</strong>: <code>GHC.Prim</code> has a <a href="https://www.stackage.org/haddock/lts-1.0/ghc-prim-0.3.1.0/GHC-Prim.html#g:12">section on mutable
+variables</a>,
+which forms the basis on <code>IORef</code> and <code>STRef</code>. Provide a new implementation of
+<code>STRef</code>, including <code>newSTRef</code>, <code>readSTRef</code>, and <code>writeSTRef</code>.</p>
+<h2 id="primmonad">PrimMonad</h2>
+<p>It's a bit unfortunate that we have to have two completely separate sets of
+APIs: one for <code>IO</code> and another for <code>ST</code>. One common example of this is <code>IORef</code>
+and <code>STRef</code>, but- as we'll see at the end of this section- there are plenty of
+operations that we'd like to be able to generalize.</p>
+<p>This is where <code>PrimMonad</code>, from the <code>primitive</code> package, comes into play. Let's
+look at <a href="https://www.stackage.org/haddock/lts-1.0/primitive-0.5.4.0/src/Control-Monad-Primitive.html#PrimMonad">its definition</a>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#93a1a1;">-- | Class of primitive state-transformer monads
+</span><span style="color:#859900;">class Monad </span><span style="color:#268bd2;">m</span><span> =&gt; </span><span style="color:#268bd2;">PrimMonad m </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#93a1a1;">-- | State token type
+</span><span>  </span><span style="color:#859900;">type </span><span style="color:#cb4b16;">PrimState</span><span> m
+</span><span>
+</span><span>  </span><span style="color:#93a1a1;">-- | Execute a primitive operation
+</span><span>  </span><span style="color:#b58900;">primitive </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">State</span><span># (</span><span style="color:#268bd2;">PrimState m</span><span>) </span><span style="color:#859900;">-&gt;</span><span> (# </span><span style="color:#268bd2;">State</span><span># (</span><span style="color:#268bd2;">PrimState m</span><span>), </span><span style="color:#268bd2;">a</span><span> #)) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m a
+</span></code></pre>
+<p>Note: I have <em>not</em> included the <code>internal</code> method, since <a href="https://github.com/haskell/primitive/pull/19">it will likely be
+removed</a>. In fact, at the time
+you're reading this, it may already be gone!</p>
+<p><code>PrimState</code> is an associated type giving the type of the state token. For <code>IO</code>,
+that's <code>RealWorld</code>, and for <code>ST s</code>, it's <code>s</code>. <code>primitive</code> gives a way to lift
+the internal implementation of both <code>IO</code> and <code>ST</code> to the monad under question.</p>
+<p><strong>Exercise</strong>: Write implementations of the <code>PrimMonad IO</code> and <code>PrimMonad (ST s)</code> instances, and compare against the real ones.</p>
+<p>The primitive package provides a number of wrappers around types and functions
+from <code>GHC.Prim</code> and generalizes them to both <code>IO</code> and <code>ST</code> via the <code>PrimMonad</code>
+type class.</p>
+<p><strong>Exercise</strong>: Extend your previous <code>STRef</code> implementation to work in any
+<code>PrimMonad</code>. After you're done, you may want to <a href="https://www.stackage.org/haddock/lts-1.0/primitive-0.5.4.0/Data-Primitive-MutVar.html">have a look at
+Data.Primitive.MutVar</a>.</p>
+<p>The <code>vector</code> package builds on top of the <code>primitive</code> package to provide
+mutable vectors that can be used from both <code>IO</code> and <code>ST</code>. This chapter is <em>not</em>
+a tutorial on the <code>vector</code> package, so we won't go into any more details now.
+However, if you're curious, please <a href="https://www.stackage.org/haddock/nightly-2015-01-08/vector-0.10.12.2/Data-Vector-Generic-Mutable.html">look through the
+<code>Data.Vector.Generic.Mutable</code>
+docs</a>.</p>
+<h2 id="readerio-monad">ReaderIO monad</h2>
+<p>To tie this off, we're going to implement a <code>ReaderIO</code> type. This will flatten
+together the implementations of <code>ReaderT</code> and <code>IO</code>. Generally speaking, there's
+no advantage to doing this: GHC should always be smart enough to generate the
+same code for this and for <code>ReaderT r IO</code> (and in my benchmarks, they perform
+identically). But it's a good way to test that you understand the details here.</p>
+<p>You may want to try implementing this yourself before looking at the
+implementation below.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> FlexibleInstances     #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> MagicHash             #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> MultiParamTypeClasses #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> TypeFamilies          #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> UnboxedTuples         #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Applicative        </span><span>(</span><span style="color:#268bd2;">Applicative </span><span style="color:#b58900;">(..)</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad              </span><span>(</span><span style="color:#b58900;">ap</span><span>, </span><span style="color:#b58900;">liftM</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.IO.Class     </span><span>(</span><span style="color:#268bd2;">MonadIO </span><span style="color:#b58900;">(..)</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.Primitive    </span><span>(</span><span style="color:#268bd2;">PrimMonad </span><span style="color:#b58900;">(..)</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.Reader.Class </span><span>(</span><span style="color:#268bd2;">MonadReader </span><span style="color:#b58900;">(..)</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">GHC.Base                   </span><span>(</span><span style="color:#268bd2;">IO </span><span style="color:#b58900;">(..)</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">GHC.Prim                   </span><span>(</span><span style="color:#268bd2;">RealWorld</span><span>, </span><span style="color:#268bd2;">State</span><span>#)
+</span><span>
+</span><span style="color:#93a1a1;">-- | Behaves like a @ReaderT r IO a@.
+</span><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">ReaderIO</span><span> r a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ReaderIO
+</span><span>    (r </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">State</span><span># </span><span style="color:#cb4b16;">RealWorld </span><span style="color:#859900;">-&gt;</span><span> (# </span><span style="color:#cb4b16;">State</span><span># </span><span style="color:#cb4b16;">RealWorld</span><span>, a #))
+</span><span>
+</span><span style="color:#93a1a1;">-- standard implementations...
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Functor</span><span> (</span><span style="color:#268bd2;">ReaderIO r</span><span>) </span><span style="color:#859900;">where
+</span><span>    fmap </span><span style="color:#859900;">=</span><span> liftM
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Applicative</span><span> (</span><span style="color:#268bd2;">ReaderIO r</span><span>) </span><span style="color:#859900;">where
+</span><span>    pure </span><span style="color:#859900;">=</span><span> return
+</span><span>    </span><span style="color:#b58900;">(&lt;*&gt;) </span><span style="color:#859900;">=</span><span> ap
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Monad</span><span> (</span><span style="color:#268bd2;">ReaderIO r</span><span>) </span><span style="color:#859900;">where
+</span><span>    return x </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ReaderIO </span><span style="color:#859900;">$ \</span><span>_ s </span><span style="color:#859900;">-&gt;</span><span> (# s, x #)
+</span><span>    </span><span style="color:#cb4b16;">ReaderIO</span><span> f </span><span style="color:#859900;">&gt;&gt;=</span><span> g </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ReaderIO </span><span style="color:#859900;">$ \</span><span>r s0 </span><span style="color:#859900;">-&gt;
+</span><span>        </span><span style="color:#859900;">case</span><span> f r s0 </span><span style="color:#859900;">of
+</span><span>            (# s1, x #) </span><span style="color:#859900;">-&gt;
+</span><span>                </span><span style="color:#859900;">let </span><span style="color:#cb4b16;">ReaderIO</span><span> g&#39; </span><span style="color:#859900;">=</span><span> g x
+</span><span>                 </span><span style="color:#859900;">in</span><span> g&#39; r s1
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadReader r</span><span> (</span><span style="color:#268bd2;">ReaderIO r</span><span>) </span><span style="color:#859900;">where
+</span><span>    ask </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ReaderIO </span><span style="color:#859900;">$ \</span><span>r s </span><span style="color:#859900;">-&gt;</span><span> (# s, r #)
+</span><span>    local f (</span><span style="color:#cb4b16;">ReaderIO</span><span> m) </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ReaderIO </span><span style="color:#859900;">$ \</span><span>r s </span><span style="color:#859900;">-&gt;</span><span> m (f r) s
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadIO</span><span> (</span><span style="color:#268bd2;">ReaderIO r</span><span>) </span><span style="color:#859900;">where
+</span><span>    liftIO (</span><span style="color:#cb4b16;">IO</span><span> f) </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ReaderIO </span><span style="color:#859900;">$ \</span><span>_ s </span><span style="color:#859900;">-&gt;</span><span> f s
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">PrimMonad</span><span> (</span><span style="color:#268bd2;">ReaderIO r</span><span>) </span><span style="color:#859900;">where
+</span><span>    </span><span style="color:#859900;">type </span><span style="color:#cb4b16;">PrimState</span><span> (</span><span style="color:#cb4b16;">ReaderIO</span><span> r) </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">RealWorld
+</span><span>
+</span><span>    primitive f </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ReaderIO </span><span style="color:#859900;">$ \</span><span>_ s </span><span style="color:#859900;">-&gt;</span><span> f s
+</span><span>
+</span><span>    </span><span style="color:#93a1a1;">-- Cannot properly define internal, since there&#39;s no way to express a
+</span><span>    </span><span style="color:#93a1a1;">-- computation that requires an @r@ input value as one that doesn&#39;t. This
+</span><span>    </span><span style="color:#93a1a1;">-- limitation of @PrimMonad@ is being addressed:
+</span><span>    </span><span style="color:#93a1a1;">--
+</span><span>    </span><span style="color:#93a1a1;">-- https://github.com/haskell/primitive/pull/19
+</span><span>    internal (</span><span style="color:#cb4b16;">ReaderIO</span><span> f) </span><span style="color:#859900;">=
+</span><span>        f (error </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">PrimMonad.internal: environment evaluated</span><span style="color:#839496;">&quot;</span><span>)
+</span></code></pre>
+<p><strong>Exercise</strong>: Modify the <code>ReaderIO</code> monad to instead be a <code>ReaderST</code> monad, and
+take an <code>s</code> parameter for the specific state token.</p>
+<h2 id="more-exercises">More exercises:</h2>
+<ul>
+<li>Rewrite <code>return</code> and <code>&gt;&gt;=</code> for <code>IO</code> with unboxed functions.</li>
+<li>Rewrite <code>runST</code>. You'll need <a href="https://www.stackage.org/haddock/lts-12.21/ghc-prim-0.5.1.1/GHC-Magic.html#v:runRW-35-"><code>runRW#</code></a>
+in <code>GHC.Magic</code>.</li>
+</ul>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> MagicHash #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> UnboxedTuples #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> RankNTypes #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">GHC.Prim
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">GHC.Types
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">GHC.ST
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">GHC.Magic
+</span><span>
+</span><span style="color:#b58900;">runIO </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">State</span><span># </span><span style="color:#268bd2;">RealWorld </span><span style="color:#859900;">-&gt;</span><span> (# </span><span style="color:#268bd2;">State</span><span># </span><span style="color:#268bd2;">RealWorld</span><span>, </span><span style="color:#268bd2;">a</span><span> #)
+</span><span>runIO (</span><span style="color:#cb4b16;">IO</span><span> f) s </span><span style="color:#859900;">=</span><span> f s
+</span><span>
+</span><span style="color:#b58900;">returnIO </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO a
+</span><span>returnIO x </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">IO </span><span style="color:#859900;">$ \</span><span>s </span><span style="color:#859900;">-&gt;</span><span> (# s, x #)
+</span><span>
+</span><span style="color:#b58900;">bindIO </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO a </span><span style="color:#859900;">-&gt;</span><span> (</span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO b</span><span>) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO b
+</span><span>bindIO (</span><span style="color:#cb4b16;">IO</span><span> ioa) f </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">IO </span><span style="color:#859900;">$ \</span><span>s0 </span><span style="color:#859900;">-&gt;
+</span><span>  </span><span style="color:#859900;">case</span><span> ioa s0 </span><span style="color:#859900;">of
+</span><span>    (# s1, a #) </span><span style="color:#859900;">-&gt;</span><span> runIO (f a) s1
+</span><span>
+</span><span style="color:#b58900;">runST </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">forall s</span><span>. </span><span style="color:#268bd2;">ST s a</span><span>) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a
+</span><span>runST (</span><span style="color:#cb4b16;">ST</span><span> f) </span><span style="color:#859900;">=
+</span><span>  </span><span style="color:#859900;">case</span><span> runRW# f </span><span style="color:#859900;">of
+</span><span>    (# _ignoredState, x #) </span><span style="color:#859900;">-&gt;</span><span> x
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> pure </span><span style="color:#b58900;">()
+</span></code></pre>
+<p>Implement a scaled down version of <code>ST</code> with a <code>Monad</code> instance and
+the following signature:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">ST</span><span> s a
+</span><span style="color:#b58900;">runST </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">forall s</span><span>. </span><span style="color:#268bd2;">ST s a</span><span>) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a
+</span><span style="color:#b58900;">unsafeToST </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">ST s a
+</span></code></pre>
+<p>Solution:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> MagicHash #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> UnboxedTuples #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> RankNTypes #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> DeriveFunctor #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">GHC.Prim
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">GHC.Magic
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">GHC.Types
+</span><span>
+</span><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">ST</span><span> s a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ST</span><span> (</span><span style="color:#cb4b16;">State</span><span># s </span><span style="color:#859900;">-&gt;</span><span> (# </span><span style="color:#cb4b16;">State</span><span># s, a #))
+</span><span>  </span><span style="color:#859900;">deriving </span><span style="color:#cb4b16;">Functor
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Applicative</span><span> (</span><span style="color:#268bd2;">ST s</span><span>) </span><span style="color:#859900;">where
+</span><span>  pure x </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ST</span><span> (</span><span style="color:#859900;">\</span><span>s </span><span style="color:#859900;">-&gt;</span><span> (# s, x #))
+</span><span>  </span><span style="color:#cb4b16;">ST</span><span> f </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">ST</span><span> x </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ST </span><span style="color:#859900;">$ \</span><span>s0 </span><span style="color:#859900;">-&gt;
+</span><span>    </span><span style="color:#859900;">case</span><span> f s0 </span><span style="color:#859900;">of
+</span><span>      (# s1, f&#39; #) </span><span style="color:#859900;">-&gt;
+</span><span>        </span><span style="color:#859900;">case</span><span> x s1 </span><span style="color:#859900;">of
+</span><span>          (# s2, x&#39; #) </span><span style="color:#859900;">-&gt;</span><span> (# s2, f&#39; x&#39; #)
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Monad</span><span> (</span><span style="color:#268bd2;">ST s</span><span>) </span><span style="color:#859900;">where
+</span><span>  return </span><span style="color:#859900;">=</span><span> pure
+</span><span>  </span><span style="color:#cb4b16;">ST</span><span> x </span><span style="color:#859900;">&gt;&gt;=</span><span> f </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ST </span><span style="color:#859900;">$ \</span><span>s0 </span><span style="color:#859900;">-&gt;
+</span><span>    </span><span style="color:#859900;">case</span><span> x s0 </span><span style="color:#859900;">of
+</span><span>      (# s1, x&#39; #) </span><span style="color:#859900;">-&gt;
+</span><span>        </span><span style="color:#859900;">case</span><span> f x&#39; </span><span style="color:#859900;">of
+</span><span>          </span><span style="color:#cb4b16;">ST</span><span> f&#39; </span><span style="color:#859900;">-&gt;</span><span> f&#39; s1
+</span><span>
+</span><span style="color:#b58900;">runST </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">forall s</span><span>. </span><span style="color:#268bd2;">ST s a</span><span>) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a
+</span><span>runST (</span><span style="color:#cb4b16;">ST</span><span> f) </span><span style="color:#859900;">=
+</span><span>  </span><span style="color:#859900;">case</span><span> runRW# f </span><span style="color:#859900;">of
+</span><span>    (# _s, x #) </span><span style="color:#859900;">-&gt;</span><span> x
+</span><span>
+</span><span style="color:#b58900;">unsafeToST </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">ST s a
+</span><span>unsafeToST (</span><span style="color:#cb4b16;">IO</span><span> f) </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ST</span><span> (unsafeCoerce# f)
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> print </span><span style="color:#859900;">$!</span><span> runST </span><span style="color:#859900;">$ do
+</span><span>  unsafeToST </span><span style="color:#859900;">$</span><span> putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Enter your name</span><span style="color:#839496;">&quot;
+</span><span>  unsafeToST getLine
+</span></code></pre>
+<p><strong>Challenge question</strong> Why is <code>$!</code> necessary?</p>
+<h2 id="further-reading">Further reading</h2>
+<ul>
+<li><a href="https://downloads.haskell.org/~ghc/7.8.3/docs/html/users_guide/primitives.html">GHC docs on primitives</a></li>
+<li><a href="https://ghc.haskell.org/trac/ghc/wiki/Commentary/PrimOps">GHC Wiki on PrimOps</a></li>
+<li><a href="https://www.haskell.org/haskellwiki/Evaluation_order_and_state_tokens">Evaluation order and state tokens</a></li>
+</ul>
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#6211030e0711220412010d0f120e0716074c010d0f" targe="_blank"><span class="__cf_email__" data-cfemail="a6d5c7cac3d5e6c0d6c5c9cbd6cac3d2c388c5c9cb">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

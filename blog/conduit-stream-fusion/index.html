@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>IAP: conduit stream fusion</title>
+  <meta property="og:title" content="IAP: conduit stream fusion">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;08&#x2F;conduit-stream-fusion&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>IAP: conduit stream fusion</h1>
+      
+      <p id="page-description">By Michael Snoyman, August 27, 2014</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=IAP%3A%20conduit%20stream%20fusion https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;08&#x2F;conduit-stream-fusion&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;08&#x2F;conduit-stream-fusion&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;08&#x2F;conduit-stream-fusion&#x2F;&amp;title=IAP%3A%20conduit%20stream%20fusion"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;08&#x2F;conduit-stream-fusion&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>Both the changes described in this blog post, and in the
+<a href="/blog/2014/08/iap-speeding-up-conduit">previous blog
+post</a>, are now merged to the master branch of conduit, and have
+been released to Hackage as conduit 1.2.0. That doesn't indicate
+stream fusion is complete (far from it!). Rather, the optimizations
+we have so far are valuable enough that I want them to be available
+immediately, and future stream fusion work is highly unlikely to
+introduce further breaking changes. Having the code on Hackage will
+hopefully also make it easier for others to participate in the
+discussion around this code.</p>
+<h2 id="stream-fusion">Stream fusion</h2>
+<p><a href="/blog/2014/08/iap-speeding-up-conduit">Last time</a>, I
+talked about applying the codensity transform to speed up conduit.
+This greatly increases performance when performing many monadic
+binds. However, this does nothing to help us with speeding up the
+"categorical composition" of conduit, where we connect two
+components of a pipeline together so the output from the first
+flows into the second. conduit usually refers to this as
+<i>fusion</i>, but given the topic at hand (stream fusion), I think
+that nomenclature will become confusing. So let's stick to
+categorical composition, even though conduit isn't actually a
+category.</p>
+<p>Duncan Coutts, Roman Leshchinskiy and Don Stewart wrote <a href=
+"http://fun.cs.tufts.edu/stream-fusion.pdf">the stream fusion
+paper</a>, and that technique has become integral to getting high
+performance in the vector and text packages. The paper is well
+worth the read, but for those unfamiliar with the technique, let me
+give a very brief summary:</p>
+<ul>
+<li>GHC is very good at optimising non-recursive functions.</li>
+<li>We express all of our streaming functions has a combination of
+some internal state, and a function to step over that state.</li>
+<li>Stepping either indicates that the stream is complete, there's
+a new value and a new state, or there's a new state without a new
+value (this last case helps avoid recursion for a number of
+functions like <code>filter</code>).</li>
+<li>A stream transformers (like <code>map</code>) takes a
+<code>Stream</code> as input and produces a new <code>Stream</code>
+as output.</li>
+<li>The final consuming functions, like <code>fold</code>, are the
+only place where recursion happens. This allows all other
+components of the pipeline to be inlined, rewritten to more
+efficient formats, and optimized by GHC.</li>
+</ul>
+<p>Let's see how this looks compared to conduit.</p>
+<h2 id="data-types">Data types</h2>
+<p>I'm going to slightly rename data types from stream fusion to
+avoid conflicts with existing conduit names. I'm also going to add
+an extra type parameter to represent the final return value of a
+stream; this is a concept that exists in conduit, but not common
+stream fusion.</p>
+<pre><span class="hs-keyword">data</span> <span class=
+"hs-conid">Step</span> <span class="hs-varid">s</span> <span class=
+"hs-varid">o</span> <span class="hs-varid">r</span>
+    <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">Emit</span> <span class="hs-varid">s</span> <span class=
+"hs-varid">o</span>
+    <span class="hs-keyglyph">|</span> <span class=
+"hs-conid">Skip</span> <span class="hs-varid">s</span>
+    <span class="hs-keyglyph">|</span> <span class=
+"hs-conid">Stop</span> <span class="hs-varid">r</span>
+<span class="hs-keyword">data</span> <span class=
+"hs-conid">Stream</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">o</span> <span class=
+"hs-varid">r</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-keyword">forall</span> <span class=
+"hs-varid">s</span><span class="hs-varop">.</span> <span class=
+"hs-conid">Stream</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">s</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Step</span> <span class="hs-varid">s</span> <span class=
+"hs-varid">o</span> <span class="hs-varid">r</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">m</span> <span class="hs-varid">s</span><span class=
+"hs-layout">)</span></pre>
+<p>The <code>Step</code> datatype takes three parameters.
+<code>s</code> is the internal state used by the stream,
+<code>o</code> is the type of the stream of values it generates,
+and <code>r</code> is the final result value. The
+<code>Stream</code> datatype uses an existential to hide away that
+internal state. It then consists of a step function that takes a
+state and gives us a new <code>Step</code>, as well as an initial
+state value (which is a monadic action, for cases where we want to
+do some initialization when starting a stream).</p>
+<p>Let's look at some functions to get a feel for what this
+programming style looks like:</p>
+<pre><span class=
+"hs-definition">enumFromToS_int</span> <span class="hs-keyglyph">::</span> <span class="hs-layout">(</span><span class="hs-conid">Integral</span> <span class="hs-varid">a</span><span class="hs-layout">,</span> <span class="hs-conid">Monad</span> <span class="hs-varid">m</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-varid">a</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">a</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Stream</span> <span class="hs-varid">m</span> <span class="hs-varid">a</span> <span class="hs-conid">()</span>
+<span class="hs-definition">enumFromToS_int</span> <span class=
+"hs-varop">!</span><span class="hs-varid">x0</span> <span class=
+"hs-varop">!</span><span class="hs-varid">y</span> <span class=
+"hs-keyglyph">=</span>
+    <span class="hs-conid">Stream</span> <span class=
+"hs-varid">step</span> <span class="hs-layout">(</span><span class=
+"hs-varid">return</span> <span class=
+"hs-varid">x0</span><span class="hs-layout">)</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">step</span> <span class=
+"hs-varid">x</span> <span class="hs-keyglyph">|</span> <span class=
+"hs-varid">x</span> <span class=
+"hs-varop">&lt;=</span> <span class="hs-varid">y</span>    <span class="hs-keyglyph">=</span> <span class="hs-varid">return</span> <span class="hs-varop">$</span> <span class="hs-conid">Emit</span> <span class="hs-layout">(</span><span class="hs-varid">x</span> <span class="hs-varop">+</span> <span class="hs-num">1</span><span class="hs-layout">)</span> <span class="hs-varid">x</span>
+           <span class="hs-keyglyph">|</span> <span class=
+"hs-varid">otherwise</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">return</span> <span class=
+"hs-varop">$</span> <span class="hs-conid">Stop</span> <span class=
+"hs-conid">()</span></pre>
+<p>This function generates a stream of integral values from
+<code>x0</code> to <code>y</code>. The internal state is the
+current value to be emitted. If the current value is less than or
+equal to <code>y</code>, we emit our current value, and update our
+state to be the next value. Otherwise, we stop.</p>
+<p>We can also write a function that transforms an existing stream.
+<code>mapS</code> is likely the simplest example of this:</p>
+<pre><span class="hs-definition">mapS</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-layout">(</span><span class="hs-varid">a</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">b</span><span class="hs-layout">)</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Stream</span> <span class="hs-varid">m</span> <span class="hs-varid">a</span> <span class="hs-varid">r</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Stream</span> <span class="hs-varid">m</span> <span class="hs-varid">b</span> <span class="hs-varid">r</span>
+<span class="hs-definition">mapS</span> <span class=
+"hs-varid">f</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Stream</span> <span class=
+"hs-varid">step</span> <span class=
+"hs-varid">ms0</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span>
+    <span class="hs-conid">Stream</span> <span class=
+"hs-varid">step'</span> <span class="hs-varid">ms0</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">step'</span> <span class=
+"hs-varid">s</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-keyword">do</span>
+        <span class="hs-varid">res</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">step</span> <span class="hs-varid">s</span>
+        <span class="hs-varid">return</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-keyword">case</span> <span class=
+"hs-varid">res</span> <span class="hs-keyword">of</span>
+            <span class="hs-conid">Stop</span> <span class=
+"hs-varid">r</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Stop</span> <span class="hs-varid">r</span>
+            <span class="hs-conid">Emit</span> <span class=
+"hs-varid">s'</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Emit</span> <span class=
+"hs-varid">s'</span> <span class="hs-layout">(</span><span class=
+"hs-varid">f</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span>
+            <span class="hs-conid">Skip</span> <span class=
+"hs-varid">s'</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Skip</span> <span class="hs-varid">s'</span></pre>
+<p>The trick here is to make a function from one
+<code>Stream</code> to another. We unpack the input
+<code>Stream</code> constructor to get the input step and state
+functions. Since <code>mapS</code> has no state of its own, we
+simply keep the input state unmodified. We then provide our
+modified <code>step'</code> function. This calls the input step
+function, and any time it sees an <code>Emit</code>, applies the
+user-provided <code>f</code> function to the emitted value.</p>
+<p>Finally, let's consider the consumption of a stream with a
+strict left fold:</p>
+<pre><span class="hs-definition">foldS</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-layout">(</span><span class="hs-varid">b</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">a</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">b</span><span class="hs-layout">)</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">b</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Stream</span> <span class="hs-varid">m</span> <span class="hs-varid">a</span> <span class="hs-conid">()</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">m</span> <span class="hs-varid">b</span>
+<span class="hs-definition">foldS</span> <span class=
+"hs-varid">f</span> <span class="hs-varid">b0</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Stream</span> <span class=
+"hs-varid">step</span> <span class=
+"hs-varid">ms0</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span>
+    <span class="hs-varid">ms0</span> <span class=
+"hs-varop">&gt;&gt;=</span> <span class=
+"hs-varid">loop</span> <span class="hs-varid">b0</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">loop</span> <span class=
+"hs-varop">!</span><span class="hs-varid">b</span> <span class=
+"hs-varid">s</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-keyword">do</span>
+        <span class="hs-varid">res</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">step</span> <span class="hs-varid">s</span>
+        <span class="hs-keyword">case</span> <span class=
+"hs-varid">res</span> <span class="hs-keyword">of</span>
+            <span class="hs-conid">Stop</span> <span class=
+"hs-conid">()</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">return</span> <span class="hs-varid">b</span>
+            <span class="hs-conid">Skip</span> <span class=
+"hs-varid">s'</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">loop</span> <span class="hs-varid">b</span> <span class=
+"hs-varid">s'</span>
+            <span class="hs-conid">Emit</span> <span class=
+"hs-varid">s'</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">loop</span> <span class="hs-layout">(</span><span class=
+"hs-varid">f</span> <span class="hs-varid">b</span> <span class=
+"hs-varid">a</span><span class="hs-layout">)</span> <span class=
+"hs-varid">s'</span></pre>
+<p>We unpack the input <code>Stream</code> constructor again, get
+the initial state, and then loop. Each loop, we run the input step
+function.</p>
+<h2 id="match-and-mismatch-with-conduit">Match and mismatch with
+conduit</h2>
+<p>There's a simple, straightforward conversion from a
+<code>Stream</code> to a <code>Source</code>:</p>
+<pre><span class="hs-definition">toSource</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-conid">Stream</span> <span class="hs-varid">m</span> <span class="hs-varid">a</span> <span class="hs-conid">()</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Producer</span> <span class="hs-varid">m</span> <span class="hs-varid">a</span>
+<span class="hs-definition">toSource</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Stream</span> <span class=
+"hs-varid">step</span> <span class=
+"hs-varid">ms0</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span>
+    <span class="hs-varid">lift</span> <span class=
+"hs-varid">ms0</span> <span class=
+"hs-varop">&gt;&gt;=</span> <span class="hs-varid">loop</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">loop</span> <span class=
+"hs-varid">s</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-keyword">do</span>
+        <span class="hs-varid">res</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">lift</span> <span class="hs-varop">$</span> <span class=
+"hs-varid">step</span> <span class="hs-varid">s</span>
+        <span class="hs-keyword">case</span> <span class=
+"hs-varid">res</span> <span class="hs-keyword">of</span>
+            <span class="hs-conid">Stop</span> <span class=
+"hs-conid">()</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">return</span> <span class="hs-conid">()</span>
+            <span class="hs-conid">Skip</span> <span class=
+"hs-varid">s'</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">loop</span> <span class="hs-varid">s'</span>
+            <span class="hs-conid">Emit</span> <span class=
+"hs-varid">s'</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">yield</span> <span class=
+"hs-varid">a</span> <span class="hs-varop">&gt;&gt;</span> <span class="hs-varid">loop</span> <span class="hs-varid">s'</span></pre>
+<p>We extract the state, and then loop over it, calling
+<code>yield</code> for each emitted value. And ignoring finalizers
+for the moment, there's even a way to convert a <code>Source</code>
+into a <code>Stream</code>:</p>
+<pre><span class="hs-definition">fromSource</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-conid">Source</span> <span class="hs-varid">m</span> <span class="hs-varid">a</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Stream</span> <span class="hs-varid">m</span> <span class="hs-varid">a</span> <span class="hs-conid">()</span>
+<span class="hs-definition">fromSource</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ConduitM</span> <span class=
+"hs-varid">src0</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span>
+    <span class="hs-conid">Stream</span> <span class=
+"hs-varid">step</span> <span class="hs-layout">(</span><span class=
+"hs-varid">return</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">src0</span> <span class=
+"hs-conid">Done</span><span class="hs-layout">)</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">step</span> <span class=
+"hs-layout">(</span><span class="hs-conid">Done</span> <span class=
+"hs-conid">()</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">return</span> <span class=
+"hs-varop">$</span> <span class="hs-conid">Stop</span> <span class=
+"hs-conid">()</span>
+    <span class="hs-varid">step</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Leftover</span> <span class=
+"hs-varid">p</span> <span class="hs-conid">()</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">return</span> <span class="hs-varop">$</span> <span class="hs-conid">Skip</span> <span class="hs-varid">p</span>
+    <span class="hs-varid">step</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">NeedInput</span> <span class=
+"hs-keyword">_</span> <span class="hs-varid">p</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">return</span> <span class="hs-varop">$</span> <span class="hs-conid">Skip</span> <span class="hs-varop">$</span> <span class="hs-varid">p</span> <span class="hs-conid">()</span>
+    <span class="hs-varid">step</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">PipeM</span> <span class="hs-varid">mp</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=</span> <span class="hs-varid">liftM</span> <span class="hs-conid">Skip</span> <span class="hs-varid">mp</span>
+    <span class="hs-varid">step</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">HaveOutput</span> <span class=
+"hs-varid">p</span> <span class=
+"hs-sel">_finalizer</span> <span class=
+"hs-varid">o</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">return</span> <span class=
+"hs-varop">$</span> <span class="hs-conid">Emit</span> <span class=
+"hs-varid">p</span> <span class="hs-varid">o</span></pre>
+<p>Unfortunately, there's no straightforward conversion for
+<code>Conduit</code>s (transformers) and <code>Sink</code>s
+(consumers). There's simply a mismatch in the conduit world- which
+is fully continuation based- to the stream world- where the
+upstream is provided in an encapsulated value. I <i>did</i> find a
+few representations that mostly work, but the performance
+characteristics are terrible.</p>
+<p>If anyone has insights into this that I missed, please contact
+me, as this could have an important impact on the future of stream
+fusion in conduit. But for the remainder of this blog post, I will
+continue under the assumption that only <code>Source</code> and
+<code>Stream</code> can be efficiently converted.</p>
+<h2 id="streamconduit">StreamConduit</h2>
+<p>Once I accepted that I wouldn't be able to convert a stream
+transformation into a conduit transformation, I was left with a
+simple approach to start working on fusion: have two
+representations of each function we want to be able to fuse. The
+first representation would use normal conduit code, and the second
+would be streaming. This looks like:</p>
+<pre><span class="hs-keyword">data</span> <span class=
+"hs-conid">StreamConduit</span> <span class=
+"hs-varid">i</span> <span class="hs-varid">o</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">r</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">StreamConduit</span>
+    <span class="hs-layout">(</span><span class=
+"hs-conid">ConduitM</span> <span class=
+"hs-varid">i</span> <span class="hs-varid">o</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">r</span><span class=
+"hs-layout">)</span>
+    <span class="hs-layout">(</span><span class=
+"hs-conid">Stream</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">i</span> <span class=
+"hs-conid">()</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Stream</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">o</span> <span class=
+"hs-varid">r</span><span class="hs-layout">)</span></pre>
+<p>Notice that the second field uses the stream fusion concept of a
+<code>Stream</code>-transforming function. At first, this may seem
+like it doesn't properly address <code>Source</code>s and
+<code>Sink</code>s, since the former doesn't have an input
+<code>Stream</code>, and the latter results in a single output
+value, not a <code>Stream</code>. However, those are really just
+special cases of the more general form used here. For
+<code>Source</code>s, we provide an empty input stream, and for
+<code>Sink</code>s, we continue executing the <code>Stream</code>
+until we get a <code>Stop</code> constructor with the final result.
+You can see both of these in the implementation of the
+<code>connectStream</code> function (whose purpose I'll explain in
+a moment):</p>
+<pre><span class="hs-definition">connectStream</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class="hs-varid">m</span>
+              <span class="hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">StreamConduit</span> <span class=
+"hs-conid">()</span> <span class=
+"hs-varid">i</span>    <span class="hs-varid">m</span> <span class=
+"hs-conid">()</span>
+              <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">StreamConduit</span> <span class=
+"hs-varid">i</span>  <span class=
+"hs-conid">Void</span> <span class="hs-varid">m</span> <span class=
+"hs-varid">r</span>
+              <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">r</span>
+<span class="hs-definition">connectStream</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">StreamConduit</span> <span class=
+"hs-keyword">_</span> <span class=
+"hs-varid">stream</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-conid">StreamConduit</span> <span class=
+"hs-keyword">_</span> <span class="hs-varid">f</span><span class=
+"hs-layout">)</span> <span class="hs-keyglyph">=</span>
+    <span class="hs-varid">run</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">f</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">stream</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-conid">Stream</span> <span class=
+"hs-varid">emptyStep</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">return</span> <span class=
+"hs-conid">()</span><span class="hs-layout">)</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">emptyStep</span> <span class=
+"hs-keyword">_</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">return</span> <span class=
+"hs-varop">$</span> <span class="hs-conid">Stop</span> <span class=
+"hs-conid">()</span>
+    <span class="hs-varid">run</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Stream</span> <span class=
+"hs-varid">step</span> <span class=
+"hs-varid">ms0</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span>
+        <span class="hs-varid">ms0</span> <span class=
+"hs-varop">&gt;&gt;=</span> <span class="hs-varid">loop</span>
+      <span class="hs-keyword">where</span>
+        <span class="hs-varid">loop</span> <span class=
+"hs-varid">s</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-keyword">do</span>
+            <span class="hs-varid">res</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">step</span> <span class="hs-varid">s</span>
+            <span class="hs-keyword">case</span> <span class=
+"hs-varid">res</span> <span class="hs-keyword">of</span>
+                <span class="hs-conid">Stop</span> <span class=
+"hs-varid">r</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">return</span> <span class="hs-varid">r</span>
+                <span class="hs-conid">Skip</span> <span class=
+"hs-varid">s'</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">loop</span> <span class="hs-varid">s'</span>
+                <span class="hs-conid">Emit</span> <span class=
+"hs-keyword">_</span> <span class="hs-varid">o</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">absurd</span> <span class="hs-varid">o</span></pre>
+<p>Notice how we've created an empty <code>Stream</code> using
+<code>emptyStep</code> and a dummy <code>()</code> state. And on
+the <code>run</code> side, we loop through the results. The type
+system (via the <code>Void</code> datatype) prevents the
+possibility of a meaningful <code>Emit</code> constructor, and we
+witness this with the <code>absurd</code> function. For
+<code>Stop</code> we return the final value, and <code>Skip</code>
+implies another loop.</p>
+<h3 id="fusing-streamconduit">Fusing StreamConduit</h3>
+<p>Assuming we have some functions that use
+<code>StreamConduit</code>, how do we get things to fuse? We still
+need all of our functions to have a <code>ConduitM</code> type
+signature, so we start off with a function to convert a
+<code>StreamConduit</code> into a <code>ConduitM</code>:</p>
+<pre><span class="hs-definition">unstream</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">StreamConduit</span> <span class=
+"hs-varid">i</span> <span class="hs-varid">o</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">r</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">ConduitM</span> <span class=
+"hs-varid">i</span> <span class="hs-varid">o</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">r</span>
+<span class="hs-definition">unstream</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">StreamConduit</span> <span class=
+"hs-varid">c</span> <span class="hs-keyword">_</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">c</span>
+<span class="hs-comment">{-# INLINE [0] unstream #-}</span></pre>
+<p>Note that we hold off on any inlining until simplification phase
+0. This is vital to our next few rewrite rules, which is where all
+the magic happens.</p>
+<p>The next thing we want to be able to do is categorically compose
+two <code>StreamConduit</code>s together. This is easy to do, since
+a <code>StreamConduit</code> is made up of <code>ConduitM</code>s
+which compose via the <code>=$=</code> operator, and
+<code>Stream</code> transformers, which compose via normal function
+composition. This results in a function:</p>
+<pre><span class="hs-definition">fuseStream</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class="hs-varid">m</span>
+           <span class="hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">StreamConduit</span> <span class=
+"hs-varid">a</span> <span class="hs-varid">b</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">()</span>
+           <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">StreamConduit</span> <span class=
+"hs-varid">b</span> <span class="hs-varid">c</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">r</span>
+           <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">StreamConduit</span> <span class=
+"hs-varid">a</span> <span class="hs-varid">c</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">r</span>
+<span class="hs-definition">fuseStream</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">StreamConduit</span> <span class=
+"hs-varid">a</span> <span class="hs-varid">x</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-conid">StreamConduit</span> <span class=
+"hs-varid">b</span> <span class="hs-varid">y</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">StreamConduit</span> <span class="hs-layout">(</span><span class="hs-varid">a</span> <span class="hs-varop">=$=</span> <span class="hs-varid">b</span><span class="hs-layout">)</span> <span class="hs-layout">(</span><span class="hs-varid">y</span> <span class="hs-varop">.</span> <span class="hs-varid">x</span><span class="hs-layout">)</span>
+<span class="hs-comment">{-# INLINE fuseStream #-}</span></pre>
+<p>That's very logical, but still not magical. The final trick is a
+rewrite rule:</p>
+<pre><span class=
+"hs-comment">{-# RULES "fuseStream" forall left right.
+        unstream left =$= unstream right = unstream (fuseStream left right)
+  #-}</span></pre>
+<p>We're telling GHC that, if we see a composition of two
+streamable conduits, then we can compose the stream versions of
+them and get the same result. But this isn't enough yet;
+<code>unstream</code> will still end up throwing away the stream
+version. We now need to deal with running these things. The first
+case we'll handle is connecting two streamable conduits, which is
+where the <code>connectStream</code> function from above comes into
+play. If you go back and look at that code, you'll see that the
+<code>ConduitM</code> fields are never used. All that's left is
+telling GHC to use <code>connectStream</code> when appropriate:</p>
+<pre><span class=
+"hs-comment">{-# RULES "connectStream" forall left right.
+        unstream left $$ unstream right = connectStream left right
+  #-}</span></pre>
+<p>The next case we'll handle is when we connect a streamable
+source to a non-streamable sink. This is less efficient than the
+previous case, since it still requires allocating
+<code>ConduitM</code> constructors, and doesn't expose as many
+opportunities for GHC to inline and optimize our code. However,
+it's still better than nothing:</p>
+<pre><span class="hs-definition">connectStream1</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class="hs-varid">m</span>
+               <span class="hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">StreamConduit</span> <span class=
+"hs-conid">()</span> <span class=
+"hs-varid">i</span>    <span class="hs-varid">m</span> <span class=
+"hs-conid">()</span>
+               <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">ConduitM</span>      <span class=
+"hs-varid">i</span>  <span class=
+"hs-conid">Void</span> <span class="hs-varid">m</span> <span class=
+"hs-varid">r</span>
+               <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">r</span>
+<span class="hs-definition">connectStream1</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">StreamConduit</span> <span class=
+"hs-keyword">_</span> <span class=
+"hs-varid">fstream</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-conid">ConduitM</span> <span class=
+"hs-varid">sink0</span><span class=
+"hs-layout">)</span> <span class="hs-keyglyph">=</span>
+    <span class="hs-keyword">case</span> <span class=
+"hs-varid">fstream</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-conid">Stream</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">const</span> <span class="hs-varop">$</span> <span class="hs-varid">return</span> <span class="hs-varop">$</span> <span class="hs-conid">Stop</span> <span class="hs-conid">()</span><span class="hs-layout">)</span> <span class="hs-layout">(</span><span class="hs-varid">return</span> <span class="hs-conid">()</span><span class="hs-layout">)</span> <span class="hs-keyword">of</span>
+        <span class="hs-conid">Stream</span> <span class=
+"hs-varid">step</span> <span class=
+"hs-varid">ms0</span> <span class="hs-keyglyph">-&gt;</span>
+            <span class="hs-keyword">let</span> <span class=
+"hs-varid">loop</span> <span class=
+"hs-keyword">_</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Done</span> <span class="hs-varid">r</span><span class=
+"hs-layout">)</span> <span class="hs-keyword">_</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">return</span> <span class="hs-varid">r</span>
+                <span class="hs-varid">loop</span> <span class=
+"hs-varid">ls</span> <span class="hs-layout">(</span><span class=
+"hs-conid">PipeM</span> <span class=
+"hs-varid">mp</span><span class="hs-layout">)</span> <span class=
+"hs-varid">s</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">mp</span> <span class=
+"hs-varop">&gt;&gt;=</span> <span class=
+"hs-varid">flip</span> <span class="hs-layout">(</span><span class=
+"hs-varid">loop</span> <span class="hs-varid">ls</span><span class=
+"hs-layout">)</span> <span class="hs-varid">s</span>
+                <span class="hs-varid">loop</span> <span class=
+"hs-varid">ls</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Leftover</span> <span class=
+"hs-varid">p</span> <span class="hs-varid">l</span><span class=
+"hs-layout">)</span> <span class="hs-varid">s</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">loop</span> <span class="hs-layout">(</span><span class=
+"hs-varid">l</span><span class="hs-conop">:</span><span class=
+"hs-varid">ls</span><span class="hs-layout">)</span> <span class=
+"hs-varid">p</span> <span class="hs-varid">s</span>
+                <span class="hs-varid">loop</span> <span class=
+"hs-keyword">_</span> <span class="hs-layout">(</span><span class=
+"hs-conid">HaveOutput</span> <span class=
+"hs-keyword">_</span> <span class=
+"hs-keyword">_</span> <span class="hs-varid">o</span><span class=
+"hs-layout">)</span> <span class="hs-keyword">_</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">absurd</span> <span class="hs-varid">o</span>
+                <span class="hs-varid">loop</span> <span class=
+"hs-layout">(</span><span class="hs-varid">l</span><span class=
+"hs-conop">:</span><span class="hs-varid">ls</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-conid">NeedInput</span> <span class=
+"hs-varid">p</span> <span class="hs-keyword">_</span><span class=
+"hs-layout">)</span> <span class="hs-varid">s</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">loop</span> <span class=
+"hs-varid">ls</span> <span class="hs-layout">(</span><span class=
+"hs-varid">p</span> <span class="hs-varid">l</span><span class=
+"hs-layout">)</span> <span class="hs-varid">s</span>
+                <span class="hs-varid">loop</span> <span class=
+"hs-conid">[]</span> <span class="hs-layout">(</span><span class=
+"hs-conid">NeedInput</span> <span class=
+"hs-varid">p</span> <span class="hs-varid">c</span><span class=
+"hs-layout">)</span> <span class="hs-varid">s</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+                    <span class="hs-varid">res</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">step</span> <span class="hs-varid">s</span>
+                    <span class=
+"hs-keyword">case</span> <span class=
+"hs-varid">res</span> <span class="hs-keyword">of</span>
+                        <span class=
+"hs-conid">Stop</span> <span class=
+"hs-conid">()</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">loop</span> <span class="hs-conid">[]</span> <span class="hs-layout">(</span><span class="hs-varid">c</span> <span class="hs-conid">()</span><span class="hs-layout">)</span> <span class="hs-varid">s</span>
+                        <span class=
+"hs-conid">Skip</span> <span class=
+"hs-varid">s'</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">loop</span> <span class="hs-conid">[]</span> <span class="hs-layout">(</span><span class="hs-conid">NeedInput</span> <span class="hs-varid">p</span> <span class="hs-varid">c</span><span class="hs-layout">)</span> <span class="hs-varid">s'</span>
+                        <span class=
+"hs-conid">Emit</span> <span class=
+"hs-varid">s'</span> <span class="hs-varid">i</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">loop</span> <span class=
+"hs-conid">[]</span> <span class="hs-layout">(</span><span class=
+"hs-varid">p</span> <span class="hs-varid">i</span><span class=
+"hs-layout">)</span> <span class="hs-varid">s'</span>
+             <span class="hs-keyword">in</span> <span class=
+"hs-varid">ms0</span> <span class=
+"hs-varop">&gt;&gt;=</span> <span class=
+"hs-varid">loop</span> <span class=
+"hs-conid">[]</span> <span class="hs-layout">(</span><span class=
+"hs-varid">sink0</span> <span class=
+"hs-conid">Done</span><span class="hs-layout">)</span>
+<span class="hs-comment">{-# INLINE connectStream1 #-}</span>
+
+<span class=
+"hs-comment">{-# RULES "connectStream1" forall left right.
+        unstream left $$ right = connectStream1 left right
+  #-}</span></pre>
+<p>There's a third case that's worth considering: a streamable sink
+and non-streamable source. However, I ran into two problems when
+implementing such a rewrite rule:</p>
+<ul>
+<li>
+<p>GHC did not end up firing the rule.</p>
+</li>
+<li>
+<p>There are some corner cases regarding finalizers that need to be
+dealt with. In our previous examples, the upstream was always a
+stream, which has no concept of finalizers. But when the upstream
+is a conduit, we need to make sure to call them appropriately.</p>
+</li>
+</ul>
+<p>So for now, fusion only works for cases where all of the
+functions can by fused, or all of the functions before the
+<code>$$</code> operator can be fused. Otherwise, we'll revert to
+the normal performance of conduit code.</p>
+<h2 id="benchmarks">Benchmarks</h2>
+<p>I took the benchmarks from our previous blog post and modified
+them slightly. The biggest addition was including an example of
+<code>enumFromTo =$= map =$= map =$= fold</code>, which really
+stresses out the fusion capabilities, and demonstrates the
+performance gap stream fusion offers.</p>
+<p>The other thing to note is that, in the "before fusion"
+benchmarks, the sum results are skewed by the fact that we have the
+overly eager rewrite rules for <code>enumFromTo $$ fold</code> (for
+more information, see the previous blog post). For the "after
+fusion" benchmarks, there are no special-case rewrite rules in
+place. Instead, the results you're seeing are actual artifacts of
+having a proper fusion framework in place. In other words, you can
+expect this to translate into real-world speedups.</p>
+<p>You can compare <a href=
+"https://s3.amazonaws.com/download.fpcomplete.com/benchmarks/conduit-201408/before-fusion.html">
+before fusion</a> and <a href=
+"https://s3.amazonaws.com/download.fpcomplete.com/benchmarks/conduit-201408/after-fusion.html">
+after fusion</a>. Let me provide a few select comparisons:</p>
+<table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>Low level or vector</th>
+<th>Before fusion</th>
+<th>After fusion</th>
+<th>Speedup</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>map + sum</th>
+<td>5.95us</td>
+<td>636us</td>
+<td>5.96us</td>
+<td style="color:green">99%</td>
+</tr>
+<tr>
+<th>monte carlo</th>
+<td>3.45ms</td>
+<td>5.34ms</td>
+<td>3.70ms</td>
+<td style="color:green">71%</td>
+</tr>
+<tr>
+<th>sliding window size 10, Seq</th>
+<td>1.53ms</td>
+<td>1.89ms</td>
+<td>1.53ms</td>
+<td style="color:green">21%</td>
+</tr>
+<tr>
+<th>sliding vector size 10, unboxed</th>
+<td>2.25ms</td>
+<td>4.05ms</td>
+<td>2.33ms</td>
+<td style="color:green">42%</td>
+</tr>
+</tbody>
+</table>
+<p>Note at the map + sum benchmark is very extreme, since the inner
+loop is doing very cheap work, so the conduit overhead dominated
+the analysis.</p>
+<h2 id="streamifying-a-conduit">Streamifying a conduit</h2>
+<p>Here's an example of making a conduit function stream
+fusion-compliant, using the <code>map</code> function:</p>
+<pre><span class="hs-definition">mapC</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-layout">(</span><span class="hs-varid">a</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">b</span><span class="hs-layout">)</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Conduit</span> <span class="hs-varid">a</span> <span class="hs-varid">m</span> <span class="hs-varid">b</span>
+<span class="hs-definition">mapC</span> <span class=
+"hs-varid">f</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">awaitForever</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">yield</span> <span class="hs-varop">.</span> <span class="hs-varid">f</span>
+<span class="hs-comment">{-# INLINE mapC #-}</span>
+
+<span class="hs-definition">mapS</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-layout">(</span><span class="hs-varid">a</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">b</span><span class="hs-layout">)</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Stream</span> <span class="hs-varid">m</span> <span class="hs-varid">a</span> <span class="hs-varid">r</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Stream</span> <span class="hs-varid">m</span> <span class="hs-varid">b</span> <span class="hs-varid">r</span>
+<span class="hs-definition">mapS</span> <span class=
+"hs-varid">f</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Stream</span> <span class=
+"hs-varid">step</span> <span class=
+"hs-varid">ms0</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span>
+    <span class="hs-conid">Stream</span> <span class=
+"hs-varid">step'</span> <span class="hs-varid">ms0</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">step'</span> <span class=
+"hs-varid">s</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-keyword">do</span>
+        <span class="hs-varid">res</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">step</span> <span class="hs-varid">s</span>
+        <span class="hs-varid">return</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-keyword">case</span> <span class=
+"hs-varid">res</span> <span class="hs-keyword">of</span>
+            <span class="hs-conid">Stop</span> <span class=
+"hs-varid">r</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Stop</span> <span class="hs-varid">r</span>
+            <span class="hs-conid">Emit</span> <span class=
+"hs-varid">s'</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Emit</span> <span class=
+"hs-varid">s'</span> <span class="hs-layout">(</span><span class=
+"hs-varid">f</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span>
+            <span class="hs-conid">Skip</span> <span class=
+"hs-varid">s'</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Skip</span> <span class="hs-varid">s'</span>
+<span class="hs-comment">{-# INLINE mapS #-}</span>
+
+<span class="hs-definition">map</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-layout">(</span><span class="hs-varid">a</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">b</span><span class="hs-layout">)</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Conduit</span> <span class="hs-varid">a</span> <span class="hs-varid">m</span> <span class="hs-varid">b</span>
+<span class="hs-definition">map</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">mapC</span>
+<span class="hs-comment">{-# INLINE [0] map #-}</span>
+<span class="hs-comment">{-# RULES "unstream map" forall f.
+    map f = unstream (StreamConduit (mapC f) (mapS f))
+  #-}</span></pre>
+<p>Notice the three steps here:</p>
+<ul>
+<li>Define a pure-conduit implementation (<code>mapC</code>), which
+looks just like conduit 1.1's <code>map</code> function.</li>
+<li>Define a pure-stream implementation (<code>mapS</code>), which
+looks very similar to vector's <code>mapS</code>.</li>
+<li>Define <code>map</code>, which by default simply reexposes
+<code>mapC</code>. But then, use an <code>INLINE</code> statement
+to delay inlining until simplification phase 0, and use a rewrite
+rule to rewrite <code>map</code> in terms of <code>unstream</code>
+and our two helper functions <code>mapC</code> and
+<code>mapS</code>.</li>
+</ul>
+<p>While tedious, this is all we need to do for each function to
+expose it to the fusion framework.</p>
+<h2 id="vector-vs-conduit-mapm-style">Vector vs conduit, mapM
+style</h2>
+<p>Overall, vector has been both the inspiration for the work I've
+done here, and the bar I've used to compare against, since it is
+generally the fastest implementation you can get in Haskell (and
+tends to be high-level code to boot). However, there seems to be
+one workflow where conduit drastically outperforms vector: chaining
+together monadic transformations.</p>
+<p>I put together a
+benchmark which does the same enumFromTo+map+sum benchmark I
+demonstrated previously. But this time, I have four versions:
+vector with pure functions, vector with IO functions, conduit with
+pure functions, and conduit with IO functions. You can <a href=
+"https://s3.amazonaws.com/download.fpcomplete.com/benchmarks/conduit-201408/mapm.html">
+see the results here</a>, the important takeaway is:</p>
+<ul>
+<li>Pure is always faster, since it exposes more optimizations to
+GHC.</li>
+<li>vector and conduit pure are almost identical, at 57.7us and
+58.1us.</li>
+<li>Monadic conduit code does have a slowdown (86.3us). However,
+monadic vector code has a drastic slowdown (305us), presumably
+because monadic binds defeat its fusion framework.</li>
+</ul>
+<p>So there seems to be at least one workflow for which conduit's
+fusion framework can outperform even vector!</p>
+<h2 id="downsides">Downsides</h2>
+<p>The biggest downside to this implementation of stream fusion is
+that we need to write all of our algorithms twice. This can
+possibly be mitigated by having a few helper functions in place,
+and implementing others in terms of those. For example,
+<code>mapM_</code> can be implemented in terms
+<code>foldM</code>.</p>
+<p>There's one exception to this: using the
+<code>streamSource</code> function, we can convert a
+<code>Stream</code> into a <code>Source</code> without having to
+write our algorithm twice. However, due to differences in how
+monadic actions are performed between Stream and Conduit, this
+could introduce a performance degredation for pure
+<code>Source</code>s. We can work around that with a special case
+function <code>streamSourcePure</code> for the
+<code>Identity</code> monad as a base.</p>
+<h2 id="getting-good-performance">Getting good performance</h2>
+<p>In order to take advantage of the new stream fusion framework,
+try to follow these guidelines:</p>
+<ul>
+<li>Use fusion functions whenever possible. Explicit usage of
+<code>await</code> and <code>yield</code> will immediately kick you
+back to non-fusion (the same as explicit pattern matching defeats
+list fusion).</li>
+<li>If you absolutely cannot use an existing fusion function,
+consider writing your own fusion variant.</li>
+<li>When mixing fusion and non-fusion, put as many fusion functions
+as possible together with the <code>$=</code> operator before the
+connect operator <code>$$</code>.</li>
+</ul>
+<h2 id="next-steps">Next steps</h2>
+<p>Even though this work is now publicly available on Hackage,
+there's still a lot of work to be done. This falls into three main
+categories:</p>
+<ul>
+<li>Continue rewriting core library functions in streaming style.
+Michael Sloan has been working on a lot of these functions, and
+we're hoping to have almost all the combinators from
+Data.Conduit.List and Data.Conduit.Combinators done soon.</li>
+<li>Research why rewrite rules and inlining don't play nicely
+together. In a number of places, we've had to explicitly use
+rewrite rules to force fusion to happen, when theoretically
+inlining should have taken care of it for us.</li>
+<li>Look into any possible alternative formulations of stream
+fusion that provide better code reuse or more reliable rewrite rule
+firing.</li>
+</ul>
+<p>Community assistance on all three points, but especially 2 and
+3, are much appreciated!</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=IAP%3A%20conduit%20stream%20fusion https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;08&#x2F;conduit-stream-fusion&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;08&#x2F;conduit-stream-fusion&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;08&#x2F;conduit-stream-fusion&#x2F;&amp;title=IAP%3A%20conduit%20stream%20fusion"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;08&#x2F;conduit-stream-fusion&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#93e0f2fff6e0d3f5e3f0fcfee3fff6e7f6bdf0fcfe" targe="_blank"><span class="__cf_email__" data-cfemail="d5a6b4b9b0a695b3a5b6bab8a5b9b0a1b0fbb6bab8">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

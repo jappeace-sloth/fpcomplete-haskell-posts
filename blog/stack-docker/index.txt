@@ -1,0 +1,231 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+How stack can use Docker under the hood
+
+By Emanuel Borsboom, August 5, 2015
+
+Share this     
+
+TL;DR: if you just want to get started use stack's Docker support, see the Docker page on the stack
+wiki. The rest of this post gives background on the benefits, implementation, and reasons for our
+choices.
+
+A brief history
+
+Using LXC for containerization is an integral component of the FP Complete Haskell Center and
+School of Haskell, so lightweight virtualization was not new to us. We started tentative
+experiments using Docker for command-line development about a year ago and it quickly became an
+indispensable part of our development tool chain. We soon wrote a wrapper script that did user ID
+mapping and volume mounting so that developers could just prefix their usual cabal or build script
+commands with the wrapper and have them automagically run in a container without developers needing
+to adjust their usual workflow for Docker. The wrapper's functionality was integrated into an
+internal build tool and formed the core of its sandboxing approach. Then that internal build tool
+became stack which got its own non-Docker based sandboxing approach. But the basic core of that
+original wrapper script is still available, and there are significant benefits to using stack's
+Docker integration for teams.
+
+Benefits
+
+The primary pain point we are solving with our use of Docker is ensuring that all developers are
+using a consistent environment for building and testing code.
+
+Before Docker, our approach involved having developers all run the same Linux distribution version,
+install the same additional OS packages, and use hsenv sandboxes (and, as they stabilized, Cabal
+sandboxes) for Haskell package sandboxing. However, this proved deficient in several ways:
+
+  • Some people develop on their primary workstation, so have additional software or different
+    versions installed. Not everyone has a spare extra machine around or wants the overhead of
+    developing in a "heavyweight" virtual machine (e.g. using Vagrant and/or VirtualBox) that
+    requires dedicated RAM and virtual disks.
+  • Different projects may have different requirements. Again, the overhead of multiple heavyweight
+    VMs is undesirable.
+  • Keeping automated build environments in sync for multiple projects and versions with different
+    requirements was error-prone.
+
+In the process of solving the main problems, there were some additional goals:
+
+  • Avoid changing the developer's workflow. stack commands should work as close to normally as
+    possible when Docker is enabled.
+  • Shield developers from having to know the details of how containerization is implemented.
+    Developers shouldn't need to learn all about Docker in order to build their code.
+  • Be able to easily update all developers to new and consistent versions system tools, libraries,
+    and packages.
+  • Give developers a way to test their code in an environment that is very similar to the
+    environment that it will run in production.
+  • Require as few changes as possible for our existing automated build processes. We use Jenkins
+    and Bamboo for automated builds. All that should be needed is having Docker available on the
+    build slave.
+
+Approach
+
+When Docker is enabled in stack.yaml, every invocation of stack (with the exception of certain
+sub-commands) transparently re-invokes itself in an ephemeral Docker container which has the
+project root directory and the stack home (~/.stack) bind-mounted. The container exists only to
+provide the environment in which the build runs, nothing is actually written to the container's
+file-system (any writes happen in the bind-mounted directories) and it the container is destroyed
+immediately after stack exits (using docker run --rm). This means upgrading to a new image is easy,
+since it's just a matter of creating ephemeral containers from the new image. The directories are
+bind-mounted to the same file-system location in the container, which makes it possible to switch
+between using docker and not and still have everything work.
+
+Docker runs processes in containers as root by default, which would result in files all over our
+project and stack home being owned by root when they should be owned by the host OS user. There is
+the docker run --user option to specify a different user ID to run the process as, but it works
+best if that user already exists in the Docker image. In this case, we don't know the user ID of
+the developer at image creation. We work around that by using docker run --env to pass in the host
+user's UID and GID, and adding an ENTRYPOINT which, inside the container, creates the user and then
+uses sudo -u to run the build command as that user.
+
+In addition, stack and the entrypoint:
+
+  • Uses the stack.yaml resolver setting to construct the Docker image tag (which can be
+    overridden).
+
+  • Copies the Stackage LTS snapshot's build plan and the Hackage index from the image into ~
+    /.stack, if they are newer. This way, they do not need to be downloaded which enables
+    Internet-connectionless operation once you have the Docker image.
+
+  • Determines whether the stdin/stdout/stderr file handles are connected to a terminal device and,
+    if so, runs in interactive container (using docker run --interactive --tty). Unfortunately
+    there doesn't seem to be a way to get a Dockerized process to behave just like a normal process
+    when it comes to stdin/stdout/stderr on the host, but this is close enough that it behaves as
+    expected most of the time.
+
+  • Volume-mounts special project-and-image-specific ~/.cabal and ~/.ghc directories into the
+    image, which means that if you use cabal install directly it will end up with an automatic
+    "sandbox" (before stack added its own, this was the sandboxing approach of our internal build
+    tool, but it is no longer necessary since stack doesn't touch ~/.cabal or ~/.ghc anymore).
+
+  • Checks that the version of Docker installed on the host is recent enough.
+
+  • Provides options to adjust Docker behaviour for common development use cases, plus the ability
+    to pass arbitrary arguments to docker run for the less common cases.
+
+Images
+
+For each GHC version + Stackage LTS snapshot combination, we tag several images (which layer on top
+of each other):
+
+  • run: Starts with phusion/baseimage, which itself is built on top of Ubuntu 14.04, and adds
+    basic runtime libraries (e.g. libgmp, zlib) and tools (e.g. curl). The idea is that any binary
+    built using one of the higher-level images would run in the base image without any missing
+    shared libs or tools. It does not contain anything to support building Haskell code. Includes
+    the ENTRYPOINT and other support for stack described in the previous section.
+  • build: Adds GHC and a complete set of Haskell build tools (cabal-install, alex, happy, cpphs,
+    shake and others, all built from the Stackage LTS snapshot). It does not include Stackage
+    packages or any packages that are not included with GHC itself.
+  • full: Adds a complete build of the Stackage LTS snapshot! Includes Haddocks for all packages
+    and a Hoogle database. Adds some extra tools that are handy while developing.
+
+Most of a developer's work is done using a build or full image, and they can test using a run
+image. The actual production environment for a server can be built on run.
+
+In addition, there are variants of these images that include GHCJS (ghcjs-build and ghcjs-full),
+plus additional private variants for internal and clients' use that include proprietary extensions.
+
+We create and push these images using a Shake script on the host, and Propellor in the container to
+control what is in the image. This provides far more flexibility than basic Dockerfiles, and is why
+we can easily mix-and-match and patch images. Our image build process also allows us to provide
+custom images for clients. These might include additional tools or proprietary libraries specific
+to a customer's requirements. We intend to open the image build tool, but it currently contains
+proprietary information and needs to be refactored before we can extract that and open the rest.
+
+Challenges
+
+Nothing is perfect, and we have run into some challenges with Docker:
+
+  • It is Linux-only. While Docker does have some support for other host operating systems using
+    boot2docker this has not been reliable enough in practice. In particular, since it uses
+    VirtualBox under the surface, it relies on VirtualBox's extremely slow "shared folders" for
+    bind-mounting directories from the host into the container, which makes it nearly unusable for
+    Haskell builds.
+
+  • The V1 private Docker registry is not very reliable, so we use a variant of this approach to
+    run a static registry hosted directly from S3. We're pleased with this static S3 registry since
+    it means we don't need to set up high availability for our various registries, so we haven't
+    tried the new V2 registry yet.
+
+  • Some corporate customers have extremely restrictive firewalls, which pose difficulties for
+    downloading Docker images from the registry. The static registry helps with this as well.
+
+  • Docker images, especially when they include a complete set of pre-built packages from Stackage,
+    use a lot of disk space. To help with this, stack keeps track of which images it uses and makes
+    it easy to clean up old images.
+
+  • Since the images are large, we have hit limitations in the default device-mapper storage driver
+    configuration which require some tuning. In particular, we've hit default maximum container
+    file system size with the device-mapper driver and and must use the --storage-opt dm.basesize=
+    20G option to increase it. When using btrfs, it is not uncommon to get No space left on device
+    errors even though there is plenty of disk space. This is a well known issue with btrfs due to
+    it running our of space for metadata, which requires a re-balance. We have found the aufs and
+    overlay drivers to work out-of-the-box.
+
+Alternative approaches
+
+There are many other ways to use Docker, but we didn't find that the "obvious" ones met our goals.
+
+The Official Haskell image (which didn't exist when we started using Docker) approach of
+iteratively developing using docker build and Dockerfile has some disadvantages:
+
+  • It's very different from the way developers are accustomed to working and requires them to
+    understand Docker.
+  • While it uses Docker's intermediate step caching to avoid rebuilding dependencies, it has to
+    rebuild the entire project every time. For anything more than a toy project this would make for
+    slow edit-compile-test cycle.
+  • It also has to upload the "context" (the project directory) to the Docker daemon for every
+    build. With a large project, this will be time consuming.
+  • Since each successful build is saved to an image, we end up with many images that need to be
+    cleaned up.
+
+The Vagrant-style approach of having a persistent container with the project directory bind-mounted
+into it, while much better, has other disadvantages:
+
+  • Developers need to be congnizant of managing multiple running containers, one for each project.
+  • Upgrading to a new image can be more difficult, because this approach encourages making custom
+    changes in the persistent container which then have to be re-done when upgrading.
+  • Is more oriented toward heavyweight virtual machines, which have high startup costs.
+
+Future
+
+There are plenty of directions to take Docker support in stack as the container ecosystem evolves.
+There is work-in-progress to have stack create new Docker images containing executables
+automatically, and this works even if you perform the builds without Docker. Moving toward more
+general opencontainers.org support is another direction we are considering. A better solution to
+using containers on non-Linux operating system is desirable. As stack's support for editor
+integration via ide-backend improves, this will apply equally well to Docker use.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

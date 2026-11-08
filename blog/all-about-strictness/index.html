@@ -1,0 +1,2426 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>All About Strictness</title>
+  <meta property="og:title" content="All About Strictness">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Understanding how lazy evaluation affects your data in Haskell is vital to writing efficient programs. Get a crash course in the basics.">
+  <meta property="og:description" content="Understanding how lazy evaluation affects your data in Haskell is vital to writing efficient programs. Get a crash course in the basics.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;09&#x2F;all-about-strictness&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>All About Strictness</h1>
+      
+      <p id="page-description">By Michael Snoyman, August 28, 2017</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=All%20About%20Strictness https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;09&#x2F;all-about-strictness&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;09&#x2F;all-about-strictness&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;09&#x2F;all-about-strictness&#x2F;&amp;title=All%20About%20Strictness"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;09&#x2F;all-about-strictness&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>Haskell is—perhaps infamously—a <i>lazy</i> language. The basic
+idea of laziness is pretty easy to sum up in one sentence: values
+are only computed when they're needed. But the implications of this
+are more subtle. In particular, it's important to understand some
+crucial topics if you want to write memory- and time-efficient
+code:</p>
+<ul>
+<li>Weak head normal form (WHNF) versus normal form (NF)</li>
+<li>How to use the <code>seq</code> and <code>deepseq</code>
+functions (and related concepts)</li>
+<li>Strictness annotations on data types</li>
+<li>Bang patterns</li>
+<li>Strictness of data structures: lazy, spine-strict, and
+value-strict</li>
+<li>Choosing the appropriate helper functions, especially with
+folds</li>
+</ul>
+<p>This blog post was inspired by some questions around writing
+efficient <a href=
+"https://haskell-lang.org/library/conduit">conduit</a> code, so
+I'll try to address some of that directly at the end. The concepts,
+though, are general, and will transfer to not only other streaming
+libraries, but non-streaming data libraries too.</p>
+<p><strong>NOTE</strong> This blog post will mostly treat laziness
+as a problem to be solved, as opposed to the reality: laziness is
+sometimes an asset, and sometimes a liability. I'm focusing on the
+negative exclusively, because our goal here is to understand the
+rough edges and how to avoid them. There are many great things
+about laziness that I'm not even hinting at. I trust my readers to
+add some great links to articles speaking on the virtues of
+laziness in the comments :)</p>
+<h2 id="basics-of-laziness">Basics of laziness</h2>
+<p>Let's elaborate on my one liner above:</p>
+<blockquote>
+<p>Values are only computed when they're needed</p>
+</blockquote>
+<p>Let's explore this by comparison with a strict language: C.</p>
+<pre><code class="c">#include &lt;stdio.h&gt;
+
+int add(int x, int y) {
+  return x + y;
+}
+
+int main() {
+  int five = add(1 + 1, 1 + 2);
+  int seven = add(1 + 2, 1 + 3);
+
+  printf("Five: %d\n", five);
+  return 0;
+}</code></pre>
+<p>Our function <code>add</code> is <i>strict</i> in both of its
+arguments. And its result is also strict. This means that:</p>
+<ul>
+<li>Before <code>add</code> is called the first time, we will
+compute the result of both <code>1 + 1</code> and <code>1 +
+2</code>.</li>
+<li>We will call the <code>add</code> function on <code>2</code>
+and <code>3</code>, get a result of <code>5</code>, and place that
+value in memory pointed at by the variable <code>five</code>.</li>
+<li>Then we'll do the same thing with <code>1 + 2</code>, <code>1 +
+3</code>, and placing <code>7</code> in <code>seven</code>.</li>
+<li>Then we'll call <code>printf</code> with our <code>five</code>
+value, which is already fully computed.</li>
+</ul>
+<p>Let's compare that to the equivalent Haskell code:</p>
+<pre><code class="haskell">add :: Int -&gt; Int -&gt; Int
+add x y = x + y
+
+main :: IO ()
+main = do
+  let five = add (1 + 1) (1 + 2)
+      seven = add (1 + 2) (1 + 3)
+
+  putStrLn $ "Five: " ++ show five</code></pre>
+<p>There's something called <i>strictness analysis</i> which will
+result in something more efficient than what I'll describe here in
+practice, but semantically, we'll end up with the following:</p>
+<ul>
+<li>Instead of immediately computing <code>1 + 1</code> and <code>1
++ 2</code>, the compiler will create a <i>thunk</i> (which you can
+think of as a <i>promise</i>) for those computations, and pass
+those thunks to the <code>add</code> function.</li>
+<li>Except: we won't call the <code>add</code> function right away
+either: <code>five</code> will be a thunk representing the
+application of the <code>add</code> function to the thunk for
+<code>1 + 1</code> and <code>1 + 2</code>.</li>
+<li>We'll end up doing the same thing with <code>seven</code>: it
+will be a thunk for applying <code>add</code> to two other
+thunks.</li>
+<li>When we finally try to print out the value <code>five</code>,
+we need to know the actual number. This is called <i>forcing
+evaluation</i>. We'll get into more detail on when and how this
+happens below, but for now, suffice it to say that when
+<code>putStrLn</code> is executed, it forces evaluation of
+<code>five</code>, which forces evaluation of <code>1 + 1</code>
+and <code>1 + 2</code>, converting the thunks into real values
+(<code>2</code>, <code>3</code>, and ultimately
+<code>5</code>).</li>
+<li>Because <code>seven</code> is never used, it remains a thunk,
+and we don't spend time evaluating it.</li>
+</ul>
+<p>Compared to the C (strict) evaluation, there is one clear
+benefit: we don't bother wasting time evaluating the
+<code>seven</code> value at all. That's three addition operations
+bypassed, woohoo! And in a real world scenario, instead of being
+three additions, that could be a seriously expensive operation.</p>
+<p><i>However</i>, it's not all rosey. Creating a thunk does not
+come for free: we need to allocate space for the thunk, which costs
+both allocation, and causes GC pressure for freeing them
+afterwards. Perhaps most importantly: the thunked version of an
+expression can be far more costly than the evaluated version.
+Ignoring some confusing overhead from data constructors (which only
+make the problem worse), let's compare our two representations of
+<code>five</code>. In C, <code>five</code> takes up exactly one
+machine word*. In Haskell, our <code>five</code> thunk will take up
+roughly:</p>
+<p>* Or perhaps less, as <code>int</code> is probably only 32 bits,
+and you're probably on a 64 bit machine. But then you get into
+alignment issues, and registers... so let's just say one machine
+word.</p>
+<ul>
+<li>One machine word to say "I'm a thunk"</li>
+<li>Within that thunk, pointers to the <code>add</code> function,
+and the <code>1 + 1</code> and <code>1 + 2</code> thunks (one
+machine word each). So three machine words total.</li>
+<li>Within the <code>1 + 1</code> thunk, one machine word for the
+thunk, and then again a pointer to the <code>+</code> operator, and
+the <code>1</code> values. (GHC has an optimization where it will
+keep small int values in dedicated parts of memory, avoiding extra
+overhead for the ints themselves. But you could theoretically add
+in an extra machine word for each.) Again, conservatively: three
+machine words.</li>
+<li>Same logic for the <code>1 + 2</code> thunk, so three more
+machine words.</li>
+<li>For a whopping total of <strong>10 machine words</strong>, or
+10 times the memory usage as C!</li>
+</ul>
+<p>Now in practice, it's not going to work out that way. I
+mentioned the strictness analysis step, which will say "hey, wait a
+second, it's totally better to just add two numbers than allocate a
+thunk, I'mma do that now, kthxbye." But it's vital when writing
+Haskell to understand all of these places where laziness and thunks
+can creep in.</p>
+<h3 id="bang">Bang!</h3>
+<p>Let's look at how we can force Haskell to be more strict in its
+evaluation. Likely the easiest way to do this is with bang
+patterns. Let's look at the code first:</p>
+<pre><span class="hs-comment">{-# LANGUAGE BangPatterns #-}</span>
+<span class="hs-definition">add</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">add</span> <span class=
+"hs-varop">!</span><span class="hs-varid">x</span> <span class=
+"hs-varop">!</span><span class="hs-varid">y</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">x</span> <span class=
+"hs-varop">+</span> <span class="hs-varid">y</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varop">!</span><span class="hs-varid">five</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">add</span> <span class="hs-layout">(</span><span class=
+"hs-num">1</span> <span class="hs-varop">+</span> <span class=
+"hs-num">1</span><span class="hs-layout">)</span> <span class=
+"hs-layout">(</span><span class="hs-num">1</span> <span class=
+"hs-varop">+</span> <span class="hs-num">2</span><span class=
+"hs-layout">)</span>
+      <span class="hs-varop">!</span><span class=
+"hs-varid">seven</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">add</span> <span class="hs-layout">(</span><span class=
+"hs-num">1</span> <span class="hs-varop">+</span> <span class=
+"hs-num">2</span><span class="hs-layout">)</span> <span class=
+"hs-layout">(</span><span class="hs-num">1</span> <span class=
+"hs-varop">+</span> <span class="hs-num">3</span><span class=
+"hs-layout">)</span>
+
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-str">"Five: "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">five</span></pre>
+<p>This code now behaves exactly like the strict C code. Because
+we've put a bang (<code>!</code>) in front of the <code>x</code>
+and <code>y</code> in the <code>add</code> function, GHC knows that
+it must force evaluation of those values before evaluating it.
+Similarly, by placing bangs on <code>five</code> and
+<code>seven</code>, GHC must evaluate these immediately, before
+getting to <code>putStrLn</code>.</p>
+<p>As with many things in Haskell, however, bang patterns are just
+syntactic sugar for something else. And in this case, that
+something else is the <code>seq</code> function. This function
+looks like:</p>
+<pre><span class="hs-definition">seq</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-varid">a</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">b</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">b</span></pre>
+<p>You could implement this type signature yourself, of course, by
+just ignoring the <code>a</code> value:</p>
+<pre><span class="hs-definition">badseq</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-varid">a</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">b</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">b</span>
+<span class="hs-definition">badseq</span> <span class=
+"hs-varid">a</span> <span class="hs-varid">b</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">b</span></pre>
+<p>However, <code>seq</code> uses primitive operations from GHC
+itself to ensure that, when <code>b</code> is evaluated,
+<code>a</code> is evaluated too. Let's rewrite our <code>add</code>
+function to use <code>seq</code> instead of bang patterns:</p>
+<pre><span class="hs-definition">add</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">add</span> <span class=
+"hs-varid">x</span> <span class="hs-varid">y</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">part1</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">seq</span> <span class="hs-varid">x</span> <span class=
+"hs-varid">part2</span>
+      <span class="hs-varid">part2</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">seq</span> <span class="hs-varid">y</span> <span class=
+"hs-varid">answer</span>
+      <span class="hs-varid">answer</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">x</span> <span class=
+"hs-varop">+</span> <span class="hs-varid">y</span>
+   <span class="hs-keyword">in</span> <span class=
+"hs-varid">part1</span>
+<span class="hs-comment">-- Or more idiomatically</span>
+<span class="hs-definition">add</span> <span class=
+"hs-varid">x</span> <span class="hs-varid">y</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">x</span> <span class=
+"hs-varop">`seq`</span> <span class=
+"hs-varid">y</span> <span class="hs-varop">`seq`</span> <span class="hs-varid">x</span> <span class="hs-varop">+</span> <span class="hs-varid">y</span></pre>
+<p>What this is saying is this:</p>
+<ul>
+<li><code>part1</code> is an expression which will tell you the
+value of <code>part2</code>, after it evaluates <code>x</code></li>
+<li><code>part2</code> is an expression which will tell you the
+value of <code>answer</code>, after it evaluates
+<code>y</code></li>
+<li><code>answer</code> is just <code>x + y</code></li>
+</ul>
+<p>Of course, that's a long way to write this out, and the pattern
+is common enough that people will usually just use <code>seq</code>
+infix as demonstrated above.</p>
+<p><strong>EXERCISE</strong> What would happen if, instead of
+<code>in part1</code>, the code said <code>in part2</code>? How
+about <code>in answer</code>?</p>
+<p>There is always a straightforward translation from bang patterns
+to usage of <code>let</code>. We can do the same with the
+<code>main</code> function:</p>
+<pre><span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">five</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">add</span> <span class="hs-layout">(</span><span class=
+"hs-num">1</span> <span class="hs-varop">+</span> <span class=
+"hs-num">1</span><span class="hs-layout">)</span> <span class=
+"hs-layout">(</span><span class="hs-num">1</span> <span class=
+"hs-varop">+</span> <span class="hs-num">2</span><span class=
+"hs-layout">)</span>
+      <span class="hs-varid">seven</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">add</span> <span class="hs-layout">(</span><span class=
+"hs-num">1</span> <span class="hs-varop">+</span> <span class=
+"hs-num">2</span><span class="hs-layout">)</span> <span class=
+"hs-layout">(</span><span class="hs-num">1</span> <span class=
+"hs-varop">+</span> <span class="hs-num">3</span><span class=
+"hs-layout">)</span>
+
+  <span class="hs-varid">five</span> <span class=
+"hs-varop">`seq`</span> <span class=
+"hs-varid">seven</span> <span class=
+"hs-varop">`seq`</span> <span class=
+"hs-varid">putStrLn</span> <span class=
+"hs-layout">(</span><span class=
+"hs-str">"Five: "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">five</span><span class="hs-layout">)</span></pre>
+<p>It's vital to understand how <code>seq</code> is working, but
+there's no advantage to using it over bang patterns where the
+latter are clear and easy to read. Choose whichever option makes
+the code easiest to read, which will often be bang patterns.</p>
+<h3 id="tracing-evaluation">Tracing evaluation</h3>
+<p>So far, you've just had to trust me about the evaluation of
+thunks occurring. Let's see a method to more directly observe
+evaluation. The <code>trace</code> function from
+<code>Debug.Trace</code> will print a message when it is evaluated.
+Take a guess at the output of these programs:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.3 script</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Debug</span><span class="hs-varop">.</span><span class=
+"hs-conid">Trace</span>
+
+<span class="hs-definition">add</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">add</span> <span class=
+"hs-varid">x</span> <span class="hs-varid">y</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">x</span> <span class=
+"hs-varop">+</span> <span class="hs-varid">y</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">five</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">trace</span> <span class=
+"hs-str">"five"</span> <span class="hs-layout">(</span><span class=
+"hs-varid">add</span> <span class="hs-layout">(</span><span class=
+"hs-num">1</span> <span class="hs-varop">+</span> <span class=
+"hs-num">1</span><span class="hs-layout">)</span> <span class=
+"hs-layout">(</span><span class="hs-num">1</span> <span class=
+"hs-varop">+</span> <span class="hs-num">2</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+      <span class="hs-varid">seven</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">trace</span> <span class=
+"hs-str">"seven"</span> <span class=
+"hs-layout">(</span><span class="hs-varid">add</span> <span class=
+"hs-layout">(</span><span class="hs-num">1</span> <span class=
+"hs-varop">+</span> <span class="hs-num">2</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-num">1</span> <span class="hs-varop">+</span> <span class=
+"hs-num">3</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span>
+
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-str">"Five: "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">five</span></pre>
+<p>Versus:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.3 script</span>
+<span class="hs-comment">{-# LANGUAGE BangPatterns #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Debug</span><span class="hs-varop">.</span><span class=
+"hs-conid">Trace</span>
+
+<span class="hs-definition">add</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">add</span> <span class=
+"hs-varid">x</span> <span class="hs-varid">y</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">x</span> <span class=
+"hs-varop">+</span> <span class="hs-varid">y</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varop">!</span><span class="hs-varid">five</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">trace</span> <span class=
+"hs-str">"five"</span> <span class="hs-layout">(</span><span class=
+"hs-varid">add</span> <span class="hs-layout">(</span><span class=
+"hs-num">1</span> <span class="hs-varop">+</span> <span class=
+"hs-num">1</span><span class="hs-layout">)</span> <span class=
+"hs-layout">(</span><span class="hs-num">1</span> <span class=
+"hs-varop">+</span> <span class="hs-num">2</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+      <span class="hs-varop">!</span><span class=
+"hs-varid">seven</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">trace</span> <span class=
+"hs-str">"seven"</span> <span class=
+"hs-layout">(</span><span class="hs-varid">add</span> <span class=
+"hs-layout">(</span><span class="hs-num">1</span> <span class=
+"hs-varop">+</span> <span class="hs-num">2</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-num">1</span> <span class="hs-varop">+</span> <span class=
+"hs-num">3</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span>
+
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-str">"Five: "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">five</span></pre>
+<p>Think about this before looking at the answer...</p>
+<p>OK, hope you had a good think. Here's the answer:</p>
+<ul>
+<li>The first program will print both <code>five</code> and
+<code>Five: 5</code>. It will not bother printing
+<code>seven</code>, since that expression is never forced. (Due to
+strangeness around output buffering, you may see interleaving of
+these two output values.)</li>
+<li>The second will print both <code>five</code> and
+<code>seven</code>, because the bang patterns force their
+evaluation. <i>However</i>, the order of their output may be
+different than you expect. On my system, for example,
+<code>seven</code> prints before <code>five</code>. That's because
+GHC retains the right to rearrange order of evaluation in these
+cases.</li>
+<li>By contrast, if you use <code>five `seq` seven `seq` putStrLn
+("Five: " ++ show five)</code>, it comes out in the order you would
+intuitively expect: first five, then seven, and then "Five: 5".
+This gives a bit of a lie to my claim that bang patterns are always
+a simple translation to <code>seq</code>s. However, the fact is
+that with an expression <code>x `seq` y</code>, GHC is free to
+choose whether it evaluates <code>x</code> or <code>y</code> first,
+as long as it ensure that when that expression finishes evaluating,
+both <code>x</code> and <code>y</code> are evaluated.</li>
+</ul>
+<p>All that said: as long as your expressions are truly pure, you
+will be unable to observe the difference between <code>x</code> and
+<code>y</code> evaluating first. Only the fact that we used
+<code>trace</code>, which is an impure function, allowed us to
+observe the order of evaluation.</p>
+<p><strong>QUESTION</strong> Does the result change at all if you
+put bangs on the <code>add</code> function? Why do bangs there
+affect (or not affect) the output?</p>
+<h3 id="the-value-of-bottom">The value of bottom</h3>
+<p>This is all well and good, but the more standard way to
+demonstrate evaluation order is to use bottom values, aka
+<code>undefined</code>. <code>undefined</code> is special in that,
+when it is evaluated, it throws a runtime exception. (The
+<code>error</code> function does the same thing, as do a few other
+special functions and values.) To demonstrate the same thing about
+<code>seven</code> not being evaluated without the bangs, compare
+these two programs:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.3 script</span>
+<span class="hs-comment">{-# LANGUAGE BangPatterns #-}</span>
+
+<span class="hs-definition">add</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">add</span> <span class=
+"hs-varid">x</span> <span class="hs-varid">y</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">x</span> <span class=
+"hs-varop">+</span> <span class="hs-varid">y</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">five</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">add</span> <span class="hs-layout">(</span><span class=
+"hs-num">1</span> <span class="hs-varop">+</span> <span class=
+"hs-num">1</span><span class="hs-layout">)</span> <span class=
+"hs-layout">(</span><span class="hs-num">1</span> <span class=
+"hs-varop">+</span> <span class="hs-num">2</span><span class=
+"hs-layout">)</span>
+      <span class="hs-varid">seven</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">add</span> <span class="hs-layout">(</span><span class=
+"hs-num">1</span> <span class="hs-varop">+</span> <span class=
+"hs-num">2</span><span class="hs-layout">)</span> <span class=
+"hs-varid">undefined</span> <span class=
+"hs-comment">-- (1 + 3)</span>
+
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-str">"Five: "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">five</span></pre>
+<p>Versus:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.3 script</span>
+<span class="hs-comment">{-# LANGUAGE BangPatterns #-}</span>
+
+<span class="hs-definition">add</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">add</span> <span class=
+"hs-varid">x</span> <span class="hs-varid">y</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">x</span> <span class=
+"hs-varop">+</span> <span class="hs-varid">y</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">five</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">add</span> <span class="hs-layout">(</span><span class=
+"hs-num">1</span> <span class="hs-varop">+</span> <span class=
+"hs-num">1</span><span class="hs-layout">)</span> <span class=
+"hs-layout">(</span><span class="hs-num">1</span> <span class=
+"hs-varop">+</span> <span class="hs-num">2</span><span class=
+"hs-layout">)</span>
+      <span class="hs-varop">!</span><span class=
+"hs-varid">seven</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">add</span> <span class="hs-layout">(</span><span class=
+"hs-num">1</span> <span class="hs-varop">+</span> <span class=
+"hs-num">2</span><span class="hs-layout">)</span> <span class=
+"hs-varid">undefined</span> <span class=
+"hs-comment">-- (1 + 3)</span>
+
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-str">"Five: "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">five</span></pre>
+<p>The former completes without issue, since <code>seven</code> is
+never evaluated. However, in the latter, we have a bang pattern on
+<code>seven</code>. What GHC does here is:</p>
+<ul>
+<li>Evaluate the expression <code>add (1 + 2) undefined</code></li>
+<li>This reduces to <code>(1 + 2) + undefined</code></li>
+<li>But this is still an expression, not a value, so more
+evaluation is necessary</li>
+<li>In order to evaluate the <code>+</code> operator, it needs
+actual values for the two arguments, not just thunks. This can be
+seen as if <code>+</code> has bang patterns on its arguments. The
+correct way to say this is "<code>+</code> is strict in both of its
+arguments."</li>
+<li>GHC is free to choose to either evaluate <code>1 + 2</code> or
+<code>undefined</code> first. Let's assume it does <code>1 +
+2</code> first. It will come up with two evaluated values
+(<code>1</code> and <code>2</code>), pass them to <code>+</code>,
+and get back <code>3</code>. All good.</li>
+<li>However, it then tries to evaluate <code>undefined</code>,
+which triggers a runtime exception to be thrown.</li>
+</ul>
+<p><strong>QUESTION</strong> Returning to the question above: does
+it look like bang patterns inside the <code>add</code> function
+actually accomplish anything? Think about what the output of this
+program will be:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.3 script</span>
+<span class="hs-comment">{-# LANGUAGE BangPatterns #-}</span>
+
+<span class="hs-definition">add</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">add</span> <span class=
+"hs-varop">!</span><span class="hs-varid">x</span> <span class=
+"hs-varop">!</span><span class="hs-varid">y</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">x</span> <span class=
+"hs-varop">+</span> <span class="hs-varid">y</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">five</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">add</span> <span class="hs-layout">(</span><span class=
+"hs-num">1</span> <span class="hs-varop">+</span> <span class=
+"hs-num">1</span><span class="hs-layout">)</span> <span class=
+"hs-layout">(</span><span class="hs-num">1</span> <span class=
+"hs-varop">+</span> <span class="hs-num">2</span><span class=
+"hs-layout">)</span>
+      <span class="hs-varid">seven</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">add</span> <span class="hs-layout">(</span><span class=
+"hs-num">1</span> <span class="hs-varop">+</span> <span class=
+"hs-num">2</span><span class="hs-layout">)</span> <span class=
+"hs-varid">undefined</span> <span class=
+"hs-comment">-- (1 + 3)</span>
+
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-str">"Five: "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">five</span></pre>
+<p>To compare this behavior to a strict language, we need a
+language with something like runtime exceptions. I'll use Rust's
+panics:</p>
+<pre><code class="rust">fn add(x: isize, y: isize) -&gt; isize {
+    println!("adding: {} and {}", x, y);
+    x + y
+}
+
+fn main() {
+    let five = add(1 + 1, 1 + 2);
+    let seven = add(1 + 2, panic!());
+
+    println!("Five: {}", five);
+}</code></pre>
+<p>Firstly, to Rust's credit: it gives me a bunch of warnings about
+how this program is dumb. Fair enough, but I'm going to ignore
+those warnings and charge ahead with it. This program will first
+evaluate the <code>add(1 + 1, 1 + 2)</code> expression (which we
+can see in the output of <code>adding: 2 and 3</code>). Then,
+before it ever enters the <code>add</code> function the second
+time, it needs to evaluate both <code>1 + 2</code> and
+<code>panic!()</code>. The former works just fine, but the latter
+results in a panic being generated and short-circuiting the rest of
+our function.</p>
+<p>If we want to regain Haskell's laziness properties, there's a
+straightforward way to do it: use a closure. A closure is,
+essentially, a thunk. The Rust syntax for creating a closure is
+<code>|args| body</code>. We can create closures with no arguments
+to act like thunks, which gives us:</p>
+<pre><code class="rust">fn add&lt;X, Y&gt;(x: X, y: Y) -&gt; isize
+    where X: FnOnce() -&gt; isize,
+          Y: FnOnce() -&gt; isize {
+    let x = x();
+    let y = y();
+    println!("adding: {} and {}", x, y);
+    x + y
+}
+
+fn main() {
+    let five = || add(|| 1 + 1, || 1 + 2);
+    let seven = || add(|| 1 + 2, || panic!());
+
+    println!("Five: {}", five());
+}</code></pre>
+<p>Again, the Rust compiler complains about the unused
+<code>seven</code>, but this program succeeds in running, since we
+never run the <code>seven</code> closure.</p>
+<p>Still not up to speed with Rust? Let's use everyone's favorite
+language: Javascript:</p>
+<pre><code class="javascript">function add(x, y) {
+    return x() + y();
+}
+
+function panic() {
+    throw "Panic!"
+}
+
+var five = ignored =&gt; add(ignored =&gt; 1 + 1, ignored =&gt; 1 + 2);
+var seven = ignored =&gt; add(ignored =&gt; 1 + 2, panic);
+console.log("Five: " + five());</code></pre>
+<p>Alright, to summarize until now:</p>
+<ul>
+<li>Haskell is lazy by default</li>
+<li>You can use bang patterns and <code>seq</code> to make things
+strict</li>
+<li>By contrast, in strict languages, you can use closures to make
+things lazy</li>
+<li>You can see if a function is strict in its arguments by passing
+in bottom (<code>undefined</code>) and seeing if it explodes in
+your face</li>
+<li>The <code>trace</code> function can help you see this as
+well</li>
+</ul>
+<p>This is all good, and make sure you have a solid grasp of these
+concepts before continuing. Consider rereading the sections
+above.</p>
+<h2 id="average">Average</h2>
+<p>Here's something we didn't address: what, exactly, does it mean
+to evaluate or force a value? To demonstrate the problem, let's
+implement an average function. We'll use a helper datatype, called
+<code>RunningTotal</code>, to capture both the cumulative sum and
+the number of elements we've seen so far.</p>
+<pre><span class="hs-keyword">data</span> <span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">RunningTotal</span>
+  <span class="hs-layout">{</span> <span class=
+"hs-varid">sum</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">Int</span>
+  <span class="hs-layout">,</span> <span class=
+"hs-varid">count</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">Int</span>
+  <span class="hs-layout">}</span>
+
+<span class="hs-definition">printAverage</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">printAverage</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-varid">sum</span> <span class=
+"hs-varid">count</span><span class="hs-layout">)</span>
+  <span class="hs-keyglyph">|</span> <span class=
+"hs-varid">count</span> <span class=
+"hs-varop">==</span> <span class="hs-num">0</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">error</span> <span class=
+"hs-str">"Need at least one value!"</span>
+  <span class="hs-keyglyph">|</span> <span class=
+"hs-varid">otherwise</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">print</span> <span class=
+"hs-layout">(</span><span class="hs-varid">fromIntegral</span> <span class="hs-varid">sum</span> <span class="hs-varop">/</span> <span class="hs-varid">fromIntegral</span> <span class="hs-varid">count</span> <span class="hs-keyglyph">::</span> <span class="hs-conid">Double</span><span class="hs-layout">)</span>
+
+<span class=
+"hs-comment">-- | A fold would be nicer... we'll see that later</span>
+<span class="hs-definition">printListAverage</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-keyglyph">[</span><span class="hs-conid">Int</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">printListAverage</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">go</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-num">0</span> <span class="hs-num">0</span><span class=
+"hs-layout">)</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">go</span> <span class=
+"hs-varid">rt</span> <span class="hs-conid">[]</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">printAverage</span> <span class="hs-varid">rt</span>
+    <span class="hs-varid">go</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-varid">sum</span> <span class=
+"hs-varid">count</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-varid">x</span><span class="hs-conop">:</span><span class=
+"hs-varid">xs</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span>
+      <span class="hs-keyword">let</span> <span class=
+"hs-varid">rt</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">RunningTotal</span> <span class="hs-layout">(</span><span class="hs-varid">sum</span> <span class="hs-varop">+</span> <span class="hs-varid">x</span><span class="hs-layout">)</span> <span class="hs-layout">(</span><span class="hs-varid">count</span> <span class="hs-varop">+</span> <span class="hs-num">1</span><span class="hs-layout">)</span>
+       <span class="hs-keyword">in</span> <span class=
+"hs-varid">go</span> <span class="hs-varid">rt</span> <span class=
+"hs-varid">xs</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">printListAverage</span> <span class=
+"hs-keyglyph">[</span><span class="hs-num">1</span><span class=
+"hs-keyglyph">..</span><span class=
+"hs-num">1000000</span><span class="hs-keyglyph">]</span></pre>
+<p>We're going to run this with run time statistics turned on so we
+can look at memory usage:</p>
+<pre>
+<code>$ stack ghc average.hs &amp;& ./average +RTS -s</code></pre>
+<p>Lo and behold, our memory usage is through the roof!</p>
+<pre>
+<code>[1 of 1] Compiling Main             ( average.hs, average.o )
+Linking average ...
+500000.5
+     258,654,528 bytes allocated in the heap
+     339,889,944 bytes copied during GC
+      95,096,512 bytes maximum residency (9 sample(s))
+       1,148,312 bytes maximum slop
+             164 MB total memory in use (0 MB lost due to fragmentation)</code></pre>
+<p>We're allocating a total of 258MB, and keeping 95MB in memory at
+once. For something that should just be a tight inner loop, that's
+<i>ridiculously</i> large.</p>
+<h3 id="bang2">Bang!</h3>
+<p>You're probably thinking right now "shouldn't we use that
+<code>seq</code> stuff or those bang patterns?" Certainly that
+makes sense. And in fact, it looks really trivial to solve this
+problem with a single bang to force evaluation of the newly
+constructed <code>rt</code> before recursing back into
+<code>go</code>. For example, we can add <code>{-# LANGUAGE
+BangPatterns #-}</code> to the top of our file and then define
+<code>go</code> as:</p>
+<pre><span class="hs-definition">go</span> <span class=
+"hs-varop">!</span><span class="hs-varid">rt</span> <span class=
+"hs-conid">[]</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">printAverage</span> <span class="hs-varid">rt</span>
+<span class="hs-definition">go</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-varid">sum</span> <span class=
+"hs-varid">count</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-varid">x</span><span class="hs-conop">:</span><span class=
+"hs-varid">xs</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">rt</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">RunningTotal</span> <span class="hs-layout">(</span><span class="hs-varid">sum</span> <span class="hs-varop">+</span> <span class="hs-varid">x</span><span class="hs-layout">)</span> <span class="hs-layout">(</span><span class="hs-varid">count</span> <span class="hs-varop">+</span> <span class="hs-num">1</span><span class="hs-layout">)</span>
+   <span class="hs-keyword">in</span> <span class=
+"hs-varid">go</span> <span class="hs-varid">rt</span> <span class=
+"hs-varid">xs</span></pre>
+<p>Unfortunately, this results in <i>exactly</i> the same memory
+usage as we had before. In order to understand why this is
+happening, we need to look at something called weak head normal
+form.</p>
+<h3 id="weak-head-normal-form">Weak Head Normal Form</h3>
+<p>Note in advance that <a href=
+"https://stackoverflow.com/a/6889335/369198">there's a great Stack
+Overflow answer</a> on this topic for further reading.</p>
+<p>We've been talking about forcing values and evaluating
+expressions, but what exactly that means hasn't been totally clear.
+To start simple, what will the output of this program be?</p>
+<pre><span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">undefined</span> <span class=
+"hs-varop">`seq`</span> <span class=
+"hs-str">"Hello World"</span></pre>
+<p>You'd probably guess that it will print an error about
+<code>undefined</code>, since it will try to evaluate
+<code>undefined</code> before it will evaluate <code>"Hello
+World"</code>, and because <code>putStrLn</code> is strict in its
+argument. And you'd be correct. But let's try something a little
+bit different:</p>
+<pre><span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class="hs-conid">Just</span> <span class=
+"hs-varid">undefined</span> <span class=
+"hs-varop">`seq`</span> <span class=
+"hs-str">"Hello World"</span></pre>
+<p>If you assume that "evaluate" means "fully evaluate into
+something with no thunks left," you'll say that this, too, prints
+an <code>undefined</code> error. But in fact, it happily prints out
+"Hello World" with no exceptions. What gives?</p>
+<p>It turns out that when we talk about forcing evaluation with
+<code>seq</code>, we're only talking about evaluating to <i>weak
+head normal form (WHNF)</i>. For most data types, this means
+unwrapping one layer of constructor. In the case of <code>Just
+undefined</code>, it means that we unwrap the <code>Just</code>
+data constructor, but don't touch the <code>undefined</code> within
+it. (We'll see a few ways to deal with this differently below.)</p>
+<p>It turns out that, with a standard data constructor*, the impact
+of using <code>seq</code> is the same as pattern matching the
+outermost constructor. If you want to monomorphise, for example,
+you can implement a function of type <code>seqMaybe :: Maybe a
+-&gt; b -&gt; b</code> and use it in the <code>main</code> example
+above. Go ahead and give it a shot... answer below.</p>
+<p>* Hold your horses, we'll talk about <code>newtype</code>s later
+and then you'll understand this weird phrasing.</p>
+<pre><span class="hs-definition">seqMaybe</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Maybe</span> <span class=
+"hs-varid">a</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">b</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">b</span>
+<span class="hs-definition">seqMaybe</span> <span class=
+"hs-conid">Nothing</span> <span class=
+"hs-varid">b</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">b</span>
+<span class="hs-definition">seqMaybe</span> <span class=
+"hs-layout">(</span><span class="hs-conid">Just</span> <span class=
+"hs-keyword">_</span><span class="hs-layout">)</span> <span class=
+"hs-varid">b</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">b</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class="hs-conid">Just</span> <span class=
+"hs-varid">undefined</span> <span class=
+"hs-varop">`seqMaybe`</span> <span class=
+"hs-str">"Hello World"</span>
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">undefined</span> <span class=
+"hs-varop">`seqMaybe`</span> <span class=
+"hs-str">"Goodbye!"</span></pre>
+<p>Let's up the ante again. What do you think this program will
+print?</p>
+<pre><span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">error</span> <span class="hs-varop">`seq`</span> <span class="hs-str">"Hello"</span>
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class="hs-layout">(</span><span class=
+"hs-keyglyph">\</span><span class="hs-varid">x</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">undefined</span><span class=
+"hs-layout">)</span> <span class=
+"hs-varop">`seq`</span> <span class="hs-str">"World"</span>
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">error</span> <span class="hs-str">"foo"</span> <span class="hs-varop">`seq`</span> <span class="hs-str">"Goodbye!"</span></pre>
+<p>You might think that <code>error `seq` ...</code> would be a
+problem. After all, isn't <code>error</code> going to throw an
+exception? However, <code>error</code> is a function. There's no
+exception getting thrown, or no bottom value being provided, until
+<code>error</code> is given its <code>String</code> argument. As a
+result, evaluating does not, in fact, generate an error. The rule
+is: any function applied to too few values is automatically in
+WHNF.</p>
+<p>A similar logic applies to <code>(\x -&gt; undefined)</code>.
+Although it's a lambda expression, its type is a function which has
+not been applied to all arguments. And therefore, it will not throw
+an exception when evaluated. In other words, it's already in
+WHNF.</p>
+<p>However, <code>error "foo"</code> is a function fully applied to
+its arguments. It's no longer a function, it's a value. And when we
+try to evaluate it to WHNF, its exception blows up in our face.</p>
+<p><strong>EXERCISE</strong> Will the following throw exceptions
+when evaluated?</p>
+<ul>
+<li><code>(+) undefined</code></li>
+<li><code>Just undefined</code></li>
+<li><code>undefined 5</code></li>
+<li><code>(error "foo" :: Int -&gt; Double)</code></li>
+</ul>
+<h3 id="fixing-average">Fixing average</h3>
+<p>Having understood WHNF, let's return to our example and see why
+our first bang pattern did nothing to help us:</p>
+<pre><span class="hs-definition">go</span> <span class=
+"hs-varop">!</span><span class="hs-varid">rt</span> <span class=
+"hs-conid">[]</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">printAverage</span> <span class="hs-varid">rt</span>
+<span class="hs-definition">go</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-varid">sum</span> <span class=
+"hs-varid">count</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-varid">x</span><span class="hs-conop">:</span><span class=
+"hs-varid">xs</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">rt</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">RunningTotal</span> <span class="hs-layout">(</span><span class="hs-varid">sum</span> <span class="hs-varop">+</span> <span class="hs-varid">x</span><span class="hs-layout">)</span> <span class="hs-layout">(</span><span class="hs-varid">count</span> <span class="hs-varop">+</span> <span class="hs-num">1</span><span class="hs-layout">)</span>
+   <span class="hs-keyword">in</span> <span class=
+"hs-varid">go</span> <span class="hs-varid">rt</span> <span class=
+"hs-varid">xs</span></pre>
+<p>In WHNF, forcing evaluation is the same as unwrapping the
+constructor, which we are already doing in the second clause! The
+problem is that the values contained inside the
+<code>RunningTotal</code> data constructor are not being evaluated,
+and therefore are accumulating thunks. Let's see two ways to solve
+this:</p>
+<pre><span class="hs-definition">go</span> <span class=
+"hs-varid">rt</span> <span class="hs-conid">[]</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">printAverage</span> <span class="hs-varid">rt</span>
+<span class="hs-definition">go</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-varop">!</span><span class="hs-varid">sum</span> <span class=
+"hs-varop">!</span><span class="hs-varid">count</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-varid">x</span><span class="hs-conop">:</span><span class=
+"hs-varid">xs</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">rt</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">RunningTotal</span> <span class="hs-layout">(</span><span class="hs-varid">sum</span> <span class="hs-varop">+</span> <span class="hs-varid">x</span><span class="hs-layout">)</span> <span class="hs-layout">(</span><span class="hs-varid">count</span> <span class="hs-varop">+</span> <span class="hs-num">1</span><span class="hs-layout">)</span>
+   <span class="hs-keyword">in</span> <span class=
+"hs-varid">go</span> <span class="hs-varid">rt</span> <span class=
+"hs-varid">xs</span></pre>
+<p>Instead of putting the bangs on the <code>RunningTotal</code>
+value, I'm putting them on the values <i>within</i> the
+constructor, forcing them to be evaluated at each loop. We're no
+longer accumulating a huge chain of thunks, and our maximum
+residency drops to 44kb. (Total allocations, though, are still up
+around 192mb. We need to play around with other optimizations
+outside the scope of this post to deal with the total allocations,
+so we're going to ignore this value for the rest of the examples.)
+Another approach is:</p>
+<pre><span class="hs-definition">go</span> <span class=
+"hs-varid">rt</span> <span class="hs-conid">[]</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">printAverage</span> <span class="hs-varid">rt</span>
+<span class="hs-definition">go</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-varid">sum</span> <span class=
+"hs-varid">count</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-varid">x</span><span class="hs-conop">:</span><span class=
+"hs-varid">xs</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varop">!</span><span class="hs-varid">sum'</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">sum</span> <span class="hs-varop">+</span> <span class=
+"hs-varid">x</span>
+      <span class="hs-varop">!</span><span class=
+"hs-varid">count'</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">count</span> <span class=
+"hs-varop">+</span> <span class="hs-num">1</span>
+      <span class="hs-varid">rt</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-varid">sum'</span> <span class="hs-varid">count'</span>
+   <span class="hs-keyword">in</span> <span class=
+"hs-varid">go</span> <span class="hs-varid">rt</span> <span class=
+"hs-varid">xs</span></pre>
+<p>This one instead forces evaluation of the new sum and count
+<i>before</i> constructing the new <code>RunningTotal</code> value.
+I like this version a bit more, as it's forcing evaluation at the
+correct point: when creating the value, instead of on the next
+iteration of the loop when destructing it.</p>
+<p>Moral of the story: make sure you're evaluating the thing you
+actually need to evaluate, not just its container!</p>
+<h3 id="deepseq">deepseq</h3>
+<p>The fact that <code>seq</code> only evaluates to weak head
+normal form is annoying. There are lots of times when we would like
+to fully evaluate down to <i>normal form</i> (NF), meaning all
+thunks have been evaluated inside our values. While there is
+nothing built into the language to handle this, there is a
+semi-standard (meaning it ships with GHC) library to handle this:
+<code>deepseq</code>. It works by providing an <code>NFData</code>
+type class the defines how to <strong>r</strong>educe a value to
+<strong>n</strong>ormal <strong>f</strong>orm (via the
+<code>rnf</code> method).</p>
+<pre><span class="hs-comment">{-# LANGUAGE BangPatterns #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">DeepSeq</span>
+
+<span class="hs-keyword">data</span> <span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">RunningTotal</span>
+  <span class="hs-layout">{</span> <span class=
+"hs-varid">sum</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">Int</span>
+  <span class="hs-layout">,</span> <span class=
+"hs-varid">count</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">Int</span>
+  <span class="hs-layout">}</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">NFData</span> <span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-keyword">where</span>
+  <span class="hs-varid">rnf</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-varid">sum</span> <span class=
+"hs-varid">count</span><span class=
+"hs-layout">)</span> <span class="hs-keyglyph">=</span> <span class="hs-varid">sum</span> <span class="hs-varop">`deepseq`</span> <span class="hs-varid">count</span> <span class="hs-varop">`deepseq`</span> <span class="hs-conid">()</span>
+
+<span class="hs-definition">printAverage</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">printAverage</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-varid">sum</span> <span class=
+"hs-varid">count</span><span class="hs-layout">)</span>
+  <span class="hs-keyglyph">|</span> <span class=
+"hs-varid">count</span> <span class=
+"hs-varop">==</span> <span class="hs-num">0</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">error</span> <span class=
+"hs-str">"Need at least one value!"</span>
+  <span class="hs-keyglyph">|</span> <span class=
+"hs-varid">otherwise</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">print</span> <span class=
+"hs-layout">(</span><span class="hs-varid">fromIntegral</span> <span class="hs-varid">sum</span> <span class="hs-varop">/</span> <span class="hs-varid">fromIntegral</span> <span class="hs-varid">count</span> <span class="hs-keyglyph">::</span> <span class="hs-conid">Double</span><span class="hs-layout">)</span>
+
+<span class=
+"hs-comment">-- | A fold would be nicer... we'll see that later</span>
+<span class="hs-definition">printListAverage</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-keyglyph">[</span><span class="hs-conid">Int</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">printListAverage</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">go</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-num">0</span> <span class="hs-num">0</span><span class=
+"hs-layout">)</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">go</span> <span class=
+"hs-varid">rt</span> <span class="hs-conid">[]</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">printAverage</span> <span class="hs-varid">rt</span>
+    <span class="hs-varid">go</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-varid">sum</span> <span class=
+"hs-varid">count</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-varid">x</span><span class="hs-conop">:</span><span class=
+"hs-varid">xs</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span>
+      <span class="hs-keyword">let</span> <span class=
+"hs-varid">rt</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">RunningTotal</span> <span class="hs-layout">(</span><span class="hs-varid">sum</span> <span class="hs-varop">+</span> <span class="hs-varid">x</span><span class="hs-layout">)</span> <span class="hs-layout">(</span><span class="hs-varid">count</span> <span class="hs-varop">+</span> <span class="hs-num">1</span><span class="hs-layout">)</span>
+       <span class="hs-keyword">in</span> <span class=
+"hs-varid">rt</span> <span class=
+"hs-varop">`deepseq`</span> <span class=
+"hs-varid">go</span> <span class="hs-varid">rt</span> <span class=
+"hs-varid">xs</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">printListAverage</span> <span class=
+"hs-keyglyph">[</span><span class="hs-num">1</span><span class=
+"hs-keyglyph">..</span><span class=
+"hs-num">1000000</span><span class="hs-keyglyph">]</span></pre>
+<p>This has a maximum residency, once again, of 44kb. We define our
+<code>NFData</code> instance, which includes an <code>rnf</code>
+method. The approach of simply <code>deepseq</code>ing all of the
+values within a data constructor is almost always the approach to
+take for <code>NFData</code> instances. In fact, it's so common,
+that you can get away with just using <code>Generic</code> deriving
+and have GHC do the work for you:</p>
+<pre><span class="hs-comment">{-# LANGUAGE DeriveGeneric #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">GHC</span><span class="hs-varop">.</span><span class=
+"hs-conid">Generics</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Generic</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">DeepSeq</span>
+
+<span class="hs-keyword">data</span> <span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">RunningTotal</span>
+  <span class="hs-layout">{</span> <span class=
+"hs-varid">sum</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">Int</span>
+  <span class="hs-layout">,</span> <span class=
+"hs-varid">count</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">Int</span>
+  <span class="hs-layout">}</span>
+  <span class="hs-keyword">deriving</span> <span class=
+"hs-conid">Generic</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">NFData</span> <span class=
+"hs-conid">RunningTotal</span></pre>
+<p>The true beauty of having <code>NFData</code> instances is the
+ability to abstract over many different data types. We can use this
+not only to avoid space leaks (as we're doing here), but also to
+avoid accidentally including exceptions inside thunks within a
+value. For an example of that, check out the <a href=
+"https://www.stackage.org/haddock/lts-9.3/safe-exceptions-0.1.6.0/Control-Exception-Safe.html#v:tryAnyDeep">
+tryAnyDeep</a> function from the <a href=
+"https://haskell-lang.org/library/safe-exceptions">safe-exceptions
+library</a>.</p>
+<p><strong>EXERCISE</strong> Define the <code>deepseq</code>
+function yourself in terms of <code>rnf</code> and
+<code>seq</code>.</p>
+<h3 id="strict-data">Strict data</h3>
+<p>These approaches work, but they are not ideal. The problem lies
+in our definition of <code>RunningTotal</code>. What we <i>want</i>
+to say is that, whenever you have a value of type
+<code>RunningTotal</code>, you in fact have two <code>Int</code>s.
+But because of laziness, what we're actually saying is that a
+<code>RunningTotal</code> value could contain two
+<code>Int</code>s, or it could contain thunks that will evaluate to
+<code>Int</code>s, or thunks that will throw exceptions.</p>
+<p>Instead, we'd like to make it impossible to construct a
+<code>RunningTotal</code> value that has any laziness room left
+over. And to do that, we can use <i>strictness annotations</i> in
+our definition of the data type:</p>
+<pre><span class="hs-keyword">data</span> <span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">RunningTotal</span>
+  <span class="hs-layout">{</span> <span class=
+"hs-varid">sum</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-varop">!</span><span class=
+"hs-conid">Int</span>
+  <span class="hs-layout">,</span> <span class=
+"hs-varid">count</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-varop">!</span><span class=
+"hs-conid">Int</span>
+  <span class="hs-layout">}</span>
+  <span class="hs-keyword">deriving</span> <span class=
+"hs-conid">Generic</span>
+
+<span class="hs-definition">printAverage</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">printAverage</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-varid">sum</span> <span class=
+"hs-varid">count</span><span class="hs-layout">)</span>
+  <span class="hs-keyglyph">|</span> <span class=
+"hs-varid">count</span> <span class=
+"hs-varop">==</span> <span class="hs-num">0</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">error</span> <span class=
+"hs-str">"Need at least one value!"</span>
+  <span class="hs-keyglyph">|</span> <span class=
+"hs-varid">otherwise</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">print</span> <span class=
+"hs-layout">(</span><span class="hs-varid">fromIntegral</span> <span class="hs-varid">sum</span> <span class="hs-varop">/</span> <span class="hs-varid">fromIntegral</span> <span class="hs-varid">count</span> <span class="hs-keyglyph">::</span> <span class="hs-conid">Double</span><span class="hs-layout">)</span>
+
+<span class=
+"hs-comment">-- | A fold would be nicer... we'll see that later</span>
+<span class="hs-definition">printListAverage</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-keyglyph">[</span><span class="hs-conid">Int</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">printListAverage</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">go</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-num">0</span> <span class="hs-num">0</span><span class=
+"hs-layout">)</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">go</span> <span class=
+"hs-varid">rt</span> <span class="hs-conid">[]</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">printAverage</span> <span class="hs-varid">rt</span>
+    <span class="hs-varid">go</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">RunningTotal</span> <span class=
+"hs-varid">sum</span> <span class=
+"hs-varid">count</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-varid">x</span><span class="hs-conop">:</span><span class=
+"hs-varid">xs</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span>
+      <span class="hs-keyword">let</span> <span class=
+"hs-varid">rt</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">RunningTotal</span> <span class="hs-layout">(</span><span class="hs-varid">sum</span> <span class="hs-varop">+</span> <span class="hs-varid">x</span><span class="hs-layout">)</span> <span class="hs-layout">(</span><span class="hs-varid">count</span> <span class="hs-varop">+</span> <span class="hs-num">1</span><span class="hs-layout">)</span>
+       <span class="hs-keyword">in</span> <span class=
+"hs-varid">go</span> <span class="hs-varid">rt</span> <span class=
+"hs-varid">xs</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">printListAverage</span> <span class=
+"hs-keyglyph">[</span><span class="hs-num">1</span><span class=
+"hs-keyglyph">..</span><span class=
+"hs-num">1000000</span><span class="hs-keyglyph">]</span></pre>
+<p>All we've done is put bangs in front of the <code>Int</code>s in
+the definition of <code>RunningTotal</code>. We have no other
+references to strictness or evaluation in our program. However, by
+placing the strictness annotations on those fields, we're saying
+something simple and yet profound:</p>
+<p><strong>Whenever you evaluate a value of type
+<code>RunningTotal</code>, you must also evaluate the two
+<code>Int</code>s it contains</strong></p>
+<p>As we mentioned above, our second <code>go</code> clause forces
+evaluation of the <code>RunningTotal</code> value by taking apart
+its constructor. This act now automatically forces evaluation of
+<code>sum</code> and <code>count</code>, which we previously needed
+to achieve via a bang pattern.</p>
+<p>There's one other advantage to this, which is slightly out of
+scope but worth mentioning. When dealing with small values like an
+<code>Int</code>, GHC will automatically <i>unbox</i> strict
+fields. This means that, instead of keeping a pointer to an
+<code>Int</code> inside <code>RunningTotal</code>, it will keep the
+<code>Int</code> itself. This can further reduce memory usage.</p>
+<p>You're probably asking a pretty good question right now: "how do
+I know if I should use a strictness annotation on my data fields?"
+This answer is slightly controversial, but my advice and
+recommended best practice: unless you know that you want laziness
+for a field, make it strict. Making your fields strict helps in a
+few ways:</p>
+<ul>
+<li>Avoids accidental space leaks, like we're doing here</li>
+<li>Avoids accidentally including bottom values</li>
+<li>When constructing a value with record syntax, GHC will give you
+an error if you forget a strict field. It will only give you a
+warning for non-strict fields.</li>
+</ul>
+<h3 id="the-curious-case-of-newtype">The curious case of
+newtype</h3>
+<p>Let's define three very similar data types:</p>
+<pre><span class="hs-keyword">data</span> <span class=
+"hs-conid">Foo</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">Foo</span> <span class="hs-conid">Int</span>
+<span class="hs-keyword">data</span> <span class=
+"hs-conid">Bar</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">Bar</span> <span class="hs-varop">!</span><span class=
+"hs-conid">Int</span>
+<span class="hs-keyword">newtype</span> <span class=
+"hs-conid">Baz</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">Baz</span> <span class="hs-conid">Int</span></pre>
+<p>Let's play a game, and guess the output of the following
+potential bodies for <code>main</code>. Try to work through each
+case in your head before reading the explanation below.</p>
+<ol>
+<li><code>case undefined of { Foo _ -&gt; putStrLn "Still alive!"
+}</code></li>
+<li><code>case Foo undefined of { Foo _ -&gt; putStrLn "Still
+alive!" }</code></li>
+<li><code>case undefined of { Bar _ -&gt; putStrLn "Still alive!"
+}</code></li>
+<li><code>case Bar undefined of { Bar _ -&gt; putStrLn "Still
+alive!" }</code></li>
+<li><code>case undefined of { Baz _ -&gt; putStrLn "Still alive!"
+}</code></li>
+<li><code>case Baz undefined of { Baz _ -&gt; putStrLn "Still
+alive!" }</code></li>
+</ol>
+<p>Case (1) is relatively straightforward: we try to unwrap one
+layer of data constructor (the <code>Foo</code>) and find a bottom
+value. So this thing throws an exception. The same thing applies to
+(3).</p>
+<p>(2) does <i>not</i> throw an exception. We have a
+<code>Foo</code> data constructor in our expression, and it
+contains a bottom value. However, since there is no strictness
+annotation on the <code>Int</code> in <code>Foo</code>, uwnrapping
+the <code>Foo</code> does not force evaluation of the
+<code>Int</code>, and therefore no exception is thrown. By
+contrast, in (4), we <i>do</i> have a strictness annotation, and
+therefore <code>case</code>ing on <code>Bar</code> throws an
+exception.</p>
+<p>What about <code>newtype</code>s? What we know about
+<code>newtype</code>s is that they have no runtime representation.
+Therefore, it's impossible for the <code>Baz</code> data
+constructor to be hiding an extra layer of bottomness. In other
+words, <code>Baz undefined</code> and <code>undefined</code> are
+indistinguishable. That may sound like <code>Bar</code> at first,
+but interestingly it's not.</p>
+<p>You see, unwrapping a <code>Baz</code> constructor can have no
+effect on runtime behavior, since it was never there in the first
+place. The pattern match inside (5), therefore, does
+<i>nothing</i>. It is equivalent to <code>case undefined of { _
+-&gt; putStrLn "Still alive!" }</code>. And since we're not
+inspecting the <code>undefined</code> at all (because we're using a
+wildcard pattern and not a data constructor), no exception is
+thrown.</p>
+<p>Similarly, in case (6), we've applied a <code>Baz</code>
+constructor to <code>undefined</code>, but since it has no runtime
+representation, it may as well not be there. So once again, no
+exception is thrown.</p>
+<p><strong>EXERCISE</strong> What is the output of the program
+<code>main = Baz undefined `seq` putStrLn "Still alive!"</code>?
+Why?</p>
+<h3 id="convenience-operators-and-functions">Convenience operators
+and functions</h3>
+<p>It can be inconvenient, as you may have noticed already, to use
+<code>seq</code> and <code>deepseq</code> all over the place. Bang
+patterns help, but there are other ways to force evaluation.
+Perhaps the most common is the <code>$!</code> operator, e.g.:</p>
+<pre><span class="hs-definition">mysum</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-keyglyph">[</span><span class="hs-conid">Int</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">mysum</span> <span class=
+"hs-varid">list0</span> <span class="hs-keyglyph">=</span>
+  <span class="hs-varid">go</span> <span class=
+"hs-varid">list0</span> <span class="hs-num">0</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">go</span> <span class=
+"hs-conid">[]</span> <span class=
+"hs-varid">total</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">total</span>
+    <span class="hs-varid">go</span> <span class=
+"hs-layout">(</span><span class="hs-varid">x</span><span class=
+"hs-conop">:</span><span class="hs-varid">xs</span><span class=
+"hs-layout">)</span> <span class=
+"hs-varid">total</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">go</span> <span class="hs-varid">xs</span> <span class=
+"hs-varop">$!</span> <span class=
+"hs-varid">total</span> <span class=
+"hs-varop">+</span> <span class="hs-varid">x</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">print</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">mysum</span> <span class="hs-keyglyph">[</span><span class="hs-num">1</span><span class="hs-keyglyph">..</span><span class="hs-num">1000000</span><span class="hs-keyglyph">]</span></pre>
+<p>This forces evaluation of <code>total + x</code> before
+recursing back into the <code>go</code> function, avoiding a space
+leak. (EXERCISE: do the same thing with a bang pattern, and with
+the <code>seq</code> function.)</p>
+<p>The <code>$!!</code> operator is the same, except instead of
+working with <code>seq</code>, it uses <code>deepseq</code> and
+therefore evaluates to normal form.</p>
+<pre><span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">DeepSeq</span>
+
+<span class="hs-definition">average</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-keyglyph">[</span><span class="hs-conid">Int</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Double</span>
+<span class="hs-definition">average</span> <span class=
+"hs-varid">list0</span> <span class="hs-keyglyph">=</span>
+  <span class="hs-varid">go</span> <span class=
+"hs-varid">list0</span> <span class=
+"hs-layout">(</span><span class="hs-num">0</span><span class=
+"hs-layout">,</span> <span class="hs-num">0</span><span class=
+"hs-layout">)</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">go</span> <span class=
+"hs-conid">[]</span> <span class="hs-layout">(</span><span class=
+"hs-varid">total</span><span class=
+"hs-layout">,</span> <span class="hs-varid">count</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=</span> <span class="hs-varid">fromIntegral</span> <span class="hs-varid">total</span> <span class="hs-varop">/</span> <span class="hs-varid">count</span>
+    <span class="hs-varid">go</span> <span class=
+"hs-layout">(</span><span class="hs-varid">x</span><span class=
+"hs-conop">:</span><span class="hs-varid">xs</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-varid">total</span><span class=
+"hs-layout">,</span> <span class="hs-varid">count</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=</span> <span class="hs-varid">go</span> <span class="hs-varid">xs</span> <span class="hs-varop">$!!</span> <span class="hs-layout">(</span><span class="hs-varid">total</span> <span class="hs-varop">+</span> <span class="hs-varid">x</span><span class="hs-layout">,</span> <span class="hs-varid">count</span> <span class="hs-varop">+</span> <span class="hs-num">1</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">print</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">average</span> <span class="hs-keyglyph">[</span><span class="hs-num">1</span><span class="hs-keyglyph">..</span><span class="hs-num">1000000</span><span class="hs-keyglyph">]</span></pre>
+<p>Another nice helper function is <a href=
+"https://www.stackage.org/haddock/lts-9.3/deepseq-1.4.2.0/Control-DeepSeq.html#v:force">
+<code>force</code></a>. What this does is makes it that, when the
+expression you're looking at is evaluated to WHNF, it's
+<i>actually</i> evaluated to NF. For example, we can rewrite the
+<code>go</code> function above as:</p>
+<pre><span class="hs-definition">go</span> <span class=
+"hs-conid">[]</span> <span class="hs-layout">(</span><span class=
+"hs-varid">total</span><span class=
+"hs-layout">,</span> <span class="hs-varid">count</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=</span> <span class="hs-varid">fromIntegral</span> <span class="hs-varid">total</span> <span class="hs-varop">/</span> <span class="hs-varid">count</span>
+<span class="hs-definition">go</span> <span class=
+"hs-layout">(</span><span class="hs-varid">x</span><span class=
+"hs-conop">:</span><span class="hs-varid">xs</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-varid">total</span><span class=
+"hs-layout">,</span> <span class="hs-varid">count</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=</span> <span class="hs-varid">go</span> <span class="hs-varid">xs</span> <span class="hs-varop">$!</span> <span class="hs-varid">force</span> <span class="hs-layout">(</span><span class="hs-varid">total</span> <span class="hs-varop">+</span> <span class="hs-varid">x</span><span class="hs-layout">,</span> <span class="hs-varid">count</span> <span class="hs-varop">+</span> <span class="hs-num">1</span><span class="hs-layout">)</span></pre>
+<p><strong>EXERCISE</strong> Define these convenience functions and
+operators yourself in terms of <code>seq</code> and
+<code>deepseq</code>.</p>
+<h2 id="data-structures">Data structures</h2>
+<p>Alright, I swear that's all of the really complicated stuff. If
+you've absorbed all of those details, the rest of this just follows
+naturally and introduces a little bit more terminology to help us
+understand things.</p>
+<p>Let's start off slowly: what's the output of this program:</p>
+<pre><span class="hs-keyword">data</span> <span class=
+"hs-conid">List</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">Cons</span> <span class="hs-varid">a</span> <span class=
+"hs-layout">(</span><span class="hs-conid">List</span> <span class=
+"hs-varid">a</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">|</span> <span class="hs-conid">Nil</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">Cons</span> <span class=
+"hs-varid">undefined</span> <span class=
+"hs-varid">undefined</span> <span class=
+"hs-varop">`seq`</span> <span class=
+"hs-varid">putStrLn</span> <span class=
+"hs-str">"Hello World"</span></pre>
+<p>Well, using our principles from above: <code>Cons undefined
+undefined</code> is already in WHNF, since we've got the outermost
+constructor available. So this program prints "Hello World",
+without any exceptions. Cool. Now let's realize that
+<code>Cons</code> is the same as the <code>:</code> data
+constructor for lists, and see that the above is identical to:</p>
+<pre><span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-layout">(</span><span class=
+"hs-varid">undefined</span><span class=
+"hs-conop">:</span><span class=
+"hs-varid">undefined</span><span class=
+"hs-layout">)</span> <span class=
+"hs-varop">`seq`</span> <span class=
+"hs-varid">putStrLn</span> <span class=
+"hs-str">"Hello World"</span></pre>
+<p>This tells me that lists are a lazy data structure: I have a
+bottom value for the first element, a bottom value for the rest of
+the list, and yet this first cell is not bottom. Let's try
+something a little bit different:</p>
+<pre><span class="hs-keyword">data</span> <span class=
+"hs-conid">List</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">Cons</span> <span class="hs-varid">a</span> <span class=
+"hs-varop">!</span><span class="hs-layout">(</span><span class=
+"hs-conid">List</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">|</span> <span class="hs-conid">Nil</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">Cons</span> <span class=
+"hs-varid">undefined</span> <span class=
+"hs-varid">undefined</span> <span class=
+"hs-varop">`seq`</span> <span class=
+"hs-varid">putStrLn</span> <span class=
+"hs-str">"Hello World"</span></pre>
+<p>This is going to explode in our faces! We are now strict in the
+tail of the list. However, the following is fine:</p>
+<pre><span class="hs-keyword">data</span> <span class=
+"hs-conid">List</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">Cons</span> <span class="hs-varid">a</span> <span class=
+"hs-varop">!</span><span class="hs-layout">(</span><span class=
+"hs-conid">List</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">|</span> <span class="hs-conid">Nil</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">Cons</span> <span class=
+"hs-varid">undefined</span> <span class=
+"hs-layout">(</span><span class="hs-conid">Cons</span> <span class=
+"hs-varid">undefined</span> <span class=
+"hs-conid">Nil</span><span class="hs-layout">)</span> <span class=
+"hs-varop">`seq`</span> <span class=
+"hs-varid">putStrLn</span> <span class=
+"hs-str">"Hello World"</span></pre>
+<p>With this definition of a list, we need to know all the details
+about the list itself, but the values can remain undefined. This is
+called <i>spine strict</i>. By contrast, we can also be strict in
+the values and be <i>value strict</i>:</p>
+<pre><span class="hs-keyword">data</span> <span class=
+"hs-conid">List</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">Cons</span> <span class="hs-varop">!</span><span class=
+"hs-varid">a</span> <span class="hs-varop">!</span><span class=
+"hs-layout">(</span><span class="hs-conid">List</span> <span class=
+"hs-varid">a</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">|</span> <span class="hs-conid">Nil</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">Cons</span> <span class=
+"hs-varid">undefined</span> <span class=
+"hs-layout">(</span><span class="hs-conid">Cons</span> <span class=
+"hs-varid">undefined</span> <span class=
+"hs-conid">Nil</span><span class="hs-layout">)</span> <span class=
+"hs-varop">`seq`</span> <span class=
+"hs-varid">putStrLn</span> <span class=
+"hs-str">"Hello World"</span></pre>
+<p>This will explode in our faces, as we'd expect.</p>
+<p>There's one final definition of list you may be expecting, one
+strict in values but not in the tail:</p>
+<pre><span class="hs-keyword">data</span> <span class=
+"hs-conid">List</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">Cons</span> <span class="hs-varop">!</span><span class=
+"hs-varid">a</span> <span class="hs-layout">(</span><span class=
+"hs-conid">List</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">|</span> <span class="hs-conid">Nil</span></pre>
+<p>In practice, I'm aware of no data structures in Haskell that
+follow this pattern, and therefore it doesn't have a name. (If
+there <i>are</i> such data structures, and this does have a name,
+please let me know, I'd be curious about the use cases for it.)</p>
+<p>So standard lists are lazy. Let's look at a few other data
+types:</p>
+<h3 id="vectors">Vectors</h3>
+<p>The vectors in <code>Data.Vector</code> (also known as <i>boxed
+vectors</i>) are spine strict. Assuming an import of <code>import
+qualified Data.Vector as V</code>, what would be the results of the
+following programs?</p>
+<ol>
+<li><code>main = V.fromList [undefined] `seq` putStrLn "Hello
+World"</code></li>
+<li><code>main = V.fromList (undefined:undefined) `seq` putStrLn
+"Hello World"</code></li>
+<li><code>main = V.fromList undefined `seq` putStrLn "Hello
+World"</code></li>
+</ol>
+<p>The first succeeds: we have the full spine of the vector
+defined. The fact that it contains a bottom value is irrelevant.
+The second fails, since the spine of the tail of the list is
+undefined, making the spine undefined. And finally the third (of
+course) fails, since the entire list is undefined.</p>
+<p>Now let's look at <i>unboxed vectors</i>. Because of inference
+issues, we need to help out GHC a little bit more. So starting with
+this head of a program:</p>
+<pre><span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Vector</span><span class="hs-varop">.</span><span class=
+"hs-conid">Unboxed</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">V</span>
+
+<span class="hs-definition">fromList</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-keyglyph">[</span><span class="hs-conid">Int</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">V</span><span class="hs-varop">.</span><span class=
+"hs-conid">Vector</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">fromList</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">V</span><span class=
+"hs-varop">.</span><span class="hs-varid">fromList</span></pre>
+<p>What happens with the three cases above?</p>
+<ol>
+<li><code>main = fromList [undefined] `seq` putStrLn "Hello
+World"</code></li>
+<li><code>main = fromList (undefined:undefined) `seq` putStrLn
+"Hello World"</code></li>
+<li><code>main = fromList undefined `seq` putStrLn "Hello
+World"</code></li>
+</ol>
+<p>As you'd expect, (2) and (3) have the same behavior as with
+boxed vectors. However, (1) <i>also</i> throws an exception, since
+unboxed vectors are value strict, not just spine strict. The same
+applies to storable and primitive vectors.</p>
+<p>Unfortunately, to my knowledge, there is no definition of a
+strict, boxed vector in a public library. Such a data type would be
+useful to help avoid space leaks (such as the original question
+that triggered this blog post).</p>
+<h3 id="sets-and-maps">Sets and Maps</h3>
+<p>If you look at the containers and unordered-containers packages,
+you may have noticed that the Map-like modules come in
+<code>Strict</code> and <code>Lazy</code> variants (e.g.,
+<code>Data.HashMap.Strict</code> and
+<code>Data.HashMap.Lazy</code>) while the Set-like modules do not
+(e.g., <code>Data.IntSet</code>). This is because <i>all</i> of
+these containers are spine strict, and therefore must be strict in
+the keys. Since a set only has keys, no separate values, it must
+also be value strict.</p>
+<p>A map, by contrast, has both keys and values. The lazy variants
+of the map-like modules are spine-strict, value-lazy, whereas the
+strict variants are both spine and value strict.</p>
+<p><strong>EXERCISE</strong> Analyze the
+<code>Data.Sequence.Seq</code> data type and classify it as either
+lazy, spine strict, or value strict.</p>
+<h2 id="function-arguments">Function arguments</h2>
+<p>A function is considered strict in one of its arguments if, when
+the function is applied to a bottom value for that argument, the
+result is bottom. As we saw way above, <code>+</code> for
+<code>Int</code> is strict in both of its arguments, since:
+<code>undefined + x</code> is bottom, and <code>x +
+undefined</code> is bottom.</p>
+<p>By contrast, the <code>const</code> function, defined as
+<code>const a b = a</code>, is strict in its first argument and
+lazy in its second argument.</p>
+<p>The <code>:</code> data constructor for lists is lazy in both
+its first and second argument. But if you have <code>data List =
+Cons !a !(List a) | Nil</code>, <code>Cons</code> is strict in both
+its first and second argument.</p>
+<h2 id="folds">Folds</h2>
+<p>A common place to end up getting tripped up by laziness is
+dealing with folds. The most infamous example is the
+<code>foldl</code> function, which lulls you into a false sense of
+safety only to dash your hopes and destroy your dreams:</p>
+<pre><span class="hs-definition">mysum</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-keyglyph">[</span><span class="hs-conid">Int</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">mysum</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">foldl</span> <span class=
+"hs-layout">(</span><span class="hs-varop">+</span><span class=
+"hs-layout">)</span> <span class="hs-num">0</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">print</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">mysum</span> <span class="hs-keyglyph">[</span><span class="hs-num">1</span><span class="hs-keyglyph">..</span><span class="hs-num">1000000</span><span class="hs-keyglyph">]</span></pre>
+<p>This is so close to correct, and yet uses 53mb of resident
+memory! The solution is but a tick away, using the strict left fold
+<code>foldl'</code> function:</p>
+<pre><span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">List</span> <span class="hs-layout">(</span><span class=
+"hs-varid">foldl'</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">mysum</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-keyglyph">[</span><span class="hs-conid">Int</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">mysum</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">foldl'</span> <span class=
+"hs-layout">(</span><span class="hs-varop">+</span><span class=
+"hs-layout">)</span> <span class="hs-num">0</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">print</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">mysum</span> <span class="hs-keyglyph">[</span><span class="hs-num">1</span><span class="hs-keyglyph">..</span><span class="hs-num">1000000</span><span class="hs-keyglyph">]</span></pre>
+<p>Why does the <code>Prelude</code> expose a function
+(<code>foldl</code>) which is almost always the wrong one to
+use?</p>
+<p><img alt="Hysterical Raisins" src=
+"/images/hysterical-raisins.jpg"></p>
+<p>But the important thing to note about almost all functions that
+claim to be strict is that they are only strict to weak head normal
+form. Pulling up our <code>average</code> example from before, this
+still has a space leak:</p>
+<pre><span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">List</span> <span class="hs-layout">(</span><span class=
+"hs-varid">foldl'</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">average</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-keyglyph">[</span><span class="hs-conid">Int</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Double</span>
+<span class="hs-definition">average</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">divide</span> <span class=
+"hs-varop">.</span> <span class=
+"hs-varid">foldl'</span> <span class=
+"hs-varid">add</span> <span class="hs-layout">(</span><span class=
+"hs-num">0</span><span class="hs-layout">,</span> <span class=
+"hs-num">0</span><span class="hs-layout">)</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">divide</span> <span class=
+"hs-layout">(</span><span class="hs-varid">total</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">count</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=</span> <span class="hs-varid">fromIntegral</span> <span class="hs-varid">total</span> <span class="hs-varop">/</span> <span class="hs-varid">count</span>
+    <span class="hs-varid">add</span> <span class=
+"hs-layout">(</span><span class="hs-varid">total</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">count</span><span class="hs-layout">)</span> <span class="hs-varid">x</span> <span class="hs-keyglyph">=</span> <span class="hs-layout">(</span><span class="hs-varid">total</span> <span class="hs-varop">+</span> <span class="hs-varid">x</span><span class="hs-layout">,</span> <span class="hs-varid">count</span> <span class="hs-varop">+</span> <span class="hs-num">1</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">print</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">average</span> <span class="hs-keyglyph">[</span><span class="hs-num">1</span><span class="hs-keyglyph">..</span><span class="hs-num">1000000</span><span class="hs-keyglyph">]</span></pre>
+<p>My advice is to use a helper data type with strict fields. But
+perhaps you don't want to do that, and you're frustrated that there
+is no <code>foldl'</code> that evaluates to normal form.
+Fortunately for you, by just throwing in a call to
+<code>force</code>, you can easily upgrade a WHNF fold into a NF
+fold:</p>
+<pre><span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">List</span> <span class="hs-layout">(</span><span class=
+"hs-varid">foldl'</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">DeepSeq</span> <span class="hs-layout">(</span><span class="hs-varid">force</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">average</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-keyglyph">[</span><span class="hs-conid">Int</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Double</span>
+<span class="hs-definition">average</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">divide</span> <span class=
+"hs-varop">.</span> <span class=
+"hs-varid">foldl'</span> <span class=
+"hs-varid">add</span> <span class="hs-layout">(</span><span class=
+"hs-num">0</span><span class="hs-layout">,</span> <span class=
+"hs-num">0</span><span class="hs-layout">)</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">divide</span> <span class=
+"hs-layout">(</span><span class="hs-varid">total</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">count</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=</span> <span class="hs-varid">fromIntegral</span> <span class="hs-varid">total</span> <span class="hs-varop">/</span> <span class="hs-varid">count</span>
+    <span class="hs-varid">add</span> <span class=
+"hs-layout">(</span><span class="hs-varid">total</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">count</span><span class="hs-layout">)</span> <span class="hs-varid">x</span> <span class="hs-keyglyph">=</span> <span class="hs-varid">force</span> <span class="hs-layout">(</span><span class="hs-varid">total</span> <span class="hs-varop">+</span> <span class="hs-varid">x</span><span class="hs-layout">,</span> <span class="hs-varid">count</span> <span class="hs-varop">+</span> <span class="hs-num">1</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">print</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">average</span> <span class="hs-keyglyph">[</span><span class="hs-num">1</span><span class="hs-keyglyph">..</span><span class="hs-num">1000000</span><span class="hs-keyglyph">]</span></pre>
+<p>Like a good plumber, <code>force</code> patches that leak right
+up!</p>
+<h3 id="streaming-data">Streaming data</h3>
+<p>One of the claims of streaming data libraries (like conduit) is
+that they promote constant memory usage. This may make you think
+that you can get away without worrying about space leaks. However,
+all of the comments about WHNF vs NF mentioned above apply. To
+prove the point, let's do average badly with conduit:</p>
+<pre><span class="hs-keyword">import</span> <span class=
+"hs-conid">Conduit</span>
+
+<span class="hs-definition">average</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-conid">ConduitM</span> <span class="hs-conid">Int</span> <span class="hs-varid">o</span> <span class="hs-varid">m</span> <span class="hs-conid">Double</span>
+<span class="hs-definition">average</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">divide</span> <span class=
+"hs-varop">&lt;$&gt;</span> <span class=
+"hs-varid">foldlC</span> <span class=
+"hs-varid">add</span> <span class="hs-layout">(</span><span class=
+"hs-num">0</span><span class="hs-layout">,</span> <span class=
+"hs-num">0</span><span class="hs-layout">)</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">divide</span> <span class=
+"hs-layout">(</span><span class="hs-varid">total</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">count</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=</span> <span class="hs-varid">fromIntegral</span> <span class="hs-varid">total</span> <span class="hs-varop">/</span> <span class="hs-varid">count</span>
+    <span class="hs-varid">add</span> <span class=
+"hs-layout">(</span><span class="hs-varid">total</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">count</span><span class="hs-layout">)</span> <span class="hs-varid">x</span> <span class="hs-keyglyph">=</span> <span class="hs-layout">(</span><span class="hs-varid">total</span> <span class="hs-varop">+</span> <span class="hs-varid">x</span><span class="hs-layout">,</span> <span class="hs-varid">count</span> <span class="hs-varop">+</span> <span class="hs-num">1</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">print</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">runConduitPure</span> <span class="hs-varop">$</span> <span class="hs-varid">enumFromToC</span> <span class="hs-num">1</span> <span class="hs-num">1000000</span> <span class="hs-varop">.|</span> <span class="hs-varid">average</span></pre>
+<p>You can test the memory usage of this with:</p>
+<pre>
+<code>$ stack --resolver lts-9.3 ghc --package conduit-combinators -- Main.hs -O2
+$ ./Main +RTS -s</code></pre>
+<p><strong>EXERCISE</strong> Make this program run in constant
+resident memory, by using:</p>
+<ol>
+<li>The <code>force</code> function</li>
+<li>Bang patterns</li>
+<li>A custom data type with strict fields</li>
+</ol>
+<h2 id="chain-reaction">Chain reaction</h2>
+<p>Look at this super strict program. It's got a special
+value-strict list data type. I've liberally sprinkled bang patterns
+and calls to <code>seq</code> throughout. I've used
+<code>$!</code>. How much memory do you think it uses?</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.3 script</span>
+<span class="hs-comment">{-# LANGUAGE BangPatterns #-}</span>
+
+<span class="hs-keyword">data</span> <span class=
+"hs-conid">StrictList</span> <span class=
+"hs-varid">a</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">Cons</span> <span class="hs-varop">!</span><span class=
+"hs-varid">a</span> <span class="hs-varop">!</span><span class=
+"hs-layout">(</span><span class=
+"hs-conid">StrictList</span> <span class=
+"hs-varid">a</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">|</span> <span class="hs-conid">Nil</span>
+
+<span class="hs-definition">strictMap</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">b</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">StrictList</span> <span class=
+"hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">StrictList</span> <span class="hs-varid">b</span>
+<span class="hs-definition">strictMap</span> <span class=
+"hs-keyword">_</span> <span class=
+"hs-conid">Nil</span> <span class="hs-keyglyph">=</span> <span class="hs-conid">Nil</span>
+<span class="hs-definition">strictMap</span> <span class=
+"hs-varid">f</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Cons</span> <span class="hs-varid">a</span> <span class=
+"hs-varid">list</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varop">!</span><span class="hs-varid">b</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">f</span> <span class=
+"hs-varid">a</span>
+      <span class="hs-varop">!</span><span class=
+"hs-varid">list'</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">strictMap</span> <span class=
+"hs-varid">f</span> <span class="hs-varid">list</span>
+   <span class="hs-keyword">in</span> <span class=
+"hs-varid">b</span> <span class=
+"hs-varop">`seq`</span> <span class="hs-varid">list'</span> <span class="hs-varop">`seq`</span> <span class="hs-conid">Cons</span> <span class="hs-varid">b</span> <span class="hs-varid">list'</span>
+
+<span class="hs-definition">strictEnum</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">StrictList</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">strictEnum</span> <span class=
+"hs-varid">low</span> <span class=
+"hs-varid">high</span> <span class="hs-keyglyph">=</span>
+  <span class="hs-varid">go</span> <span class=
+"hs-varid">low</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">go</span> <span class=
+"hs-varop">!</span><span class="hs-varid">x</span>
+      <span class="hs-keyglyph">|</span> <span class=
+"hs-varid">x</span> <span class="hs-varop">==</span> <span class=
+"hs-varid">high</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">Cons</span> <span class="hs-varid">x</span> <span class=
+"hs-conid">Nil</span>
+      <span class="hs-keyglyph">|</span> <span class=
+"hs-varid">otherwise</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">Cons</span> <span class="hs-varid">x</span> <span class=
+"hs-layout">(</span><span class="hs-varid">go</span> <span class=
+"hs-varop">$!</span> <span class="hs-varid">x</span> <span class=
+"hs-varop">+</span> <span class="hs-num">1</span><span class=
+"hs-layout">)</span>
+
+<span class="hs-definition">double</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">double</span> <span class=
+"hs-varop">!</span><span class="hs-varid">x</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">x</span> <span class=
+"hs-varop">*</span> <span class="hs-num">2</span>
+
+<span class="hs-definition">evens</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">StrictList</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">evens</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">strictMap</span> <span class=
+"hs-varid">double</span> <span class=
+"hs-varop">$!</span> <span class=
+"hs-varid">strictEnum</span> <span class=
+"hs-num">1</span> <span class="hs-num">1000000</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">string</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-str">"Hello World"</span>
+      <span class="hs-varid">string'</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">evens</span> <span class=
+"hs-varop">`seq`</span> <span class="hs-varid">string</span>
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varid">string</span></pre>
+<p>Look carefully, read the code well, and make a guess. Ready?
+Good.</p>
+<p>It uses 44kb of memory. "What?!" you may exclaim. "But this
+thing has to hold onto a million <code>Int</code>s in a strict
+linked list!" Ehh... almost. It's true, our program is going to do
+a hell of a lot of evaluation as soon as we force the
+<code>evens</code> value. And as soon as we force the
+<code>string'</code> value in <code>main</code>, we'll force
+<code>evens</code>.</p>
+<p>However, our program never actually forces evaluation of either
+of these! If you look carefully, the last line in the program uses
+the <code>string</code> value. It never looks at
+<code>string'</code> or <code>evens</code>. When executing our
+program, GHC is only interested in performing the <code>IO</code>
+actions it is told to perform by the <code>main</code> function.
+And <code>main</code> only says something about <code>putStrLn
+string</code>.</p>
+<p>This is vital to understand. You can build up as many chains of
+evaluation using <code>seq</code> and <code>deepseq</code> as you
+want in your program. But ultimately, unless you force evaluation
+via some <code>IO</code> action of the value at the top of the
+chain, it will all remain an unevaluated thunk.</p>
+<p><strong>EXERCISES</strong></p>
+<ol>
+<li>Change <code>putStrLn string</code> to <code>putStrLn
+string'</code> and see what happens to memory usage. (Then undo
+that change for the other exercises.)</li>
+<li>Use a bang pattern in <code>main</code> somewhere to get the
+great memory usage.</li>
+<li>Add a <code>seq</code> somewhere in the <code>putStrLn
+string</code> line to force the greater memory usage.</li>
+</ol>
+<h2>Further Reading</h2>
+<p>Sebastian Graf has written a <a href=
+"http://fixpt.de/blog/2017-12-04-strictness-analysis-part-1.html">great
+post called analyzing this blog post</a>. It goes into much more
+detail on how GHC analyzes and optimizes cases of strictness. Or to
+quote the author himself, "In this post, I want to offer another,
+more surgical approach to plugging space leaks that works hand in
+hand with optimizations carried out by the compiler." If that's
+something you're interested in, I recommend checking it out.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=All%20About%20Strictness https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;09&#x2F;all-about-strictness&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;09&#x2F;all-about-strictness&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;09&#x2F;all-about-strictness&#x2F;&amp;title=All%20About%20Strictness"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;09&#x2F;all-about-strictness&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#c9baa8a5acba89afb9aaa6a4b9a5acbdace7aaa6a4" targe="_blank"><span class="__cf_email__" data-cfemail="6714060b021427011704080a170b0213024904080a">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,108 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Announcing executable-hash
+
+By Michael Sloan, March 18, 2015
+
+Share this     
+
+We're releasing a simple package called executable-hash, which provides the SHA1 hash of the
+program's executable. In order to avoid computing this hash at runtime, it may be inserted into the
+binary as a step after compilation.
+
+Use Cases
+
+Why might you want this? There are a couple clear usecases, and likely others exist:
+
+  • Enabling protocols to ensure that different versions of the program don't attempt to
+    communicate. Instead of hoping that the programs' implementation of the serialization and
+    protocol match up, we can catch differing versions early, as part of the initial handshake.
+    This was the motivating usecase for the package.
+
+  • Allowing logs and bug reports to be tagged in a way that identifies the binary being used. One
+    way to do this is to use the version number / git commit SHA. For example, this code captures
+    this information by using git-embed and cabal-file-th. While this can be quite helpful, it
+    isn't quite as precise as having a hash of the binary, identifying the exact version of the
+    program, taking into account:
+
+      □ Working copy changes
+
+      □ Different dependency versions
+
+      □ Different compiler versions
+
+    Note that since shared libraries are not directly included in the executable, differences in
+    shared libraries do not affect the hash.
+
+Implementation
+
+The function for computing the executable hash is quite simple. Leveraging Crypto.Hash.SHA1.hash
+from cryptohash, and the getScriptPath from executable-path:
+
+computeExecutableHash :: IO (Maybe BS.ByteString)
+computeExecutableHash = do
+    sp <- getScriptPath
+    case sp of
+        Executable fp -> Just . hash <$> BS.readFile fp
+        _ -> return Nothing
+
+From this, we see that computeExecutableHash returns Nothing if the program hasn't been compiled to
+a binary (probably due to it being interpreted by ghci, runhaskell, or the GHC API).
+
+Injecting the hash into the binary
+
+If the package just consisted of the above definition, it probably wouldn't be worth announcing!
+The main nice feature of executable-hash is that it can utilize file-embed to insert the hash into
+the executable. This way, we don't need to compute it at runtime! This works by generating a
+ByteString constant in the code, which will also be present in the generated binary. As a step
+after compilation, we search for this constant and replace it with the executable's hash.
+
+The executableHash function uses the injected hash if available, and otherwise computes it:
+
+executableHash :: IO (Maybe BS.ByteString)
+executableHash =
+    case injectedExecutableHash of
+        Just x -> return (Just x)
+        Nothing -> computeExecutableHash
+
+Note that applications which rely on the hash being the actual SHA1 of the executable shouldn't use
+executableHash. This is because injecting the hash into the executable modifies its contents, and
+so modifies the SHA1 that would be computed for it.
+
+See the doc for instructions on how to setup injection of the hash into the executable.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

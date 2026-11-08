@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>The Functor Pattern in C++</title>
+  <meta property="og:title" content="The Functor Pattern in C++">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;07&#x2F;the-functor-pattern-in-c&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>The Functor Pattern in C++</h1>
+      
+      <p id="page-description">By Bartosz Milewski, June 20, 2012</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=The%20Functor%20Pattern%20in%20C%2B%2B https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;07&#x2F;the-functor-pattern-in-c&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;07&#x2F;the-functor-pattern-in-c&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;07&#x2F;the-functor-pattern-in-c&#x2F;&amp;title=The%20Functor%20Pattern%20in%20C%2B%2B"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;07&#x2F;the-functor-pattern-in-c&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>The <a href="https://en.wikipedia.org/wiki/Design_Patterns"
+target="_blank">Gang of Four book</a> introduced many a C++
+programmer to the world of patterns. Those patterns are mostly
+based on everyday examples, although there are a few more abstract
+ones like Strategy. In Haskell (and other functional languages)
+most patterns are very abstract. They are often based on
+mathematical constructs; category theory being a major source of
+ideas.</p>
+<div style="float: right; text-align: center"><img alt=
+"Alexander Stepanov" src=
+"https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Alexander_Stepanov.jpg/180px-Alexander_Stepanov.jpg">
+Alexander Stepanov</div>
+<p>Arguably it's easier to grok terms like Factory, Facade, or
+Visitor from the GoF book than the ones from the Haskell arsenal,
+like Monad, Monoid, or Applicative Functor.</p>
+<p>You might not know that, but some of the best C++ programmers
+use functional abstractions in their work. Alexander Stepanov used
+many functional patterns in designing the C++ Standard Template
+Library -- his education in mathematics was no doubt a big factor
+in this groundbreaking work. I'll show you some of these patterns
+later.</p>
+<p>In my <a href=
+"/blog/2012/06/asynchronous-api-in-c-and-the-continuation-monad"
+target="_blank">previous blog</a> I described a functional approach
+to asynchronicity in C++ based on the Haskell's Continuation Monad.
+For many readers that might have been too big of a jump -- not only
+is the Monad pattern unfamiliar in the imperative world, but the
+Continuation Monad is one of the hardest to wrap your brain around.
+This is why I decided to back off a little and write a few posts
+that will introduce functional patterns more gradually. As a bonus,
+these patterns will expose some interesting aspect of asynchronous
+programming.</p>
+<p>Here's the plan: In this installment I will introduce the
+Functor pattern (the real "functor," not the misnomer for a
+function object). More posts on Functors, Applicative Functors,
+Monads, and Monoids will follow. I promise to stay away from
+category theory.</p>
+<h2>Type Constructors</h2>
+<p>Let's start looking for some hidden patterns. The first one is
+called a type constructor. In every programming language you have
+some basic types like integers, doubles, etc.; and then you have
+ways of defining new types. Type constructors create new types from
+old types.</p>
+<p>There are some built-in type constructors in C++. For instance,
+by adding an asterisk to any type, you create a pointer to that
+type (well, never say <em>always</em> in C++: there are always
+exceptions to every rule). You can have a pointer to
+<code>int</code>, as in <code>int *</code>), a pointer to
+<code>bool</code>, a pointer to a pointer, a pointer to a function,
+etc. Give me any type (except for a few outliers) and I'll create a
+pointer to that type. Pointer is a <em>type constructor</em>.</p>
+<p>You can create even more type constructors using templates.
+Generalizing a built-in pointer type constructor, we have the smart
+pointer type constructors, such as
+<code>unique<i>ptr&lt;T&gt;</i></code> <i>or
+<code>shared</code></i><code>ptr&lt;T&gt;</code>. Again, these type
+constructors work for any type <code>T</code> (with the above
+caveat).</p>
+<p>Arrays are another example of a built-in type constructor. You
+can define array types by adding square brackets to almost any
+type, as in <code>int[]</code>.</p>
+<p>Generalizing arrays, we have user-defined containers. All
+containers in STL are type constructors. For instance, take almost
+any type <code>T</code> and you can create a
+<code>std::vector&lt;T&gt;</code>.</p>
+<p>Function types are also created using a built in type
+constructor. Take any type and append a pair of parentheses to it
+and you get a function type (a function returning that type, as in
+<code>int()</code>).</p>
+<p>Again, we can generalize function types to function objects, in
+particular the STL <code>std::function</code> template, which is,
+you guessed it, also a type constructor.</p>
+<p>In general type constructors can take more than one type as
+input, or no type at all (nullary type constructors). They are just
+like functions that operate on types rather than values.</p>
+<p>In what follows I will concentrate on unary type constructors,
+because they are the building blocks of functors. An n-ary type
+constructor can always be turned into a unary one by providing
+concrete types for n-1 of its inputs. For instance,
+<code>pair&lt;A,B&gt;</code> can give rise to unary type
+constructors <code>pair&lt;A,int&gt;</code> or <code>pair&lt;double
+*,B&gt;</code>.</p>
+<p>There is another way of looking at type constructors: An object
+of the constructed type hides a value (or values) of the original
+type. That's easy to see with pointer types: a pointer to
+<code>int</code> hides an <code>int</code>. You can access that
+<code>int</code> by dereferencing the pointer. The same goes for
+smart pointers. A container hides multiple values of its basic
+type. A <code>vector&lt;float&gt;</code> contains floating point
+values. They can be accessed through indexing or through
+iterators.</p>
+<p>Functions are an interesting type. They are not containers but
+they, too, can "hide" a value -- the value they return. This value
+can be accessed by executing the function. When you call a function
+of the type <code>int()</code>, it returns a value of the type
+<code>int</code>, etc. We'll talk more about function types
+later.</p>
+<h2>Functors</h2>
+<p>Now that you can recognize the Type Constructor pattern, let's
+look for some more structure. As I said, type constructors may be
+thought of as encapsulating values of their input types. You can
+work on those values by first exposing them, applying some
+transformation, and then hiding them back. But this is tedious and
+it breaks encapsulation. What if you had a way of transforming
+hidden values without exposing them to the public. That's exactly
+what a functor does. It's a combination of a unary type constructor
+and a prescription for applying functions to hidden values.</p>
+<p>Let's try it with some of the type constructors we've seen so
+far. For simplicity, I'll pick one particular transformation: It
+takes a <code>string</code> and returns an <code>int</code>. Let's
+represent it by a function <code>length</code>. We want to apply
+this transformation, which turns <code>string</code>s to
+<code>int</code>s, to various encapsulations of
+<code>string</code>s, and obtain the corresponding encapsulations
+of <code>int</code>s.</p>
+<h4>Pointers</h4>
+<p>Let's try first doing that for a
+<code>unique<i>ptr</i></code><i>. We are given a
+<code>unique</code></i><code>ptr&lt;string&gt;</code> and we want
+to get a <code>unique<i>ptr&lt;int&gt;</i></code><i>, which
+contains the length of the string. This new transformation which
+transforms <code>unique</code></i><code>ptr</code>s is often called
+the <em>lifting</em> of the original transformation. In other
+words, we are lifting a function acting on input types to a
+function acting on output types of the type constructor.</p>
+<p>Let's try it:</p>
+<pre>unique_ptr&lt;int&gt; <span style=
+"color:#00a">liftedLength</span>(unique_ptr&lt;string&gt; s) {
+    return unique_ptr&lt;int&gt;(new int(<span style=
+"color:#00a">length</span>(*s)));
+}</pre>
+<p>We did have to expose the value hidden in the
+<code>unique_ptr</code> in the implementation of the lifting, but
+the client can use <code>liftedLength</code> and similar functions
+without breaking the encapsulation. (By the way, I'm not worrying
+about null pointers here -- that's a different pattern
+altogether.)</p>
+<p>Now replace <code>length</code> with any other function
+<code>f</code> from <code>A</code> to <code>B</code>. It's very
+easy to generalize our lifting formula. The lifting function is
+traditionally called <code>fmap</code>:</p>
+<pre>template&lt;class A, class B&gt;
+unique_ptr&lt;B&gt; <span style=
+"color:#00a">fmap</span>(function&lt;B(A)&gt; <span style=
+"color:#00a">f</span>, unique_ptr&lt;A&gt; a) {
+    return unique_ptr&lt;B&gt;(new B(<span style=
+"color:#00a">f</span>(*a)));
+}</pre>
+<p>Equipped with <code>fmap</code> we can, for instance, trim a
+string inside <code>unique_ptr</code>:</p>
+<pre>
+fmap&lt;string, string&gt;(&amp;trim, unique_ptr&lt;string&gt;(new string(" Hi! ")));</pre>
+<p>We can also compose lifted functions:</p>
+<pre>unique_ptr&lt;string&gt; p(new string(" Hi! "));
+auto np = <span style=
+"color:#00a">fmap</span>&lt;string, int&gt;(&amp;length, 
+                            <span style=
+"color:#00a">fmap</span>&lt;string, string&gt;(&amp;trim, move(p)));</pre>
+<p>The notation is awkward, but the idea is simple.</p>
+<p>The type constructor <code>unique_ptr&lt;T&gt;</code> and the
+above lifting function, <code>fmap</code>, form a Functor.</p>
+<h4>Containers</h4>
+<p>Now let's do the same thing with a vector of strings. The
+lifting of <code>length</code> should take such a vector and return
+a vector of <code>int</code>s. Piece of cake:</p>
+<pre>vector&lt;int&gt; <span style=
+"color:#00a">liftedLength</span>(vector&lt;string&gt; strings) {
+    unsigned size = strings.size();
+    vector&lt;int&gt; lengths(size);
+    for (unsigned i = 0; i &lt; size; ++i)
+        lengths[i] = <span style=
+"color:#00a">length</span>(strings[i]);
+    return lengths;
+}</pre>
+I used indexing to access both vectors because that's what I said
+about accessing values hidden inside vectors. Alex Stepanov would
+probably shudder seeing this code. That's because he provided a
+very general way of lifting any function to containers. First of
+all, he abstracted access to all containers using iterators, and
+then created the <code>std::transform</code> algorithm which lifts
+any function to the level of iterators. So here's the lifting of
+<code>length</code> the STL way:
+<pre>vector&lt;int&gt; <span style=
+"color:#00a">liftedLength</span>(vector&lt;string&gt; strings) {
+    vector&lt;int&gt; lengths;
+    transform(strings.begin(), strings.end(), back_inserter(lengths), &<span style="color:#00a">length</span>);
+    return lengths;
+}</pre>
+<p>Obviously, this code can be generalized to lift any function
+<code>f</code> taking <code>A</code> and returning
+<code>B</code>:</p>
+<pre>template&lt;class A, class B&gt;
+vector&lt;B&gt; <span style=
+"color:#00a">fmap</span>(function&lt;B(A)&gt; <span style=
+"color:#00a">f</span>, vector&lt;A&gt; as) {
+    vector&lt;B&gt; bs;
+    transform(as.begin(), as.end(), back_inserter(bs), <span style=
+"color:#00a">f</span>);
+    return bs;
+}</pre>
+<p>The <code>vector&lt;T&gt;</code> type constructor with its
+corresponding <code>fmap</code> form a Functor.</p>
+<h4>A little Haskell digression</h4>
+<p>So far these have been pretty straightforward examples. Even
+though they were simple, expressing them in C++ produced quite a
+bit of syntactic noise. This noise will get increasingly louder
+with more complex examples. So we need a better way of expressing
+functional pattern in order to make progress. As I <a href=
+"https://bartoszmilewski.com/2009/10/21/what-does-haskell-have-to-do-with-c/"
+target="_blank">argued previously</a>, knowing Haskell is a great
+help in designing and understanding more advanced patterns in C++.
+So let's take a little break and see what the last example would
+look like in Haskell.</p>
+<p>The canonical equivalent of a C++ vector is a Haskell list. Just
+like <code>vector</code> in C++, list is a type constructor in
+Haskell. A list of values of type <code>a</code> (type variables
+are lower-case in Haskell) has type <code>[a]</code>. The version
+of <code>fmap</code> for lists is defined in the standard Haskell
+library called Prelude, and is called <code>map</code>.</p>
+<p>Here's the signature of <code>map</code>:</p>
+<pre>map :: (a -&gt; b) -&gt; [a] -&gt; [b]</pre>
+<p>Let me translate it: <code>map</code> is a function of two
+arguments, the first being itself a function <code>a-&gt;b</code>
+that takes an <code>a</code> and returns a <code>b</code>. The
+second argument, <code>[a]</code>, is a list of <code>a</code>. The
+result -- the thing after the last arrow -- is of type
+<code>[b]</code>, a list of <code>b</code>. The lifting of the
+function <code>length</code> would be expressed in Haskell like
+this:</p>
+<pre>liftedLength :: [String] -&gt; [Int]
+liftedLength str = map length str</pre>
+The first line (it is optional because Haskell has a powerful type
+inference system) shows the type of the lifted function: from lists
+of strings to lists of integers. The second line defines the
+function <code>liftedLength</code> that takes a <code>str</code>
+and applies <code>map</code> to the function <code>length</code>
+and the string <code>str</code>. (In Haskell you don't use
+parentheses around function arguments, neither in the definition
+nor in the application.)
+<p>Interestingly, because of currying (see the Appendix), the
+signature of <code>map</code> can be rewritten as (pay attention to
+parentheses):</p>
+<pre>map :: (a -&gt; b) -&gt; ([a] -&gt; [b])</pre>
+<p>which can be read as <code>map</code> being a function that
+takes a function <code>a-&gt;b</code> and returns a function
+<code>[a]-&gt;[b]</code>. In fact the definition of
+<code>liftedLength</code> can be simplified to:</p>
+<pre>liftedLength :: [String] -&gt; [Int]
+liftedLength = map length</pre>
+<p>which defines one function in terms of another (curried)
+function. Now the whole "lifting" thing starts making sense. We
+start with the function <code>length :: String-&gt;Int</code> and
+lift it to a function <code>liftedLength ::
+[String]-&gt;[Int]</code>. The lack of currying in C++ makes such
+simple things difficult to express.</p>
+<p>You can lift any function, not only <code>length</code>, this
+way. Just look at the signature of <code>map</code>, which is
+exactly what you'd for the general lifting function
+<code>fmap</code> for lists. So <code>map</code> is the
+<code>fmap</code> for lists:</p>
+<pre>fmap = map</pre>
+<p>Let's go back to some more C++ examples.</p>
+<h4>Function Objects</h4>
+<p>This is a little tricky, but the ability to think of functions
+as first class citizens is an essential skill in programming, and
+practically all imperative languages learned to recognize this
+fact. In general, a function type constructor takes one type for
+the return value and zero or more types for arguments. For
+simplicity, let's first consider nullary functions. Given any type
+<code>T</code> we can construct a function-type <code>T()</code>
+or, more generally, <code>std::function&lt;T()&gt;</code>: a
+function that takes no arguments and returns <code>T</code>. The
+generalized function object, <code>std::function</code>, not only
+deals with regular functions, but also with function objects
+(objects that overload <code>operator()</code>), lambdas, closures,
+methods, etc.</p>
+<p>How can we lift the function <code>length</code> to operate on
+functions? The lifted function must accept a function returning
+<code>string</code> and produce a function returning
+<code>int</code>:</p>
+<pre>
+function&lt;int()&gt; liftedLength(function&lt;string()&gt; fStr)</pre>
+<p>In order to return a function, we have to generate it on the
+fly. In C++11 we can do that with lambdas. Here,
+<code>liftedLength</code> should return a function that extracts
+the string from <code>fStr</code> and applies <code>length</code>
+to it. Remember, extracting a value for a function means simply
+executing it. Here it is:</p>
+<pre>function&lt;int()&gt; <span style=
+"color:#00a">liftedLength</span>(function&lt;string()&gt; fStr)
+{
+    return [fStr]() {
+        return <span style="color:#00a">length</span>(fStr());
+    };
+}</pre>
+<p>Notice that the returned function is really a closure -- it
+captures <code>fStr</code>. This anonymous function/closure is
+converted into <code>std::function</code> object upon return.</p>
+<p>This formula can be easily generalized to lifting an arbitrary
+function:</p>
+<pre>template&lt;class A, class B&gt;
+function&lt;B()&gt; <span style=
+"color:#00a">fmap</span>(function&lt;B(A)&gt; <span style=
+"color:#00a">f</span>, function&lt;A()&gt; fA)
+{
+    return [f, fA]() {
+        return <span style="color:#00a">f</span>(fA());
+    };
+}</pre>
+<p>For many C++ programmers this might be the first encounter with
+higher order functions that take functions as arguments and also
+return functions. In Haskell this is standard fare.</p>
+<p>We conclude that the nullary function constructor and the
+corresponding <code>fmap</code> form a Functor. In itself, this
+particular functor might not seem very useful, but it is a stepping
+stone toward much more interesting cases, like continuations,
+threads, or asynchronous calls.</p>
+<h4>Back to Haskell</h4>
+<p>In Haskell, which shuns side effects, a function that takes no
+arguments is not very interesting. So let's generalize the above
+example slightly: we'll look at functions taking some fixed type,
+<code>c</code>, with no restrictions on the return type
+<code>a</code>. Let's call such functions "readers" because they
+can only read c, not modify it. You might think of values of type
+<code>c</code> as, say, some configuration data that's passed
+around.</p>
+<p>Here's the type constructor:</p>
+<pre>newtype Reader c a = Reader (c -&gt; a)</pre>
+<p>I have defined a new data type, <code>Reader</code>
+parameterized by two types <code>c</code> and <code>a</code>. The
+right hand side of the definition says that I can create a
+<code>Reader</code> from any function <code>c-&gt;a</code> that
+takes <code>c</code> and returns <code>a</code>. It also says, in
+the same breath, that in order to extract that function later, I'll
+have to pattern-match a <code>Reader</code> object using the
+pattern <code>(Reader f)</code>. Trust me, that's what it says.</p>
+<p>The major reason for extracting a function from a reader is to
+apply it to some value of type <code>c</code>. Let's define a
+separate helper function to do just that:</p>
+<pre>run :: Reader c a -&gt; c -&gt; a
+run (Reader f) cfg = f cfg</pre>
+<p>The first (optional) line shows the type signature of
+<code>run</code>: It's a function that takes a reader and some
+config, and returns a value of type <code>a</code>. The second line
+is the implementation. The first argument to <code>run</code> is
+pattern matched to <code>(Reader f)</code>. This way we gain access
+to the function <code>f</code> that was encapsulated in the reader
+argument. The second argument is config <code>cfg</code>. In the
+body of the definition we apply <code>f</code> to
+<code>cfg</code>.</p>
+<p>The lifting of <code>length</code> is now pretty
+straightforward:</p>
+<pre>liftedLength :: Reader c String -&gt; Reader c Int
+<span style=
+"color:#00a">liftedLength</span> rdrStr = Reader (λ cfg -&gt; <span style="color:#00a">length</span> (run rdrStr cfg))</pre>
+<p>We have to return a new function (encapsulated in the
+<code>Reader</code> constructor): the lambda that takes an argument
+<code>cfg</code> and returns the result of <code>length</code>
+acting on the result of <code>fStr</code> applied to
+<code>cfg</code>. You might want to read this description a few
+times before it clicks.</p>
+<p>The generalization to <code>fmap</code> is straightforward --
+just replace <code>length</code> with <code>f</code>:</p>
+<pre>fmap :: (a -&gt; b) -&gt; Reader c a -&gt; Reader c b
+fmap f rdA = Reader (λ cfg -&gt; f (run rdA cfg))</pre>
+<h4>Back to C++</h4>
+<p>What does a <code>Reader</code> look like in C++? The type
+constructor is a function-type constructor that is parameterized by
+two types, <code>A</code> and <code>C</code>:</p>
+<pre>function&lt;A(C)&gt;</pre>
+<p>We'll keep <code>C</code> fixed and vary only <code>A</code> (we
+are in fact currying the type constructor when we provide concrete
+type for <code>C</code>). Here's the definition of
+<code>fmap</code> (notice: the same <code>C</code> throughout):</p>
+<pre>template&lt;class C, class A, class B&gt;
+function&lt;B(C)&gt; <span style=
+"color:#00a">fmap</span>(function&lt;B(A)&gt; <span style=
+"color:#00a">f</span>, function&lt;A(C)&gt; rdA)
+{
+    return [f, rdA](C cfg) {
+        return <span style="color:#00a">f</span>(rdA(cfg));
+    };
+}</pre>
+<p>After seeing the Haskell code, that was pretty easy, right?
+Unfortunately things are never easy in C++ so in the next blog post
+I'll show you a more careful implementation of <code>Reader</code>,
+as well as <code>Async</code> from my previous blog. For now, let
+us conclude that <code>Reader</code> together with the
+corresponding <code>fmap</code> is a Functor. We have a type
+constructor and a prescription for applying functions to its
+"hidden" value.</p>
+<p>Again, the <code>Reader</code> functor doesn't seem like it
+would be very useful in C++. Why would anyone carry around some
+configuration data if it's easier to make them global? Hmm... What
+about many different configurations? Access them by key? What about
+passing the key then? And what if you change the word
+"configuration" to "credentials"? Would you still want to make them
+global?</p>
+<h4>Functor as a Haskell typeclass</h4>
+<p>In C++ we'll just work with the functor pattern without
+abstracting it further. But in Haskell such patterns can be
+generalized using type classes. The closest thing to type classes
+in C++ were concepts, which didn't make it into the C++11 Standard.
+A Haskell type class describes a whole family of types that have
+something in common. In the case of functors, this common thing is
+the presence of the lifter: the function <code>fmap</code>. But a
+Functor doesn't just describe a type, it describes a type
+constructor -- a particular mapping from types to types. So a
+<code>Functor</code> type class unifies a whole class of type
+constructors. Here's the definition of a <code>Functor</code> in
+its full glory:</p>
+<pre>class Functor f where
+  fmap :: (a -&gt; b) -&gt; f a -&gt; f b</pre>
+<p>You can read it as: A type constructor <code>f</code> is a
+<code>Functor</code> if there is a function <code>fmap</code> with
+the type signature:</p>
+<pre>  fmap :: (a -&gt; b) -&gt; f a -&gt; f b</pre>
+<p>Notice that <code>f</code> is applied to types <code>a</code>
+and <code>b</code>. That's how we know that <code>f</code> is a
+type constructor. In fact this is how the Haskell compiler knows
+that <code>f</code> is a type constructor. It looks at the
+usage.</p>
+<p>Having defined a type class we can now tell Haskell which type
+constructors are <code>Functor</code>s. We do that by declaring
+instances of the type class. For example, I told you that a list
+constructor <code>[]</code> is a functor. Here's how I tell that to
+Haskell:</p>
+<pre>instance Functor [] where
+    fmap = map</pre>
+The instance definition must provide the implementation of the
+associated function (or functions, plural, in general). Here we
+define <code>fmap</code> in terms of an existing function,
+<code>map</code>.
+<p>Would any implementation of <code>fmap</code> work for a
+<code>Functor</code>? Not really. There are two additional functor
+laws which unfortunately cannot be enforced by Haskell.</p>
+<p>The first law states that the lifting of the identity function
+(called <code>id</code> in Haskell) must also be identity:</p>
+<pre>fmap id = id</pre>
+In other words if you apply identity to the values hidden in your
+type constructor, nothing will change.
+<p>The second law states that lifting a composition of two
+functions is the same as composing the lifted functions.</p>
+<pre>fmap (f . g) = fmap f . fmap g</pre>
+The dot means the application of one function to the result of
+another.
+<p>It's good to know about these laws, but in most practical cases
+they are trivially true. And, when a type constructor is a good
+functor candidate, there usually is only one obvious way to
+implement <code>fmap</code>, as I demonstrated in the examples
+above.</p>
+<h2>Conclusion</h2>
+<p>The Functor pattern is ultimately about code reusability and
+composability -- two major pillars of programming. Whenever you
+create a new way of encapsulating data of arbitrary type, that is a
+type constructor, you should ask yourself the question:</p>
+<p style="margin-left:30px;">How can I reuse my existing libraries
+on data that is encapsulated through this type constructor?</p>
+<p>I'm talking about libraries that contain functions like
+<code>length</code>, which don't know how to work on a
+<code>unique_ptr&lt;string&gt;</code> or a
+<code>vector&lt;string&gt;</code>.</p>
+<p>The naive approach would be to expose the encapsulated data in
+an ad hoc manner and apply library functions to it. For a multitude
+of reasons, this is not a good solution, and it gets really hairy
+when you're dealing with function-type constructors. The Functor
+pattern allows you to accomplish all this without breaking the
+encapsulation, simply by defining one template function,
+<code>fmap</code>.</p>
+<p>The Functor pattern is especially powerful when working with
+function types. A function does not contain a value (unless it's a
+constant function) -- it is a "promise" to create a value when
+executed. A functor allows you to arbitrarily compose operations
+<em>on</em> (the results of) those functions without immediately
+executing them. This is the basis of the general approach to
+asynchronous APIs I described in my previous post and will
+elaborate on in my next post.</p>
+<h3>Acknowledgments</h3>
+<p>I'd like to thank Eric Niebler for many valuable comments on the
+draft of this post.</p>
+<h2>Appendix: Currying</h2>
+<p>Many people find function syntax in Haskell confusing because
+there are no parentheses around, or commas between, arguments. It
+takes some getting used to to interpret the following pattern:</p>
+<pre>ex1 ex2 ex3</pre>
+as a call to the function produced by <code>ex1</code> with
+arguments produced by <code>ex2</code> and <code>ex3</code> (the
+<code>ex</code>s stand for arbitrary expressions). It's even more
+confusing when the expressions themselves are parenthesized, as in
+this made up example:
+<pre>(getOp "add") (getX n) (getV k m)</pre>
+This syntax makes perfect sense in Haskell, where currying is a
+national sport. In other languages, when you call a two argument
+function with one argument you get an error: Not enough arguments.
+In Haskell you get a curried function. It's a new function that
+takes one (remaining) argument. The only way you can do it in C++
+is by using a (somewhat awkward) template function
+<code>bind</code>. For instance, this is what you'd do if you
+wanted to curry a two-argument function <code>concat</code>,
+passing it <code>"Hello, "</code> as the first argument:
+<pre>
+function&lt;string(string)&gt; greet = bind(&amp;concat, "Hello, ", placeholders::_1);
+cout &lt;&lt; greet("Haskell!") &lt;&lt; endl;</pre>
+<p>Here's the equivalent code in Haskell (where, incidentally,
+concat is an infix operator <code>++</code>):</p>
+<pre>greet = (++) "Hello, "
+greet "Haskell!"</pre>
+<p>Now the type signatures of two-argument functions start making
+sense:</p>
+<pre>f :: a -&gt; b -&gt; c</pre>
+<p>This means that the function <code>f</code> takes two arguments
+of types <code>a</code> and <code>b</code> and returns
+<code>c</code>; or, equivalently, that it takes one argument of
+type <code>a</code> and returns a function <code>b-&gt;c</code>.
+It's all the same, you see, and right associativity of the arrow
+<code>-&gt;</code> makes the use of parentheses redundant (here's
+the equivalent parenthesized version: <code>f :: a -&gt; (b -&gt;
+c)</code>). [twitter-follow screen_name='BartoszMilewski']</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=The%20Functor%20Pattern%20in%20C%2B%2B https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;07&#x2F;the-functor-pattern-in-c&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;07&#x2F;the-functor-pattern-in-c&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;07&#x2F;the-functor-pattern-in-c&#x2F;&amp;title=The%20Functor%20Pattern%20in%20C%2B%2B"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;07&#x2F;the-functor-pattern-in-c&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#88fbe9e4edfbc8eef8ebe7e5f8e4edfceda6ebe7e5" targe="_blank"><span class="__cf_email__" data-cfemail="5a293b363f291a3c2a3935372a363f2e3f74393537">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

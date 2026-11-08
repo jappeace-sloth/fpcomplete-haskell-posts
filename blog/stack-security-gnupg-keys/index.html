@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Stack Security GnuPG Keys</title>
+  <meta property="og:title" content="Stack Security GnuPG Keys">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;stack-security-gnupg-keys&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Stack Security GnuPG Keys</h1>
+      
+      <p id="page-description">By Tim Dysinger, May  5, 2016</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Stack%20Security%20GnuPG%20Keys https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;stack-security-gnupg-keys&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;stack-security-gnupg-keys&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;stack-security-gnupg-keys&#x2F;&amp;title=Stack%20Security%20GnuPG%20Keys"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;stack-security-gnupg-keys&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <h2 id="introduction">Introduction</h2>
+<p>We are introducing a method of verifying Haskell packages with
+OpenPGP signatures. The initial code to sign your packages has been
+included in Stack as an experimental feature for some time. We are
+going to be improving it and included verification options soon.
+However, we need signatures from package authors before
+verification is useful.</p>
+<p>The first step in submitting package signatures is to create a
+secure OpenPGP key for yourself and publish it. This post will walk
+you through creating an offline master OpenPGP key-set with
+GnuPG.</p>
+<p>If you've never used GPG before and need to generate a secure
+set of keys, then continue reading.</p>
+<p>If you already have GPG keys that you are happy with, continue
+to 'Signing Packages with Stack' towards the bottom of this
+article.</p>
+<h2 id="gpg-keys">GPG Keys</h2>
+<h3 id="choosing-a-version-of-gpg">Choosing a version of GPG</h3>
+<p>There are 3 main flavors of GnuPG:</p>
+<ul>
+<li>1.4 (AKA "gpg") - <strong>Old</strong> - Super stable (11 years
+old) & limited features</li>
+<li>2.0 (AKA "gpg2") - <strong>Stable</strong> - Most people use
+this for personal encryption</li>
+<li>2.1 (AKA "gpg2") - <strong>Modern</strong> - Latest features:
+ECC support, Tor, TOFU, etc</li>
+</ul>
+<p>It is recommended by the GnuPG project version to use the
+<strong>Stable</strong> GPG-2 release (2.0). I've included
+instructions for using GPG 1.4 but I don't recommend using such an
+old version unless you have no choice. I've also included
+instructions for GnuPG 2.1 because I use it personally and find the
+new features useful.</p>
+<ul>
+<li>Windows - <a href=
+"https://www.gpg4win.org/download.html">https://www.gpg4win.org/download.html</a></li>
+<li>OS X
+<ul>
+<li>GPG 2.0 is available as part of GPG Suite which is an easy
+download from <a href=
+"https://gpgtools.org">https://gpgtools.org</a> (recommended).
+(Bonus: GPG Suite adds GPG e-mail for the Apple Mail app). (Note:
+If you install GPG Suite click "Cancel" when prompted to generate a
+key through their GUI. We'll go through this step below at the
+command line.)</li>
+<li>GnuPG 2.0 is available through Homebrew as well if you
+prefer.</li>
+</ul>
+</li>
+<li>Linux/BSD - GnuPG 2.x is available as a package for your
+favorite Linux flavor. (Bonus: Add Engimail while you are at it for
+easy GPG e-mail.)</li>
+</ul>
+<h3 id="offline-machine-for-gpg-key-management">Offline machine for
+GPG key management</h3>
+<p>Ideally your offline keys will never be on a machine connected
+to the outside world. The offline box will be the place where you
+keep your master key, manage your keys & sign other keys. This
+assures that you can always revoke keys and recover if your online
+machine(s) are somehow compromised.</p>
+<p>To have an offline box you'll need two "machines". These can
+just be the same machine if you utilize a "live" Linux USB/DVD boot
+drive and a USB stick for the "sneaker net".</p>
+<p>We'll follow the same procedure to generate your keys, even if
+you don't want to use an offline machine to generate them. It's
+highly recommended using an offline master though and keeping
+secure backups. It's the least hassle for everyone else in your
+"web of trust" in an event where keys are compromised.</p>
+<p>With an offline master key, if your laptop is compromised, you
+can just revoke the compromised sub-keys, create new sub-keys and
+publish them. If you get into the situation where your master key
+is compromised, you will have to revoke all your keys, approach
+people about your new keys & going through the process of
+reestablishing trust with people in your web-of-trust.</p>
+<h3 id="configuration">Configuration</h3>
+<p>Setup $GNUPGHOME directory</p>
+<pre><code>umask 077
+export GNUPGHOME=$HOME/.gnupg ; # default location but env var rules
+mkdir -p $GNUPGHOME</code></pre>
+<p>Install the secure key-server certificate (Ubuntu/Debian):</p>
+<pre><code>mkdir -p /usr/local/share/ca-certificates/
+curl -s https://sks-keyservers.net/sks-keyservers.netCA.pem \
+    | sudo tee /usr/local/share/ca-certificates/sks-keyservers.netCA.crt
+sudo update-ca-certificates</code></pre>
+<p>Put some or all of the following in your $GNUPGHOME/gpg.conf
+file: (taken from the <a href=
+"https://help.riseup.net/en/security/message-security/openpgp/best-practices">
+riseup.net best gpg practices</a> page)</p>
+<pre><code>no-emit-version
+no-comments
+keyid-format 0xlong
+with-fingerprint
+list-options show-uid-validity
+verify-options show-uid-validity
+use-agent
+keyserver hkps://hkps.pool.sks-keyservers.net
+# or less secure: keyserver hkp://pool.sks-keyservers.net
+keyserver-options no-honor-keyserver-url
+keyserver-options include-revoked
+personal-cipher-preferences AES256 AES192 AES CAST5
+personal-digest-preferences SHA512 SHA384 SHA256 SHA224
+cert-digest-algo SHA512
+default-preference-list SHA512 SHA384 SHA256 SHA224 AES256 AES192 AES CAST5 ZLIB BZIP2 ZIP Uncompressed</code></pre>
+<h3 id="key-generation">Key Generation</h3>
+<h4 id="master-key">Master Key</h4>
+<p>Public and Secret</p>
+<ol>
+<li>
+<p>Generate Key</p>
+<p>GPG 1.4</p>
+<pre><code>gpg --expert --gen-key</code></pre>
+<p>GPG 2.0</p>
+<pre><code>gpg2 --expert --gen-key</code></pre>
+<p>GPG 2.1</p>
+<pre><code>gpg2 --expert --full-gen-key</code></pre>
+<ul>
+<li>Pick the "RSA" and "set your own capabilities" option</li>
+<li>Turn off everything until it just says "Certify" then
+continue</li>
+<li>Select the bit count. I pick 4000 for RSA because it's big but
+it's also not a power of 2 (like <span class=
+"underline">everyone</span> else picks.)</li>
+<li>Select the expiration period. I picked 1 year.</li>
+<li>Pick a good pass-phrase that you can remember but would take a
+computer a long time to guess.</li>
+</ul>
+</li>
+<li>
+<p>Backup Your Keys</p>
+<p>GPG 1.4</p>
+<pre>
+<code>gpg --armor --export            &gt; $GNUPGHOME/public.asc
+gpg --armor --export-secret-key &gt; $GNUPGHOME/secret.asc</code></pre>
+<p>GPG 2.0 or 2.1</p>
+<pre>
+<code>gpg2 --armor --export            &gt; $GNUPGHOME/public.asc
+gpg2 --armor --export-secret-key &gt; $GNUPGHOME/secret.asc</code></pre></li>
+<li>
+<p>Try Recovering Your Keys</p>
+<p>Delete your public and secret key and re-import them.</p>
+<p>GPG 1.4</p>
+<pre><code>gpg --delete-secret-key &lt;KEYID&gt;
+gpg --delete-key &lt;KEYID&gt;
+gpg --import $GNUPGHOME/public.asc $GNUPGHOME/secret.asc
+gpg --expert --edit-key &lt;KEYID&gt;</code></pre>
+<p>GPG 2.0 & 2.1</p>
+<pre><code>gpg2 --delete-secret-key &lt;KEYID&gt;
+gpg2 --delete-key &lt;KEYID&gt;
+gpg2 --import $GNUPGHOME/public.asc $GNUPGHOME/secret.asc
+gpg2 --expert --edit-key &lt;KEYID&gt;</code></pre>
+<ul>
+<li>Type <strong>trust</strong> [Return] to give your self
+"ultimate" trust.</li>
+<li>Type <strong>save</strong> [Return] to save your changes to the
+key.</li>
+</ul>
+</li>
+</ol>
+<h4 id="sub-keys">Sub-keys</h4>
+<ol>
+<li>
+<p>Generate Keys</p>
+<p>Start by editing your key again.</p>
+<p>GPG 1.4</p>
+<pre><code>gpg --expert --edit-key &lt;KEYID&gt;</code></pre>
+<p>GPG 2.0 or 2.1</p>
+<pre><code>gpg2 --expert --edit-key &lt;KEYID&gt;</code></pre>
+<p>Create a Signing Sub-key:</p>
+<ul>
+<li>Type <strong>addkey</strong> [Return]</li>
+<li>Pick the "RSA" and "set your own capabilities" option</li>
+<li>Turn off everything until it just says "Sign" then
+continue</li>
+</ul>
+<p>Create an Encryption Sub-key:</p>
+<ul>
+<li>Type <strong>addkey</strong> [Return]</li>
+<li>Pick the "RSA" and "set your own capabilities" option</li>
+<li>Turn off everything until it just says "Encrypt" then
+continue</li>
+</ul>
+<p>Create an Authentication Sub-key:</p>
+<ul>
+<li>Type <strong>addkey</strong> [Return]</li>
+<li>Pick the "RSA" and "set your own capabilities" option</li>
+<li>Add the "Authenticate" capability then continue</li>
+<li>Turn off everything until it just says "Authenticate" then
+continue</li>
+<li>Type <strong>save</strong> [Return] to save and exit</li>
+</ul>
+<p>Now try encrypting and signing stuff with your keys.</p>
+<p>GPG 1.4</p>
+<pre><code>echo 'hello'    | gpg --armor --clearsign | gpg --verify
+echo 'sekrats!' | gpg --armor --encrypt   | gpg --decrypt</code></pre>
+<p>GPG 2.0 or 2.1</p>
+<pre>
+<code>echo 'hello'    | gpg2 --armor --clearsign | gpg2 --verify
+echo 'sekrats!' | gpg2 --armor --encrypt   | gpg2 --decrypt</code></pre></li>
+<li>
+<p>Backup Keys</p>
+<p>GPG 1.4</p>
+<pre>
+<code>gpg --armor --export                &gt; $GNUPGHOME/public.asc
+gpg --armor --export-secret-keys    &gt; $GNUPGHOME/secret.asc
+gpg --armor --export-secret-subkeys &gt; $GNUPGHOME/subkey.asc</code></pre>
+<p>GPG 2.0 or 2.1</p>
+<pre>
+<code>gpg2 --armor --export                &gt; $GNUPGHOME/public.asc
+gpg2 --armor --export-secret-keys    &gt; $GNUPGHOME/secret.asc
+gpg2 --armor --export-secret-subkeys &gt; $GNUPGHOME/subkey.asc</code></pre></li>
+<li>
+<p>Try Recovery</p>
+<p>Delete your public and secret key and re-import the offline keys
+(the full set).</p>
+<p>GPG 1.4</p>
+<pre><code>gpg --delete-secret-key &lt;KEYID&gt;
+gpg --delete-key &lt;KEYID&gt;
+gpg --import $GNUPGHOME/public.asc $GNUPGHOME/secret.asc
+gpg --expert --edit-key &lt;KEYID&gt;</code></pre>
+<p>GPG 2.0 or 2.1</p>
+<pre><code>gpg2 --delete-secret-key &lt;KEYID&gt;
+gpg2 --delete-key &lt;KEYID&gt;
+gpg2 --import $GNUPGHOME/public.asc $GNUPGHOME/secret.asc
+gpg2 --expert --edit-key &lt;KEYID&gt;</code></pre>
+<ol>
+<li>Type <strong>trust</strong> [Return] to give your self
+"ultimate" trust.</li>
+<li>Type <strong>save</strong> [Return] to save your changes to the
+key.</li>
+</ol>
+<p>Now try encrypting and signing stuff with your keys.</p>
+<p>GPG 1.4</p>
+<pre><code>echo 'hello'    | gpg --armor --clearsign | gpg --verify
+echo 'sekrats!' | gpg --armor --encrypt   | gpg --decrypt</code></pre>
+<p>GPG 2.0 or 2.1</p>
+<pre>
+<code>echo 'hello'    | gpg2 --armor --clearsign | gpg2 --verify
+echo 'sekrats!' | gpg2 --armor --encrypt   | gpg2 --decrypt</code></pre></li>
+</ol>
+<h3 id="switching-secret-key-sets">Switching Secret Key Sets</h3>
+<h4 id="using-your-bofflineb-secret-keys">Using your
+<strong>offline</strong> secret keys</h4>
+<p>Delete your secret keys and re-import the offline secret keys
+(the full set).</p>
+<p>GPG 1.4</p>
+<pre><code>gpg --delete-secret-key &lt;KEYID&gt;
+gpg --import $GNUPGHOME/secret.asc</code></pre>
+<p>GPG 2.0 or 2.1</p>
+<pre><code>gpg2 --delete-secret-key &lt;KEYID&gt;
+gpg2 --import $GNUPGHOME/secret.asc</code></pre>
+<p>With the full set in use (offline only of course!) you can
+import your buddy's keys, sign them and trust them. Use <strong>gpg
+–import</strong> and <strong>gpg –export</strong> to move keys
+around to/from USB drives to/from your online machine.</p>
+<p>If you list your secret keys you should see a plain "sec" next
+to your key. This indicates a full secret key is present. You may
+now manage keys and sign other keys.</p>
+<p>GPG 1.4</p>
+<pre><code>gpg --list-secret-keys</code></pre>
+<p>GPG 2.0 or 2.1</p>
+<pre><code>gpg2 --list-secret-keys</code></pre>
+<h4 id="using-your-bonlineb-secret-keys">Using your
+<strong>online</strong> secret keys</h4>
+<p>Delete your secret keys and re-import the online secret keys
+(the subset).</p>
+<p>GPG 1.4</p>
+<pre><code>gpg --delete-secret-key &lt;KEYID&gt;
+gpg --import $GNUPGHOME/subkey.asc</code></pre>
+<p>GPG 2.0 or 2.1</p>
+<pre><code>gpg2 --delete-secret-key &lt;KEYID&gt;
+gpg2 --import $GNUPGHOME/subkey.asc</code></pre>
+<p>You won't be able to sign other people's keys or create/revoke
+keys with this key-set. (This is a good thing in case your online
+machine and it's subkeys are compromised later.)</p>
+<p>If you list your secret keys you should see a "sec#" next to
+your key. The '#' indicates that the secret is missing for your
+master key. If you are following good practices, from now on, it
+will only be available on your offline computer.</p>
+<p>GPG 1.4</p>
+<pre><code>gpg --list-secret-keys</code></pre>
+<p>GPG 2.0 or 2.1</p>
+<pre><code>gpg2 --list-secret-keys</code></pre>
+<h2 id="signing-packages-with-stack">Signing Packages with
+Stack</h2>
+<p>Now that we have our online secret keys ready, we can sign our
+Hackage-bound packages with Stack. There are currently two methods
+to sign keys in Stack. The first is to sign your package while
+uploading (the default). Just perform an upload as you might have
+in the past.</p>
+<pre><code>stack upload</code></pre>
+<p>This will upload your package to Hackage just like it did
+before. After that finishes it will GPG detach-sign the package and
+send that signature to <a href=
+"https://github.com/commercialhaskell/sig-service">sig-service</a>.
+This service just collects signatures & periodically commits them
+to <a href=
+"https://github.com/commercialhaskell/sig-archive/tree/test">sig-archive</a>.
+Later we will use these signatures and our web of trust to verify
+package contents as they download with stack.</p>
+<p>If you don't want to sign for some reason. You can just skip the
+signature by adding a flag.</p>
+<pre><code>stack upload --no-signature</code></pre>
+<p>Another way to sign is to create an sdist file. If you add a
+flag you can publish a signature at the same time.</p>
+<pre><code>stack sdist --sign</code></pre>
+<p>For those package authors out there with more than a few
+packages to sign, we have written a simple tool to bulk sign all
+your packages published to Hackage. It's called <a href=
+"https://github.com/commercialhaskell/sig-tool">sig-tool</a>.</p>
+<p>To bootstrap you need to run the following:</p>
+<pre><code>cd sig-tool
+stack install
+stack exec -- sig-tool setup &lt;myHackageUser&gt;</code></pre>
+<p>This will download all of your packages to the current directory
+& generate a manifest with SHA256 sums for all the releases. You
+should inspect the files to make sure they are correct at this
+stage. You can sign all of the releases or you can trim the
+manifest file if you like.</p>
+<p>To begin signing run the following:</p>
+<pre><code>stack exec -- sig-tool sign</code></pre>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Stack%20Security%20GnuPG%20Keys https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;stack-security-gnupg-keys&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;stack-security-gnupg-keys&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;stack-security-gnupg-keys&#x2F;&amp;title=Stack%20Security%20GnuPG%20Keys"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;stack-security-gnupg-keys&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#7c0f1d10190f3c1a0c1f13110c10190819521f1311" targe="_blank"><span class="__cf_email__" data-cfemail="5320323f3620133523303c3e233f3627367d303c3e">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

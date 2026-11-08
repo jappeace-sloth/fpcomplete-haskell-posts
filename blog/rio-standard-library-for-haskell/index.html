@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>RIO - a Standard Library for Haskell</title>
+  <meta property="og:title" content="RIO - a Standard Library for Haskell">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Hear Alexey Kuleshevich, Software Engineer at FP Complete help us understand RIO, the standard library for Haskell. RIO is a Haskell library that provides a collection of solutions to some of the most common problems in the Haskell ecosystem.">
+  <meta property="og:description" content="Hear Alexey Kuleshevich, Software Engineer at FP Complete help us understand RIO, the standard library for Haskell. RIO is a Haskell library that provides a collection of solutions to some of the most common problems in the Haskell ecosystem.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;rio-standard-library-for-haskell&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>RIO - a Standard Library for Haskell</h1>
+      
+      <p id="page-description">By Robert Bobbett, March  7, 2019</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=RIO%20-%20a%20Standard%20Library%20for%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;rio-standard-library-for-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;rio-standard-library-for-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;rio-standard-library-for-haskell&#x2F;&amp;title=RIO%20-%20a%20Standard%20Library%20for%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;rio-standard-library-for-haskell&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>We are happy to announce that we have been sponsoring free
+webinars for over a year now. The feedback we have been receiving
+from the IT community has been overwhelmingly positive. We have
+been working towards producing a new webinar topic every month, and
+we plan to keep moving at that pace.&nbsp;In this
+webinar,&nbsp;<span>Alexey Kuleshevich</span><span>&nbsp;(Software
+Engineer at FP Complete)&nbsp;discusses "<span><strong><span>RIO,
+the standard library for Haskell.</span></strong></span>" We had
+377 people registered for the event which aired on Wednesday, March
+6th at 10:00 am PST.&nbsp; The source code for this webinar can be
+found&nbsp;on <a href="https://github.com/lehins/haskell-webshell"
+rel="noopener" target="_blank">Github</a>.</span></p>
+<span style=
+"color: #00aeef; font-size: 24pt; font-weight: bold; letter-spacing: 0px; text-align: left;">About
+the Webinar</span>
+<p style="text-align: justify;"><br>
+In this month's webinar, <span>Alexey
+Kuleshevich</span>&nbsp;demonstrated just how easy it is to get
+started with&nbsp;RIO, the standard library for
+Haskell.&nbsp;<span>As a recap,&nbsp;</span> <strong><a href=
+"https://github.com/commercialhaskell/rio" rel="noopener" target=
+"_blank">RIO</a></strong>&nbsp;is not only a library but is a
+collection of solutions to some of the most common problems in the
+Haskell ecosystem as well as a description of the best practices
+and design patterns. It also introduces
+the&nbsp;<span>RIO</span>&nbsp;monad, which promotes a drastic
+simplification over the common approach of an endless stack of
+transformers.</p>
+<h3>Topics covered:</h3>
+<p>During the webinar we tried to answer these questions:</p>
+<ul class="no-arrow">
+<li>What is&nbsp;<strong>RIO</strong>? Is it yet
+another&nbsp;Prelude, or a different workflow? What makes it
+different?</li>
+<li>Which scenarios are&nbsp;<strong>RIO</strong>&nbsp;good for and
+which ones aren't so much?</li>
+<li>What benefits do you get from
+using&nbsp;<strong>RIO</strong>?</li>
+<li>What's the difference between
+using&nbsp;RIO<strong>&nbsp;</strong>for library vs application
+development?</li>
+<li>Do you need to buy into the&nbsp;RIO&nbsp;type to use the
+library fully?</li>
+</ul>
+<div>
+<div class=
+"m_4454734354218400150m_1589761394490545890gmail_signature"
+data-smartmail="gmail_signature"><span style=
+"color: #00aeef; font-size: 24pt; font-weight: bold; letter-spacing: 0px; text-align: left;">
+Watch the Webinar</span></div>
+</div>
+<p style="text-align: center;"><iframe allowfullscreen frameborder=
+"0" height="315" src="https://www.youtube.com/embed/gu0ZCqQe3BY"
+width="560"></iframe></p>
+<p>We decided to include the chat log for this webinar, and it can
+be seen at the end of this blog post.</p>
+<h2>Have you heard about our new Haskell Success
+Program?&nbsp;</h2>
+<p><a href="/haskellsuccess" rel="noopener" target=
+"_blank"><img alt="Haskell Success Program" sizes=
+"(max-width: 183px) 100vw, 183px" src=
+"/images/hubspot/971ad0e2bc389481ce16daa2eb2c7b1b2beef1450ea3e5c58a070d718725931e.png"
+srcset=
+"/images/hubspot/f9eae8ce5090e2f4742d3beb9542e8935627fa1ceec6aeff2d979d56732cedbe.png 92w, /images/hubspot/971ad0e2bc389481ce16daa2eb2c7b1b2beef1450ea3e5c58a070d718725931e.png 183w, /images/hubspot/398f5489c4ee95a14ce231a3072d5690befe36b3dca311ffe097762cd259397a.png 275w, /images/hubspot/22f9f1d1ced067e99fe48db46a449f4b6b5dda49222112f894639f5f3ef17c41.png 366w, /images/hubspot/731f2e47ff8eca26be251b94ceb7a4d2a15136acbdf17d23c52e2522294d1e51.png 458w, /images/hubspot/ecd306bd98fbca70b00fac83363bd80715ce52f858f27b166b50c6e467a480e8.png 549w"
+style="width: 183px; margin: 10px 20px; float: left;" width=
+"183"></a>We decided that to grow the Haskell community we need to
+make further investments towards that goal. Webinars, blogs, and
+open source contributions can only take us so far. That's why we
+created the <a href="/haskellsuccess" rel="noopener" target=
+"_blank">Haskell Success Program</a>. Whether you are a large scale
+enterprise using Haskell daily or a small company looking to
+leverage the power of Haskell, this program is for you.
+Of&nbsp;particular note is the cost of this program. If you do the
+math, our rates for this program are insanely low. So low, that we
+are not even profiting from the program. So why are we doing it?
+Two reasons, first, we want to promote the use of Haskell across
+the globe in large and small enterprises. Second, we want to expose
+you to our awesome engineering talent and help you maximize the use
+of Haskell in your organization. It's a win-win for all!. <a href=
+"/haskellsuccess" rel="noopener" target="_blank">Check it
+out</a></p>
+<h2>Who is FP Complete in simple terms?</h2>
+<p><span style=
+"font-family: 'Source Sans Pro', sans-serif; font-size: 16px; font-weight: normal; text-align: justify; color: #626262; letter-spacing: -0.005em;">
+At FP Complete, we do so many things to help companies it's hard to
+encapsulate our impact in a few words.&nbsp; They say a picture is
+worth a thousand words, so a video has to be worth 10,000 words (at
+least). Therefore, to tell all we can in as little time as
+possible,&nbsp;check out our explainer video. It's only 108 seconds
+to get the full story of FP Complete.&nbsp;</span></p>
+<h2><br>
+<iframe allowfullscreen frameborder="0" height="315" src=
+"https://www.youtube.com/embed/JCcuSn_lFKs" style=
+"float: none; margin-left: auto; margin-right: auto; display: block;"
+width="560"></iframe></h2>
+<h2>We want your feedback for webinar topics</h2>
+<p>We would like to hear your suggestions for future webinar
+topics. The simplest way to accomplish this is to&nbsp;add a
+comment to this blog post with your suggestion. Alternatively, send
+your suggestion via email to&nbsp;<a href="/index" rel=
+"noopener"><span class="__cf_email__" data-cfemail="e89b878b818984858d8c8189a88e988b878598848d9c8dc68b8785">[email&#160;protected]</span></a>.</p>
+<h2>Webinar Chat Log</h2>
+<p>We find it useful to share what was chatted about during the
+webinar. You can see the chat flow below.</p>
+<p>20:00:42 From Michael Snoyman : Welcome to the webinar
+everyone<br>
+20:00:57 From Agustin Camino : Hi!<br>
+20:01:05 From Dan Banta : Hello. :)<br>
+20:01:24 From paulrz to All Panelists : hello<br>
+20:01:24 From Jason Shipman : Hi!<br>
+20:01:28 From Maris Orbidans to All Panelists : hello<br>
+20:01:31 From Javier Jaramago Fernández to All Panelists : Hi
+everyone!<br>
+20:01:33 From Steve Bigham to All Panelists : Greets!<br>
+20:01:37 From Agustin Camino : Sounds good!<br>
+20:01:44 From Steven Leiva : Hi folks. FP Complete - thanks for
+hosting this. I won’t be able to participate in the chat since I
+don’t want to disturb others around me, but looking forward to
+soaking everything in.<br>
+20:02:06 From Han Joosten to All Panelists : Hi<br>
+20:06:46 From Andrew Starodubtsev to All Panelists : Hi all!<br>
+20:08:58 From Michael Snoyman : Unsafe ==&gt; nasal demons<br>
+20:20:40 From Agustin Camino : Ha!<br>
+20:20:43 From Javier Jaramago Fernández to All Panelists : haha<br>
+20:33:29 From Michael Snoyman : The "sticky logger" stuff is what
+Stack uses when it shows you the "Progress: X/Y" while building a
+bunch of things<br>
+20:39:31 From Michael Snoyman : Stay tuned for more info in the
+future...<br>
+20:39:49 From Steven Leiva : +1<br>
+20:43:28 From Steven Leiva : Will the slides be available for
+download?<br>
+20:45:29 From Michael Snoyman : I believe the slides and code will
+be available afterward, but I'll ask Alexey both questions at the
+end of the presentation<br>
+20:46:19 From Michael Snoyman : PLOT TWIST :)<br>
+20:46:28 From Steven Leiva : Whoa! Mind blown.<br>
+20:46:28 From Javier Jaramago Fernández to All Panelists : haha
+what a twist<br>
+20:46:59 From Vassil Keremidchiev to All Panelists : Cool!<br>
+20:50:03 From Mark Watson to All Panelists : thanks Alexey, really
+interesting stuff.<br>
+20:51:31 From Han Joosten : How much effort would you guess would
+it be for a 100 module haskell codebase to use rio instead of
+prelude?<br>
+20:51:55 From Harold Carr : please paste the the github ink
+here<br>
+20:52:12 From Michael Snoyman :
+https://github.com/lehins/haskell-webshell<br>
+20:52:13 From Jascha Smacka :
+https://github.com/lehins/haskell-webshell<br>
+20:52:17 From Marek Dudek : What kind of adoption by
+community/industry do you have? How big do you count on it to
+be?<br>
+20:52:24 From Vladislav Sabanov : Have you working application
+online or at github that using RIO?<br>
+20:52:27 From Aniket Deshpande to All Panelists : For newbies does
+it makes sense to go the RIO route from the beginning? Or would you
+suggest to come to this library after experiencing some of the
+problems it intends to circumvent?<br>
+20:52:39 From Han Joosten : thanks. great answer<br>
+20:53:27 From Harold Carr :
+https://github.com/lehins/haskell-webshell<br>
+20:53:46 From Greg Manning : magicbane?<br>
+20:53:49 From jon schoning to All Panelists : to motivate RIO as a
+newtype, the reason is "typeclasses like MonadLogger define their
+instances on ReaderT to defer to the underlying monad". Could you
+explain why this forces a newtype? I it seems like MonadLogger
+should just default to IO<br>
+20:53:51 From Marek Dudek : Thanks<br>
+20:54:03 From Greg Manning : (I think is the name of the project
+that ties together RIO and other things)<br>
+20:54:20 From Javier Jaramago Fernández to All Panelists : So far
+everything we have seen in the default logging pattern, looks like
+will be very compatible by default to serve as a base for something
+like opentracing implementations (Haskell I think still lacks of
+one). What are your thoughts about using it as a default lib for
+something like this?<br>
+20:55:21 From Aniket Deshpande to All Panelists : Thanks<br>
+20:55:21 From Jason Shipman : No questions at the moment, but thank
+you for the excellent presentation!<br>
+20:55:22 From Marek Dudek : Follow up on currently being answered:
+which topics you need to understand to use RIO?<br>
+20:58:53 From Marek Dudek : Thanks<br>
+20:58:54 From Steven Leiva : There are good tutorials for
+exceptions and for the ReaderT pattern.<br>
+21:00:13 From Steven Leiva : :-)<br>
+21:00:20 From Michael Snoyman : Get started with runSimpleApp<br>
+21:00:20 From Vassil Keremidchiev to All Panelists : Thanks a lot
+for the great lecture!<br>
+21:00:30 From Harold Carr : thanks!<br>
+21:01:43 From Marek Dudek : Great presentation, thanks<br>
+21:02:12 From Andrew Starodubtsev to All Panelists : Thanks<br>
+21:02:18 From Han Joosten : Thanks again for another great webinar.
+Keep up the good work!<br>
+21:02:21 From Javier Jaramago Fernández to All Panelists : Great
+presentation + example project, thanks!<br>
+21:02:24 From Frank Stüss to All Panelists : super! thank you!
+please go on!<br>
+21:02:30 From Lauri Lättilä : Thanks for the presentation<br>
+21:02:33 From Martin ALLARD to All Panelists : Thanks for the
+presentation !<br>
+21:02:35 From Jascha Smacka : Thanks a lot!<br>
+21:02:38 From Greg Manning : thanks.<br>
+21:02:40 From Steven Leiva : thanks<br>
+21:02:41 From Agustin Camino : Thanks! Great presentation.<br>
+21:02:43 From Dan Banta : Fantastic presentation. Thank you! :D<br>
+21:02:43 From R Primus : Thank you both!<br>
+21:02:52 From Michael Usenko : Thank you.<br>
+21:02:52 From Jonathan Avinor : Thank you very much!<br>
+21:02:52 From Filip Federowicz to All Panelists : Thank you!<br>
+21:02:52 From Vladislav Sabanov : Thank you!<br>
+21:02:58 From Bruce Alspaugh to All Panelists : Thinks!</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=RIO%20-%20a%20Standard%20Library%20for%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;rio-standard-library-for-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;rio-standard-library-for-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;rio-standard-library-for-haskell&#x2F;&amp;title=RIO%20-%20a%20Standard%20Library%20for%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;rio-standard-library-for-haskell&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#b2c1d3ded7c1f2d4c2d1dddfc2ded7c6d79cd1dddf" targe="_blank"><span class="__cf_email__" data-cfemail="0d7e6c61687e4d6b7d6e62607d61687968236e6260">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

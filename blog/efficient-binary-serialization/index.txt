@@ -1,0 +1,354 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Efficient binary serialization
+
+By Michael Snoyman, March 14, 2016
+
+Share this     
+
+We do a lot of work at FP Complete in the realm of multi-machine computing for our customers. One
+of the things we need to do efficiently to get good speedups from adding more machines is
+optimizing serialization. Since our multi-machine work often revolves around scientific and
+mathematical computing, we primarily need to make sure that there is efficient serialization of
+primitive data types (like Int64 and Double), strict/unpacked product types (e.g. data Foo = Foo !
+Int64 !Double), and vectors of any of these.
+
+For the impatient: benchmark results and repo
+
+Not too long ago Francesco discovered and reported some issues with the binary package's
+serialization of Doubles. In response to this, we internally switched over to using the cereal
+package instead, which resulted in a few more performance related PRs. However, when the FP
+Complete team discussed serialization, and particularly the needs that our multi-machine computing
+and other client projects require, we realized that we may have some opportunities to do better.
+
+Both the binary and cereal packages are very featureful, and with these features come some
+overhead. We actually have much simpler requirements for our standard serialization cases, e.g.:
+
+  • There's no need for backwards compatible formats, since two identical executables will be
+    running on two machines and will need to communicate with each other
+  • Similarly, we don't need to have a consistent endianness for our encoding; using host byte
+    order will always work for our use case
+  • Given the structure of data we work with, we will almost always have a very cheap method of
+    determining the serialized size of a piece of data. For example, a vector of 50 Doubles will be
+    one Int64 (to hold the length of the vector) plus 50 * sizeOf (undefined :: Double), or in
+    other words: 51 * 8. By leveraging this, we can possibly do a more efficient serialization step
+    by allocating a buffer of exactly the correct size
+  • We can get away with requiring that all data be in memory, since all of our use cases require
+    that the data be fully evaluated at once (no lazy processing of larger-than-memory data sets)
+  • There's no need for any kind of fancy deserialization involving backtracking
+
+With these ideas in mind, I've spent the past few days putting together a variety of different
+implementations of both encoding and decoding, and believe that for the limited cases I just
+described, we can get significantly better serialization performance.
+
+Vector SomeData
+
+The benchmarks I've used for this experiment focus on a fairly simple encoding and decoding test
+for a boxed vector of SomeData values. The SomeData type has a single data constructor with strict
+fields of Int64, Word8, and Double. This is a fairly good representation of the kind of data that
+we deal with regularly. Serializing more complex datatypes, or more variable-length types like a
+ByteString, are certainly supported by all of the schemes I've described here, but the performance
+impact of that has not been tested (since it's not the main focus of our work).
+
+Representations
+
+There are three different binary representations of the data used in this benchmark suite:
+
+  • Simple little-endian (host-endian) serialization. In this case, the values are serialized in
+    exactly the same format as they are stored in memory. (This assumes of course a little-endian
+    architecture, which is what I did all testing on and our target architecture in production in
+    almost all cases.) Vectors are serialized by storing the length of the Vector as an Int64
+    followed by each successive element from the Vector. This format is used by the following
+    functions:
+
+      □ encodeSimpleRaw
+      □ encodeSimplePoke
+      □ encodeSimplePokeMonad
+      □ encodeSimplePokeRef
+      □ encodeSimplePokeRefMonad
+      □ encodeBuilderLE
+      □ decodeSimplePeek
+      □ decodeSimplePeekEx
+      □ decodeRawLE
+  • The big-endian format of the above. This format is used by the following functions:
+
+      □ encodeBuilderBE
+      □ encodeCereal
+      □ decodeRawBE
+      □ decodeCereal
+  • The binary format, used exclusively by the binary package. The special magic in this format is
+    that Doubles are encoded as a pair of Integer and Int. This is the original performance bug
+    that Francesco found and reported on Reddit, and which kicked off this whole analysis.
+
+Let's start with the benchmark results, and then do some more analysis:
+
+Benchmark results
+
+Unsurprisingly, binary performed the worse by far, mainly due to its Double serialization.
+Similarly, the big endian approaches were all slower than the little endian approaches, though the
+cereal package performed significantly worse than the raw bytestring-builder encoding and direct
+ByteString/bit-shifting decoding.
+
+Since the little endian encoding wins as far as representation, we'll spend the rest of this
+approach analyzing the different trade-offs in encoding and decoding, based on the 6 encoding and 3
+decoding functions implemented and tested here.
+
+Continuation vs mutable reference
+
+When both encoding and decoding, we need to keep track of the current offset being written to/read
+from within the buffer. In the case of decoding, we also need to have some way to fail out if the
+data parsed is not what we expect, or there are insufficient bytes to consume. I tested two
+approaches for this:
+
+  • A continuation-based approach, where each computation is passed the next computation to
+    perform. That next computation takes a parameter of the updated offset, and in the case of
+    decoding returns a Maybe value to allow for failure. This technique is used by the functions:
+
+      □ encodeSimpleRaw
+      □ encodeSimplePoke
+      □ encodeSimplePokeMonad
+      □ decodeSimplePeek
+      □ decodeRawLE
+  • A mutable reference approach. In this case, instead of each function needing to take an updated
+    offset value, the value is stored in a mutable reference. This allows the environment available
+    to each function to be identical (i.e., a pure ReaderT setup), which GHC is good at optimizing.
+    On the other hand, GHC also tends to do much better at optimizing code without mutable
+    references in it. To deal with failed decoding in this setup, we use runtime exceptions. This
+    technique is used by the functions:
+
+      □ encodeSimplePokeRef
+      □ encodeSimplePokeRefMonad
+      □ decodeSimplePeekEx
+
+As you can see from the results, the continuation based approach gave a slight performance
+advantage. While this is what I would have expected, the difference between the two was less than I
+had expected. Additionally, in some earlier testing before I'd added more optimization, the
+reference based implementation actually outperformed the continuation based implementation. The
+details of what's going on at the core level would be an interesting follow-up analysis.
+
+Optimizing the mutable reference
+
+If you dive into the code, you may be a bit surprised at how the offset reference is represented.
+Instead of a more standard IORef, we have:
+
+newtype OffsetRef = OffsetRef
+    (Data.Vector.Unboxed.Mutable.MVector RealWorld Offset)
+
+The idea here is to take advantage of the more efficient unboxed representation and byte array
+operations provided by the vector package and GHC. This also avoids a lot of garbage collection
+overhead used by the boxed nature of IORef. This is the same technique leveraged by the
+mutable-containers package. Also, check out the Stack Overflow question on the topic.
+
+Storable, bit-shifting, and bytestring-builder
+
+When it comes to storing primitive datatypes in a pointer, it's unsurprising to see the Storable
+type class. This class's peek and poke operations are implemented under the surface with GHC
+primops. We get away with this because, in our implementation, we are always using host byte order.
+By contrast, the cereal, binary, and bytestring-builder packages need to do more direct
+bit-shifting, such as:
+
+word64be :: ByteString -> Word64
+word64be = \s ->
+              (fromIntegral (s `SU.unsafeIndex` 0) `shiftL` 56) .|.
+              (fromIntegral (s `SU.unsafeIndex` 1) `shiftL` 48) .|.
+              (fromIntegral (s `SU.unsafeIndex` 2) `shiftL` 40) .|.
+              (fromIntegral (s `SU.unsafeIndex` 3) `shiftL` 32) .|.
+              (fromIntegral (s `SU.unsafeIndex` 4) `shiftL` 24) .|.
+              (fromIntegral (s `SU.unsafeIndex` 5) `shiftL` 16) .|.
+              (fromIntegral (s `SU.unsafeIndex` 6) `shiftL`  8) .|.
+              (fromIntegral (s `SU.unsafeIndex` 7) )
+
+Leveraging Storable whenever possible simplifies our codebase and makes it more efficient. In fact,
+the Simple typeclass - used for most of our implementations here - provides default implementations
+of all functions in terms of Storable, so that the instances for primitive types just look like:
+
+instance Simple Int64
+instance Simple Word8
+instance Simple Double
+
+simpleSize :: Either Int (a -> Int)
+
+You may be wondering: if Storable is so great, why not just base a serialization library on it
+directly? There's one downside: it assumes that every datatype has a fixed serialized width. While
+this works great for Ints and the like, it fails with a Vector, where we need to know - at runtime
+- the actual length of the Vector to determine its serialized size.
+
+A naive implementation of this would look like:
+
+simpleSize :: a -> Int
+
+However, this signature implies that every type's size may change at runtime. This would require
+that, when serializing a Vector, we always inspect every single value, which introduces significant
+CPU overhead. For example, given that the representation of a Vector is an 8-byte integer length
+plus the sizes of all elements, this would look like:
+
+simpleSize :: Vector a -> Int
+simpleSize v = 8 + V.sum (V.map simpleSize v)
+
+But in the case of statically-known sizes, we'd like to replace that sum with a simple
+multiplication. To make this work, we have a slightly smarter type signature for the size function:
+
+simpleSize :: Either Int (a -> Int)
+
+If this function returns Left, there's no need to inspect individual values. For Right, we're stuck
+with checking each thing. Putting this together, here's our implementation for Vectors.
+
+simpleSize :: Either Int (Vector a -> Int)
+simpleSize = Right $ \v ->
+    case simpleSize of
+        Left s -> s * V.length v + 8
+        Right f -> V.sum (V.map f v) + 8
+
+Notice how, for a Vector Int64, we'd be able to follow the Left branch and avoid the costly sum.
+This ends up giving us really cheap knowledge of the total buffer size needed, which we take
+advantage of when encoding, e.g.:
+
+encodeSimpleRaw :: Simple a => a -> ByteString
+encodeSimpleRaw x = unsafeCreate
+    (either id ($ x) simpleSize)
+    (\p -> simpleRawPoke p 0 x)
+
+Monadic vs Monoidal interface
+
+Ever since blaze-html famously provided a broken Monad interface in the name of performance,
+there's been a concern (at least by me) that providing a proper Monad instance instead of just a
+Monoid instance could slow things down. Therefore, this benchmark included encoding functions that
+are both monadic (encodeSimplePokeMonad and encodeSimplePokeRefMonad) and monoidal
+(encodeSimplePoke and encodeSimplePokeRef). To my surprise, they performed nearly identically.
+
+The monadic interface though has many advantages over a monoidal one:
+
+  • You can still provide a Monoid instance for any Monad, so you actually get both interfaces for
+    free
+  • You get to use do notation if desired
+  • Subjectively, I'd guess that people are more used to monadic combinators (e.g., mapM_ vs
+    foldMap).
+  • In my testing, I found a major slowdown due to the usage of foldMap from Vector. I'm guessing
+    this is due to a missing INLINE in the default implementation of foldMap in Data.Foldable, but
+    I haven't had a chance to investigate yet. Again, since monadic combinators seem to be more
+    well used, odds are that they will also be more well optimized.
+
+Overall abstraction overhead
+
+In addition to the nice newtype-wrapped monads and monoids, I implemented a raw version of both
+encoding and decoding, just to see if the abstraction added an overhead. Fortunately, this was not
+the case, which lets us stick with relatively simple high-level code such as:
+
+simplePeek = SomeData
+    <$> simplePeek
+    <*> simplePeek
+    <*> simplePeek
+
+instead of:
+
+readInt64  bs  $ \bsX x ->
+readWord8  bsX $ \bsY y ->
+readDouble bsY $ \bsZ z -> do
+    MV.unsafeWrite mv idx (SomeData x y z)
+    loop (idx + 1) bsZ
+
+ST-like monad
+
+If you look at the implementation of the Binary instance for Vector, you'll see that it needs to
+resort to unsafePerformIO. This is because, in order to efficiently create a Vector, it needs to
+perform mutations, but the Get monad from binary does not provide any ST or IO like behavior for
+mutating a buffer.
+
+Since we're designing a new decoding interface from scratch, and have Vector as a first-class use
+case, I decided to bake in ST-like semantics to allow directly playing around with mutable vectors.
+As a result, the type of Peek has an extra state token parameter, just like ST:
+
+newtype Peek s a
+
+Also, there is a PrimMonad instance for Peek, which allows for the mutable vector operations to
+occur within the monad without any lifting. To see how this works, take a look at the
+implementation of simplePeek for Vectors:
+
+simplePeek :: Simple a => Peek (Vector a)
+simplePeek = do
+    len :: Int64 <- simplePeek
+    let len' = fromIntegral len
+    mv <- MV.new len'
+    let loop i
+            | i >= len' = V.unsafeFreeze mv
+            | otherwise = do
+                x <- simplePeek
+                MV.unsafeWrite mv i x
+                loop $! i + 1
+    loop 0
+
+All of this also applies to the PeekEx type.
+
+Results
+
+The criterion link I shared above has the results of all of these benchmarks, but for the lazy,
+here's the result graph again:
+
+Benchmark results
+
+As you can see: the little-endian encoding regularly outperformed the other two formats by a
+significant margin. This isn't surprising, given that there is less CPU work that needs to be done,
+and that we are able to leverage primops from GHC to do most of the work.
+
+Similarly, while bytestring-builder is a very highly tuned library, for a narrow use case like ours
+where the resulting buffer size is easily computed in advance, constructing ByteStrings manually
+gives a significant performance boost.
+
+To my surprise, the mutable reference/exception based approach to peeking and poking was fairly
+competitive with the continuation-based approach. Nonetheless, overall the continuation-based
+approach outperforms it, and is more elegant an approach.
+
+While the monadic and monoidal interfaces for poking/encoding give similar results, the performance
+of the monoidal interface can be unpredictable if used incorrectly. Since monadic combinators are
+more commonly optimized and more ubiquitous, it's safer to expose the monadic interface. (And, for
+what it's worth, we can always provide a Monoid instance for any Monad.)
+
+And thankfully, the abstractions we use to make our encoding and decoding easy to work with and
+nicely composable do not introduce a slowdown versus the low-level implementation. So no need to
+force people to drop down to manual continuation passing.
+
+What's next
+
+Based on this analysis, it seems like we have a clear set of choices for a new serialization
+library. This blog post already clarifies the design goals of such a library, and its limitations
+(e.g., no streaming decoding). Such a library is something we'll almost certainly want to leverage
+for our multi-machine computation work at FP Complete.
+
+I'm interested on feedback from others on this topic, including ways to better optimize the code,
+alternative strategies, and additional use cases you might have for such a library.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

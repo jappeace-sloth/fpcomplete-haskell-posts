@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Development Workflows in Haskell</title>
+  <meta property="og:title" content="Development Workflows in Haskell">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="This webinar will help you take your workflow skills to the next level by exploring different approaches to Haskell development. From compiling a full application whenever you save a file, to experiment with in-progress code drafts over a REPL.">
+  <meta property="og:description" content="This webinar will help you take your workflow skills to the next level by exploring different approaches to Haskell development. From compiling a full application whenever you save a file, to experiment with in-progress code drafts over a REPL.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;development-workflows-in-haskell&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Development Workflows in Haskell</h1>
+      
+      <p id="page-description">By Robert Bobbett, October 17, 2018</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Development%20Workflows%20in%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;development-workflows-in-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;development-workflows-in-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;development-workflows-in-haskell&#x2F;&amp;title=Development%20Workflows%20in%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;development-workflows-in-haskell&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>Our monthly webinar series is really starting to take off and
+judging by the registration numbers we might be forced into
+allowing more than 500 people to register for our next webinar
+which could be about Rust - Don't hold us to that ;)&nbsp; For
+Roman's, Development Workflows in Haskell, we had 434 registrants
+which makes this our most popular webinar so far.&nbsp;&nbsp;</p>
+<h2>About the Webinar</h2>
+<p style="text-align: justify;">In this month's webinar, Roman
+Gonzalez will help you take your workflow skills to the next level
+by exploring different approaches to Haskell development. From
+compiling a full application whenever you save a file, to
+experiment with in-progress code drafts over a REPL, we will
+explore the benefits of REPL driven development and how to
+integrate this to your everyday routine easily.</p>
+<p style="text-align: justify;"><span>Coming from classic typed
+programming languages like Java, you get to learn about the
+benefits of types on large code bases, and with dynamic type
+languages like Python, you get to experience the benefits of a
+quick feedback loop using a REPL, interacting with the code as you
+develop it. In this webinar, Roman will demonstrate how you can get
+to use these two essential aspects of development using Haskell
+tooling.</span></p>
+<p><em style=
+"color: #b0d235; font-size: 18pt; font-weight: 600; letter-spacing: -0.03em;">
+Topics to be covered:</em></p>
+<ul>
+<li>Differences between interpreted and compiled workflows</li>
+<li>Haskell development using Stack</li>
+<li>Haskell development using GHCi</li>
+<li>How to customize and extend GHCi</li>
+<li>Running your application test-suite over the REPL</li>
+<li>Running applications over the REPL</li>
+<li>Demo the usage of a couple of text editors and what workflows
+they provide&nbsp;</li>
+</ul>
+<div>
+<div class=
+"m_4454734354218400150m_1589761394490545890gmail_signature"
+data-smartmail="gmail_signature"><span style=
+"color: #00aeef; font-size: 24pt; font-weight: bold; letter-spacing: 0px; text-align: left;">
+Watch the Webinar</span></div>
+</div>
+<p style="text-align: center;"><iframe allowfullscreen frameborder=
+"0" height="315" src="https://www.youtube.com/embed/y_kcrv6Kdv8"
+width="560"></iframe></p>
+<p>The slides to this webinar are also available at <a href=
+"https://github.com/roman/Haskell-development-workflows" rel=
+"noopener" target="_blank">Development Workflows in Haskell</a>. We
+decided to include the chat log for this webinar and it can be seen
+at the end of this blog post.</p>
+<h2>We want your feedback for webinar topics</h2>
+<p>We would like to hear your suggestions for future webinar
+topics. The simplest way to accomplish this is to&nbsp;add a
+comment to this blog post with your suggestion. Alternatively, send
+your suggestion via email to <a href="/index" rel=
+"noopener"><span class="__cf_email__" data-cfemail="2c5f434f454d40414948454d6c4a5c4f43415c40495849024f4341">[email&#160;protected]</span></a>.</p>
+<h2>Check out our new Explainer Video</h2>
+<p><span>At FP Complete, we do so many things to help companies
+it's hard to encapsulate our impact in a few words.&nbsp; They say
+a picture is worth a thousand words, so a video has to be worth
+10,000 words (at least). Therefore, to tell all we can in as little
+time as possible, we recently produced a new explainer video. Check
+it out by clicking the video link below. It's only 108 seconds to
+get the full story of FP Complete. One last thing. We have a home
+page a facelift, and you can <a href="/index" rel="noopener"
+target="_blank">check it out here</a>.</span></p>
+<p style="text-align: center;"><iframe allowfullscreen frameborder=
+"0" height="315" src="https://www.youtube.com/embed/JCcuSn_lFKs"
+width="560"></iframe></p>
+<h2>In case you haven't read it yet</h2>
+<div><span>Our State of Haskell Report 2018 has proven to be an
+excellent read for those that are interested where the
+language&nbsp;is heading, and its rate of adoption for
+commercial&nbsp;applications.&nbsp; You can download the report by
+clicking the image below. Also, Aaron was recently interviewed by
+InfoQ about the report, and you can find that article here -
+<a href=
+"https://www.infoq.com/news/2018/05/haskell-user-survey-2018?utm_content=72411107&amp;utm_medium=social&amp;utm_source=twitter"
+rel="noopener" target="_blank">Haskell Adoption and User
+Satisfaction Growing</a>.</span></div>
+<h2>Finally - Fix your DevOps Challenges</h2>
+<p>If you haven't heard, we just published an ebook about DevOps
+and the 5 strategies you can implement now to help your IT
+Projects. Click the picture below to get your free copy today.</p>
+<h2>Webinar Chat Log</h2>
+<p>10:00:58 From Michael Snoyman : Hi everyone, welcome to the
+webinar, we'll be getting started in a few minutes once everyone's
+had a chance to join.<br>
+10:01:32 From Nick Linker to All panelists : Hello everyone!<br>
+10:03:18 From Coury Ditch : Hey Michael & Roman! Thanks for doing
+this webinar, and thanks FP Complete for the great learning
+resources.<br>
+10:03:30 From Jingjing Duan : yea thanks!<br>
+10:03:34 From Samuel Castro to All panelists : :)<br>
+10:03:47 From Michael Snoyman : Feel free to drop questions here
+and in the Q&amp;A, I'll pass them along to Roman at appropriate
+break points<br>
+10:08:41 From Barry Moore to All panelists : Can slides be shared
+at end?<br>
+10:09:13 From Michael Snoyman : I believe so Barry, I'll confirm
+with Roman after the webinar<br>
+10:10:36 From Nick Linker : The bash prompt is awesome :-P<br>
+10:14:41 From Nick Linker : Guys, is there anyone who is recording
+the video?<br>
+10:14:50 From Edmund Cape : Is there a way to show modules without
+the file name?<br>
+10:14:54 From John Soo to All panelists : Spacemacs &lt;3<br>
+10:15:08 From Edmund Cape : I use it a lot, but find the filename
+obfuscates the list<br>
+10:16:23 From Edmund Cape : thank you.<br>
+10:17:28 From Nick Linker : How to unload a module then?<br>
+10:18:25 From Daniel Leones to All panelists : Usually, in next
+days, they release a video recoding of this webinar.<br>
+10:19:03 From Michael Snoyman : Daniel: that's correct, we intend
+to release a video in the near future.<br>
+10:19:10 From Michael Snoyman : Nick: Question noted<br>
+10:22:51 From Nick Linker : How to execute only one (or several)
+test, not the whole suite?<br>
+10:24:17 From Nick Linker : Thanks, this answers the question.<br>
+10:24:25 From Jyothish Joshi : Is “stack repl” same as “stack
+ghci”?<br>
+10:25:41 From Casey Allred to All panelists : is there a way for
+the repl to recognize changes in the package.yaml and possibly pull
+and compile the new dependencies without exiting and building?<br>
+10:25:43 From Edmund Cape : does `:m -&lt;module name&gt;` not
+unload a specific module?<br>
+10:26:44 From Edmund Cape : before leaving this section: can we
+list the steps to link the test dependencies?<br>
+10:27:03 From Michael Snoyman : What do you mean by link?<br>
+10:27:26 From Edmund Cape : we get import errors<br>
+10:27:56 From Benito Haskelitto : :m - &lt;module name&gt; works
+for :l name<br>
+10:27:58 From Michael Snoyman : I don't think we'll be able to get
+into that kind of debugging in this webinar<br>
+10:28:18 From Nick Linker : What is BCO?<br>
+10:28:44 From Michael Snoyman : Byte Code Object if I'm not
+mistaken<br>
+10:29:00 From Nick Linker : Thanks, Michael.<br>
+10:29:07 From Michael Snoyman : :)<br>
+10:30:52 From Niklas Hambuechen : Another benefit of object code is
+that you can turn on -O flags. A drawback is that object code loads
+much slower than byte code (unless already cached on disk).<br>
+10:36:00 From Nick Linker : this is cool trick<br>
+10:36:00 From Michael Xavier : what is :seti again? as opposed to
+:set<br>
+10:36:09 From Michael Xavier : haha nm<br>
+10:36:23 From Michael Snoyman : Roman is psychic<br>
+10:36:40 From Michael Xavier : haha clearly<br>
+10:36:41 From Daniel Leones to All panelists : haha<br>
+10:37:32 From sdf asdf : half a megabyte to add up numbers?<br>
+10:37:39 From Nick Linker : half of megabyte to calculate 5 :-D<br>
+10:40:17 From Pankaj Godbole : Can you please mention where .ghci
+resides? Thanks.<br>
+10:40:59 From Daniel Leones to All panelists : In slides, I
+guess.<br>
+10:41:05 From Nick Linker : Roman, how do I make multiline
+definitions in repl?<br>
+10:41:13 From Han Joosten to All panelists : this is a neat .ghci
+file. Can it be shared?<br>
+10:41:54 From Jingjing Duan : can you share your ~/ghci file?<br>
+10:41:57 From Nick Linker : (... they usually require correct
+indentation)<br>
+10:42:04 From Pankaj Godbole : OK, got it! :-)<br>
+10:42:13 From Jyothish Joshi : Is `stack ghci` exactly same as the
+underlying `ghci` or are there any additional functionalities (do
+all the commands mentioned over here like :seti etc work on plain
+`ghci` as well) ?<br>
+10:42:38 From Michael Snoyman : You can use `stack ghci --verbose`
+to see the extra flags passed to `ghci`. It also sets some
+environment variables such as GHC_PACKAGE_PATH<br>
+10:42:51 From Casey Allred to All panelists : :{ and :} for multi
+line GHCI<br>
+10:42:56 From Michael Snoyman : Thanks Casey :)<br>
+10:43:06 From Michael Xavier : IIRC git can't preserve the
+permissions on a .ghci file and checks it out with too-open
+permissions for ghci<br>
+10:52:35 From Samuel Castro to All panelists : Are you guys going
+to share this video?<br>
+10:52:39 From Coury Ditch : *clap*<br>
+10:52:48 From Nick Linker : Ah DEBUGGING is not touched, ugh...<br>
+10:52:49 From Jingjing Duan : great webinar!<br>
+10:52:50 From Pankaj Godbole : Thanks Roman<br>
+10:52:54 From John Askew : thanks!<br>
+10:52:55 From Nick Linker : But thanks anywhay<br>
+10:52:57 From Jörn Gersdorf : Thank you, Roman!<br>
+10:52:57 From Anton Latukha to All panelists : Great lecture.<br>
+10:52:59 From Karl Berger : Thanks Roman!<br>
+10:52:59 From Samuel Castro to All panelists : Good job!<br>
+10:53:00 From Rich Beerman : Thank you!<br>
+10:53:01 From Michael Xavier : Thanks!<br>
+10:53:02 From Jan Stranik to All panelists : thanks.<br>
+10:53:03 From Alexei Pastuchov to All panelists : thank you<br>
+10:53:04 From Anton Latukha to All panelists : Thank you!<br>
+10:53:04 From Jameo Jones to All panelists : Thanks; I learned a
+lot.<br>
+10:53:07 From Casey Allred to All panelists : thanks!<br>
+10:53:07 From Samuel Castro to All panelists : thanks!<br>
+10:53:08 From Nikolay Artamonov to All panelists : Thanks! )<br>
+10:53:08 From Alex Bielen : thanks roman!<br>
+10:53:09 From Edmund Cape : thank you!!<br>
+10:53:11 From Han Joosten to All panelists : Great, very inspiring.
+This is going to save a lot of time!<br>
+10:53:13 From Jyothish Joshi : Thanks!!!<br>
+10:53:15 From Han Joosten to All panelists : Thanks!!<br>
+10:53:19 From Bulent Basaran : Thank you :-)<br>
+10:53:20 From NILESH MESHRAM : no<br>
+10:53:20 From John Soo to All panelists : thanks!!<br>
+10:53:20 From Pablo Adames to All panelists : thanks<br>
+10:53:21 From Franck Rasolo : Thanks Roman & Michael!<br>
+10:53:21 From David Nicholaeff to All panelists : Danke<br>
+10:53:24 From NILESH MESHRAM : thanks<br>
+10:53:30 From Vassil Keremidchiev : Thank you!<br>
+10:53:32 From Yifan Yu : thanks!<br>
+10:53:33 From Dan Banta : Thank you.<br>
+10:53:34 From Aleksandr Lisenko : Thank you!<br>
+10:53:38 From John Askew to All panelists : Seems like ghcid
+completely replaces the `stack build —fast —file-watch approach`,
+is there any reason to use the former?</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Development%20Workflows%20in%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;development-workflows-in-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;development-workflows-in-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;development-workflows-in-haskell&#x2F;&amp;title=Development%20Workflows%20in%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;development-workflows-in-haskell&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#a4d7c5c8c1d7e4c2d4c7cbc9d4c8c1d0c18ac7cbc9" targe="_blank"><span class="__cf_email__" data-cfemail="4330222f2630032533202c2e332f2637266d202c2e">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

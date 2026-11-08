@@ -1,0 +1,161 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+The Downfall of Imperative Programming
+
+By Bartosz Milewski, March 9, 2012
+
+Share this     
+
+Imperative programming is in my bloodstream. I've been a C++ programmer for most of my life. I
+wrote a book about C++. I helped Andrei and Walter design an imperative language D. If I dabbled in
+functional programming, it was mostly to make my imperative programs better.
+
+Over the years I also developed a real passion for concurrent programming. I wrote blogs and
+recorded tutorials about concurrency support in C++11. I went to conferences and read academic
+papers. I proposed an ownership system for D, which didn't fly because it required far reaching
+extensions to the type system and looked painful to use.
+
+There is no doubt in my mind, and most experts agree, that concurrency and parallelism are the
+future of programming. The key word here is "future." The hardware is already there -- even phones
+use multicore processors with powerful GPUs. Hardware vendors are desperate for programmers to
+harness this power. Yet very little is happening in the world of software.
+
+I have recently attended the Multicore DevCon in San Jose, which was part of a big DesignWest Expo.
+I witnessed tremendous progress in hardware since previous years. Hardware is forging ahead without
+any signs of slowdown. Year after year more cores and more GPUs are packed into single chips. This
+is in stark contrast with the situation in software. One could argue that software engineering is
+actually moving backwards in that area.
+
+Remember the times when progress in software was driven by adding abstraction layers between
+programming languages and the details of processor architectures? From flipping binary switches to
+assembly, to FORTRAN and C. Then there was the object-oriented revolution. Programs were written in
+terms of objects, often with domain-specific names like Student or Account. Java even let go of
+pointers and explicit memory management. These were the good times. Enter parallel programming...
+
+I may surprise you that the state of the art in parallel programming is OpenMP and OpenCL. At least
+this is the consensus among panelists who discuss the future of multicore programming at various
+conferences I attend. To remind you, OpenMP is a system of pragmas that you insert into a program
+to make parts of it parallel. OpenCL is a low-level language to communicate with GPUs (there's also
+CUDA, in case OpenCL is not low enough for you).
+
+But maybe this is just a temporary state of affairs and there is ongoing work to ratchet the levels
+of abstraction back to where they'd been. Sure, there's the Chapel language that nicely separates
+concerns about how to parallelize or distribute a computation from the algorithms required by the
+problem domain. There are also higher level libraries like Intel TBB (Threading Building Blocks)
+and Microsoft PPL (Parallel Pattern Library). GPU programming is being addressed by Microsoft
+C++AMP extensions.
+
+They are all failing because of one problem -- data races.
+
+Programmers are scared of concurrency, and rightly so. Managers are scared of concurrency even
+more. If programmers were electricians, parallel programmers would be bomb disposal experts. Both
+cut wires. Except that, when the latter cut the wrong wire, mayhem ensues. We make mistakes in
+coding and we have systems for debugging and testing programs -- there is no such system for
+concurrency bugs. I should know because I worked for a company that made state of the art data race
+detector. But this detector couldn't prove that a program was 100% data-race free. There was always
+a chance that a data race could sneak into a released product and strike at the most inconvenient
+moment. The company's web site had a list of major disasters caused by data races. Among them was
+the famous Therac-25 disaster that killed three patients and injured several others, and the
+Northeast Blackout of 2003 that affected 55 million people. The fears are well founded!
+
+So why are data races so much harder to detect and fix than regular bugs? It all has to do with
+non-determinism. Every time a multi-threaded program is run, its threads may interleave
+differently. The number of possible interleavings is astronomical. If your program has a data race,
+it usually manifests itself only in a very small subset of possible interleavings. To discover a
+bug, two threads must access the same memory location at exactly the same time, and one of the
+threads must modify that location. I have written programs with deliberate data races and I
+couldn't trigger buggy behavior even with extensive testing.
+
+Here's the key insight:
+
+Imperative programs will always be vulnerable to data races because they contain mutable variables.
+
+Did you notice that in the definition of a data race there's always talk of mutation? Any number of
+threads may read a memory location without synchronization but if even one of them mutates it, you
+have a race. That's why the majority of imperative programmers with their mutable variables will
+always be reluctant to embrace concurrent programming. And that is the downfall of imperative
+programming.
+
+So what's the solution? As Sherlock Holmes famously said, "Once you eliminate the impossible,
+whatever remains, no matter how improbable, must be the truth." Enter functional programming.
+
+Here's the second key insight:
+
+There are no data races in purely functional languages because they don't have mutable variables.
+
+All data is immutable. All functions are pure. You might think this is crazy -- how can you program
+with such stifling restrictions? It turns out that people have been doing just that for a long
+time. In fact the most popular language for parallel and distributed programming is Erlang -- a
+functional language. An even better candidate for parallel programming is Haskell, which supports a
+large variety of parallel paradigms.
+
+If you think you can stay away from functional programming, you're mistaken. Imperative languages
+are incorporating more and more of the functional style, exactly because of the pressure from the
+multicore world. In C++ you already have lambdas and higher order functions in the guise of STL
+algorithms. C# has delegates, Java is introducing closures, D supports immutable objects and pure
+functions; the list goes on and on. This is all good, but not enough. If you are just mixing
+functional elements into a predominantly imperative program, the specter of data races will always
+be lurking in the shadows. You may be a very disciplined expert concurrent programmer and still, a
+less knowledgeable member of your team may break your code and nothing in the language is going to
+prevent it. No whistles will blow, no bells will ring.
+
+So here's the situation: Sooner or later you'll have to face the multicore reality. You will be
+forced to learn functional methods to the extent to which your imperative language supports them.
+Despite that, data races will infest your code and leak into released products. So you might as
+well take a shortcut and embrace a full blown functional language now.
+
+How hard is functional programming? It definitely requires some getting used to. You'll have to
+learn to replace loops with recursion, to map and fold your lists, traverse data structures without
+iterators, do input/output using monads, and many other exciting things. All these techniques have
+value on their own. As programmers we constantly learn new tricks, and functional programming is
+just another bag of tricks.
+
+Originally there wasn't much interest in FP outside of academic circles because there was no
+functional killer app. Now we know that this killer app is concurrency. For a functional programmer
+there is no barrier to concurrency, parallelism, or GPU programming.
+
+After dedicating many years of my life to C++ and imperative languages, I decided to switch to
+functional programming and try to convince as many programmers as I can to make the same decision.
+
+Bibliography
+
+ 1. Miran Lipovača, Learn You a Haskell for Great Good! -- an excellent Haskell tutorial
+ 2. Manuel Chakravarty, Data Parallelism in Haskell -- a video presentation.
+ 3. Data Parallel Haskell -- a collection of papers.
+ 4. Repa -- REgular PArallel arrays.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

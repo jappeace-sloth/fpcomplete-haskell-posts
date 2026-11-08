@@ -1,0 +1,75 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Package security in stack
+
+By Michael Snoyman, July 20, 2015
+
+Share this     
+
+As readers of this blog or the mailing lists are likely already aware: package security is
+important to both FP Complete and other members of the Commercial Haskell community. While there
+was quite a bit of public discussion around this during the planning phase, I was reminded in a
+conversation on Friday that we never announced the outcome of these plans.
+
+tl;dr: Secure package distribution is fully implemented in stack, with some options to harden the
+default. We're still implementing an easy author signing story, and that will be announced soon.
+
+The implementation we have in stack follows the plan in the above-linked proposal pretty directly.
+Let me just flesh it out fully here:
+
+  • The all-cabal-hashes repository is used by default by stack for getting the collection of cabal
+    files (known as the package index). This is downloaded over https. In addition to the raw
+    .cabal files, this repository also contains hashes and download sizes for all tarballs
+    available.
+  • When downloading tarballs, the file size and content hash will be verified against the
+    information provided in the index, if available. If more bytes are provided than indicated, the
+    download is aborted. Only after verification is complete is the file moved into its final
+    destination and available for future operations.
+  • For added security (which I'd recommend), you can also turn on GPG verification and requiring
+    hashes for this index (see the stack.yaml configuration settings).
+      □ GPG verification will use Git's built-in GPG support to verify the signature on the
+        all-cabal-hashes tag before accepting the new content, and will refuse to update the index
+        if the GPG verification fails. (You'll need to add our GPG key to your keychain.)
+      □ Requiring hashes means that the package index will not be accepted unless every package
+        listed also has package hash/download size information. This is disabled by default for
+        those who download the package index without Git support.
+
+The story still isn't complete: we have no way to verify that the package author really is the
+person who uploaded the package. Stay tuned to the upload/signature author work we're doing, which
+will hopefully be available Real Soon Now(tm).
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

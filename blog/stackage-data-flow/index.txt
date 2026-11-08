@@ -1,0 +1,153 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+The Stackage data flow
+
+By Michael Snoyman, April 14, 2016
+
+Share this     
+
+I recently wrote up the Stackage data flow. The primary intent was to assist the rest of the
+Stackage curation team see how all the pieces fit together. However, it may also be of general
+interest to the rest of the community. In particular, some of the components used are not widely
+known and may be beneficial for completely separate projects (such as all-cabal-metadata).
+
+Please check out the above linked copy of the file for the most up-to-date content. For
+convenience, I'm copying in the current content as of publication time below.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The Stackage project is really built on top of a number of different subcomponents. This page
+covers how they fit together. The Stackage data flow diagram gives a good bird's-eye view:
+
+Stackage data flow diagram
+
+Inputs
+
+There are three inputs into the data flow:
+
+  • Hackage is the upstream repository of all available open source Haskell packages that are part
+    of our ecosystem. Hackage provides both cabal file metadata (via the 00-index.tar file) and
+    tarballs of the individual packages.
+
+  • build-constraints.yaml is the primary Stackage input file. This is where package maintainers
+    can add packages to the Stackage package set. This also defines upper bounds, skipped tests,
+    and a few other pieces of metadata.
+
+  • stackage-content is a Github repository containing static file content served from stackage.org
+
+Travis
+
+For various reasons, we leverage Travis CI for running some processes. In particular:
+
+  • all-cabal-files clones all cabal files from Hackage's 00-index.tar file into a Git repository
+    without any modification
+
+  • all-cabal-hashes is mostly the same, but also includes cryptographic hashes of the package
+    tarballs for more secure download (as leveraged by Stack. It is powered by
+    all-cabal-hashes-tool
+
+  • all-cabal-packages uses hackage-mirror to populate the hackage.fpcomplete.com mirror of
+    Hackage, which provides S3-backed high availability hosting of all package tarballs
+
+  • all-cabal-metadata uses all-cabal-metadata-tool to query extra metadata from Hackage about
+    packages and put them into YAML files. As we'll see later, this avoids the need to make a lot
+    of costly calls to Hackage APIs
+
+Travis does not currently provide a means of running jobs on a regular basis. Therefore, we have a
+simple cron job on the Stackage build server that triggers each of the above builds every 30
+minutes.
+
+stackage-curator
+
+The heart of running Stackage builds is the stackage-curator tool. We run this on a daily basis on
+the Stackage build server for Stackage Nightly, and on a weekly basis for LTS Haskell. The build
+process is highly automated and leverages Docker quite a bit.
+
+stackage-curator needs to know about the most recent versions of all packages, their tarball
+contents, and some metadata, all of which it gets from the Travis-generated sources mentioned in
+the previous section. In addition, it needs to know about build constraints, which can come from
+one of two places:
+
+  • When doing an LTS Haskell minor version bump (e.g., building lts-5.13), it grabs the previous
+    version (e.g., lts-5.12) and converts the previous package set into constraints. For example,
+    if lts-5.12 contains the package foo-5.6.7, this will be converted into the constraint foo >=
+    5.6.7 && < 5.7.
+  • When doing a Stackage Nightly build or LTS Haskell major version bump (e.g., building lts-6.0),
+    it grabs the latest version of the build-constraints.yaml file.
+
+By combining these constraints with the current package data, stackage-curator can generate a build
+plan and check it. (As an aside, this build plan generation and checking also occurs every time you
+make a pull request to the stackage repo.) If there are version bounds problems, one of the
+Stackage curators will open up a Github issue and will add upper bounds, temporarily block a
+package, or some other corrective action.
+
+Once a valid build plan is found, stackage-curator will build all packages, build docs, and run
+test suites. Assuming that all succeeds, it generates some artifacts:
+
+  • Uploads the build plan as a YAML file to either stackage-nightly or lts-haskell
+  • Uploads the generated Haddock docs and a package index (containing all used .cabal files) to
+    haddock.stackage.org.
+
+stackage-server-cron
+
+On the Stackage build server, we run the stackage-server-cron executable regularly, which
+generates:
+
+  • A SQLite database containing information on snapshots, the packages they contain, Hackage
+    metadata about packages, and a bit more. This database is uploaded to S3.
+  • A Hoogle database for each snapshot, which is also uploaded to S3
+
+stackage-server
+
+The software running stackage.org is a relatively simple Yesod web application. It pulls data from
+the stackage-content repo, the SQLite database, the Hoogle databases, and the build plans for
+Stackage Nightly and LTS Haskell. It doesn't generate anything important of its own except for a
+user interface.
+
+Stack
+
+Stack takes advantage of many of the pieces listed above as well:
+
+  • It by default uses the all-cabal-hashes repo for getting package metadata, and downloads
+    package contents from the hackage.fpcomplete.com mirror (using the hashes in the repo for
+    verification)
+  • There are some metadata files in stackage-content which contain information on, for example,
+    where to download GHC tarballs from to make stack setup work
+  • Stack downloads the raw build plans for Stackage Nightly and LTS Haskell from the Github repo
+    and uses them when deciding which packages to build for a given stack.yaml file
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

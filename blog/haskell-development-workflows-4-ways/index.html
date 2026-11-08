@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Haskell Development Workflows (4 ways)</title>
+  <meta property="og:title" content="Haskell Development Workflows (4 ways)">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Learn how FP Complete uses 4 different development workflows in Haskell. Learn about auto-compile on save via stack, REPL driven development via GHCi, Auto-reload GHCi REPL with ghcid, Emacs + Intero development. Using these will enhance your workflow substantially.">
+  <meta property="og:description" content="Learn how FP Complete uses 4 different development workflows in Haskell. Learn about auto-compile on save via stack, REPL driven development via GHCi, Auto-reload GHCi REPL with ghcid, Emacs + Intero development. Using these will enhance your workflow substantially.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;08&#x2F;haskell-development-workflows-4-ways&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Haskell Development Workflows (4 ways)</h1>
+      
+      <p id="page-description">By Roman Gonzalez, August 23, 2018</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Haskell%20Development%20Workflows%20%284%20ways%29 https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;08&#x2F;haskell-development-workflows-4-ways&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;08&#x2F;haskell-development-workflows-4-ways&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;08&#x2F;haskell-development-workflows-4-ways&#x2F;&amp;title=Haskell%20Development%20Workflows%20%284%20ways%29"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;08&#x2F;haskell-development-workflows-4-ways&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>One fantastic aspect of Haskell is that it offers various tools
+that allow different development workflows. In this blog post, we
+are going to focus on four different workflows to develop Haskell.
+These are techniques that the FP Complete team themselves use
+regularly and we wanted to share them with our readers.</p>
+<h2>Auto-compile on save via stack <code>--file-watch</code></h2>
+<p>This workflow is the simplest one you can introduce to your day
+to day if you are using Stack. To get started you need to use the
+flag <code>--file-watch</code> on the stack command you use to
+build your project (e.g. <code>stack build</code>). This mode
+monitors all the Haskell files in your project, and it executes the
+specified stack command as soon as a file change is detected. For
+example, say you want to run the project’s unit test every time a
+file changes, you can execute this command in your terminal:</p>
+<pre><code class=
+"language-bash">$ stack test --dump-logs --fast --file-watch
+</code></pre>
+<p>The execution of that command would look something like the
+following:</p>
+<p><img alt="workflow_1" sizes="(max-width: 640px) 100vw, 640px"
+src=
+"/images/hubspot/599ed0f9070eff5ed4fd23960363003385bd40fa1667cf03f78d8524a3f11c99.gif"
+srcset=
+"/images/hubspot/ea56ca4093f950da540f1afc06ec84ab898be8b2cf2c15ca5559324cefada99f.gif 320w, /images/hubspot/599ed0f9070eff5ed4fd23960363003385bd40fa1667cf03f78d8524a3f11c99.gif 640w, /images/hubspot/a28a34bfeaa37301cdeecb004b6b578a30fa56e4e3c7baaae485a6cba01bbf67.gif 960w, /images/hubspot/0d365adbe120480c31d58528bc95fb56d1cb395cec585f65c78036678dcf857d.gif 1280w, /images/hubspot/474cd5c53516aa551134b104cec3473e8503e65d0daabc650fc2743d5cd44529.gif 1600w, /images/hubspot/96540bc3426047935c6e1727cf9b492e050b9b2dc29c68baae72bc1d99935fc4.gif 1920w"
+style="width: 640px;" width="640"></p>
+<p><strong>Pros:</strong></p>
+<ul>
+<li>Very easy to get started with</li>
+<li>Works great for projects with a small number of files</li>
+<li>Detects changes automatically after saving a file</li>
+<li>You can run another command everytime compilation is successful
+using the <code>--exec</code> parameter</li>
+<li>Works with any source code editor</li>
+</ul>
+<p><strong>Cons:</strong></p>
+<ul>
+<li>Feedback loop is slow when working on a project with many files
+and dependencies given your workflow goes through compiling and
+linking sources every time a file changes.</li>
+<li>It doesn’t provide an easy way to interact with in-progress
+code</li>
+</ul>
+<h2>REPL driven development via GHCi</h2>
+<p>This workflow allows developers to play with Haskell code
+interactively, in this particular example we are using Stack to run
+GHCi (as it provides some utilities that load all the source code
+of the project automatically for us for a particular target), but
+you can also run it with the <code>ghci</code> program. When using
+GHCi, the result of code changes can be seen quite rapidly, because
+your toolset doesn’t need to recompile/link the whole project, only
+the files that changed.</p>
+<p>You can run the GHCi REPL in your stack project by executing the
+following command in your terminal:</p>
+<pre><code class="language-bash">$ stack repl
+</code></pre>
+<p>When using <code>stack repl</code>, the workflow looks something
+like this:</p>
+<p><img alt="workflow_2" sizes="(max-width: 640px) 100vw, 640px"
+src=
+"/images/hubspot/261ee7d487e6018f2f5824ce3daa20fe74613ded7f3c9fda267d94d494a69cab.gif"
+srcset=
+"/images/hubspot/f79510bb00497d0985fc5bfdd496d1778cfdf8072410f274b87b632efa565512.gif 320w, /images/hubspot/261ee7d487e6018f2f5824ce3daa20fe74613ded7f3c9fda267d94d494a69cab.gif 640w, /images/hubspot/1220bb0b7b0154fecac60f6037383094bb2a7efcb5bbfbe44dd0736ea59530c2.gif 960w, /images/hubspot/8cbc060c870d802624aa80d11ec43f30a02a6e860af641a275af4a0904dd0f08.gif 1280w, /images/hubspot/fa31cec339fd0d2848078efe160696ec529666b7816504a1052b222dca284135.gif 1600w, /images/hubspot/9cddf46373f8d3d0a6755bdc86aaaae9bd7bb468baad3a0d5794e1fbb4b9dfa6.gif 1920w"
+style="width: 640px;" width="640"></p>
+<p>Notice that whenever we change a file, we need to execute the
+<code>:reload</code> command to get the latest changes, and then
+execute <code>:main</code> to run the main application, in this
+case, the main application is a test-suite so that we can run
+test-suites from a REPL.</p>
+<p><strong>Pros:</strong></p>
+<ul>
+<li>Considerably faster feedback loop, especially on larger
+projects</li>
+<li>Works with any source code editor</li>
+<li>The REPL allows you to run the functions you are developing and
+interact with them without having to compile a program</li>
+</ul>
+<p><strong>Cons:</strong></p>
+<ul>
+<li>It doesn’t reload and run your application as soon as you
+modify a file</li>
+<li>Running the program is not as performant as when you compile
+the binary</li>
+</ul>
+<h2>Auto-reload GHCi REPL with ghcid</h2>
+<p><a href="https://github.com/ndmitchell/ghcid" rel="noopener"
+target="_blank">ghcid</a> is a phenomenal tool developed by Neil
+Mitchell. This tool is a combination of the first and second
+approach discussed before. It runs a REPL environment with your
+application and rapidly reloads (and optionally, runs) your program
+as soon as you save changes on your source code files. To get
+started you need to install ghcid and then run a command like the
+following in your terminal:</p>
+<pre><code>$ ghcid --command "stack repl" --test ":main"
+</code></pre>
+<p>When using ghcid, it looks something like the following:</p>
+<img alt="workflow_3" sizes="(max-width: 640px) 100vw, 640px" src=
+"/images/hubspot/1c89098c72001624b45ee00ca04d624135e8882cc90230926fc1884c63327a96.gif"
+srcset=
+"/images/hubspot/474266659d2522edf1217e69f70a0f2a31770d3e2dca2ab2493bd8eea5e89e56.gif 320w, /images/hubspot/1c89098c72001624b45ee00ca04d624135e8882cc90230926fc1884c63327a96.gif 640w, /images/hubspot/60ff119ddb8498e772f41fd1c22418973afb6a0a9f9fdc123efc0b0afeb5d37a.gif 960w, /images/hubspot/a2dbdc81e45afefac3e2fb8558f9409fe8b33152b98a5edaafef5fb6b15b278a.gif 1280w, /images/hubspot/3fda69a1d279a67425bdd7ed89c121b2492a4b414cfd853475ede038a35ff9c7.gif 1600w, /images/hubspot/8518c6af30358f48b00a9e0de2018bf7ee96e0c53d9398f1f6db619cc9766ac2.gif 1920w"
+style="width: 640px;" width="640">
+<p>The command above is loading the project’s test target in a REPL
+environment, and for every change that happens in the file, it
+executes the <code>:main</code> command on its REPL
+environment.</p>
+<p><strong>Pros:</strong></p>
+<ul>
+<li>Fastest feedback loop</li>
+<li>Works with any source code</li>
+<li>Allows modifying the test command to run different things on
+file changes (need to restart the process through)</li>
+</ul>
+<p><strong>Cons:</strong></p>
+<ul>
+<li>You are no longer able to interact with the source code; it
+only verifies that the code compiles and it runs the test
+command</li>
+<li>If running a long-living application on the “test command”
+argument, it behaves a bit strange (for example, the standard
+output gets lost)</li>
+</ul>
+<h2>Emacs + Intero development</h2>
+<p>Lastly, we are going to talk about a very powerful workflow.
+Intero allows you to run the Haskell REPL inside your editor, which
+in itself allows you to gather information from it to enhance your
+code editing experience; it also allows you to quickly reload a
+module you are working on in the REPL with just a key binding. This
+workflow is very similar to the GHCi one, but with the extra
+benefit of having the REPL embedded in your editor. If you are an
+Emacs savvy, you may be able to get all the features that ghcid
+offers in your emacs editor. Following is an example of how using
+intero would look like:</p>
+<p><img alt="workflow_4_1" sizes="(max-width: 640px) 100vw, 640px"
+src=
+"/images/hubspot/89b926b5884928d434bf3a1749ad0c20be8b2346fb581a25bb12ea97c489e45e.gif"
+srcset=
+"/images/hubspot/201498513edd2156fc7072897aa02c382378d38965bb3f947cca8d615412455b.gif 320w, /images/hubspot/89b926b5884928d434bf3a1749ad0c20be8b2346fb581a25bb12ea97c489e45e.gif 640w, /images/hubspot/891d512a9adcd87bf8a7e155211edd3d715b7293d052c97f23f221dd65db3ef0.gif 960w, /images/hubspot/cbe69f15fb4d4b716721b0e2fe29c5f5616f35ccca0853a44e9e2e8d8bc1c759.gif 1280w, /images/hubspot/e8a9045602104f16365bdb175e143f8ee7e4537f615943522bf46a1da3191032.gif 1600w, /images/hubspot/86d9d721dddfed10496000bb8dc97f1d1d141ae8bae9dbef9ae821ed9c295e3f.gif 1920w"
+style="width: 640px;" width="640"></p>
+<p>With enough experience using emacs lisp, you may extend your
+editor to support auto-reload and execution of commands like in
+ghcid. In this example, we create an emacs hook that runs the
+reload automatically for us as soon as we save the file in the
+editor:</p>
+<p><img alt="workflow_4_2" sizes="(max-width: 640px) 100vw, 640px"
+src=
+"/images/hubspot/6019992a4f25d086216c600a37a43814609b78d93088f06d3b3e78e5eb661ae7.gif"
+srcset=
+"/images/hubspot/6cdc0a742639aa1e0332fac7be2935f6d31bf5bf67b0b0640dd0f40d19863909.gif 320w, /images/hubspot/6019992a4f25d086216c600a37a43814609b78d93088f06d3b3e78e5eb661ae7.gif 640w, /images/hubspot/dcd075520b3425ca1d85ce043af095f542bd5291703ff6a3ee563b2f124debc5.gif 960w, /images/hubspot/338537d0a12454837383143d5504159ccaae26c73147860b0c342871c197bb1d.gif 1280w, /images/hubspot/88d25e8299a37af7c3337bbde04e2c073486d64a6166420966020b3fd1fc7219.gif 1600w, /images/hubspot/5075e0583db0ff28ac2d94b1fefc3c097532a39ee524e258ccdb863ea325898c.gif 1920w"
+style="width: 640px;" width="640"></p>
+<p><strong>Pros:</strong></p>
+<ul>
+<li>Fastest feedback loop (if you use emacs)</li>
+<li>The REPL allows you to run the functions you are developing and
+interact with them without having to compile a program</li>
+<li>Seamless integration with emacs (enhances coding
+experience)</li>
+</ul>
+<p><strong>Cons:</strong></p>
+<ul>
+<li>Attached to a particular editor</li>
+</ul>
+<h2>Conclusion</h2>
+<p>These are the four main ways we develop Haskell in FP Complete,
+if you have used one of the approaches but not the others; we
+encourage you to go out there, to leave the comfort zone and try
+out a new approach, you may discover it improves your workflow
+substantially. Do you have another workflow that you are productive
+with that we didn’t mention? Let us know in the comments.</p>
+<p>If you haven't heard about it yet, you can attend our next free
+webinar on how to deploy Haskell Apps using Kubernetes. You can
+register for the event by clicking the button below.</p>
+<p>Also, if you want to know about Haskell and how we use it at FP
+Complete, please visit <a href="/haskell" rel="noopener" target=
+"_blank">The Haskell Programming Language</a>.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Haskell%20Development%20Workflows%20%284%20ways%29 https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;08&#x2F;haskell-development-workflows-4-ways&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;08&#x2F;haskell-development-workflows-4-ways&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;08&#x2F;haskell-development-workflows-4-ways&#x2F;&amp;title=Haskell%20Development%20Workflows%20%284%20ways%29"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;08&#x2F;haskell-development-workflows-4-ways&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#780b19141d0b381e081b171508141d0c1d561b1715" targe="_blank"><span class="__cf_email__" data-cfemail="d6a5b7bab3a596b0a6b5b9bba6bab3a2b3f8b5b9bb">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

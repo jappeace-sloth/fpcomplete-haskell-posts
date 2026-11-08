@@ -1,0 +1,289 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Do you like Scala? Give Haskell a try!
+
+By Philipp Kant, November 29, 2016
+
+Share this     
+
+The language Scala promises a smooth migration path from Object-oriented Java to functional
+programming. It runs on the JVM, has concepts both from OOP and FP, and an emphasis on
+interoperability with Java.
+
+As a multi-paradigm language, Scala can flatten the learning curve for those already familiar with
+OOP, at the price of making some compromises in language design that can make functional
+programming in Scala more cumbersome than it has to be.
+
+If you like the functional aspects of Scala, but are somewhat bothered by the annoyances that doing
+FP in Scala incurs, you should take a look at Haskell! It is one of the languages that inspired
+Scala, so you will find many familiar concepts. By fully embracing the functional paradigm, Haskell
+makes functional programming much more convenient. The following is an (incomplete) overview of
+some of the things you can expect from Haskell.
+
+If you want to try out Haskell right away, you can find instructions for getting started here. We
+have collected some useful training resources at FP Complete Haskell Syllabus, and also provide
+commercial training. If you're planning to use Haskell for a project and want some help, we can
+provide you with Consulting services.
+
+Concise syntax
+
+Scala uses a Java-like syntax, but avoids a lot of unnecessary boilerplate by making things like an
+end-of-line semicolon or empty code blocks { } optional.
+
+Haskell goes much further in terms of conciseness of syntax. For instance, function application,
+the most common operation in a functional language, is indicated by whitespace, writing f x instead
+of f(x).
+
+As an example of Haskell's conciseness, consider the definition of a binary tree containing data of
+some type A. In Scala, you'd define a trait, and a case object/case class each for an empty node
+and a node that contains an A, and left and right sub-trees, like this:
+
+sealed trait Tree[+A]
+case object Empty extends Tree[Nothing]
+case class Node[A](v: A, l: Tree[A], r: Tree[A]) extends Tree[A]
+
+The Haskell equivalent is
+
+data Tree a = Empty
+    | Node a (Tree a) (Tree a)
+
+Another thing that is syntactically more pleasant in Haskell is currying: in Scala, if you want to
+use a curried function, you have to anticipate this when defining the function, and write
+
+def curriedF(x: Int)(y: Int) = ...
+
+instead of
+
+def f(x: Int, y: Int) = ...
+
+and then use an underscore to get a one-argument function, as in curriedF(x)_. In Haskell, you can
+curry any function by applying it to a subset of its arguments; if you define a function of two
+arguments, as in
+
+f x y = ...
+
+then f x is a function of one argument.
+
+Function composition, i.e., combining two functions f :: b -> c and g :: a -> b to a function from
+a to c, is simply indicated by a dot, as in f . g :: a -> c. With function composition and
+currying, it is possible to combine small functions with minimal visual overhead. For example,
+
+tenSmallest = take 10 . sort
+
+defines a function that will first sort a list, and then return the first 10 elements.
+
+The minimalistic syntax of Haskell both avoids excessive typing, and makes it easier to read code,
+since there is less distracting boilerplate.
+
+More powerful type system
+
+Both Scala and Haskell are statically typed languages, but Haskell's type system is arguably more
+powerful, in the sense that it provides more guarantees that are checked by the compiler. It also
+has superior type inference, which means that it places a lower burden on the programmer.
+
+Zero-cost newtypes
+
+One of the benefits of using a type system is that it prevents you from making mistakes such as
+passing an argument to a function that makes no sense. The more fine-grained the type system is,
+the more mistakes it can preclude.
+
+For instance, you might have many values of type Double in your program, where some may stand for
+lengths as measured in meters, some for times in seconds, etc. If the type system only knows that
+those are Doubles, it will not get in your way when you do a silly mistake, such as adding a time
+and a distance.
+
+In Scala, you can wrap a Double up in a value class that represents a time interval as in,
+
+class Seconds(val value: Double) extends AnyVal
+
+This type is essentially a Double, but Scala will not let you mix up values of type Seconds and
+Double, eliminating a class of possible errors.
+
+Scala tries to avoid instantiation of value classes, using the underlying type as the runtime
+representation whenever possible. However, since the JVM does not support values classes, under
+some circumstances (such as when performing pattern matches or storing a value class in an array),
+instantiation is unavoidable and there is a run-time cost to the abstraction.
+
+If we want to perform operations, such as addition or subtraction, on the new type Seconds, we'll
+have to define operations on them, such as
+
+class Seconds(val value: Double) extends AnyVal {
+  def +(x: Seconds): Seconds = new Seconds(value + x.value)
+  def -(x: Seconds): Seconds = new Seconds(value - x.value)
+}
+
+While this is straightforward, it is boilerplate code that you'd like to avoid writing yourself.
+
+In Haskell, you can: defining Seconds as a newtype, as in
+
+newtype Seconds = Seconds Double deriving (Eq, Num, Ord)
+
+will define a new type, Seconds, that has numerical operations, comparisons, and equality defined.
+Furthermore, the run-time representation of this will always be a plain Double, so there is no cost
+for this abstraction.
+
+Since newtypes are so lightweight (both in terms of performance and in the amount of boilerplate
+code), they are used pervasively in Haskell projects, which contributes to clean, robust code.
+
+Track side effects in the type system
+
+A prominent example is the IO type: in Haskell, the type signature
+
+f :: a -> b
+
+indicates a function f that takes a value of type a, and returns a value of type b, without
+producing any side effects. This is distinct from
+
+g :: a -> IO b
+
+which says that g takes input of type a, gives output of type b, but also can also perform some IO
+in between.
+
+Just by looking at the type signature, a programmer can conclude that f does not interact with the
+file system, the network, or the user. This means that the function f is referentially transparent,
+i.e., an occurrence of f in the code is equivalent to its result.
+
+In Scala, writing referentially transparent functions is encouraged as a best practice, but it is
+not evident, without reading the actual code, whether a given function has side effects or not. In
+Haskell, referential transparency is enforced by the type system, which not only gives important
+information to the programmer, but also allows for optimizations in the form of rewrite rules.
+
+As an example, consider the consecutive application of two functions f :: a -> b and g :: b -> c to
+all the elements of a list, via map. You can either write this as
+
+map g . map f
+
+or as
+
+map (g . f)
+
+For referentially transparent functions, both versions give the same result, but the first version
+involves two list traversals, and the second only one. Since referential transparency is evident in
+the types, GHC can safely use a rewrite rule to replace the first version with the second.
+
+These rewrite rules are not hard-wired into the compiler, but are a feature that is exposed to the
+programmer, so that when you implement your own data structures, you can define your own rewrite
+rules to boost efficiency. A prominent example is the vector package, which uses re-write rules to
+performs stream fusion, giving c-like performance to high level code.
+
+No conflicting implicit conversions
+
+Scala has the notion of implicit conversions, that let you add functionality to your types. For
+instance, declaring an implicit conversion to the Ordered trait lets you add functions for
+comparing values with respect to some ordering. Implicit conversions are a powerful tool, but also
+one that can lead to subtle errors. Since implicits can be brought to scope anywhere, you have no
+guarantee of consistency.
+
+For example, when you use implicit conversions to store and retrieve data in a sorted set, there is
+no guarantee that the implicit conversion used for storage and retrieval is the same.
+
+In Haskell, you would instead write an instance of the Ord typeclass for your data type. Since
+writing multiple instances of a given type class for the same data type is a compile-time error,
+consistency is guaranteed.
+
+Superior type inference
+
+One argument brought against static type systems is that writing down type signatures for every
+function can be tedious. But modern languages like Scala and Haskell feature algorithms that let
+the compiler infer the type of a function when none is stated explicitly.
+
+Scala, being a multi-paradigm language, has to account for inheritance, which makes type inference
+more challenging. As a result, in many cases Scala cannot infer types that are much easier to infer
+in Haskell.
+
+More advanced features
+
+If you miss features like existential or universal quantification, type families, or generalized
+algebraic data types, Haskell has those as well.
+
+With many researchers amongst its users, Haskell gets new extensions to its type system regularly.
+One notable example is Liquid Haskell, which lets you encode restrictions to your types, and pre-
+and postconditions for your functions, and have their correctness proven at compile time,
+eliminating the need for run-time checks.
+
+Proper tail call optimization
+
+Functional programming relies heavily on the use of recursion where imperative languages would use
+loops. In order not to blow the stack, tail call optimization is employed.
+
+Unfortunately, due to limitations in the JVM, Scala only has fairly limited tail call optimization,
+in that it only optimizes self-tail calls. This excludes the case of multiple functions making tail
+calls to each other (which flatMap does), severely limiting the usefulness of functional
+programming in Scala.
+
+There are workarounds for this, such as using trampolines, but they come with performance costs.
+Thus, when programming in Scala, you often face the question whether it is ok to using functional
+programming techniques for some problem, or if the price you pay in terms of performance would be
+too high.
+
+Haskell does not have this problem, since all tail calls are optimized.
+
+Language interoperability
+
+A strong selling point of Scala is its interoperability with Java, allowing the re-use of a
+plethora of existing libraries.
+
+Haskell provides a lot in terms of language interoperability as well:
+
+  • The Foreign Function Interface (FFI) allows calling C functions from Haskell code. It is very
+    easy to use, and allows interoperation with all languages that also have C interoperability
+    (such as C++, Python, and Ruby). A lot of popular C libraries have Haskell bindings using the
+    FFI.
+  • Furthermore, it is possible to embed snippets of C code directly into your Haskell code, via
+    inline-c.
+  • For data analysis and visualization, you can embed R code with inline-r.
+  • With the recent addition of inline-java, it is straightforward to call Java functions from
+    Haskell (although Haskell will not share a heap with Java, as Scala does).
+
+Haskell is ready for production
+
+With its origins in academia, Haskell gets a reputation of being a language purely for the Ivory
+Tower. Despite this preconception, Haskell is being used successfully in real world projects:
+Facebook built its spam filter with Haskell, the Commercial Haskell special interest group lists
+companies using Haskell, and our own success stories show some examples of successful applications
+of Haskell in industry.
+
+Get Started
+
+If you want to try out Haskell right away, you can find instructions for getting started here. If
+you want to learn more, have a look at the FP Complete Haskell Syllabus, or look at our Haskell
+training.
+
+If you're planning to use Haskell for a project and want some help, we can provide you with
+Consulting services.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

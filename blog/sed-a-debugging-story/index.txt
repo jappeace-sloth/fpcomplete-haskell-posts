@@ -1,0 +1,302 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Sed: a debugging story
+
+By Michael Snoyman, June 19, 2018
+
+Share this     
+
+This blog post is a semi-complete retelling of my debugging adventures on a particularly crazy bug.
+Consider it a combination of fun story telling for the audience and catharsis for myself. This
+affects anyone trying to use AppVeyor and Stack for projects that use the network package with GHC
+8.4 and up. If you want to cheat and get the solution, check out the pull request. Otherwise, strap
+yourselves in, it's gonna be a bumpy ride.
+
+Initial bug report
+
+Neil Mitchell opened a bug report against Stack. The bug report detailed the fact that running
+stack --resolver nightly build network would fail, but using stack unpack network and then building
+the locally unpacked source files did work. When it failed, the error message was:
+
+config.status: creating network.buildinfo
+sed: -e expression #1, char 257: invalid reference \1 on `s' command's RHS
+
+Initially, I didn't believe this was too serious a bug: it appeared that unpacking locally was a
+decent workaround. I didn't understand that this bug would prevent using AppVeyor for any testing
+of compatibility of Haskell source code on Windows. My initial poking and prodding at the issue was
+therefore minimal. Once I was shown that this was more serious than I thought, I spent significant
+time in clusters over the past few weeks trying to understand what was going on.
+
+First guesses
+
+A first guess at the problem here is that we had two different versions of the sed executable at
+play, and one was misbehaving. This even lines up with the bug triggering on AppVeyor. AppVeyor
+itself will install its own sed.exe as part of its Git installation, and Stack will provide a
+sed.exe as part of the msys environment. For some reason, Stack was setting different environment
+variables for different ways of building, causing the buggy behavior.
+
+However, this hypothesis left some questions:
+
+  • Why would a change in GHC version cause Stack to pass in different environment variables?
+  • How could two different sources for a sed.exe executable have such different behaviors?
+
+Since I didn't like this hypothesis too much, I decided to try to disprove it. I tried installing a
+modified sed.exe that would pass its arguments over to the real sed.exe. I got that sort of working
+, but it turned out that I'd messed up the actual passing in of the arguments. I didn't end up
+figuring out what I did wrong here. However, the AppVeyor log showed me exactly what I needed to
+know:
+
+Both the stack unpack and stack build network versions of the build called my modified sed.exe.
+This disproved the initial hypothesis well enough for me: the problem was not in different
+executables being called. Something else had to be afoot.
+
+What's GHC got to do with this?
+
+Let's take a step back and understand exactly what Stack is doing when this bug gets triggered.
+With the stack build network case, it starts off by downloading the network-2.7.0.0.tar.gz tarball
+and unpacking it to a temporary directory. In the stack unpack network-2.7.0.0 case, the
+downloading and unpacking happen during the unpack call, and happen to the current directory, not a
+temporary directory. Once we have the files on the filesystem, the following steps occur:
+
+ 1. Stack compiles the Setup.hs file from network into Setup.exe. This module uses the Cabal
+    library that ships with GHC.
+ 2. Stack calls Setup.exe configure with the PATH environment variable set appropriately to find
+    build tools (like GHC, gcc, bash, sed, etc).
+ 3. Setup.exe configure runs the configure script that ships with the network package, which
+    ultimately has the sed failure.
+
+Looking at these steps, there are only two places where GHC could have any impact:
+
+  • The directories set for the PATH to find the GHC executable
+  • Which Cabal library is used
+
+The former doesn't seem likely to be the problem, since the directory holding ghc.exe seems
+unrelated to how sed.exe is being called. However, the latter—which Cabal library is used—seems
+promising. My new hypothesis was: the GHC version at play isn't actually causing the bug, it's the
+Cabal library version.
+
+I tested this hypothesis by using GHC 8.2.2, which initially worked perfectly, and installing a
+newer version of the Cabal library. I ended up doing this manually in a remote desktop session to
+AppVeyor, so I have no scripts to show. But the result was exactly what I was hoping for: once I
+installed Cabal 2.2 with GHC 8.2.2, it failed just like GHC 8.4.3 did. Hurrah! We narrowed down the
+source of the problem.
+
+Unpack location
+
+This gets us a bit closer, but we still don't know why the two ways of unpacking the network
+package make a difference. But let me paraphrase myself from above:
+
+    With the stack build network case, it unpacks to a temporary directory. In the stack unpack
+    network-2.7.0.0 case, it unpacks to the current directory.
+
+Alright, that's somewhat promising. New hypothesis: for some reason, unpacking to a temporary
+directory causes the breakage. Easy enough to test. Let's manually stack unpack into a “temporary”
+directory. I looked at the logs from the stack build network case, and found that it was building
+from C:\Users\appveyor\AppData\Local\Temp\1\stack2232\network-2.7.0.0. So I manually ran some
+commands along the lines of:
+
+mkdir C:\Users\appveyor\AppData\Local\Temp\1\stack2232\
+cd C:\Users\appveyor\AppData\Local\Temp\1\stack2232\
+stack unpack network-2.7.0.0
+cd network-2.7.0.0
+echo "resolver: ghc-8.4.3" > stack.yaml
+stack build
+
+And, like magic, I reproduced the bug! This was a great breakthrough, it was the first time I
+reproduced the bug and had access to modify the source code at the same time (without tweaking
+Stack's behavior). The question was: what was wrong with that directory?
+
+The path length limit
+
+I've been burned many times in the past by Window's path length limit, which is set somewhere
+around 256 characters. (Yeah, it's sort of 260, and yeah, it's sort of been relaxed. But I'm
+paranoid.) So my first guess was that this temp directory was too long. So I decided to
+progressively move up the directory tree to see where things stopped failing.
+
+I tried building inside C:\Users\appveyor\AppData\Local\Temp\1\ next, and the build failed. I moved
+up another directory and built in C:\Users\appveyor\AppData\Local\Temp\. And suddenly the build
+succeeded. I hadn't expected that: I'd only removed two characters from the path.
+
+Eureka!
+
+I stared at the subdirectory I'd just removed, 1\. And I had a crazy thought. I ran something like:
+
+mkdir \1
+cd \1
+stack unpack network-2.7.0.0
+cd network-2.7.0.0
+echo "resolver: ghc-8.4.3" > stack.yaml
+stack build
+
+And, even with this tiny path, the build failed! There seemed to be something magical about the \1
+subdirectory. I was able to use this approach to reliably reproduce the bug on my local Windows
+machine too, which was a much more pleasant continuation of debugging than remotely connecting to
+AppVeyor (although the RDP setup for AppVeyor is an amazing feature). Awesome!
+
+Next I decided to fuzz this a bit more, and built in c:\2. This time, my error message changed
+from:
+
+sed: -e expression #1, char 213: invalid reference \1 on `s' command's RHS
+
+to
+
+sed: -e expression #1, char 213: invalid reference \2 on `s' command's RHS
+
+That's when it hit me: sed was, for some reason, suddenly interpreting components of the file path
+as part of its substitution command. Weird!
+
+Cabal's fault!
+
+Now I knew the problem was related to paths, and that there was a change in Cabal 2.2 versus Cabal
+2.0 that triggered this bug. Therefore, there must be some difference between these two versions
+and how they're calling the configure script. After some searching, I found the current call to the
+configure script:
+
+configureFile <- makeAbsolute $
+  fromMaybe "." (takeDirectory <$> cabalFilePath lbi) </> "configure"
+...
+let args' = configureFile:args ++ ["CC=" ++ ccProgShort]
+...
+runProgramInvocation verbosity $
+  (programInvocation (sh {programOverrideEnv = overEnv}) args')
+  { progInvokeCwd = Just (buildDir lbi) }
+
+Which roughly translates to:
+
+ 1. Find the configure file in the same directory of the cabal file
+ 2. Get an absolute path to that file
+ 3. Construct a set of command line arguments with the configure script as the first argument
+ 4. Pass all of this to sh, setting the working directory to the build directory
+
+OK, all of that seems reasonable. But for some reason, the path to the config file is being
+interpreted as sed commands. It turns out that you can replace backslashes with forward slashes in
+Windows file paths, so my next step was to try this little ugly hack:
+
+let args' = map replace configureFile:args ++ ["CC=" ++ ccProgShort]
+    replace '\\' = '/'
+    replace c = c
+
+And sure enough, this worked! Definitely zeroing in. My next question was: what did this look like
+in Cabal 2.0? A quick call to git diff origin/2.0 -- Cabal/Distribution/Simple.hs revealed that:
+
++  configureFile <- makeAbsolute $
++    fromMaybe "." (takeDirectory <$> cabalFilePath lbi) </> "configure"
+...
+-      args' = args ++ ["CC=" ++ ccProgShort]
++      args' = configureFile:args ++ ["CC=" ++ ccProgShort]
+...
+                  (programInvocation (sh {programOverrideEnv = overEnv}) args')
++                 { progInvokeCwd = Just (buildDir lbi) }
+...
+-    args = "./configure" : configureArgs backwardsCompatHack flags
++    args = configureArgs backwardsCompatHack flags
+
+It seems that Cabal 2.0 was assuming that the current working directory contained the configure
+script, and therefore wasn't passing in the full path on the command line. And therefore, the funny
+paths couldn't possible be interpreted as sed commands. Can we get back that same behavior? Sure,
+by make the code instead look something like:
+
+let configureFile = "./configure"
+...
+let args' = configureFile:args ++ ["CC=" ++ ccProgShort]
+...
+runProgramInvocation verbosity $
+  (programInvocation (sh {programOverrideEnv = overEnv}) args')
+  { progInvokeCwd = fmap takeDirectory (cabalFilePath lbi) }
+
+I tried this out, and the network package built correctly. I've since filed an issue with Cabal
+about this.
+
+Cabal's fault?
+
+Alright… but is that really a bug in Cabal? It passed a valid path to the configure script, which
+proceeded to barf. After some discussion on the aforementioned issue, it became clear that, in
+fact, this is a bug in autotools itself. Quasi Computation sent a bug report upstream.
+
+However, even if the bug is upstream, this is an issue we'll need to deal with, since:
+
+  • There's no timeline on an autotools fix
+  • It will take time for the autotools fix to deploy
+  • Even after it deploys, broken configure scripts will continue to exist in the wild, such as all
+    existing versions of the network package
+
+We can change the Cabal library to not trigger this bug with some flavor of the workaround I
+mentioned above. However, Stack will continue to use the version of Cabal that ships with GHC by
+default, which for GHC 8.4.1, 8.4.2, and 8.4.3 will trigger this bug.
+
+Stack's workaround
+
+One workaround for Stack would be kind of crazy: add some conditional logic to, on Windows, when
+using Cabal 2.2, check if the generated temporary directories include a backslash followed by a
+digit, and then figure out some other directory to use. I considered that for a bit, and then
+realized we had a simpler solution, so I sent a PR consisting of:
+
+   global:
+     STACK_ROOT: "c:\\sr"
+
++    # Override the temp directory to avoid sed escaping issues
++    # See https://github.com/haskell/cabal/issues/5386
++    TMP: "c:\\tmp"
++
+
+All we've done is changed the temporary directory used when building on AppVeyor. This works well
+enough, as to my knowledge most Windows systems do not have such weird temporary directory paths.
+If others are affected by this in the future, we can make further tweaks to either Stack itself,
+the Stack installer, or documentation.
+
+Last unsolved question
+
+I have one final question that I haven't answered yet. I was able to reproduce the bug using
+Cabal-the-library and a manually created triggering directory. But what about using cabal-install
+to install network? Well, that seems to work just fine. It seems that cabal-install unpacks into C:
+\Users\appveyor\AppData\Local\Temp\cabal-tmp-2952. Notice how it does not have a \1 style path in
+it.
+
+I've looked through both the Stack and cabal-install codebases briefly, and I cannot figure out why
+they'd have different behavior for creating temporary directories. But at this point, I've had
+enough of my debugging adventure. Perhaps some curious reader will shed some light on the last
+mystery here.
+
+Takeaway
+
+This was a challenging, frustrating, and ultimately fun bug. It's not often we get to find bugs in
+such ubiquitous tools as autoconf. It took a lot of effort to unwind the various layers of tooling.
+Getting a reliable repro locally was hard, and AppVeyor's remote desktop was invaluable there. And
+the debugging technique of “form a hypothesis, try to invalidate it” helped me ultimately zero in
+on the real problem.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

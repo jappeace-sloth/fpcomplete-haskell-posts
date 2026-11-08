@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Cryptographic Hashing in Haskell</title>
+  <meta property="og:title" content="Cryptographic Hashing in Haskell">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Cookbook-style blog post demonstrating how to do cryptographic hashing with the cryptonite library, with related work like base-16 encoding.">
+  <meta property="og:description" content="Cookbook-style blog post demonstrating how to do cryptographic hashing with the cryptonite library, with related work like base-16 encoding.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;09&#x2F;cryptographic-hashing-haskell&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Cryptographic Hashing in Haskell</h1>
+      
+      <p id="page-description">By Michael Snoyman, September 12, 2017</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Cryptographic%20Hashing%20in%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;09&#x2F;cryptographic-hashing-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;09&#x2F;cryptographic-hashing-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;09&#x2F;cryptographic-hashing-haskell&#x2F;&amp;title=Cryptographic%20Hashing%20in%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;09&#x2F;cryptographic-hashing-haskell&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>The <a href=
+"https://www.stackage.org/package/cryptonite">cryptonite
+library</a> is the de facto standard in Haskell today for
+cryptography. It provides support for secure random number generic,
+shared key and public key encryption, message authentification
+codes (MACs), and—for our purposes today—cryptographic hashes.</p>
+<p>For those unfamiliar: a hash function is a function that maps
+data from arbitrary size to a fixed size. A cryptographic hash
+function is a hash function with properties suitable for
+cryptography (see <a href=
+"https://en.wikipedia.org/wiki/Cryptographic_hash_function">Wikipedia
+article for more details</a>). A common example of cryptographic
+hash usage is providing a checksum on a file download to ensure it
+has not be tampered with. Common algorithms in use today include
+SHA256, Skein512, and (the slightly outdated) MD5.</p>
+<p>The cryptonite library is built on top of the <a href=
+"https://www.stackage.org/package/memory">memory library</a>, which
+provides type classes and convenience functions for dealing with
+reading and creating byte arrays. You may initially think
+"shouldn't it all be <code>ByteString</code>s." We'll get to why
+the type classes are so helpful later.</p>
+<p>Once familiar with these two libraries, they are straightforward
+to use. However, seeing how all the pieces fit together is
+difficult from just the API docs, especially understanding where an
+explicit type signature will be necessary. This post will give a
+quick overview of the pieces you'll want to be interacting with
+with simple, runnable examples. By the end, the goal is that you'll
+be able to trivially understand the API docs themselves.</p>
+<p>The runnable examples below will all use the Stack script
+interpreter support. Make sure you <a href=
+"https://haskell-lang.org/get-started">have Stack installed</a> and
+then, for each example:</p>
+<ul>
+<li>Copy the contents into a file called <code>Main.hs</code></li>
+<li>Run <code>stack Main.hs</code></li>
+</ul>
+<h2 id="basic-typeclasses">Basic typeclasses</h2>
+<p>You're used to dealing with a a number of different string-like
+things, between strict and lazy bytestrings and text, plus
+<code>String</code>s. However, if I asked you to tell me how to
+represent a strict sequence of bytes, you'd likely refer to
+<code>Data.ByteString.ByteString</code>. However, as you'll see
+through this tutorial, there are multiple data types we'll want to
+treat as a sequence of bytes.</p>
+<p>The <code>memory</code> library defines two typeclasses to help
+out with this:</p>
+<ul>
+<li><a href=
+"https://www.stackage.org/haddock/lts-9.4/memory-0.14.7/Data-ByteArray.html#t:ByteArrayAccess">
+<code>ByteArrayAccess</code></a> gives you read-only access to the
+bytes within a data type.</li>
+<li><a href=
+"https://www.stackage.org/haddock/lts-9.4/memory-0.14.7/Data-ByteArray.html#t:ByteArray">
+<code>ByteArray</code></a> gives you read/write access, and is a
+child class of <code>ByteArrayAccess</code>.</li>
+</ul>
+<p>To demonstrate, let's do a pointless conversion between
+<code>ByteString</code> and <code>Bytes</code> (which we'll explain
+in a second).</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.3 script</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteArray</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">BA</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ByteString</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">B</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-conid">B</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">writeFile</span> <span class=
+"hs-str">"test.txt"</span> <span class=
+"hs-str">"This is a test"</span>
+  <span class="hs-varid">byteString</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">readFile</span> <span class="hs-str">"test.txt"</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">bytes</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">BA</span><span class="hs-varop">.</span><span class=
+"hs-conid">Bytes</span>
+      <span class="hs-varid">bytes</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">BA</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">convert</span> <span class="hs-varid">byteString</span>
+  <span class="hs-varid">print</span> <span class=
+"hs-varid">bytes</span></pre>
+<p>We're starting off with some file I/O using the bytestring
+library (because you should <a href=
+"https://www.snoyman.com/blog/2016/12/beware-of-readfile">really do
+I/O with bytestring</a>). Then the <code>convert</code> function
+can turn that into a <code>Bytes</code> value.</p>
+<p><strong>EXERCISE</strong> What do you think the type signature
+of <code>convert</code> is, given the description of the two
+typeclasses above? You can <a href=
+"https://www.stackage.org/haddock/lts-9.4/memory-0.14.7/Data-ByteArray.html#v:convert">
+check if you're right</a>.</p>
+<p>Did you notice that explicit type signature I put on the
+<code>bytes</code> value? Well, that's your next lesson with
+<code>memory</code> and <code>cryptonite</code>: since so many
+functions work on type classes instead of concrete types, you'll
+often end up needing to give GHC some assistance on type
+inference.</p>
+<p>I could show you an example of a data type which is a
+<code>ByteArrayAccess</code> but not a <code>ByteArray</code>, but
+it will ring hollow right now. When we get to actual hashing, the
+distinction in type classes will make a lot more sense. So let's
+just wait.</p>
+<h3 id="why-the-different-data-types">Why the different data
+types?</h3>
+<p>You may be legitimately wondering why there's a
+<code>Bytes</code> datatype in <code>memory</code>, when it seems
+identical to <code>ByteString</code>. In fact: it's not.
+<code>Bytes</code> has less memory overhead, which it gets by not
+tracking the offset and length of its slice. In exchange for that:
+a <code>Bytes</code> value doesn't allow for any slicing. In other
+words, the <code>drop</code> function on a <code>Bytes</code> would
+have to create a new copy of the buffer.</p>
+<p>In other words: this is all performance stuff. And a library
+dealing with cryptography generally needs to be more concerned with
+performance.</p>
+<p>Another interesting data type in <code>memory</code> is <a href=
+"https://www.stackage.org/haddock/lts-9.4/memory-0.14.7/Data-ByteArray.html#t:ScrubbedBytes">
+<code>ScrubbedBytes</code></a>. This type has three special
+properties (as called out in its Haddocks):</p>
+<ul>
+<li>Being scrubbed after its goes out of scope.</li>
+<li>A <code>Show</code> instance that doesn't actually show any
+content</li>
+<li>A <code>Eq</code> instance that is constant time</li>
+</ul>
+<p>In other words: it automatically prevents a number of common
+security holes when dealing with sensitive data.</p>
+<p>OK, not much code to look at here, let's get to more fun
+stuff!</p>
+<h2 id="base-16-encodingdecoding">Base 16 encoding/decoding</h2>
+<p>Let's convert some user input into base 16 (aka
+hexadecimal):</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.3 script</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteArray</span>          <span class=
+"hs-keyword">as</span> <span class="hs-conid">BA</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteArray</span><span class=
+"hs-varop">.</span><span class=
+"hs-conid">Encoding</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">convertToBase</span><span class=
+"hs-layout">,</span> <span class=
+"hs-conid">Base</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Base16</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span>         <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ByteString</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Text</span><span class="hs-varop">.</span><span class=
+"hs-conid">Encoding</span>      <span class=
+"hs-layout">(</span><span class=
+"hs-varid">encodeUtf8</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Text</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span>            <span class=
+"hs-keyword">as</span> <span class="hs-conid">TIO</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span>               <span class=
+"hs-layout">(</span><span class=
+"hs-varid">hFlush</span><span class="hs-layout">,</span> <span class="hs-varid">stdout</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">putStr</span> <span class=
+"hs-str">"Enter some text: "</span>
+  <span class="hs-varid">hFlush</span> <span class=
+"hs-varid">stdout</span>
+  <span class="hs-varid">text</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">TIO</span><span class="hs-varop">.</span><span class=
+"hs-varid">getLine</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">bs</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">encodeUtf8</span> <span class="hs-varid">text</span>
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-str">"You entered: "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">bs</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">encoded</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">convertToBase</span> <span class=
+"hs-conid">Base16</span> <span class=
+"hs-varid">bs</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">ByteString</span>
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-str">"Converted to base 16: "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">encoded</span></pre>
+<p>The <code>convertToBase</code> will convert the contents of any
+<code>ByteArrayAccess</code> into a <code>ByteArray</code> using
+the given base. Other options here besides <code>Base16</code>
+include <code>Base64</code> and others (just <a href=
+"https://www.stackage.org/haddock/lts-9.3/memory-0.14.6/Data-ByteArray-Encoding.html#t:Base">
+check out the docs</a>).</p>
+<p>As you can see, I had to put in an explicit
+<code>ByteString</code> type signature, since otherwise GHC
+wouldn't know which instance of <code>ByteArrayAccess</code> to
+use.</p>
+<p>As you may guess, there is <i>also</i> a
+<code>convertFromBase</code> to do the opposite conversion. It
+returns an <code>Either String byteArray</code> value in case the
+input is not in the correct format.</p>
+<p><strong>EXERCISE</strong> Write a program to base 16 decode its
+input. (Solution follows.)</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.3 script</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteArray</span>          <span class=
+"hs-keyword">as</span> <span class="hs-conid">BA</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteArray</span><span class=
+"hs-varop">.</span><span class=
+"hs-conid">Encoding</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">convertFromBase</span><span class=
+"hs-layout">,</span> <span class=
+"hs-conid">Base</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Base16</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span>         <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ByteString</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Text</span><span class="hs-varop">.</span><span class=
+"hs-conid">Encoding</span>      <span class=
+"hs-layout">(</span><span class=
+"hs-varid">encodeUtf8</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Text</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span>            <span class=
+"hs-keyword">as</span> <span class="hs-conid">TIO</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span>               <span class=
+"hs-layout">(</span><span class=
+"hs-varid">hFlush</span><span class="hs-layout">,</span> <span class="hs-varid">stdout</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">putStr</span> <span class=
+"hs-str">"Enter some hexadecimal text: "</span>
+  <span class="hs-varid">hFlush</span> <span class=
+"hs-varid">stdout</span>
+  <span class="hs-varid">text</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">TIO</span><span class="hs-varop">.</span><span class=
+"hs-varid">getLine</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">bs</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">encodeUtf8</span> <span class="hs-varid">text</span>
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-str">"You entered: "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">bs</span>
+  <span class="hs-keyword">case</span> <span class=
+"hs-varid">convertFromBase</span> <span class=
+"hs-conid">Base16</span> <span class=
+"hs-varid">bs</span> <span class="hs-keyword">of</span>
+    <span class="hs-conid">Left</span> <span class=
+"hs-varid">e</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">error</span> <span class=
+"hs-varop">$</span> <span class="hs-str">"Invalid input: "</span> <span class="hs-varop">++</span> <span class="hs-varid">e</span>
+    <span class="hs-conid">Right</span> <span class=
+"hs-varid">decoded</span> <span class="hs-keyglyph">-&gt;</span>
+      <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-str">"Converted from base 16: "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">show</span> <span class="hs-layout">(</span><span class=
+"hs-varid">decoded</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">ByteString</span><span class="hs-layout">)</span></pre>
+<p><strong>EXERCISE</strong> Write a program to convert input from
+base 16 to base 64 encoding.</p>
+<h2 id="hashing-a-strict-bytestring">Hashing a strict
+bytestring</h2>
+<p>Alright, that's enough of the <code>memory</code> library. Time
+to do some real crypto stuff. We're going to get the SHA256 hash
+(aka digest) of some user input:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.3 script</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Crypto</span><span class="hs-varop">.</span><span class=
+"hs-conid">Hash</span>             <span class=
+"hs-layout">(</span><span class="hs-varid">hash</span><span class=
+"hs-layout">,</span> <span class=
+"hs-conid">SHA256</span> <span class=
+"hs-layout">(</span><span class="hs-keyglyph">..</span><span class=
+"hs-layout">)</span><span class="hs-layout">,</span> <span class=
+"hs-conid">Digest</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span>         <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ByteString</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Text</span><span class="hs-varop">.</span><span class=
+"hs-conid">Encoding</span>      <span class=
+"hs-layout">(</span><span class=
+"hs-varid">encodeUtf8</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Text</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span>            <span class=
+"hs-keyword">as</span> <span class="hs-conid">TIO</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span>               <span class=
+"hs-layout">(</span><span class=
+"hs-varid">hFlush</span><span class="hs-layout">,</span> <span class="hs-varid">stdout</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">putStr</span> <span class=
+"hs-str">"Enter some text: "</span>
+  <span class="hs-varid">hFlush</span> <span class=
+"hs-varid">stdout</span>
+  <span class="hs-varid">text</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">TIO</span><span class="hs-varop">.</span><span class=
+"hs-varid">getLine</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">bs</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">encodeUtf8</span> <span class="hs-varid">text</span>
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-str">"You entered: "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">bs</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">digest</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Digest</span> <span class="hs-conid">SHA256</span>
+      <span class="hs-varid">digest</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">hash</span> <span class="hs-varid">bs</span>
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-str">"SHA256 hash: "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">digest</span></pre>
+<p>We've used the <code>hash</code> function to convert a
+<code>ByteString</code> (or any instance of
+<code>ByteArrayAccess</code>) into a <code>Digest SHA256</code>. If
+you're already wondering: yes, you could replace
+<code>SHA256</code> with one of the other <a href=
+"https://www.stackage.org/haddock/lts-9.3/cryptonite-0.23/Crypto-Hash-Algorithms.html">
+hash algorithms available</a>.</p>
+<p>As before: it's important to use a type signature of
+<code>Digest SHA256</code> to let GHC know what kind of hash you
+want to perform. However, in this case, there's an alternative
+function you could choose instead:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.3 script</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Crypto</span><span class="hs-varop">.</span><span class=
+"hs-conid">Hash</span>             <span class=
+"hs-layout">(</span><span class=
+"hs-varid">hashWith</span><span class=
+"hs-layout">,</span> <span class=
+"hs-conid">SHA256</span> <span class=
+"hs-layout">(</span><span class="hs-keyglyph">..</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span>         <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ByteString</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Text</span><span class="hs-varop">.</span><span class=
+"hs-conid">Encoding</span>      <span class=
+"hs-layout">(</span><span class=
+"hs-varid">encodeUtf8</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Text</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span>            <span class=
+"hs-keyword">as</span> <span class="hs-conid">TIO</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span>               <span class=
+"hs-layout">(</span><span class=
+"hs-varid">hFlush</span><span class="hs-layout">,</span> <span class="hs-varid">stdout</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">putStr</span> <span class=
+"hs-str">"Enter some text: "</span>
+  <span class="hs-varid">hFlush</span> <span class=
+"hs-varid">stdout</span>
+  <span class="hs-varid">text</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">TIO</span><span class="hs-varop">.</span><span class=
+"hs-varid">getLine</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">bs</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">encodeUtf8</span> <span class="hs-varid">text</span>
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-str">"You entered: "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">bs</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">digest</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">hashWith</span> <span class=
+"hs-conid">SHA256</span> <span class="hs-varid">bs</span>
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-str">"SHA256 hash: "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">digest</span></pre>
+<p>The <code>Show</code> instance of <code>Digest</code> will
+display the digest in hexadecimal/base 16. That's pretty nice. But
+let's suppose we want to display it in base 64 instead. Get ready
+for this: <code>Digest</code> is an instance of
+<code>ByteArrayAccess</code>, so you can use
+<code>convertToBase</code>. (And it's <i>not</i> an instance of
+<code>ByteArray</code>, consider why such an instance would be
+problematic. If you're stumped: read the <a href=
+"https://www.stackage.org/haddock/lts-9.3/cryptonite-0.23/Crypto-Hash.html#v:digestFromByteString">
+docs for this function</a> for the answer.)</p>
+<p><strong>EXERCISE</strong> Display the digest as a base 64
+encoded string (solution follows).</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.3 script</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Crypto</span><span class="hs-varop">.</span><span class=
+"hs-conid">Hash</span>             <span class=
+"hs-layout">(</span><span class=
+"hs-varid">hashWith</span><span class=
+"hs-layout">,</span> <span class=
+"hs-conid">SHA256</span> <span class=
+"hs-layout">(</span><span class="hs-keyglyph">..</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span>         <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ByteString</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteArray</span><span class=
+"hs-varop">.</span><span class=
+"hs-conid">Encoding</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">convertToBase</span><span class=
+"hs-layout">,</span> <span class=
+"hs-conid">Base</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Base64</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Text</span><span class="hs-varop">.</span><span class=
+"hs-conid">Encoding</span>      <span class=
+"hs-layout">(</span><span class=
+"hs-varid">encodeUtf8</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Text</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span>            <span class=
+"hs-keyword">as</span> <span class="hs-conid">TIO</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span>               <span class=
+"hs-layout">(</span><span class=
+"hs-varid">hFlush</span><span class="hs-layout">,</span> <span class="hs-varid">stdout</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">putStr</span> <span class=
+"hs-str">"Enter some text: "</span>
+  <span class="hs-varid">hFlush</span> <span class=
+"hs-varid">stdout</span>
+  <span class="hs-varid">text</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">TIO</span><span class="hs-varop">.</span><span class=
+"hs-varid">getLine</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">bs</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">encodeUtf8</span> <span class="hs-varid">text</span>
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-str">"You entered: "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">show</span> <span class="hs-varid">bs</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">digest</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">convertToBase</span> <span class=
+"hs-conid">Base64</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">hashWith</span> <span class=
+"hs-conid">SHA256</span> <span class=
+"hs-varid">bs</span><span class="hs-layout">)</span>
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-str">"SHA256 hash: "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">show</span> <span class="hs-layout">(</span><span class=
+"hs-varid">digest</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">ByteString</span><span class="hs-layout">)</span></pre>
+<p>Notice how we needed the type signature on <code>digest</code>
+to make it clear that it's a <code>ByteString</code>.</p>
+<h2 id="check-if-any-files-match">Check if any files match</h2>
+<p>Here's a neat little program. The user will provide a number of
+files as command line arguments. Then we'll print out lists of all
+the files with identical content (or, at least, matching SHA256s).
+(Try to notice something memory-inefficient in this implementation;
+we'll address it later.)</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.3 script</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Crypto</span><span class="hs-varop">.</span><span class=
+"hs-conid">Hash</span>             <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Digest</span><span class="hs-layout">,</span> <span class="hs-conid">SHA256</span><span class="hs-layout">,</span> <span class="hs-varid">hash</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span>         <span class=
+"hs-keyword">as</span> <span class="hs-conid">B</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Foldable</span>           <span class=
+"hs-layout">(</span><span class="hs-varid">forM_</span><span class=
+"hs-layout">)</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Map</span><span class="hs-varop">.</span><span class=
+"hs-conid">Strict</span>         <span class=
+"hs-layout">(</span><span class="hs-conid">Map</span><span class=
+"hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Map</span><span class="hs-varop">.</span><span class=
+"hs-conid">Strict</span>         <span class=
+"hs-keyword">as</span> <span class="hs-conid">Map</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Environment</span>      <span class=
+"hs-layout">(</span><span class=
+"hs-varid">getArgs</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">readFile'</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">FilePath</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Map</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Digest</span> <span class=
+"hs-conid">SHA256</span><span class=
+"hs-layout">)</span> <span class="hs-keyglyph">[</span><span class=
+"hs-conid">FilePath</span><span class=
+"hs-keyglyph">]</span><span class="hs-layout">)</span>
+<span class="hs-definition">readFile'</span> <span class=
+"hs-varid">fp</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">bs</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">readFile</span> <span class="hs-varid">fp</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">digest</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">hash</span> <span class=
+"hs-varid">bs</span> <span class="hs-comment">-- notice lack of type signature :)</span>
+  <span class="hs-varid">return</span> <span class=
+"hs-varop">$</span> <span class="hs-conid">Map</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">singleton</span> <span class=
+"hs-varid">digest</span> <span class=
+"hs-keyglyph">[</span><span class="hs-varid">fp</span><span class=
+"hs-keyglyph">]</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">args</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">getArgs</span>
+  <span class="hs-varid">m</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">Map</span><span class="hs-varop">.</span><span class=
+"hs-varid">unionsWith</span> <span class=
+"hs-layout">(</span><span class="hs-varop">++</span><span class=
+"hs-layout">)</span> <span class=
+"hs-varop">&lt;$&gt;</span> <span class=
+"hs-varid">mapM</span> <span class=
+"hs-varid">readFile'</span> <span class="hs-varid">args</span>
+  <span class="hs-varid">forM_</span> <span class=
+"hs-layout">(</span><span class="hs-conid">Map</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">toList</span> <span class="hs-varid">m</span><span class="hs-layout">)</span> <span class="hs-varop">$</span> <span class="hs-keyglyph">\</span><span class="hs-layout">(</span><span class="hs-varid">digest</span><span class="hs-layout">,</span> <span class="hs-varid">files</span><span class="hs-layout">)</span> <span class="hs-keyglyph">-&gt;</span>
+    <span class="hs-keyword">case</span> <span class=
+"hs-varid">files</span> <span class="hs-keyword">of</span>
+      <span class="hs-conid">[]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">error</span> <span class=
+"hs-str">"can never happen"</span>
+      <span class="hs-keyglyph">[</span><span class=
+"hs-keyword">_</span><span class=
+"hs-keyglyph">]</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">return</span> <span class="hs-conid">()</span> <span class="hs-comment">-- only one file</span>
+      <span class="hs-keyword">_</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">show</span> <span class=
+"hs-varid">digest</span> <span class=
+"hs-varop">++</span> <span class="hs-str">": "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">unwords</span> <span class=
+"hs-layout">(</span><span class="hs-varid">map</span> <span class=
+"hs-varid">show</span> <span class=
+"hs-varid">files</span><span class="hs-layout">)</span></pre>
+<p><strong>EXERCISE</strong> Write a program that will print out
+the SHA256 for every file name passed in on the command line.</p>
+<p><strong>QUESTION</strong> What's the inefficiency in the code
+above? You'll see in the next section.</p>
+<h2 id="more-efficient-file-hashing">More efficient file
+hashing</h2>
+<p>If we tried implementing our program from above without hashing,
+we'd either have to hold the entire file contents of each file in
+memory at once, or do some weird O(n^2) pairwise comparisons. Our
+hash-based implementation is better. But it's still a problem: it
+uses <code>Data.ByteString.readFile</code>, causing possibly
+unbounded memory usage. There's a more efficient way to hash entire
+files, using <code>cryptonite-conduit</code>:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.3 script</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Crypto</span><span class="hs-varop">.</span><span class=
+"hs-conid">Hash</span>         <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Digest</span><span class="hs-layout">,</span> <span class="hs-conid">SHA256</span><span class="hs-layout">,</span> <span class="hs-varid">hash</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Crypto</span><span class="hs-varop">.</span><span class=
+"hs-conid">Hash</span><span class="hs-varop">.</span><span class=
+"hs-conid">Conduit</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">hashFile</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Foldable</span>       <span class=
+"hs-layout">(</span><span class="hs-varid">forM_</span><span class=
+"hs-layout">)</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Map</span><span class="hs-varop">.</span><span class=
+"hs-conid">Strict</span>     <span class=
+"hs-layout">(</span><span class="hs-conid">Map</span><span class=
+"hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Map</span><span class="hs-varop">.</span><span class=
+"hs-conid">Strict</span>     <span class=
+"hs-keyword">as</span> <span class="hs-conid">Map</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Environment</span>  <span class=
+"hs-layout">(</span><span class=
+"hs-varid">getArgs</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">readFile'</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">FilePath</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Map</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Digest</span> <span class=
+"hs-conid">SHA256</span><span class=
+"hs-layout">)</span> <span class="hs-keyglyph">[</span><span class=
+"hs-conid">FilePath</span><span class=
+"hs-keyglyph">]</span><span class="hs-layout">)</span>
+<span class="hs-definition">readFile'</span> <span class=
+"hs-varid">fp</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">digest</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">hashFile</span> <span class="hs-varid">fp</span>
+  <span class="hs-varid">return</span> <span class=
+"hs-varop">$</span> <span class="hs-conid">Map</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">singleton</span> <span class=
+"hs-varid">digest</span> <span class=
+"hs-keyglyph">[</span><span class="hs-varid">fp</span><span class=
+"hs-keyglyph">]</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">args</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">getArgs</span>
+  <span class="hs-varid">m</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">Map</span><span class="hs-varop">.</span><span class=
+"hs-varid">unionsWith</span> <span class=
+"hs-layout">(</span><span class="hs-varop">++</span><span class=
+"hs-layout">)</span> <span class=
+"hs-varop">&lt;$&gt;</span> <span class=
+"hs-varid">mapM</span> <span class=
+"hs-varid">readFile'</span> <span class="hs-varid">args</span>
+  <span class="hs-varid">forM_</span> <span class=
+"hs-layout">(</span><span class="hs-conid">Map</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">toList</span> <span class="hs-varid">m</span><span class="hs-layout">)</span> <span class="hs-varop">$</span> <span class="hs-keyglyph">\</span><span class="hs-layout">(</span><span class="hs-varid">digest</span><span class="hs-layout">,</span> <span class="hs-varid">files</span><span class="hs-layout">)</span> <span class="hs-keyglyph">-&gt;</span>
+    <span class="hs-keyword">case</span> <span class=
+"hs-varid">files</span> <span class="hs-keyword">of</span>
+      <span class="hs-conid">[]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">error</span> <span class=
+"hs-str">"can never happen"</span>
+      <span class="hs-keyglyph">[</span><span class=
+"hs-keyword">_</span><span class=
+"hs-keyglyph">]</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">return</span> <span class="hs-conid">()</span> <span class="hs-comment">-- only one file</span>
+      <span class="hs-keyword">_</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">show</span> <span class=
+"hs-varid">digest</span> <span class=
+"hs-varop">++</span> <span class="hs-str">": "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">unwords</span> <span class=
+"hs-layout">(</span><span class="hs-varid">map</span> <span class=
+"hs-varid">show</span> <span class=
+"hs-varid">files</span><span class="hs-layout">)</span></pre>
+<p>Pretty simple change (in fact, I'd argue this code is just
+slightly easier to read), and we get far better memory performance
+(linear in the number of files being compared, constant in the size
+of those files).</p>
+<h2 id="streaming-hashing">Streaming hashing</h2>
+<p>Perhaps your ears (or eyes? you're probably reading this) perked
+up at the mention of conduit. To answer the question I'm going to
+pretend you're asking: yes, you can do streaming computation of a
+hash. Here's a program that will take a URL and file path, write
+the contents of the URL's response body to a file path, and print
+out the SHA256 digest. And the cool part: it will only look at each
+chunk of data once.</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.3 script</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Conduit</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Crypto</span><span class="hs-varop">.</span><span class=
+"hs-conid">Hash</span>         <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Digest</span><span class="hs-layout">,</span> <span class="hs-conid">SHA256</span><span class="hs-layout">,</span> <span class="hs-varid">hash</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Crypto</span><span class="hs-varop">.</span><span class=
+"hs-conid">Hash</span><span class="hs-varop">.</span><span class=
+"hs-conid">Conduit</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">sinkHash</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Network</span><span class=
+"hs-varop">.</span><span class="hs-conid">HTTP</span><span class=
+"hs-varop">.</span><span class="hs-conid">Simple</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Environment</span>  <span class=
+"hs-layout">(</span><span class=
+"hs-varid">getArgs</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">args</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">getArgs</span>
+  <span class="hs-layout">(</span><span class=
+"hs-varid">url</span><span class="hs-layout">,</span> <span class=
+"hs-varid">fp</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">&lt;-</span>
+    <span class="hs-keyword">case</span> <span class=
+"hs-varid">args</span> <span class="hs-keyword">of</span>
+      <span class="hs-keyglyph">[</span><span class=
+"hs-varid">x</span><span class="hs-layout">,</span> <span class=
+"hs-varid">y</span><span class="hs-keyglyph">]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">return</span> <span class=
+"hs-layout">(</span><span class="hs-varid">x</span><span class=
+"hs-layout">,</span> <span class="hs-varid">y</span><span class=
+"hs-layout">)</span>
+      <span class="hs-keyword">_</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">error</span> <span class=
+"hs-varop">$</span> <span class="hs-str">"Expected: URL FILEPATH"</span>
+  <span class="hs-varid">req</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">parseRequest</span> <span class="hs-varid">url</span>
+  <span class="hs-varid">digest</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">runResourceT</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">httpSink</span> <span class=
+"hs-varid">req</span> <span class="hs-varop">$</span> <span class=
+"hs-keyglyph">\</span><span class="hs-sel">_res</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">getZipSink</span> <span class="hs-varop">$</span>
+    <span class="hs-conid">ZipSink</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">sinkFile</span> <span class=
+"hs-varid">fp</span><span class="hs-layout">)</span> <span class=
+"hs-varop">*&gt;</span>
+    <span class="hs-conid">ZipSink</span> <span class=
+"hs-varid">sinkHash</span>
+  <span class="hs-varid">print</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">digest</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Digest</span> <span class=
+"hs-conid">SHA256</span><span class="hs-layout">)</span></pre>
+<p>Of course, if conduit can do it, you can do it too. Let's write
+a <code>hashFile</code> implementation ourselves without conduit to
+get some exposure to the raw hashing API:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.3 script</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Crypto</span><span class="hs-varop">.</span><span class=
+"hs-conid">Hash</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Environment</span>  <span class=
+"hs-layout">(</span><span class=
+"hs-varid">getArgs</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-varid">withBinaryFile</span><span class=
+"hs-layout">,</span> <span class=
+"hs-conid">IOMode</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ReadMode</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Foldable</span> <span class=
+"hs-layout">(</span><span class="hs-varid">forM_</span><span class=
+"hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">B</span>
+
+<span class="hs-definition">hashFile</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">HashAlgorithm</span> <span class=
+"hs-varid">ha</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">FilePath</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Digest</span> <span class=
+"hs-varid">ha</span><span class="hs-layout">)</span>
+<span class="hs-definition">hashFile</span> <span class=
+"hs-varid">fp</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">withBinaryFile</span> <span class="hs-varid">fp</span> <span class="hs-conid">ReadMode</span> <span class="hs-varop">$</span> <span class="hs-keyglyph">\</span><span class="hs-varid">h</span> <span class="hs-keyglyph">-&gt;</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">loop</span> <span class=
+"hs-varid">context</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+        <span class="hs-varid">chunk</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">hGetSome</span> <span class=
+"hs-varid">h</span> <span class="hs-num">4096</span>
+        <span class="hs-keyword">if</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">null</span> <span class="hs-varid">chunk</span>
+          <span class="hs-keyword">then</span> <span class=
+"hs-varid">return</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">hashFinalize</span> <span class=
+"hs-varid">context</span>
+          <span class="hs-keyword">else</span> <span class=
+"hs-varid">loop</span> <span class=
+"hs-varop">$!</span> <span class="hs-varid">hashUpdate</span> <span class="hs-varid">context</span> <span class="hs-varid">chunk</span>
+   <span class="hs-keyword">in</span> <span class=
+"hs-varid">loop</span> <span class="hs-varid">hashInit</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">args</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">getArgs</span>
+  <span class="hs-varid">forM_</span> <span class=
+"hs-varid">args</span> <span class="hs-varop">$</span> <span class=
+"hs-keyglyph">\</span><span class="hs-varid">fp</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">digest</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">hashFile</span> <span class="hs-varid">fp</span>
+    <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">show</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">digest</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Digest</span> <span class=
+"hs-conid">SHA256</span><span class=
+"hs-layout">)</span> <span class="hs-varop">++</span> <span class=
+"hs-str">"  "</span> <span class="hs-varop">++</span> <span class=
+"hs-varid">fp</span></pre>
+<p>This uses the pure update API provided by
+<code>Crypto.Hash</code>. We can also use a mutating API in this
+case, which is slightly more efficient by bypassing some buffer
+copies:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.3 script</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Crypto</span><span class="hs-varop">.</span><span class=
+"hs-conid">Hash</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Crypto</span><span class="hs-varop">.</span><span class=
+"hs-conid">Hash</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Environment</span>  <span class=
+"hs-layout">(</span><span class=
+"hs-varid">getArgs</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-varid">withBinaryFile</span><span class=
+"hs-layout">,</span> <span class=
+"hs-conid">IOMode</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ReadMode</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Foldable</span> <span class=
+"hs-layout">(</span><span class="hs-varid">forM_</span><span class=
+"hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">B</span>
+
+<span class="hs-definition">hashFile</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">HashAlgorithm</span> <span class=
+"hs-varid">ha</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">FilePath</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Digest</span> <span class=
+"hs-varid">ha</span><span class="hs-layout">)</span>
+<span class="hs-definition">hashFile</span> <span class=
+"hs-varid">fp</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">withBinaryFile</span> <span class="hs-varid">fp</span> <span class="hs-conid">ReadMode</span> <span class="hs-varop">$</span> <span class="hs-keyglyph">\</span><span class="hs-varid">h</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">context</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">hashMutableInit</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">loop</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+        <span class="hs-varid">chunk</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">hGetSome</span> <span class=
+"hs-varid">h</span> <span class="hs-num">4096</span>
+        <span class="hs-keyword">if</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">null</span> <span class="hs-varid">chunk</span>
+          <span class="hs-keyword">then</span> <span class=
+"hs-varid">hashMutableFinalize</span> <span class=
+"hs-varid">context</span>
+          <span class="hs-keyword">else</span> <span class=
+"hs-keyword">do</span>
+            <span class=
+"hs-varid">hashMutableUpdate</span> <span class=
+"hs-varid">context</span> <span class="hs-varid">chunk</span>
+            <span class="hs-varid">loop</span>
+  <span class="hs-varid">loop</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">args</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">getArgs</span>
+  <span class="hs-varid">forM_</span> <span class=
+"hs-varid">args</span> <span class="hs-varop">$</span> <span class=
+"hs-keyglyph">\</span><span class="hs-varid">fp</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">digest</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">hashFile</span> <span class="hs-varid">fp</span>
+    <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">show</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">digest</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Digest</span> <span class=
+"hs-conid">SHA256</span><span class=
+"hs-layout">)</span> <span class="hs-varop">++</span> <span class=
+"hs-str">"  "</span> <span class="hs-varop">++</span> <span class=
+"hs-varid">fp</span></pre>
+<p><strong>EXERCISE</strong> Use lazy I/O and the
+<code>hashlazy</code> function to implement <code>hashFile</code>.
+(NOTE: I am <i>not</i> condoning lazy I/O here.)</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Cryptographic%20Hashing%20in%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;09&#x2F;cryptographic-hashing-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;09&#x2F;cryptographic-hashing-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;09&#x2F;cryptographic-hashing-haskell&#x2F;&amp;title=Cryptographic%20Hashing%20in%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;09&#x2F;cryptographic-hashing-haskell&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#5b283a373e281b3d2b3834362b373e2f3e75383436" targe="_blank"><span class="__cf_email__" data-cfemail="3c4f5d50594f7c5a4c5f53514c50594859125f5351">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

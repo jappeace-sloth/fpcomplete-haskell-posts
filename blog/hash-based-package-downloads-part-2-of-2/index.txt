@@ -1,0 +1,188 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Hash Based Package Downloads - part 2 of 2
+
+By Michael Snoyman, January 31, 2018
+
+Share this     
+
+In our previous post, we define a common problem around reproducible build plans. The solution we
+desired was some form of cryptographic hash based configuration and download system for packages,
+package metadata, and snapshot definitions. This blog post will describe a potential concrete
+implementation.
+
+Federated download service
+
+Who hosts these files? Well, anyone. The level of trust needed in a service providing these files
+once again reduces to trusting cryptographic hashes. For example, if the protocol was simply to
+download the hash deadbeef from https://totally-not-a-hacker.com/sha256/deadbeef, that would be
+safe. It may not be reliable, because that website could go down, but I wouldn't worry about
+building with the wrong version of the package.
+
+This opens up a world where the complete federation of package hosting is possible. We could have a
+discovery mechanism for finding new hosts, a mechanism to detect broken hosts or hosts that
+regularly return incorrect data, and anything else we can dream up. Also, these hosts would not
+need to be tied to any specific language ecosystem. The same host could happily provide downloads
+for a wide range of content, since it will all be referenced via cryptographic hash.
+
+As a simple beginning, we can define a wire protocol (discussed below), provide a config value for
+how to contact the server, and run a single, centralized host. Expanding in the future is certainly
+possible.
+
+More efficient file content sharing
+
+This is totally optional, and I hesitate to even include it in this blog post. But I'm going to do
+so anyway, at the risk of encouraging a bunch of bikeshedding on this one section. For the record:
+I'd rather focus the discussion on the rest of this document instead of this section, which only
+represents an optimization for disk space and bandwidth usage.
+
+In the Haskell package ecosystem, and in many others as well, the primary mechanism for package
+storage is the tarball. This has a number of downsides, but the most important is that it
+replicates contents. Many versions of a package end up sharing identical content for many files. We
+end up storing and transferring that duplicated content unnecessarily.
+
+Instead, we can have our file store additionally support tree storage. I'm unapologetically ripping
+off Git right now (see prior art below for why this isn't just Git). We would end up with some kind
+of a tree manifest that looks something like:
+
+null terminated file path\NUL
+sha256 of the file contents
+is this executable?
+
+Repeated many times. We could ensure that the same input always generates the same output with
+requirements around the ordering of the file paths. And there may be some extra metadata on files
+in a tree that should be stored, such as modification date. However, in my experience, these are
+the only three things you actually want for reproducible builds.
+
+With a system like this in place, downloading a package would look something like this:
+
+ 1. Look up the hash of the tree in the snapshot file
+ 2. Download the manifest from the server
+ 3. Check which file contents we don't have locally already
+ 4. Download all of the remaining file contents from the server
+
+This is strictly not necessary, downloading tarballs instead will work just fine. But this is a
+nice optimization we can easily grab if desired.
+
+Wire protocol
+
+I'd recommend that we start off with an HTTPS-based wire protocol for this. This isn't because
+HTTPS is best suited for this case, but because it has the best success for traversing various
+firewalls.
+
+Note that this may be an appropriate usecase for insecure HTTP instead of HTTPS, since the hashes
+themselves provide the security we're looking for. On the other hand, using insecure HTTP will
+still break privacy, in that an eavesdropper could determine which content you were downloading.
+
+Anyway, in the future other protocols can be implemented as well, such as on raw TCP. Some kind of
+streaming protocol for supporting large files better may make sense. But at its most basic, I'm
+imagining something along the lines of:
+
+  • GET /file/sha256/#hash returns the file contents as a response body
+  • GET /tree/sha256/#hash returns the tree manifest as a response body
+  • POST /file/sha256 allows you to upload a request body consisting of multiple SHA256s. The
+    response body would be the file size, in decimal, followed by a colon, followed by the
+    contents, followed by a comma. Or, in other words, netstrings. This alternative to the GET
+    request will allow more efficient downloading of many files.
+  • POST /tree/sha256 would be the same thing but for trees
+
+Prior art
+
+As I've discussed this over the past few weeks with coworkers and friends, the most recurring
+reference I've heard is to IPFS. I unfortunately have to admit some ignorance on IPFS right now, as
+I've only been able to briefly review it. My biggest concern from that initial review is speed: it
+may not be well optimized enough for a use case involving bulk downloading of many files at once.
+But this certainly requires more research. If anyone is familiar with IPFS and is interested in the
+problem described here, please drop a comment.
+
+But the most blatant prior art is really Git. Anyone familiar with Git's blob/tree objects will see
+what a striking similarity the proposal above has. There are some simplifications above due to our
+alternate use case (totally immutable file and package storage):
+
+  • There are no commits at all
+  • There's no way to modify files or trees
+  • As an optimization, instead of trees-of-trees like Git uses (which is great for optimizing a
+    mutable tree case), we use one deep tree
+  • Importantly: instead of SHA1, we use the more secure SHA256.
+      □ Side note: I haven't scoped it out fully above, but proper implementation of this proposal
+        should ensure the easy ability to extend to other hash functions in the future
+
+Additionally, I have some prior experience with using Git for a file storage mechanism. In previous
+versions of Stack, we used a Git-based approach for storing cabal files. We've since moved over to
+Hackage Security, the package index mechanism utilized by Hackage (which is upstream of the
+Stackage project). There are some downsides with depending on Git for this kind of package index
+storage:
+
+  • It can be quite difficult to rely on an external command line tool for core functionality like
+    this. Ensuring the tool is available, dealing with multiple versions of the tool, and so on are
+    annoyances. Having a clear wire protocol and local storage mechanism can be much simpler.
+  • Git is not well set up for downloading a subset of blobs and trees, something we explicitly
+    want to support here.
+  • We've had reports of very slow git clone speeds for people in different regions. Unfortunately,
+    we've also recently started receiving these same complaints about Hackage Security updates. It
+    may simply be that the Hackage package index is large enough to cause trouble. However, two
+    aspects of this proposal will hopefully improve the situation:
+      □ It's designed from the ground up for efficient transfer of lots of small files
+      □ Due to its nature, we can download only the set of metadata files necessary for a specific
+        snapshot, not the entire package index
+
+The biggest thing that prevented me from writing this blog post was how much overlap exists with
+Git, and a desire to avoid a Not Invented Here solution. But the differences with Git are large
+enough that I think a new implementation is, in this case, warranted.
+
+Rollout
+
+This is all just a design right now. And the design will hopefully help others in a similar
+situation. But concretely for the Haskell, Stackage and Stack use case, the current rollout plan
+looks something like this:
+
+  • Implement the storage solution described above
+  • Begin mirroring all of Hackage into this storage solution
+  • Begin including the relevant SHA256s for this storage solution in future Stackage snapshots (in
+    addition to all current metadata)
+  • Add support to Stack to use the SHA256 hashes instead of the current download mechanisms
+
+This plan is designed to be implemented in reasonable chunks, allow thorough testing of each
+component on its own, respect complete backwards compatibility, and seamlessly upgrade users to a
+more secure experience when complete.
+
+If anyone's interested in collaborating on this, please reach out, there is plenty of work (and a
+lot of it quite fun stuff!) to be done. And for that matter, if anyone outside of the Haskell
+community is interesting in creating an implementation of this, having cross language compatibility
+would be awesome.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Guest post: Haskell at Front Row</title>
+  <meta property="og:title" content="Guest post: Haskell at Front Row">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;haskell-at-front-row&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Guest post: Haskell at Front Row</h1>
+      
+      <p id="page-description">By Michael Snoyman, May  9, 2015</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Guest%20post%3A%20Haskell%20at%20Front%20Row https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;haskell-at-front-row&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;haskell-at-front-row&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;haskell-at-front-row&#x2F;&amp;title=Guest%20post%3A%20Haskell%20at%20Front%20Row"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;haskell-at-front-row&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p><a href="https://www.kurilin.net/">Alexandr Kurilin</a> from
+Front Row Education
+recently wrote <a href=
+"https://github.com/commercialhaskell/commercialhaskell/blob/master/usage/frontrow.md">
+an article</a> about their usage of Haskell for the <a href=
+"https://github.com/commercialhaskell/commercialhaskell">Commercial
+Haskell Special Interest Group</a>. I asked his permission to post
+that article to our blog as well.</p>
+<hr>
+<h2 id="the-mission">The mission</h2>
+<p>Front Row Education was founded to change the way math education
+is done in a modern day classroom. In the web universe we have all
+sorts of great tools for tracking, analyzing and incentivising user
+behavior: complex analytics, rich data visualizations, a/b testing,
+studying usage patterns over time, cohort analysis, gamification
+etc. We figured: instead of using the above to have granny click on
+more ads, let's make these powerful techniques available to
+teachers, parents and school administrators to make math education
+more engaging and effective.</p>
+<p>Front Row allows schools to track student progress over time,
+identify areas of struggle, learn how to address them, all the
+while encouraging more quality practice. Learning math this way
+becomes a interactive and compelling experience, providing
+immediate feedback and adjusting content with every answer. As
+students practice, they generate rich data that school staff uses
+to continuously course-correct and fill in the gaps.</p>
+<p>Numerous experiments from past years show that making Front Row
+a regular part of a math classroom leads to improved conceptual
+understanding, a lower rate of students falling behind, and
+improved scores on state tests. As of today Front Row helps over a
+million students in their regular math practice, and has been used
+in over 30% of US K-8 schools.</p>
+<h3 id="our-journey-to-haskell">Our journey to Haskell</h3>
+<p>As of today Front Row uses Haskell for anything that needs to
+run on a server machine that is more complex than a 20 line ruby
+script. This includes most web services, cron-driven mailers,
+command-line support tools, applications for processing and
+validating content created by our teachers and more. We've been
+using Haskell actively in production since 2014.</p>
+<p>At the time of the switch we were already familiar with the
+functional programming world. The central piece to the Front Row
+system is the JSON API used by both the student and teacher web
+experiences. I wrote the first version of the API in 2013 in
+Clojure on top of the Ring/Compojure micro-framework. At the time I
+didn't have plans for the API to grow to serve the kind of size and
+traffic we see today: it was mostly a way for me to really dive
+into functional programming and understanding design challenges
+that other popular frameworks had to come across.</p>
+<p>Building your own framework is a fantastic learning experience,
+but it is also a significant commitment: without investing a ton of
+time and effort into the framework, you'll end up with something
+very bare-bones and hard to turn it into a production quality,
+fully-featured application. It takes innumerable iterations to make
+a framework extensible, modular and well maintained with a team of
+1-3 developers, busy with dozens other tasks that a fast-moving
+startup demands.</p>
+<p>Clojure at the time didn't offer any alternatives as far as web
+frameworks were concerned, and we were already starting to see the
+inherent critical weakness behind building large modular systems in
+dynamically typed languages: refactoring is a serious pain and
+something you will avoid at all costs because it's hard to ensure
+you're not breaking anything. It's not that bad if you have ONE
+codebase that doesn't have dependencies, but once you get into two
+digits you're in for a bad time.</p>
+<p>Switching to Haskell and the Yesod framework seemed like a
+natural step forward: a strongly typed, purely functional, highly
+expressive language that would finally allow refactoring and moving
+fast to be painless. On top of it, a beautifully designed,
+extensible web framework with years of polish, one of the best
+high-performance web servers in the industry, extreme attention to
+type safety, and an all-star team of OSS contributors supporting
+it.</p>
+<p>Moving from Clojure to Haskell didn't feel like a massive jump:
+a lot of concepts translate pretty closely, although Haskell offers
+a much richer vocabulary than just maps and vecs. Monads, type
+classes, IO etc. eventually clicked, and it was smooth sailing
+after that.</p>
+<h2 id="advantages-of-using-haskell">Advantages of using
+Haskell</h2>
+<p>Where does Haskell fit into all of this you say? As the
+development team of a small early stage edtech startup, we have two
+main goals:</p>
+<ol>
+<li>Iterate as fast as possible on new educational concepts,
+business model experiments and user feedback. Basically, crank out
+as much code as possible while keeping the quality bar very
+high.</li>
+<li>Stretch our runway, be conservative with our very limited
+resources</li>
+</ol>
+<p>Haskell fits in pretty well with both of goals.</p>
+<h3 id="static-typing">Static typing</h3>
+<p>First of all, static typing is essential when it comes to
+keeping the system always in a working state. Coming from a
+dynamically typed universe, it's surprising how much time you can
+save on writing unit tests, because you are getting more certainty
+from the compiler: no more null exceptions, no type mismatches in
+function calls, no more forgetting about dealing with the empty
+list case etc. A whole class of pesky, incredibly common and banal
+bugs is eliminated from your work: you now have more bandwidth to
+worry about implementing user stories instead of obsessing that
+your application doesn't blow up due to sloppy oversight.</p>
+<p>I still remember one of my biggest Haskell/Yesod "aha" moments:
+not only does Yesod make sure that routes in your HTML are
+type-safe, but even image files linked in tags are verified to
+exist on disk by the compiler. No .jpg, no build, it's that simple.
+It's a level of guarantee that dramatically increases your
+confidence in the code at barely any cost.</p>
+<h3 id="modularity">Modularity</h3>
+<p>Modularity is another big one. We have a central module at the
+bottom of every one of our web applications, APIs, tools and cron
+binaries. This module wraps the database entities and the SQL logic
+necessary to access them. It also provides a lot of common shared
+functionality that should not be implemented more than once. Since
+the schema changes very aggressively, we need a way to make sure
+our applications are updated ASAP, we can't wait for things to blow
+up in production. Updating our entity definitions in that one
+module prevents every application built on top of it from compiling
+again until the change is dealt with.</p>
+<p>No more API call mismatches, no more using an old schema, no
+more apps running against an old deprecated version that can lead
+to breaking the db state. As many others have stated, Haskell is
+the first language out there that feels like it manages to achieve
+true modularity: purity and defining what context a function is
+allowed to run in ensure that a library call can lead to no
+surprises. Testing side-effect free functions is much simpler than
+continuously dealing with system state.</p>
+<h3 id="efficiency">Efficiency</h3>
+<p>Regarding the second point, why would Haskell stretch your
+runway? Simple. You're writing fewer bugs, you're reusing more
+code, new developers are causing less damage, and you have more
+room to deal with technical debt before it bites you. Purity and
+static types allow a team to aggressively refactor the codebase
+without having to worry that they might have forgotten to update
+something: a combination of a light layer of spec-style tests and a
+very picky compiler provide you with most of what you need to make
+refactoring a non-issue. More refactoring = more long-term
+productivity, higher team morale, more pride in one's work. Doing
+the same with a Ruby is as fun as pulling teeth.</p>
+<p>All of the above adds up to needing fewer developers, as less
+time is spent on maintenance, which ultimately equals a higher
+chance of your company getting somewhere thanks to the more
+frequent iterations. The more stuff you try, the more likely you
+are to find or expand that business mechanic that will carry your
+business forward.</p>
+<h2 id="trouble-in-paradise">Trouble in paradise</h2>
+<p>This is not to say that things aren't all perfect though, and
+there's still plenty of room for improvement in the ecosystem.</p>
+<h3 id="building">Building</h3>
+<p>Build times, especially once the whole constellation of Yesod
+and Persistent packages are brought into the mix, are not
+insignificant. It still takes a good 5-10 min to build our larger
+web application on our beefiest machines. There are optimizations
+that can be made in this space which we haven't adopted yet, such
+as caching already build object files to avoid having to re-compile
+them every time, so I'm confident this will be a non-issue in the
+nearby future, but it's still worth being aware of. GHC works hard,
+you need to provide it with enough juice or time to let it do its
+job.</p>
+<h3 id="testing">Testing</h3>
+<p>The testing frameworks out there are still fairly spartan from
+the developer experience standpoint. If you test Yesod with hspec,
+the premier BDD library for Haskell, there's currently no way to
+insert a bunch of rows into the database during fixtures and pass
+the results into the individual test cases. You have to wrap each
+test case in additional function calls to pull that off, adding
+more boilerplate to your tests.</p>
+<p>Additionally, it's not possible to find out which one of your
+specific test cases failed when checking for multiple conditions
+within the same "it" block. This means that if you need to check
+the state of the system after an HTTP request, you have no clue
+which one of the checks failed.</p>
+<p>Fortunately the developer(s) behind these libraries are
+responsive and happy to look into improvements. At the very least
+they're glad to point other developers in the right direction
+towards a PR.</p>
+<p>This has in general been my experience with the Haskell
+community: things aren't perfect, but folks are always looking for
+a way to improve the ecosystem and want Haskell to be the best
+language to develop in. People are trying to carve out their little
+slice of paradise, and are willing to put in the hard work to make
+it happen.</p>
+<h3 id="docs">Docs</h3>
+<p>Documentation is still not quite there and the initial
+onboarding of new developers is still rough. There are only so many
+snippets to Google for, compared to e.g. Ruby and Python. A lot of
+documentation is very barebones and requires diving straight into
+the source, which is fine for a proficient Haskeller, but not for
+an already terrified beginner.</p>
+<p>Many times I've witnessed senior developers get very frustrated
+when something wouldn't compile for hours and they couldn't find
+any help to move forward: be prepared to assist them before they
+get too grumpy. Some projects are better about it than other: Yesod
+and Persistent have extensive documentation and the FPComplete crew
+have numerous tutorials out there to help. New books come out once
+in a while with fresher snippets: the time-tested <i>Real World
+Haskell</i> is now fairly outdated, but the more recent
+<i>Beginning Haskell</i> is perfectly relevant. Many channels on
+IRC are available: #haskell-beginners, #haskell and #yesod,
+although sometimes it can take work to get the answer you're
+looking for. More than once I heard the comment that documentation
+seems to be written by wizards for other wizards, and if you're a
+lowly initiate, you will have a rough time.</p>
+<p>I've personally had the privilege to help all of our developers
+skill up in Haskell and Yesod, and I've become a huge believer in
+the power of having someone more experienced guide you along the
+way. What took me several months of learning, mostly by myself, now
+takes our developers a couple of weeks of quality coaching. It took
+me a while to grok monads, type classes, type families etc.,
+however, properly guided developers can figure it out in a matter
+of hours. Having a good teacher on your team will speed adoption
+within the organization immensely.</p>
+<h3 id="strength-in-numbers">Strength in numbers</h3>
+<p>We once experienced a very frustrating issue that got us
+thinking about our full commitment to Haskell as a company.</p>
+<p>When we switched our main API to Yesod (a full rewrite), we
+almost immediately ran into the issue the API would burn up close
+to 95% of available CPU on whatever AWS EC2 instance it was hosted
+on. We upgraded machines, just to see if we could cheat our way out
+of fixing this by throwing money at the problem, and even with a
+$600/mo 16 core box, the API still managed to flood all of the
+available cores with barely any traffic hitting it. I personally
+spent a good week banging my head against it: was it resource
+contention? Was it a really big oversight in one of my handlers?
+Was it misconfiguration? Was it something about the EC2
+environment? Why doesn't this reproducing AT ALL under profiling?
+Was it our database connection pooling? I threw a lot of
+screenshots and code samples at the community both on Google Groups
+and IRC: nobody else had ever seen anything like it. Uh oh.. All
+the while customer support requests are pouring in, teachers are
+aggravated, the team is looking at the devs and "their latest shiny
+toy", tapping their collective foot.</p>
+<p>This is the part where picking exotic tooling for your stack can
+be a dangerous beast: "given enough eyeballs, all bugs are
+shallow", and when only a dozen teams out there are using your
+libraries at your scale, you are on your own when it comes to
+fixing issues. With Rails, there's enough volume of developers that
+there will be enough projects of every scale to burn-in your tool
+of choice. That's simply not the case with Haskell's usage
+numbers.</p>
+<p>What this means is that if you're planning to bet the farm on
+Haskell, you need to be ready and comfortable with the idea that
+you might have to get your hands dirty, might be the first person
+to figure out a solution to the problem you're seeing. This
+requirement is pretty much non-existent in .NET / ruby / python at
+al. Start small, start simple, let the tooling grow on you as you
+gain experience. Start with tools that aren't mission critical
+until you're more confident.</p>
+<h3 id="however..">However..</h3>
+<p>It bears mentioning that the above concerns are being actively
+addressed by the community and the state of things is rapidly
+improving:</p>
+<ul>
+<li>Cabal, the Haskell package manager, was a real pain to work
+with just a few years ago and "cabal hell" is still part of Haskell
+vernacular. However, with sandboxes and consistent version
+snapshots provided by FPComplete as Stackage LTS, that problem has
+been mostly resolved.</li>
+<li>Build times are slow, but the community is coming up with
+improvements such as halcyon that should alleviate things
+considerably.</li>
+<li>Docs have gotten dramatically better over the past couple of
+years. There's been a big push towards keeping fresh,
+community-maintained, easy-to-follow and beginner-friendly
+instructions such as those provided by <a href=
+"https://github.com/bitemyapp/learnhaskell">Chris Allen's Learn
+Haskell</a>. We now even have IRC channels tailored specifically
+for beginners, e.g. #haskell-beginners . Today newcomers become
+more productive much faster than they did a few years ago.</li>
+<li>The community has been recently doing a better job at outreach
+and we've seen many new developers come make Haskell a permanent
+part of their toolbox. With more participants, tools get more
+fully-featured and more maintained.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>It's a very exciting time in the history of computing to jump on
+the Haskell train. Yes, the community is tiny and one might get
+little hand-holding compared to more popular ecosystems, however
+Haskell offers obvious benefits to software teams who can power
+through the initial pain period.</p>
+<p>Today Haskell offers some of the best tools around for
+delivering quality software quickly and reliably, minimizing
+maintenance cost while maximizing developer enjoyment. To me
+Haskell is that dream of "developer happiness" that we were
+promised many years ago by the Ruby community: I can write
+beautiful, short, expressive and readable code that will perform
+phenomenally and stand the test of time and continuous change. What
+more can I ask for?</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Guest%20post%3A%20Haskell%20at%20Front%20Row https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;haskell-at-front-row&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;haskell-at-front-row&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;haskell-at-front-row&#x2F;&amp;title=Guest%20post%3A%20Haskell%20at%20Front%20Row"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;haskell-at-front-row&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#3e4d5f525b4d7e584e5d51534e525b4a5b105d5153" targe="_blank"><span class="__cf_email__" data-cfemail="681b09040d1b280e180b070518040d1c0d460b0705">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

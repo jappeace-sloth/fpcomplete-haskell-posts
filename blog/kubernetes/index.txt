@@ -1,0 +1,322 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Kubernetes for Haskell Services
+
+By Tim Dysinger, November 19, 2015
+
+Share this     
+
+Kubernetes (AKA "k8s")
+
+From kubernetes.io: Kubernetes is an open source orchestration system for Docker containers. It
+handles scheduling onto nodes in a compute cluster and actively manages workloads to ensure that
+their state matches the users declared intentions. Using the concepts of "labels" and "pods", it
+groups the containers which make up an application into logical units for easy management and
+discovery.
+
+We use it to host some of our web applications at FP Complete. In this article we will show you how
+to deploy a Kubernetes cluster to Amazon's AWS cloud, create a Haskell web application, build the
+application with Stack and finally deploy the application with Docker & Kubernetes. The whole
+process should take about 10 minutes.
+
+Download the command line interface kubectl here (the binary CLI for your OS will be found in the
+tarball). You'll need this executable in order to interact with your deployed Kubernetes cluster.
+Download it now & make sure it's in your PATH.
+
+If you are curious about all the things you can do with Kubernetes, you can find the documentation
+online. There's also an active mail-list and IRC channel.
+
+kube-aws Deployment Tool
+
+The CoreOS team has created a nice AWS CloudFormation tool for deploying working clusters of
+Kubernetes on AWS with ease. This is much simpler than my blog post from last winter (shows the
+guts of a CloudFormation deployment with CoreOS & Kubernetes.) These days all we need is one
+command line tool & a tiny yaml manifest file.
+
+Download the command line tool here and put it in your PATH.
+
+Deploy Kubernetes
+
+Setup your AWS environment variables
+
+Make sure you have at least the following environment variables set:
+
+  • AWS_ACCESS_KEY_ID
+  • AWS_SECRET_ACCESS_KEY
+  • AWS_DEFAULT_REGION
+
+Create a folder for the new cluster
+
+This will house the TLS certificates & configuration for communicating with Kubernetes after
+launch.
+
+mkdir -p ~/.kube/clusters/kube/
+cd ~/.kube/
+
+Create a ~/.kube/clusters/kube/cluster.yaml manifest file
+
+This file will be used by kube-aws when launching a cluster (or destroying a cluster. See kube-aws
+--help for more options.)
+
+# cluster name is whatever you want it to be
+clusterName: kube
+# the key name is, of course, the aws key-pair name
+keyName: kubernetes
+# pick a region and availability zone
+region: us-west-2
+availabilityZone: us-west-2a
+# pick a domain name for your cluster
+externalDNSName: kube.mydomain.com
+# pick the size of your cluster
+workerCount: 3
+
+Launch with kube-aws
+
+Once our manifest is ready we can launch our cluster.
+
+kube-aws up --config=~/.kube/clusters/kube/cluster.yaml
+
+This will output the IP address of the master node. Take note of the IP address for the next step.
+
+Set a DNS A record for the Kubernetes IP address
+
+Set an external DNS 'A' record with master node's IP address.
+
+kube.mydomain.com. IN A <<IPADDRESS>>
+
+If you don't have control of DNS for a domain, you can put an entry into your /etc/hosts file.
+
+kube.mydomain.com <<IPADDRESS>>
+
+Configure kubectl
+
+Then we'll want to link the kubectl configuration file that kube-aws produced into the right spot
+(~/.kube/config) so we can talk to our cluster.
+
+ln -sf ~/.kube/clusters/kube/kubeconfig ~/.kube/config
+
+Interact with the Kubernetes cluster
+
+Everything should be ready to interact with our new cluster. Let's list the (worker) nodes. You
+should see 3 based on our manifest file above.
+
+kubectl get nodes
+
+Haskell Web Service
+
+Start a new haskell package
+
+Let's create a new directory for our example haskell web service. (We could have used stack new
+hello to create an application stub but our needs are as simple as they get. We'll just create a
+couple of files & our project will be complete.)
+
+mkdir hello
+cd hello
+
+Create a hello.cabal
+
+As with any Haskell application we need a cabal file describing the project.
+
+name:                hello
+version:             0.1.0
+license:             BSD3
+build-type:          Simple
+cabal-version:       >=1.10
+executable hello
+  default-language:    Haskell2010
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  main-is:             Main.hs
+  build-depends:       base
+                     , http-types
+                     , wai
+                     , warp
+
+Create a stack.yaml
+
+We also need a stack.yaml file. This sets the resolver (and the GHC version. In this case it's
+7.10.2). The stack.yaml file also describes what packages we are building and it has container
+image settings.
+
+resolver: lts-3.14
+packages: [.]
+image:
+  container:
+    base: hello:base
+
+Create a Dockerfile
+
+In order for Stack to build our application & package a docker container, we need to setup a base
+image with all our application dependencies. Put anything in your base image that your application
+will need. In our case today, we only need libgmp which is used by most haskell applications.
+
+FROM ubuntu:14.04
+RUN apt-get update && apt-get install -y libgmp10
+
+Now we need to build & tag the base image. You most likely only need to do this once. You can
+optionally tag this base image & share it on DockerHub with your co-workers.
+
+docker build -t hello:base .
+
+Create a Main.hs
+
+Every haskell application needs it's Main module. This one simply fires up a Warp web-server on
+port 8080 and always serves "hello world" as plain text.
+
+{-# LANGUAGE OverloadedStrings #-}
+
+import Network.HTTP.Types (status200)
+import Network.Wai (responseLBS)
+import Network.Wai.Handler.Warp (run)
+
+main :: IO ()
+main =
+  run 8080
+      (\rq rs ->
+         rs (responseLBS status200
+                         [("Content-Type","text/plain")]
+                         "hello world"))
+
+Build with Stack
+
+This will compile your haskell executable and layer it on top of your 'base' image.
+
+stack image container
+
+You should now see a hello docker image if you list your images.
+
+Test the image locally
+
+We should now be able to run the docker image locally & see it work. Try it.
+
+docker run -i -t --rm -p 8080:8080 hello hello
+
+In another window use curl or your web-browser to access port 8080.
+
+curl -v http://localhost:8080
+
+Press ctrl-c when you are done with the local docker web-server.
+
+Push the image to dockerhub
+
+Next we'll tag the hello image with our dockerhub user prefix and a version. Then we'll push the
+image up to dockerhub.com.
+
+docker tag hello dysinger/hello:0.1.0
+docker push dysinger/hello:0.1.0
+
+Deploy to Kubernetes
+
+Now that we have our application written & published we can deploy it to our new Kubernetes
+cluster. In order to deploy any cluster of web-servers to Kubernetes you need two basic yaml files.
+One is the Replication Controller file & the other is the Service file.
+
+Create a hello-rc.yaml
+
+The Replication Controller file describes our docker container's needs (ports, volumes, number of
+replicas, etc). Kubernetes will use this information to maintain a number of docker containers on
+the cluster running your application.
+
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: hello
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: hello
+    spec:
+      containers:
+      - name: hello
+        image: dysinger/hello:0.1.0
+        command:
+        - hello
+        ports:
+        - name: http
+          containerPort: 8080
+
+Create a hello-svc.yaml
+
+The Service file describes the external interface for your replicated application. It can
+optionally create a load-balancer and map ports into your replicated application. If you need your
+application to be exposed to the internet, then you need a Service file.
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello
+  labels:
+    app: hello
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+  selector:
+    app: hello
+  type: LoadBalancer
+
+Deploy the Controller & Service to Kubernetes
+
+Next we use the kubectl command line tool to tell Kubernetes to deploy this application. We can do
+it with one command.
+
+kubectl create -f hello-rc.yaml -f hello-svc.yaml
+
+Describe the running Service
+
+We can ask Kubernetes how the deployment went with the get subcommand.
+
+kubectl get pods
+
+You should see your new hello application being deployed (possibly not ready yet.)
+
+You should see 2 of our hello applications deployed on 2 of our 3 worker nodes.
+
+After a few minutes you should be able to get information about the applications external
+interface.
+
+kubectl describe svc hello
+
+This will show you the Amazon ELB DNS name. You can stick this hostname in your browser & your
+should see 'hello world'. You can update DNS with a CNAME from your domain to the Amazon ELB DNS
+name if you would like a shorter URL.
+
+hello.mydomain.com. CNAME <<ELB-HOSTNAME>>.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

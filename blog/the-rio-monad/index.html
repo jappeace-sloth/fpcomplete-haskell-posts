@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>The RIO Monad</title>
+  <meta property="og:title" content="The RIO Monad">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Tying together unliftio, the ReaderT pattern, and a tale of two brackets: learn about how the Stack codebase is leveraging the new RIO monad">
+  <meta property="og:description" content="Tying together unliftio, the ReaderT pattern, and a tale of two brackets: learn about how the Stack codebase is leveraging the new RIO monad">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;the-rio-monad&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>The RIO Monad</h1>
+      
+      <p id="page-description">By Michael Snoyman, July 24, 2017</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=The%20RIO%20Monad https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;the-rio-monad&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;the-rio-monad&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;the-rio-monad&#x2F;&amp;title=The%20RIO%20Monad"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;the-rio-monad&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>I'd really intended to write a blog post on a different topic
+this week. But given that I did some significant refactoring in the
+Stack codebase related to a <a href=
+"/blog/2017/06/readert-design-pattern">number</a> <a href=
+"/blog/2017/06/tale-of-two-brackets">of</a> <a href=
+"/blog/2017/07/announcing-new-unliftio-library">recent</a> posts,
+let's just knock this one out and get to other topics another
+time.</p>
+<p>I've played with the idea of a <code>RIO</code> (Reader + IO)
+monad a number of times in the past, but never bit the bullet to do
+it. As I've been hashing out ideas with some people and working
+through cleanups on Stack, it became clear that the time was right
+to try this out. And after having explored a bunch of other
+options, the arguments in favor of this approach are clearer in my
+head (which hopefully means clearer in this post too).</p>
+<p>I'm going to describe the kinds of problems I wanted to address
+in Stack, look at various alternative solutions, and point out
+where each fell short. I'm going to talk about Stack because</p>
+<ol>
+<li>I've implemented multiple solutions in that codebase</li>
+<li>it's a fairly large application, and</li>
+<li>it makes particularly good usage of multiple environment types,
+as I'll be explaining shortly.</li>
+</ol>
+<p>If you're terribly impatient, you can <a href=
+"https://github.com/commercialhaskell/stack/pull/3281/commits/0de40025c7c9ef6b10262c246ed589457e65250f#diff-748b3631a8e26a9b793853e343ca0577L164">
+take a peek at the code change</a>. In reality, the diff to the
+codebase is significantly larger than this: I had to make a number
+of other refactorings happen to make this one possible, in
+particular <a href=
+"https://github.com/commercialhaskell/stack/pull/3281/commits/513e362b2058ac0c0706ab609049ab560bc2eb7e">
+removing <code>StackM</code></a>. But this captures the core
+idea.</p>
+<h2 id="what39s-happening-in-stack">What's happening in Stack?</h2>
+<p>When you first run Stack, it knows nothing about your project,
+your configuration, or anything else. It has to parse environment
+variables, command line options, and config files to get basic
+information like "should I be doing a verbose and colored logging
+output." Before any real work happens (which may involve logging),
+we need to load up our logging function and other basic
+settings.</p>
+<p>Next, we need to load up some general configuration values, like
+"do we use the system-wide GHC." This does not include
+project-specific configuration values for two reasons:</p>
+<ol>
+<li>If we don't need project-specific information, the parsing is
+unneeded overhead</li>
+<li>We'll need the general config in order to load up the project
+config</li>
+</ol>
+<p>Once we have the project information, we need to resolve it into
+real information about packages in the global database, which
+actual compiler version is available, and so on.</p>
+<p>This creates a hierarchy of loaded configuration information,
+which we're going to call:</p>
+<ul>
+<li><code>Runner</code>: basic info on logging, whether we're using
+Docker or Nix, etc</li>
+<li><code>Config</code>: general config</li>
+<li><code>BuildConfig</code>: project specific config</li>
+<li><code>EnvConfig</code>: information on the actual build
+environment</li>
+</ul>
+<p>Each of these configuration values contains its parent, so that
+a <code>Config</code> also knows about logging, and
+<code>EnvConfig</code> also knows project specific config. Awesome.
+(In the actual codebase, there are a few other levels to this, but
+this is a good enough explanation to move ahead with for now.)</p>
+<p>Some parts of our code base are pure. We'll ignore those for
+now, and focus only on the parts that perform some kind of
+<code>IO</code>.</p>
+<h2 id="pass-individual-values">Pass individual values</h2>
+<p>Let's take the (arguably) simplest approach first. I described
+some data types above collecting many values together. But what if
+we completely ignore such helper types, and simply deal directly
+with their constituent values. For example, consider if we had:</p>
+<pre><span class="hs-keyword">data</span> <span class=
+"hs-conid">Runner</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">Runner</span>
+  <span class="hs-layout">{</span> <span class=
+"hs-varid">runnerLog</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Text</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span> <span class=
+"hs-comment">-- print a log message</span>
+  <span class="hs-layout">,</span> <span class=
+"hs-varid">runnerInDocker</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">Bool</span>
+  <span class="hs-layout">}</span>
+
+<span class="hs-keyword">data</span> <span class=
+"hs-conid">Config</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">Config</span>
+  <span class="hs-layout">{</span> <span class=
+"hs-varid">configRunner</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">Runner</span>
+  <span class="hs-layout">,</span> <span class=
+"hs-varid">configSystemGHC</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">Bool</span>
+  <span class="hs-layout">}</span>
+
+<span class="hs-definition">someFunc</span>
+  <span class="hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-conid">Text</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span><span class=
+"hs-layout">)</span>
+  <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Bool</span> <span class=
+"hs-comment">-- ^ system GHC?</span>
+  <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span></pre>
+<p>Then I could use <code>someFunc</code> like so:</p>
+<pre><span class="hs-definition">someFunc</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">runnerLog</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">configRunner</span> <span class=
+"hs-varid">config</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">configSystemGHC</span> <span class=
+"hs-varid">config</span><span class="hs-layout">)</span></pre>
+<p>There are two nice advantages of this approach:</p>
+<ol>
+<li>It's crystal clear exactly which pieces of information a
+function needs in order to run. For example, we can tell that
+<code>someFunc</code> doesn't care about whether we're running in
+Docker, but does care about how to log and whether we're using the
+system GHC.</li>
+<li>There are no complicated concepts at all introduced; someone
+with the most basic knowledge of Haskell could follow this function
+signature most likely.</li>
+</ol>
+<p>However, there are two major problems as well:</p>
+<ol>
+<li>It's really, really tedious. Having to pull out all of the
+values we need each time we call a function sucks. And if you
+suddenly need some extra information, you'll need to add that, and
+potentially add that value to all of the calling functions up the
+tree.</li>
+<li>I'd argue it's not type safe. Passing around random
+<code>Bool</code>s like that is a recipe for disaster. If you saw
+<code>someFunc (runnerLogFunc runner) (runnerInDocker
+runner)</code>, you probably wouldn't notice the bug, and GHC
+wouldn't help either. You can mitigate that with copious usage of
+<code>newtype</code>s, but that's yet more tedium.</li>
+</ol>
+<h2 id="pass-composite-values">Pass composite values</h2>
+<p>The solution to those two problems is pretty simple: pass around
+the <code>Runner</code>, <code>Config</code>, et al values instead.
+And since <code>Runner</code> is contained inside
+<code>Config</code>, <code>Config</code> inside
+<code>BuildConfig</code>, and <code>BuildConfig</code> inside
+<code>EnvConfig</code>, we only ever need to pass in one of these
+values (plus whatever other arguments our function needs). This
+looks like:</p>
+<pre><span class="hs-definition">someFunc</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Config</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span></pre>
+<p>I also like the fact that, within the function, you'll now be
+using <code>configSystemGHC</code>, which is <i>very</i> explicit
+about what the value represents. Not bad.</p>
+<p>But there are downsides here too:</p>
+<ol>
+<li>We're giving more information than is strictly needed to these
+functions (in our example: the <code>runnerInDocker</code> value).
+I'm honestly not too terribly concerned about this. What is
+slightly more concerning is how easy it is to accidentally depend
+on a larger value than you need, like using
+<code>BuildConfig</code> in the function signature instead of
+<code>Config</code>. This makes it harder to test functions, harder
+to understand what they do, and harder to reuse them. But this can
+be addressed with discipline, code review, and (in theory at some
+future date) static analysis tools. (That last bit makes more sense
+the the typeclass approach mentioned later.)</li>
+<li>Let's say we've got <code>someFunc2 :: BuildConfig -&gt; IO
+()</code> that wants to use <code>someFunc</code>. We'll need to
+explicit extract the <code>Config</code> value from the
+<code>BuildConfig</code> to pass it in. This <i>is</i> tedious and
+boilerplate-y, but honestly not that bad.</li>
+<li>With some functions—especially the logging functions—having to
+pass in the <code>Runner</code> value each time feels more tedious.
+Compare <code>logInfo "Calling ghc-pkg"</code> with <code>logInfo
+(configRunner config) "Calling ghc-pkg"</code>. Again, not
+terrible, but certainly an overhead and line noise.</li>
+</ol>
+<p>I want to be clear: this approach isn't bad, and has a lot of
+simplicity benefits. I know people who advocate for this approach
+in production software, and I wouldn't argue strongly against it.
+But I do think we can do better aesthetically and ergonomically. So
+let's keep going.</p>
+<h2 id="readert-io">ReaderT IO</h2>
+<p>There's a pretty well-known approach to passing around an
+environment like <code>Config</code>: the <code>ReaderT</code>
+monad transformer. We can whip that out here easily enough:</p>
+<pre><span class="hs-definition">someFunc</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-conid">Config</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">someFunc2</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-conid">BuildConfig</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">logInfo</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Text</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-conid">Runner</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span></pre>
+<p>This solves the problem of explicitly passing around these
+environments. But we've still got to somehow convert our
+environments appropriately when calling functions. This may look
+like:</p>
+<pre><span class="hs-definition">someFunc</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-conid">Config</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">someFunc</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">config</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">ask</span>
+  <span class="hs-varid">liftIO</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">runReaderT</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">logInfo</span> <span class=
+"hs-str">"Inside someFunc"</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-varid">configRunner</span> <span class=
+"hs-varid">config</span><span class="hs-layout">)</span></pre>
+<p>Some of this could get extracted to helper functions, but let's
+face it: this is just ugly.</p>
+<h2 id="monadlogger">MonadLogger</h2>
+<p>We're using the monad-logger library in Stack, which has a
+typeclass that looks roughly like this:</p>
+<pre><span class="hs-keyword">class</span> <span class=
+"hs-conid">MonadLogger</span> <span class=
+"hs-varid">m</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">logInfo</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Text</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">()</span></pre>
+<p>We can change around our functions to look like this:</p>
+<pre><span class="hs-definition">someFunc</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadLogger</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-conid">Config</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">()</span>
+<span class="hs-definition">someFunc</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">logInfo</span> <span class=
+"hs-str">"Inside someFunc"</span></pre>
+<p>This works because monad-logger defines an instance for
+<code>ReaderT</code> like so:</p>
+<pre><span class="hs-keyword">instance</span> <span class=
+"hs-conid">MonadLogger</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">MonadLogger</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-varid">env</span> <span class="hs-varid">m</span><span class=
+"hs-layout">)</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">logInfo</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">lift</span> <span class="hs-varop">.</span> <span class=
+"hs-varid">logInfo</span></pre>
+<p>This reads much more nicely, but it's weird that we've got our
+logging function defined in <code>Config</code> <i>and</i> in the
+<code>m</code> type variable. Also: which concrete representation
+of <code>m</code> are we going to use at the end of the day? We
+could use <code>LoggingT</code> like so:</p>
+<pre><span class="hs-keyword">newtype</span> <span class=
+"hs-conid">LoggingT</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">LoggingT</span> <span class=
+"hs-layout">(</span><span class="hs-layout">(</span><span class=
+"hs-conid">Text</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span> <span class=
+"hs-comment">-- defined in monad-logger</span>
+
+<span class="hs-definition">runMyStack</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Config</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-conid">Config</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">LoggingT</span> <span class=
+"hs-conid">IO</span><span class="hs-layout">)</span> <span class=
+"hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">a</span>
+<span class="hs-definition">runMyStack</span> <span class=
+"hs-varid">config</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-varid">f</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-conid">LoggingT</span> <span class=
+"hs-varid">g</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">f</span> <span class="hs-varid">config</span>
+   <span class="hs-keyword">in</span> <span class=
+"hs-varid">g</span> <span class="hs-layout">(</span><span class=
+"hs-varid">runnerLogFunc</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">configRunner</span> <span class=
+"hs-varid">config</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span></pre>
+<p>But this is starting to feel clunky. And imagine if we added a
+bunch of other functionality like logging: the many different
+layers of transformers would get much worse.</p>
+<h2 id="custom-readert">Custom ReaderT</h2>
+<p>These are solvable problems:</p>
+<pre><span class="hs-keyword">newtype</span> <span class=
+"hs-conid">MyReaderT</span> <span class=
+"hs-varid">env</span> <span class="hs-varid">m</span> <span class=
+"hs-varid">a</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">MyReaderT</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-varid">env</span> <span class="hs-varid">m</span> <span class=
+"hs-varid">a</span><span class="hs-layout">)</span>
+
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">MonadReader</span> <span class=
+"hs-varid">env</span> <span class="hs-layout">(</span><span class=
+"hs-conid">MyReaderT</span> <span class=
+"hs-varid">env</span> <span class="hs-varid">m</span><span class=
+"hs-layout">)</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">ask</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">MyReaderT</span> <span class="hs-varid">ask</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">MonadIO</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">MonadLogger</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">MyReaderT</span> <span class=
+"hs-conid">Runner</span> <span class=
+"hs-varid">m</span><span class="hs-layout">)</span> <span class=
+"hs-keyword">where</span>
+  <span class="hs-varid">logInfo</span> <span class=
+"hs-varid">msg</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">runner</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">ask</span>
+    <span class="hs-varid">liftIO</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">runnerLogFunc</span> <span class=
+"hs-varid">runner</span> <span class="hs-varid">msg</span></pre>
+<p>And then we'll need a bunch of other instances for
+<code>MonadLogger MyReaderT</code> depending on which concrete
+environment is used. Ehh.... OK, fair enough. We'll deal with that
+wrinkle shortly. Our functions now look like:</p>
+<pre><span class="hs-definition">someFunc</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadIO</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">MyReaderT</span> <span class=
+"hs-conid">Config</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">()</span>
+<span class="hs-definition">someFunc</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">logInfo</span> <span class=
+"hs-str">"Inside someFunc"</span>
+  <span class="hs-varid">config</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">ask</span>
+  <span class="hs-varid">liftIO</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">someFunc3</span> <span class="hs-varid">config</span>
+<span class="hs-definition">someFunc3</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Config</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span> <span class=
+"hs-comment">-- does something else, who cares</span></pre>
+<p>Not too terrible I guess.</p>
+<h2 id="be-more-general">Be more general!</h2>
+<p>It turns out we can generalize our signature even more. After
+all, why do we need to say anything about <code>MyReaderT</code>?
+We aren't using its implementation at all in <code>someFunc</code>.
+Here's the type that GHC will be able to derive for us:</p>
+<pre><span class="hs-definition">someFunc</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-conid">MonadReader</span> <span class="hs-conid">Config</span> <span class="hs-varid">m</span><span class="hs-layout">,</span> <span class="hs-conid">MonadIO</span> <span class="hs-varid">m</span><span class="hs-layout">,</span> <span class="hs-conid">MonadLogger</span> <span class="hs-varid">m</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-varid">m</span> <span class="hs-conid">()</span></pre>
+<p>Nifty, right? Now we can be blissfully unaware of our concrete
+implementation and state explicitly what functionality we need via
+typeclass constraints.</p>
+<p>But how exactly are we going to call <code>someFunc</code> from
+<code>someFunc2</code>? If we were still using
+<code>MyReaderT</code>, this would look like:</p>
+<pre><span class="hs-definition">someFunc2</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadIO</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">MyReaderT</span> <span class=
+"hs-conid">BuildConfig</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">()</span>
+<span class="hs-definition">someFunc2</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">buildConfig</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">ask</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">config</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">bcConfig</span> <span class=
+"hs-varid">buildConfig</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">Config</span>
+  <span class="hs-varid">runMyReaderT</span> <span class=
+"hs-varid">someFunc</span> <span class=
+"hs-varid">config</span></pre>
+<p>But that's relying on knowing the concrete representation. We're
+trying to avoid that now.</p>
+<p>And the other problem: that <code>MonadLogger</code> instance
+was annoying. We'd really rather say "anything
+<code>MyReaderT</code> that has a <code>Runner</code> in its
+environment is a <code>MonadLogger</code>." Can we do this?</p>
+<h2 id="has-type-classes">Has type classes</h2>
+<p>Yes we can!</p>
+<pre><span class="hs-keyword">class</span> <span class=
+"hs-conid">HasRunner</span> <span class=
+"hs-varid">env</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">getRunner</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-varid">env</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Runner</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">HasRunner</span> <span class=
+"hs-conid">Runner</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">getRunner</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">id</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">HasRunner</span> <span class=
+"hs-conid">Config</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">getRunner</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">configRunner</span>
+<span class="hs-keyword">class</span> <span class=
+"hs-conid">HasRunner</span> <span class=
+"hs-varid">env</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">HasConfig</span> <span class=
+"hs-varid">env</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">getConfig</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-varid">env</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Config</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">HasConfig</span> <span class=
+"hs-conid">Config</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">getConfig</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">id</span>
+<span class=
+"hs-comment">-- And so on with BuildConfig and EnvConfig</span></pre>
+<p>A bit repetitive, but we only need to define these typeclasses
+and instances once. Let's see what <code>MonadLogger</code> looks
+like:</p>
+<pre><span class="hs-keyword">instance</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">MonadIO</span> <span class=
+"hs-varid">m</span><span class="hs-layout">,</span> <span class=
+"hs-conid">HasRunner</span> <span class=
+"hs-varid">env</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">MonadLogger</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">MyReaderT</span> <span class=
+"hs-varid">env</span> <span class="hs-varid">m</span><span class=
+"hs-layout">)</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">logInfo</span> <span class=
+"hs-varid">msg</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">runner</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">asks</span> <span class="hs-varid">getRunner</span>
+    <span class="hs-varid">liftIO</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">runnerLogFunc</span> <span class=
+"hs-varid">runner</span> <span class="hs-varid">msg</span></pre>
+<p>Much better, just one instance.</p>
+<p>And finally, how does this affect our <code>someFunc2</code>
+problem above?</p>
+<pre><span class="hs-definition">someFunc</span>
+  <span class="hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">MonadReader</span> <span class=
+"hs-varid">env</span> <span class="hs-varid">m</span><span class=
+"hs-layout">,</span> <span class=
+"hs-conid">HasConfig</span> <span class=
+"hs-varid">env</span><span class="hs-layout">,</span> <span class=
+"hs-conid">MonadIO</span> <span class=
+"hs-varid">m</span><span class="hs-layout">,</span> <span class=
+"hs-conid">MonadLogger</span> <span class=
+"hs-varid">m</span><span class="hs-layout">)</span>
+  <span class="hs-keyglyph">=&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">()</span>
+
+<span class="hs-definition">someFunc2</span>
+  <span class="hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">MonadReader</span> <span class=
+"hs-varid">env</span> <span class="hs-varid">m</span><span class=
+"hs-layout">,</span> <span class=
+"hs-conid">HasBuildConfig</span> <span class=
+"hs-varid">env</span><span class="hs-layout">,</span> <span class=
+"hs-conid">MonadIO</span> <span class=
+"hs-varid">m</span><span class="hs-layout">,</span> <span class=
+"hs-conid">MonadLogger</span> <span class=
+"hs-varid">m</span><span class="hs-layout">)</span>
+  <span class="hs-keyglyph">=&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">()</span>
+<span class="hs-definition">someFunc2</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">someFunc</span></pre>
+<p>This works because the <code>HasBuildConfig</code> constraint
+implies the <code>HasConfig</code> constraint. This is the general
+approach that the Stack codebase took until last week, so clearly
+it works. Our code is fully general, we don't need to do any
+explicit parameter passing, there's no need to explicitly convert
+from <code>BuildConfig</code> to <code>Config</code> or from
+<code>Config</code> to <code>Runner</code>. Besides some pretty
+verbose type signatures, this solves a lot of our problems.</p>
+<p>Or does it?</p>
+<h2 id="exception-handling">Exception handling</h2>
+<p>I just realized that I need to do some exception handling in
+<code>someFunc2</code>. Cool, no big deal:</p>
+<pre><span class="hs-definition">someFunc2</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-conid">MonadReader</span> <span class="hs-varid">env</span> <span class="hs-varid">m</span><span class="hs-layout">,</span> <span class="hs-conid">HasBuildConfig</span> <span class="hs-varid">env</span><span class="hs-layout">,</span> <span class="hs-conid">MonadIO</span> <span class="hs-varid">m</span><span class="hs-layout">,</span> <span class="hs-conid">MonadLogger</span> <span class="hs-varid">m</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-varid">m</span> <span class="hs-conid">()</span>
+<span class="hs-definition">someFunc2</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">someFunc</span> <span class=
+"hs-varop">`catch`</span>
+  <span class="hs-keyglyph">\</span><span class=
+"hs-varid">e</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">logInfo</span> <span class=
+"hs-layout">(</span><span class="hs-conid">T</span><span class=
+"hs-varop">.</span><span class="hs-varid">pack</span> <span class=
+"hs-layout">(</span><span class="hs-varid">show</span> <span class=
+"hs-layout">(</span><span class="hs-varid">e</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IOException</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span></pre>
+<p>Who sees the problem? Well, which <code>catch</code> function
+are we using? If we're using <code>Control.Exception</code>, then
+it's specialized to <code>IO</code> and this won't typecheck. If
+we're using <code>Control.Monad.Catch</code> (the
+<code>exceptions</code> package), then we need to add a
+<code>MonadCatch</code> constraint. And if we're using
+<code>Control.Exception.Lifted</code> (the <code>lifted-base</code>
+package), we need a <code>MonadBaseControl IO m</code>.</p>
+<p>Alright, let's assume that we're using one of the latter two.
+Now our type signature looks like this:</p>
+<pre><span class="hs-definition">someFunc2</span>
+  <span class="hs-keyglyph">::</span> <span class=
+"hs-layout">(</span> <span class=
+"hs-conid">MonadReader</span> <span class=
+"hs-varid">env</span> <span class="hs-varid">m</span><span class=
+"hs-layout">,</span> <span class=
+"hs-conid">HasBuildConfig</span> <span class=
+"hs-varid">env</span><span class="hs-layout">,</span> <span class=
+"hs-conid">MonadIO</span> <span class=
+"hs-varid">m</span><span class="hs-layout">,</span> <span class=
+"hs-conid">MonadLogger</span> <span class="hs-varid">m</span>
+     <span class="hs-layout">,</span> <span class=
+"hs-conid">MonadCatch</span> <span class=
+"hs-varid">m</span><span class="hs-layout">)</span>
+  <span class="hs-keyglyph">=&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">()</span></pre>
+<p>That's getting a bit long in the tooth, but OK. However, I've
+now got a bigger problem. As <a href=
+"/blog/2017/06/tale-of-two-brackets">previously discussed</a>,
+<code>MonadCatch</code> can play a bit fast-and-loose with monadic
+state (and <code>MonadBaseControl</code> even more so). Sure, in
+our concrete monad there isn't any monadic state. But this type
+signature doesn't tell us that, at all. So I'm left worried that
+someone may call this function with a <code>StateT</code> on top
+and we'll introduce a subtle bug into the code.</p>
+<p>Sound far-fetched? In fact, it's worse than you realize. Stack
+does a lot of code that involves concurrency. It also does a number
+of things where it defers <code>IO</code> actions to be run the
+first time a value is demanded (check out the <a href=
+"https://github.com/commercialhaskell/stack/blob/98c545266ed391107fb794d1d2969f00810498fe/src/Data/IORef/RunOnce.hs">
+RunOnce module</a>). In previous versions of the codebase, we had a
+number of places where we had to discard intermediate monadic
+state. Again, this <i>shouldn't</i> be a problem in practice, since
+our concrete monad was isomorphic to <code>ReaderT</code>. But the
+types don't prove it!</p>
+<h2 id="introducing-monadunliftio">Introducing MonadUnliftIO</h2>
+<p><a href="/blog/2017/07/announcing-new-unliftio-library">Last
+week's blog post</a> gets us closer to the mark.
+<code>MonadUnliftIO</code> is like <code>MonadCatch</code> and
+<code>MonadBaseControl</code>, except it witnesses that there is no
+monadic state. Changing our imports around and then setting our
+type signature to the following restores sanity:</p>
+<pre><span class="hs-definition">someFunc2</span>
+  <span class="hs-keyglyph">::</span> <span class=
+"hs-layout">(</span> <span class=
+"hs-conid">MonadReader</span> <span class=
+"hs-varid">env</span> <span class="hs-varid">m</span><span class=
+"hs-layout">,</span> <span class=
+"hs-conid">HasBuildConfig</span> <span class=
+"hs-varid">env</span><span class="hs-layout">,</span> <span class=
+"hs-conid">MonadLogger</span> <span class=
+"hs-varid">m</span><span class="hs-layout">,</span> <span class=
+"hs-conid">MonadUnliftIO</span> <span class="hs-varid">m</span>
+     <span class="hs-layout">)</span>
+  <span class="hs-keyglyph">=&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">()</span></pre>
+<p>With that change, Stack was able to get rid of its
+state-dropping code wrapping around the monad-control library,
+which is very nice. But it's not all perfect yet:</p>
+<ul>
+<li>Those type signatures are a mouthful</li>
+<li>Should we add in extra constraints, like
+<code>MonadThrow</code> or <code>MonadBaseControl</code>? It makes
+it more convenient to use existing library functions, but it makes
+the type signatures even longer</li>
+<li>Let's say I want to modify the <code>env</code> value a bit
+(such as temporarily turning off logging). I could use
+<code>local</code>, but (1) it's not even clear from the type
+signature that using <code>local</code> will affect the
+<code>MonadLogger</code> instance, and (2) <code>local</code> won't
+allow us to change the datatype itself (e.g., switch from
+<code>BuildConfig</code> to <code>Config</code>)</li>
+</ul>
+<h2 id="more-concrete">More concrete</h2>
+<p>This is peak generality. We're using typeclasses to constrain
+both the monad we're using, and the reader environment. Here's the
+insight I had last week*: why do both? There are really solid
+arguments for using the <code>HasRunner</code>-style typeclasses on
+the environment: it avoids explicit conversion and lets a function
+automatically work in a larger context (i.e., it provides us with
+subtyping, yay Object Oriented programming).</p>
+<p><small>* To be fair, I've discussed this idea with others many
+times in the past, so it's neither a new insight nor my insight.
+But it helps move the story along if I say it that way
+:)</small></p>
+<p>But can you make the same argument about allowing the monad to
+be general? I'm going to argue that, no, you can't. We know the
+application is always using the same concrete monad under the
+surface, just with different environments. You may argue that this
+limits consumers of our API: what if they wanted to use an
+<code>RWST</code> or <code>ExceptT</code> monad when calling these
+functions? Well, two responses:</p>
+<ol>
+<li>We're not writing a generally-consumable library. We're writing
+an application. Our consumers are all within the application (or
+people crazy enough to use Stack's explicitly unstable API). And
+within our application, we know this is never happening.</li>
+<li>We've already added a <code>MonadUnliftIO</code> constraint on
+our functions, and stated that we need that constraint for sanity
+purposes. Guess what: that limits our API to things which are
+isomorphic to <code>ReaderT</code> anyway. So we may as well just
+force usage of our own variant of <code>ReaderT</code> that handles
+the <code>MonadLogger</code> instance.</li>
+</ol>
+<p>Here's one version of this idea:</p>
+<pre><span class="hs-definition">someFunc</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-conid">HasConfig</span> <span class="hs-varid">env</span><span class="hs-layout">,</span> <span class="hs-conid">MonadUnliftIO</span> <span class="hs-varid">m</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-conid">MyReaderT</span> <span class="hs-varid">env</span> <span class="hs-varid">m</span> <span class="hs-conid">()</span>
+<span class="hs-definition">someFunc2</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-conid">HasBuildConfig</span> <span class="hs-varid">env</span><span class="hs-layout">,</span> <span class="hs-conid">MonadUnliftIO</span> <span class="hs-varid">m</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-conid">MyReaderT</span> <span class="hs-varid">env</span> <span class="hs-varid">m</span> <span class="hs-conid">()</span></pre>
+<p>We get our <code>MonadReader</code> and <code>MonadLogger</code>
+instances for free from specifying <code>MyReaderT</code>. We still
+get subtyping by using the <code>Has*</code> typeclasses on the
+environment. And by specifying <code>MonadUnliftIO</code> on the
+base monad, we get <code>MonadUnliftIO</code> and
+<code>MonadIO</code> too.</p>
+<h2 id="should-we-be-that-general">Should we be that general?</h2>
+<p>We kept an <code>m</code> type variable in our signature. Do we
+need it? In reality, not at all. Concretely, that <code>m</code> is
+always going to turn out to be <code>IO</code>. Also, if we had
+some reason we needed to run in some other monad, we can just do
+this:</p>
+<pre><span class="hs-definition">runMyReaderT</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-varid">env</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">MyReaderT</span> <span class=
+"hs-varid">env</span> <span class="hs-varid">m</span> <span class=
+"hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span>
+
+<span class="hs-definition">helper</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadIO</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-varid">env</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">MyReaderT</span> <span class=
+"hs-varid">env</span> <span class="hs-conid">IO</span> <span class=
+"hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span>
+<span class="hs-definition">helper</span> <span class=
+"hs-varid">env</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">liftIO</span> <span class=
+"hs-varop">.</span> <span class=
+"hs-varid">runMyReaderT</span> <span class=
+"hs-varid">env</span></pre>
+<p>Meaning we can always get back our more general signature. But
+interestingly, we're doing something even more surprising: the
+<code>MonadUnliftIO</code> constraint has been replaced with
+<code>MonadIO</code>. That's because, inside our
+<code>MyReaderT</code> stack, we're just relying on <code>IO</code>
+itself, and leveraging its lack of monadic state. Then we can
+<code>liftIO</code> that <code>IO</code> action into <i>any</i>
+transformer on top of <code>IO</code>, even one that doesn't
+provide <code>MonadUnliftIO</code>.</p>
+<h2 id="do-we-need-a-transformer">Do we need a transformer?</h2>
+<p>Alright, what value is the transformer providing? I'm going to
+argue <i>none at all</i>. Every usage of our <code>MyReaderT</code>
+has <code>m</code> specified as <code>IO</code>. So let's finally
+knock out the final simplification and introduce the
+<code>RIO</code> (Reader+IO) monad:</p>
+<pre><span class="hs-keyword">newtype</span> <span class=
+"hs-conid">RIO</span> <span class=
+"hs-varid">env</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">RIO</span> <span class="hs-layout">(</span><span class=
+"hs-varid">env</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span>
+<span class="hs-definition">runRIO</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadIO</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-varid">env</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">RIO</span> <span class=
+"hs-varid">env</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span>
+<span class="hs-definition">runRIO</span> <span class=
+"hs-varid">env</span> <span class="hs-layout">(</span><span class=
+"hs-conid">RIO</span> <span class="hs-varid">f</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">liftIO</span> <span class="hs-layout">(</span><span class="hs-varid">f</span> <span class="hs-varid">env</span><span class="hs-layout">)</span></pre>
+<p>This has instances for <code>Monad</code>,
+<code>MonadReader</code>, <code>MonadUnliftIO</code>, and can even
+support <code>MonadThrow</code>, <code>MonadCatch</code>, or
+<code>MonadBaseControl</code>. When using those latter functions,
+though, we can look at our type signatures and realize that, since
+<code>RIO</code> by definition has no monadic state, they're
+perfectly safe to use.</p>
+<p>Our type signatures look like:</p>
+<pre><span class="hs-definition">someFunc</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">HasConfig</span> <span class=
+"hs-varid">env</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">RIO</span> <span class=
+"hs-varid">env</span> <span class="hs-conid">()</span>
+<span class="hs-definition">someFunc2</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">HasBuildConfig</span> <span class=
+"hs-varid">env</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">RIO</span> <span class=
+"hs-varid">env</span> <span class="hs-conid">()</span></pre>
+<p>The only typeclass constraints we're left with are on the
+environment, which is exactly what we said (or at least <b>I</b>
+said) we wanted, in order to allow the useful subtyping going on in
+our application.</p>
+<p>I'll argue that we've lost no generality: using
+<code>runRIO</code> makes it trivial to use all of our functions in
+a different transformer stack. And as opposed to using constraints
+like <code>MonadLogger</code>, it's trivial to fully unwrap our
+transformer, play with the contents of the environment, and do new
+actions, e.g.:</p>
+<pre><span class="hs-definition">env</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">ask</span>
+<span class="hs-keyword">let</span> <span class=
+"hs-varid">runner</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">getRunner</span> <span class="hs-varid">env</span>
+    <span class="hs-varid">modRunner</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">turnOffLogging</span> <span class=
+"hs-varid">runner</span>
+<span class="hs-definition">runRIO</span> <span class=
+"hs-varid">modRunner</span> <span class=
+"hs-varid">someActionThatShouldBeQuiet</span></pre>
+<p>This approach is currently on the master branch of Stack. I'm
+biased, but I think it greatly helps readable and approachability
+for the codebase.</p>
+<p>I'm strongly considering spinning off this <code>newtype
+RIO</code> into its own package (or adding it to
+<code>unliftio</code>, where it's a good fit too). I'm also
+considering extracting the <code>HasLogFunc</code> typeclass to the
+<code>monad-logger</code> library.</p>
+<h2 id="the-mn-instance-problem">The m*n instance problem</h2>
+<p>The <code>MonadLogger</code> typeclass suffers from what's known
+as the m*n instance problem. When I wrote <code>MonadLogger</code>,
+I had to define instances for all of the concrete transformers in
+the <code>transformers</code> package.</p>
+<p>When I wrote the <code>MonadResource</code> typeclass in
+<code>resourcet</code>, I had to do the same thing. And I had to
+provide instances for these for each new transformer I wrote, like
+<code>HandlerT</code> in yesod-core and <code>ConduitM</code> in
+conduit. That's a lot of typeclass instances. It gets even worse
+when you realize that dependency confusion problems and orphan
+instances that usually result.</p>
+<p>By contrast, if we define additional functionality via
+typeclasses on the environment, this explosion of instances doesn't
+occur. Every transformer needs to define an instance of
+<code>MonadReader</code>, and then we can replace:</p>
+<pre><span class="hs-keyword">class</span> <span class=
+"hs-conid">MonadLogger</span> <span class=
+"hs-varid">m</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">logInfo</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Text</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">()</span></pre>
+<p>with</p>
+<pre><span class="hs-keyword">class</span> <span class=
+"hs-conid">HasLogFunc</span> <span class=
+"hs-varid">env</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">getLogFunc</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-varid">env</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Text</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+
+<span class="hs-definition">logInfo</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-conid">MonadReader</span> <span class="hs-varid">env</span> <span class="hs-varid">m</span><span class="hs-layout">,</span> <span class="hs-conid">HasLogFunc</span> <span class="hs-varid">env</span><span class="hs-layout">,</span> <span class="hs-conid">MonadIO</span> <span class="hs-varid">m</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-conid">Text</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">m</span> <span class="hs-conid">()</span>
+<span class="hs-definition">logInfo</span> <span class=
+"hs-varid">msg</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">logFunc</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">asks</span> <span class="hs-varid">getLogFunc</span>
+  <span class="hs-varid">liftIO</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">logFunc</span> <span class=
+"hs-varid">msg</span><span class="hs-layout">)</span></pre>
+<p>There is a downside to this approach: it assumes that all
+transformers have <code>IO</code> at their base. I'd argue that for
+something like <code>MonadLogger</code>, this is a fair assumption.
+But if you wanted to make it more general, you <i>can</i> in fact
+do so with a little more type trickery.</p>
+<p>The principle I'm beginning to form around this is: don't define
+effects with a typeclass on the monad, define it with a typeclass
+on the environment.</p>
+<h2 id="why-not-readert">Why not ReaderT?</h2>
+<p>I alluded to it, but let me say it explicitly: we need a new
+type like <code>RIO</code> instead of <code>ReaderT</code> to make
+all of this work. That's because typeclasses like
+<code>MonadLogger</code> define their instances on
+<code>ReaderT</code> to defer to the underlying monad. We need a
+new monad (or transformer) which explicitly takes responsibility
+for defining its own instances instead of deferring to the
+underlying monad's behavior.</p>
+<h2 id="some-notes-on-the-has-typeclasses">Some notes on the Has
+typeclasses</h2>
+<p>The <code>Has*</code> typeclasses above work best when they
+properly define superclasses. It would have been much more
+irritating to write this code if I'd had to say:</p>
+<pre><span class="hs-definition">someFunc2</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-conid">HasRunner</span> <span class="hs-varid">env</span><span class="hs-layout">,</span> <span class="hs-conid">HasConfig</span> <span class="hs-varid">env</span><span class="hs-layout">,</span> <span class="hs-conid">HasBuildConfig</span> <span class="hs-varid">env</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-conid">RIO</span> <span class="hs-varid">env</span> <span class="hs-conid">()</span></pre>
+<p>The superclasses on <code>HasBuildConfig</code> and
+<code>HasConfig</code> allow me to just state
+<code>HasBuildConfig</code>, which is great.</p>
+<p>Also, I demonstrated the typeclasses above with accessor
+functions:</p>
+<pre><span class="hs-definition">getRunner</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-varid">env</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Runner</span></pre>
+<p>In reality, Stack uses lenses for this (from the microlens
+package):</p>
+<pre><span class="hs-definition">runnerL</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Lens'</span> <span class=
+"hs-varid">env</span> <span class="hs-conid">Runner</span></pre>
+<p>This makes it much easier to make modifications to the
+environment, such as the "silence log messages" example above.
+(Though I think that example is totally made up and doesn't
+actually occur in the codebase.)</p>
+<h2 id="how-about-pure-code">How about pure code?</h2>
+<p>I started off by saying this discussion applies only to
+<code>IO</code> code and doesn't apply to pure code. But what about
+pure code? One really, really bad option is to just say "don't
+write pure code." We're Haskellers (at least, I assume only a
+Haskeller would be enough of a masochist to get this far in the
+blog post). We know the value of partitioning off effects.</p>
+<p>Another option is to rely on mtl-style typeclasses, such as
+<code>MonadReader</code> and <code>MonadThrow</code>. E.g.:</p>
+<pre><span class="hs-definition">cannotFail</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-conid">MonadReader</span> <span class="hs-varid">env</span> <span class="hs-varid">m</span><span class="hs-layout">,</span> <span class="hs-conid">HasConfig</span> <span class="hs-varid">env</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-varid">m</span> <span class="hs-conid">Foo</span>
+<span class="hs-definition">canFail</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-conid">MonadReader</span> <span class="hs-varid">env</span> <span class="hs-varid">m</span><span class="hs-layout">,</span> <span class="hs-conid">HasConfig</span> <span class="hs-varid">env</span><span class="hs-layout">,</span> <span class="hs-conid">MonadThrow</span> <span class="hs-varid">m</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-varid">m</span> <span class="hs-conid">Bar</span></pre>
+<p>This is basically what we do in Stack right now, and has the
+benefit of unifying with <code>RIO</code> without explicitly
+lifting. Another approach would be to make these more concrete,
+e.g.:</p>
+<pre><span class="hs-definition">cannotFail</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">HasConfig</span> <span class=
+"hs-varid">env</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">Reader</span> <span class=
+"hs-varid">env</span> <span class="hs-conid">Foo</span>
+<span class="hs-definition">canFail</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">HasConfig</span> <span class=
+"hs-varid">env</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-varid">env</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Either</span> <span class=
+"hs-conid">MyException</span><span class=
+"hs-layout">)</span> <span class="hs-conid">Bar</span></pre>
+<p>Or even ditching the transformers:</p>
+<pre><span class="hs-definition">cannotFail</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">HasConfig</span> <span class=
+"hs-varid">env</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-varid">env</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Foo</span>
+<span class="hs-definition">canFail</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">HasConfig</span> <span class=
+"hs-varid">env</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-varid">env</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Either</span> <span class=
+"hs-conid">MyException</span> <span class=
+"hs-conid">Bar</span></pre>
+<p>Or even ditching the typeclass constraints:</p>
+<pre><span class="hs-definition">cannotFail</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Config</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Foo</span>
+<span class="hs-definition">canFail</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Config</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Either</span> <span class=
+"hs-conid">MyException</span> <span class=
+"hs-conid">Bar</span></pre>
+<p>I'm frankly undecided on the right way forward. I like the
+current approach in that it unifies without explicit conversion,
+while still preserving the ability to use the code purely, test it
+purely, and see from its type that it has no side effects. Some
+people (they can speak up for themselves if they want) disagree
+with the concept of <code>MonadThrow</code>, and don't think it
+should be used. Another advantage of ditching
+<code>MonadThrow</code> is that it can allow more explicit
+exception types (notice the <code>MyException</code> above).</p>
+<p>Regardless, take this message: don't use <code>RIO</code> as an
+excuse to dispense with purity. Strive for purity, be disciplined
+about making pure code pure, and then consider the <code>RIO</code>
+approach when you have to be effectful.</p>
+<h2 id="using-rio-in-your-application">Using RIO in your
+application</h2>
+<p>I think this is a pattern I'd already recommend. It deserves
+more real world experience, and if I add <code>RIO</code> to a
+library on Hackage it will be easier to get started. There will
+always be a little bit of upfront cost with this (defining your
+environment data type and relevant typeclasses/instances), but I
+think that cost is well worth it.</p>
+<p>If you're going to start using <code>RIO</code> yourself, please
+add a comment about it. It would be great to get some standardized
+effectful typeclasses defined to grow out the ecosystem.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=The%20RIO%20Monad https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;the-rio-monad&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;the-rio-monad&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;the-rio-monad&#x2F;&amp;title=The%20RIO%20Monad"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;the-rio-monad&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#285b49444d5b684e584b474558444d5c4d064b4745" targe="_blank"><span class="__cf_email__" data-cfemail="057664696076456375666a6875696071602b666a68">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

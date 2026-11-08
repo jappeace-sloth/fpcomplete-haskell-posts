@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>What pure functional programming is all about: Part 2</title>
+  <meta property="og:title" content="What pure functional programming is all about: Part 2">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Exploring what pure functional programming is all about: what it means, reasoning about it, and performance gains. Part 2">
+  <meta property="og:description" content="Exploring what pure functional programming is all about: what it means, reasoning about it, and performance gains. Part 2">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;05&#x2F;pure-functional-programming-part-2&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>What pure functional programming is all about: Part 2</h1>
+      
+      <p id="page-description">By Chris Done, May  1, 2017</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=What%20pure%20functional%20programming%20is%20all%20about%3A%20Part%202 https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;05&#x2F;pure-functional-programming-part-2&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;05&#x2F;pure-functional-programming-part-2&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;05&#x2F;pure-functional-programming-part-2&#x2F;&amp;title=What%20pure%20functional%20programming%20is%20all%20about%3A%20Part%202"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;05&#x2F;pure-functional-programming-part-2&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>In the <a href="/blog/2017/04/pure-functional-programming">last
+post</a>, we covered the following:</p>
+<ul>
+<li>What purity is and what it isn't.</li>
+<li>We looked at functions and function composition.</li>
+<li>We've looked at how reasoning is easier if you only have
+functions.</li>
+</ul>
+<p>In this post, we'll explore:</p>
+<ul>
+<li>SQL as a pure language, which is a familiar language to almost
+everybody.</li>
+<li>How pure languages deal with the real-world and doing
+side-effects, which are obviously practical things to do.</li>
+<li>Evaluation vs execution, the generalization of pure vs impure
+languages.</li>
+</ul>
+<p>In the next post, we'll explore the performance and
+declarative-code-writing benefits of pure functional languages in
+particular detail, looking at generated code, assembly,
+performance, etc.</p>
+<h2 id="in-a-familiar-setting:-sql">In a familiar setting: SQL</h2>
+<p>In the last post, we established that pure languages (like
+Haskell or PureScript) are unable to make observations about the
+real world directly.</p>
+<p>So, then, the question is: How do pure languages interact with
+the real world? Let's look at SQL first, because everyone knows
+SQL, and then use that as a bridge towards how it's done in Haskell
+and other general purpose pure languages.</p>
+<p>Imagine a subset of SQL which is pure. It's not a big leap: SQL
+is mostly pure anyway. I don't like it when people write an article
+and ask me to imagine a syntax that's in their heads, so here is
+trivial a <a href=
+"https://en.wikipedia.org/wiki/Parsing_expression_grammar">PEG</a>
+grammar, which you can try online <a href=
+"https://pegjs.org/online">here</a>.</p>
+<pre><code class=
+"c">Select = 'SELECT ' Fields ' FROM ' Names Where?
+Names = Name (', ' Name)*
+Fields = Exp (', ' Exp)*
+Where = ' WHERE ' Exp
+Exp = Prefix? (Funcall / Condition / Name) (Connective Exp)?
+Funcall = Name '(' Exp ')'
+Condition = (Funcall / Name) Op Exp
+Prefix = 'NOT '
+Connective = ' AND ' / ' OR '
+Op = ' = ' / ' &lt;&gt; ' / ' &lt; ' / ' &gt; ' / ' * '
+Name = [a-zA-Z0-9]+</code></pre>
+<p>The following is an example of the above grammar.</p>
+<pre><code class=
+"sql">SELECT sin(foo), bar * 3 FROM table1, table2 WHERE foo &gt; 1 AND NOT bar = floor(foo)</code></pre>
+<p>This language is pure. The result of <i>evaluating</i> one of
+these expressions is the same every time. You can swap the order of
+commutative expressions like <code>floor(foo) = bar</code> and it
+doesn't change the meaning of the program. <code>floor(x) * sin(y)
+= sin(y) * floor(x)</code>.</p>
+<p>You get a description of the work you want to be done, and then
+the database engine (PostgreSQL, MySQL, SQL Server, etc.), usually
+creating an optimized query plan based on what it knows about your
+query and the database schema and contents, <i>executes</i> the
+query on the database, returning a collection of results.</p>
+<p>You didn't write instructions about how to get the database,
+where to look on the database, how to map indices across tables and
+whether to do an index scan or a sequence scan, allocating a
+buffer, etc.</p>
+<p>And yet, above, we clearly are giving the SQL engine a little
+program (not a turing complete one), that can compute conditionals
+and even functions (<code>floor</code> and <code>sin</code>) that
+we specified freely.</p>
+<p><b>Because our little program is pure</b>, SQL is capable of
+basically rewriting it completely, reducing it into a more
+normalized form without redundancy, and executing something far
+more efficient.</p>
+<p>Look at what PostgreSQL is able to do with your queries. Here I
+do a query which works on an indexed field on a table with
+37,626,086 rows. PostgreSQL knows both the query and my data, and
+plans accordingly, able to estimate the cost of how much work we'll
+have to do.</p>
+<pre><code class=
+"sql">ircbrowse=&gt; explain select * from event where id &gt; 123 and id &lt; 200*2;
+                                    QUERY PLAN
+----------------------------------------------------------------------------------
+ Index Scan using event_unique_id on event  (cost=0.56..857.20 rows=309 width=87)
+   Index Cond: ((id &gt; 123) AND (id &lt; 400))</code></pre>
+<p>(The <code>200*2</code> was evaluated statically.)</p>
+<p>Simply based on a static analysis of the SQL program.</p>
+<h2 id="evaluation-vs-execution">Evaluation vs execution</h2>
+<p>The SQL example is a specific case of a more general way of
+separating two concerns: evaluation and execution (or
+interpretation). On the one side you have your declarative language
+that you can evaluate, pretty much in terms of substition steps
+(and that's how you do your reasoning, in terms of the
+<i>denotational semantics</i>), and on the other you have a
+separate program which interprets that language in "the real world"
+(associated with <i>operational</i> semantics).</p>
+<p>I'm sure any programmer reading this easily understands the
+informal denotational semantics of the SQL mini language above, and
+would feel comfortable implementing one or more ways of executing
+it.</p>
+<p>In the same way, Haskell and other pure languages, construct
+declarative descriptions of work which a separate program can
+execute.</p>
+<h2 id="evaluation">Evaluation</h2>
+<p>What's <i>evaluation</i>, as differentiated from
+<i>execution</i>? To do your language's regular evaluation steps,
+as you might do on paper. If you've read your Structured and
+Interpretation of Computer Programs by MIT, you'll know this as
+<a href=
+"https://sarabander.github.io/sicp/html/1_002e1.xhtml#g_t1_002e1_002e5">
+the <i>substitution model</i></a>. Here's an example.</p>
+<p>If you want to count the length of a linked list, you might
+do:</p>
+<pre><span class="hs-definition">length</span> <span class=
+"hs-keyglyph">[</span><span class="hs-num">1</span><span class=
+"hs-layout">,</span> <span class="hs-num">2</span><span class=
+"hs-layout">,</span> <span class="hs-num">3</span><span class=
+"hs-keyglyph">]</span></pre>
+<p>And <code>length</code> is implemented like this:</p>
+<pre><span class="hs-definition">length</span> <span class=
+"hs-conid">[]</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-num">0</span>
+<span class="hs-definition">length</span> <span class=
+"hs-layout">(</span><span class="hs-varid">x</span><span class=
+"hs-conop">:</span><span class="hs-varid">xs</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-num">1</span> <span class=
+"hs-varop">+</span> <span class=
+"hs-varid">length</span> <span class="hs-varid">xs</span></pre>
+<p>So let's <i>evaluate</i> the expression, step-by-step:</p>
+<pre><span class="hs-definition">length</span> <span class=
+"hs-keyglyph">[</span><span class="hs-num">1</span><span class=
+"hs-layout">,</span> <span class="hs-num">2</span><span class=
+"hs-layout">,</span> <span class="hs-num">3</span><span class=
+"hs-keyglyph">]</span>
+
+<span class="hs-num">1</span> <span class=
+"hs-varop">+</span> <span class=
+"hs-varid">length</span> <span class=
+"hs-keyglyph">[</span><span class="hs-num">2</span><span class=
+"hs-layout">,</span> <span class="hs-num">3</span><span class=
+"hs-keyglyph">]</span>
+
+<span class="hs-num">1</span> <span class=
+"hs-varop">+</span> <span class="hs-layout">(</span><span class=
+"hs-num">1</span> <span class="hs-varop">+</span> <span class=
+"hs-varid">length</span> <span class=
+"hs-keyglyph">[</span><span class="hs-num">3</span><span class=
+"hs-keyglyph">]</span><span class="hs-layout">)</span>
+
+<span class="hs-num">1</span> <span class=
+"hs-varop">+</span> <span class="hs-layout">(</span><span class=
+"hs-num">1</span> <span class="hs-varop">+</span> <span class=
+"hs-layout">(</span><span class="hs-num">1</span> <span class=
+"hs-varop">+</span> <span class=
+"hs-varid">length</span> <span class=
+"hs-conid">[]</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span>
+
+<span class="hs-num">1</span> <span class=
+"hs-varop">+</span> <span class="hs-layout">(</span><span class=
+"hs-num">1</span> <span class="hs-varop">+</span> <span class=
+"hs-layout">(</span><span class="hs-num">1</span> <span class=
+"hs-varop">+</span> <span class="hs-num">0</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+
+<span class="hs-num">1</span> <span class=
+"hs-varop">+</span> <span class="hs-layout">(</span><span class=
+"hs-num">1</span> <span class="hs-varop">+</span> <span class=
+"hs-num">1</span><span class="hs-layout">)</span>
+
+<span class="hs-num">1</span> <span class=
+"hs-varop">+</span> <span class="hs-num">2</span>
+
+<span class="hs-num">3</span></pre>
+<p>Even if you don't know Haskell, I think the simple substitution
+steps to evaluate the expression are straight-forward and make
+sense. That's evaluation.</p>
+<h2 id="a-terminal-mini-language">A Terminal mini-language</h2>
+<p>Let's look at a data type that models a list of terminal actions
+to perform. I realise that if you don't know Haskell or ML, the
+below is mostly nonsense. I'll also bring in JavaScript as a
+"lingua franca", so that the idea translates nicely.</p>
+<p>(If it looks concise in Haskell and verbose in JavaScript, it's
+because JavaScript was designed for imperative, OO-style
+programming, and Haskell was designed for pure functional
+programming.)</p>
+<table>
+<tbody>
+<tr>
+<td valign="top">
+<pre><span class="hs-keyword">data</span> <span class=
+"hs-conid">Terminal</span> <span class="hs-varid">a</span>
+  <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">Print</span> <span class=
+"hs-conid">String</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Terminal</span> <span class=
+"hs-varid">a</span><span class="hs-layout">)</span>
+  <span class="hs-keyglyph">|</span> <span class=
+"hs-conid">GetLine</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">String</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Terminal</span> <span class=
+"hs-varid">a</span><span class="hs-layout">)</span>
+  <span class="hs-keyglyph">|</span> <span class=
+"hs-conid">Return</span> <span class="hs-varid">a</span></pre></td>
+<td valign="top">
+<pre><code class="javascript">function Print(string, next) {
+  this.line = string;
+  this.next = next;
+}
+function GetLine(cont) {
+  this.f = cont;
+}
+function Return(a) {
+  this.a = a;
+}</code></pre></td>
+</tr>
+</tbody>
+</table>
+<p>It can describe printing to stdout, getting a line from stdin,
+or returning a result. An example might be:</p>
+<table>
+<tbody>
+<tr>
+<td valign="top">
+<pre><span class="hs-conid">Print</span>
+  <span class="hs-str">"Please enter your name: "</span>
+  <span class="hs-layout">(</span><span class=
+"hs-conid">GetLine</span>
+     <span class="hs-layout">(</span><span class=
+"hs-keyglyph">\</span><span class=
+"hs-varid">name</span> <span class="hs-keyglyph">-&gt;</span>
+        <span class="hs-conid">Print</span>
+           <span class="hs-layout">(</span><span class=
+"hs-str">"Hello, "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">name</span> <span class="hs-varop">++</span> <span class="hs-str">"!"</span><span class="hs-layout">)</span>
+           <span class="hs-layout">(</span><span class=
+"hs-conid">Return</span> <span class=
+"hs-conid">()</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span></pre></td>
+<td valign="top">
+<pre><code class="javascript">new Print(
+  "Please enter your name: ",
+  new GetLine(function(name){
+    return new Print("Hello, " + name + "!",
+                     new Return(null));}))</code></pre></td>
+</tr>
+</tbody>
+</table>
+<p>Think of this like an abstract syntax tree. It's the description
+of what to do. When there is a function in the AST, that's a
+callback. The callback is just another pure function that returns a
+new action to be interpreted.</p>
+<p>The expressions above can be evaluated, but they perform no
+side-effects. It's a piece of purely functional code which
+generates a data structure. Our substitution model above still
+works.</p>
+<p>Hammering the point home, consider a greeting action like
+this:</p>
+<pre><span class="hs-definition">greeting</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">String</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Terminal</span> <span class="hs-conid">()</span>
+<span class="hs-definition">greeting</span> <span class=
+"hs-varid">msg</span> <span class="hs-keyglyph">=</span>
+  <span class="hs-conid">Print</span>
+    <span class="hs-varid">msg</span>
+    <span class="hs-layout">(</span><span class=
+"hs-conid">GetLine</span>
+       <span class="hs-layout">(</span><span class=
+"hs-keyglyph">\</span><span class=
+"hs-varid">name</span> <span class="hs-keyglyph">-&gt;</span>
+          <span class="hs-keyword">if</span> <span class=
+"hs-varid">name</span> <span class=
+"hs-varop">==</span> <span class="hs-str">"Chris"</span>
+            <span class="hs-keyword">then</span> <span class=
+"hs-conid">Print</span> <span class=
+"hs-str">"That's my name too."</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Return</span> <span class=
+"hs-conid">()</span><span class="hs-layout">)</span>
+            <span class="hs-keyword">else</span> <span class=
+"hs-conid">Print</span> <span class=
+"hs-str">"Hello, stranger!"</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Return</span> <span class=
+"hs-conid">()</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span></pre>
+<p>The <code>greeting</code> function itself is pure. It takes a
+message string, and constructs a <code>Print</code> using that.
+That's done by evaluation. Also, the sub-expression <code>(\name
+-&gt; ...)</code> is another pure function that takes a name and
+conditionally produces one action or another.</p>
+<p>Now, onto <i>execution</i>.</p>
+<h2 id="execution">Execution</h2>
+<p>We can write a number of ways to interpret this AST. Here is one
+pure implementation. It takes as input (1) some action list to run
+and (2) lines of input, then it returns a value and some output
+lines:</p>
+<pre><span class="hs-keyword">data</span> <span class=
+"hs-conid">Result</span> <span class=
+"hs-varid">a</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">Success</span> <span class=
+"hs-varid">a</span> <span class="hs-keyglyph">|</span> <span class=
+"hs-conid">Failure</span> <span class=
+"hs-conid">String</span> <span class=
+"hs-keyword">deriving</span> <span class="hs-conid">Show</span>
+<span class="hs-definition">interpretPure</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Terminal</span> <span class=
+"hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-keyglyph">[</span><span class=
+"hs-conid">String</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Result</span> <span class=
+"hs-layout">(</span><span class="hs-varid">a</span><span class=
+"hs-layout">,</span><span class="hs-keyglyph">[</span><span class=
+"hs-conid">String</span><span class=
+"hs-keyglyph">]</span><span class="hs-layout">)</span>
+<span class="hs-definition">interpretPure</span> <span class=
+"hs-varid">action</span> <span class=
+"hs-varid">stdin</span> <span class="hs-keyglyph">=</span>
+  <span class="hs-keyword">case</span> <span class=
+"hs-varid">action</span> <span class="hs-keyword">of</span>
+    <span class="hs-conid">Return</span> <span class=
+"hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Success</span> <span class=
+"hs-layout">(</span><span class="hs-varid">a</span><span class=
+"hs-layout">,</span> <span class="hs-conid">[]</span><span class=
+"hs-layout">)</span>
+    <span class="hs-conid">Print</span> <span class=
+"hs-varid">line</span> <span class=
+"hs-varid">next</span> <span class="hs-keyglyph">-&gt;</span>
+      <span class="hs-keyword">case</span> <span class=
+"hs-varid">interpretPure</span> <span class=
+"hs-varid">next</span> <span class=
+"hs-varid">stdin</span> <span class="hs-keyword">of</span>
+        <span class="hs-conid">Success</span> <span class=
+"hs-layout">(</span><span class="hs-varid">a</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">stdout</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Success</span> <span class=
+"hs-layout">(</span><span class="hs-varid">a</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">line</span> <span class="hs-conop">:</span> <span class=
+"hs-varid">stdout</span><span class="hs-layout">)</span>
+        <span class="hs-conid">Failure</span> <span class=
+"hs-varid">e</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Failure</span> <span class="hs-varid">e</span>
+    <span class="hs-conid">GetLine</span> <span class=
+"hs-varid">f</span> <span class="hs-keyglyph">-&gt;</span>
+      <span class="hs-keyword">case</span> <span class=
+"hs-varid">stdin</span> <span class="hs-keyword">of</span>
+        <span class="hs-conid">[]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Failure</span> <span class=
+"hs-str">"stdin closed"</span>
+        <span class="hs-layout">(</span><span class=
+"hs-varid">line</span><span class="hs-conop">:</span><span class=
+"hs-varid">stdin'</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">interpretPure</span> <span class=
+"hs-layout">(</span><span class="hs-varid">f</span> <span class=
+"hs-varid">line</span><span class="hs-layout">)</span> <span class=
+"hs-varid">stdin'</span></pre>
+<p>In diagram form:</p>
+<img alt="No alt provided" src="https://i.imgur.com/RzACyVv.png"
+width="500">
+<p>Note the part,</p>
+<pre>    <span class="hs-conid">GetLine</span> <span class=
+"hs-varid">f</span> <span class="hs-keyglyph">-&gt;</span>
+      <span class="hs-keyword">case</span> <span class=
+"hs-varid">stdin</span> <span class="hs-keyword">of</span>
+        <span class="hs-conid">[]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Failure</span> <span class=
+"hs-str">"stdin closed"</span>
+        <span class="hs-layout">(</span><span class=
+"hs-varid">line</span><span class="hs-conop">:</span><span class=
+"hs-varid">stdin'</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">interpretPure</span> <span class=
+"hs-layout">(</span><span class="hs-varid">f</span> <span class=
+"hs-varid">line</span><span class="hs-layout">)</span> <span class=
+"hs-varid">stdin'</span>
+<span class=
+"hs-comment">-------------------------------------- ^</span></pre>
+<p>Above is where we call the <i>pure function</i> from
+<code>GetLine</code> to produce another action for us to
+interpret.</p>
+<p>In JavaScript:</p>
+<pre><code class=
+"javascript">function Success(x){ this.success = x; }
+function Failure(e){ this.error = e; }
+function interpretPure(action, stdin) {
+  if (action instanceof Return) {
+    return new Success({ result: action.a, stdout: [] });
+  } else if (action instanceof Print) {
+    var result = interpretPure(action.next, stdin);
+    if (result instanceof Success) {
+      return new Success({
+        result: result.success.result,
+        stdout: [action.line].concat(result.success.stdout)
+      });
+    } else return result;
+  } else if (action instanceof GetLine) {
+    if (stdin == "") {
+      return new Failure("stdin closed");
+    } else {
+      var line = stdin[0];
+      var stdin_ = stdin.slice(1);
+      return interpretPure(action.f(line), stdin_);
+    }
+  }
+}</code></pre>
+<p>Which we can run like this:</p>
+<pre><span class="hs-varop">&gt;</span> <span class=
+"hs-definition">interpretPure</span> <span class=
+"hs-varid">demo</span> <span class=
+"hs-keyglyph">[</span><span class=
+"hs-str">"Dave"</span><span class="hs-keyglyph">]</span>
+<span class="hs-conid">Success</span> <span class=
+"hs-layout">(</span><span class="hs-conid">()</span><span class=
+"hs-layout">,</span><span class="hs-keyglyph">[</span><span class=
+"hs-str">"Please enter your name: "</span><span class=
+"hs-layout">,</span><span class=
+"hs-str">"Hello, Dave!"</span><span class=
+"hs-keyglyph">]</span><span class="hs-layout">)</span>
+<span class="hs-varop">&gt;</span> <span class=
+"hs-definition">interpretPure</span> <span class=
+"hs-varid">demo</span> <span class="hs-conid">[]</span>
+<span class="hs-conid">Failure</span> <span class=
+"hs-str">"stdin closed"</span></pre>
+<pre><code class=
+"javascript">&gt; JSON.stringify(interpretPure(demo, ["Dave"]));
+"{"success":{"result":null,"stdout":["Please enter your name: ","Hello, Dave!"]}}"
+&gt; JSON.stringify(interpretPure(demo, []));
+"{"error":"stdin closed"}"</code></pre>
+<p>If we liked, we could interpret this as real I/O that talks to
+the world directly.</p>
+<p>In Haskell, we translate it to a different type called
+<code>IO</code>. In JavaScript, let's do a good olde-fashioned
+90's-style <code>alert</code>/<code>prompt</code> user
+interaction.</p>
+<table>
+<tbody>
+<tr>
+<td valign="top">
+<pre><span class="hs-definition">interpretIO</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Terminal</span> <span class=
+"hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">a</span>
+<span class="hs-definition">interpretIO</span> <span class=
+"hs-varid">terminal</span> <span class="hs-keyglyph">=</span>
+  <span class="hs-keyword">case</span> <span class=
+"hs-varid">terminal</span> <span class="hs-keyword">of</span>
+    <span class="hs-conid">Return</span> <span class=
+"hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">return</span> <span class="hs-varid">a</span>
+    <span class="hs-conid">Print</span> <span class=
+"hs-varid">str</span> <span class=
+"hs-varid">next</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+      <span class="hs-varid">putStrLn</span> <span class=
+"hs-varid">str</span>
+      <span class="hs-varid">interpretIO</span> <span class=
+"hs-varid">next</span>
+    <span class="hs-conid">GetLine</span> <span class=
+"hs-varid">f</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+      <span class="hs-varid">line</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">getLine</span>
+      <span class="hs-varid">interpretIO</span> <span class=
+"hs-layout">(</span><span class="hs-varid">f</span> <span class=
+"hs-varid">line</span><span class="hs-layout">)</span></pre></td>
+<td valign="top">
+<pre><code class="javascript">function interpretIO(action) {
+  if (action instanceof Return) {
+    return action.a;
+  } else if (action instanceof Print) {
+    alert(action.line);
+    interpretIO(action.next);
+  } else if (action instanceof GetLine) {
+    var line = prompt();
+    interpretIO(action.f(line));
+  }
+}</code></pre></td>
+</tr>
+</tbody>
+</table>
+<p>In this case, we're just translating from one model to another.
+The <code>IO a</code> type is interpreted by the Haskell runtime
+either in a REPL prompt, or in a compiled program. JavaScript is
+capable of executing things directly during evaluation, so we were
+able to implement something similar to what Haskell's runtime does
+for IO.</p>
+<p>In SICP, they talk about programs as being spells, and the
+interpreter being like a spirit that does your bidding. Here is a
+formal description:</p>
+<img alt="No alt provided" src="https://i.imgur.com/3o8sNra.png">
+<p>(In practice, Haskell's IO type is not a closed set of
+operations, but an open set that can be extended with e.g. bindings
+to C libraries and such, and it isn't interpreted at runtime but
+rather compiled down to bytecode or machine code. The strict
+evaluation/execution separation remains in place, however.)</p>
+<h2 id="summary">Summary</h2>
+<p>We've covered an informal comparison between "evaluating" and
+"executing" code, which is a distinction often discussed in the
+functional programming community.</p>
+<p>We've explored making a declarative data type that represents
+terminal interaction, and implemented two different ways of
+interpreting it: as a pure function, or executing it directly.
+There may be other interpretations, such as talking to a server. We
+could write an interpreter which logs every action performed. We
+could also write a test suite which feeds randomized or specific
+inputs and demands consistent outputs.</p>
+<p>We looked at how SQL is such an example of an evaluation
+(<code>1 + 1</code> is evaluated before executing the query) vs
+execution separation. In <code>SELECT customer.purchases + 1 FROM
+customer</code>, the <code>customer.purchases + 1</code> expression
+is <i>evaluated</i> by the interpreter for each row in the
+table.</p>
+<p>In the next post, we'll explore:</p>
+<ul>
+<li>Performance of pure code.</li>
+<li>Optimization of pure code, in particular: Inlining,
+deforestation, common sub-expression elimination, fusion, rewrite
+rules, etc.</li>
+<li>And how these optimizations allow for low- or zero-cost
+abstractions.</li>
+</ul>
+<p>We may further explore different types of interpreters (software
+transactional memory, local mutation, parsers, etc).</p>
+<h2 id="p.s.">P.S.</h2>
+<p>There are some extra articles that may be of interest for the
+fearless:</p>
+<ul>
+<li><a href=
+"http://conal.net/blog/posts/the-c-language-is-purely-functional">The
+C language is purely functional</a></li>
+<li>Handling effects in PureScript (no longer available)</li>
+<li><a href=
+"https://www.haskellforall.com/2012/06/you-could-have-invented-free-monads.html">
+Free monads</a></li>
+</ul>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=What%20pure%20functional%20programming%20is%20all%20about%3A%20Part%202 https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;05&#x2F;pure-functional-programming-part-2&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;05&#x2F;pure-functional-programming-part-2&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;05&#x2F;pure-functional-programming-part-2&#x2F;&amp;title=What%20pure%20functional%20programming%20is%20all%20about%3A%20Part%202"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;05&#x2F;pure-functional-programming-part-2&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#2b584a474e586b4d5b4844465b474e5f4e05484446" targe="_blank"><span class="__cf_email__" data-cfemail="bbc8dad7dec8fbddcbd8d4d6cbd7decfde95d8d4d6">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

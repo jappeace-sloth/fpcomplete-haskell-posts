@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>vector: Efficient Packed-Memory Data Representations</title>
+  <meta property="og:title" content="vector: Efficient Packed-Memory Data Representations">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;library&#x2F;vector&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+  
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+<section class="hero grid-bg">
+  <div class="container">
+    <h1>vector: Efficient Packed-Memory Data Representations
+    </h1></div>
+</section>
+
+
+
+  
+<div class="container py-3">
+  <p>The de facto standard package in the Haskell ecosystem for integer-indexed
+array data is the <a href="https://www.stackage.org/package/vector">vector package</a>.
+This corresponds at a high level to arrays in C, or the vector class in C++'s
+STL. However, the vector package offers quite a bit of functionality not
+familiar to those used to the options in imperative and mutable languages.</p>
+<p>While the interface for vector is relatively straightforward, the abundance of
+different modules can be daunting. This article will start off with an overview
+of terminology to guide you, and then step through a number of concrete
+examples of using the package.</p>
+<h2 id="tutorial-exercise">Tutorial exercise</h2>
+<p>To help motivate learning, keep in mind this exercise while reading
+through the content below, and try to implement a solution. Use
+mutable vectors to write a program that will deal you a random hand of
+poker. Bonus: use an unboxed vector. Double bonus: minimize the memory
+representation.</p>
+<h2 id="example">Example</h2>
+<p>Since we're about to jump into a few sections of descriptive text, let's kick
+this off with a concrete example to whet your appetite. We're going to count
+the frequency of different bytes that appear on standard input, and then
+display this content.</p>
+<p>Note that this example is purposely written in a very generic form. We'll build
+up to handling this form throughout this article.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> FlexibleContexts #-}
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">Control.Monad.Primitive     </span><span>(</span><span style="color:#268bd2;">PrimMonad</span><span>, </span><span style="color:#268bd2;">PrimState</span><span>)
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.ByteString.Lazy        </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">L
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Generic.Mutable </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">M
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed         </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">U
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">Data.Word                   </span><span>(</span><span style="color:#268bd2;">Word8</span><span>)
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    </span><span style="color:#93a1a1;">-- Get all of the contents from stdin
+</span><span>    lbs </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">L</span><span style="color:#859900;">.</span><span>getContents
+</span><span>
+</span><span>    </span><span style="color:#93a1a1;">-- Create a new 256-size mutable vector
+</span><span>    </span><span style="color:#93a1a1;">-- Fill the vector with zeros
+</span><span>    mutable </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">M</span><span style="color:#859900;">.</span><span>replicate </span><span style="color:#6c71c4;">256 0
+</span><span>
+</span><span>    </span><span style="color:#93a1a1;">-- Add all of the bytes from stdin
+</span><span>    addBytes mutable lbs
+</span><span>
+</span><span>    </span><span style="color:#93a1a1;">-- Freeze to get an immutable version
+</span><span>    vector </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">U</span><span style="color:#859900;">.</span><span>unsafeFreeze mutable
+</span><span>
+</span><span>    </span><span style="color:#93a1a1;">-- Print the frequency of each byte
+</span><span>    </span><span style="color:#93a1a1;">-- In newer vectors: we can use imapM_
+</span><span>    </span><span style="color:#cb4b16;">U</span><span style="color:#859900;">.</span><span>zipWithM_ printFreq (</span><span style="color:#cb4b16;">U</span><span style="color:#859900;">.</span><span>enumFromTo </span><span style="color:#6c71c4;">0 255</span><span>) vector
+</span><span>
+</span><span style="color:#b58900;">addBytes </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">PrimMonad m</span><span>, </span><span style="color:#268bd2;">M</span><span>.</span><span style="color:#268bd2;">MVector v Int</span><span>)
+</span><span>         </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">v</span><span> (</span><span style="color:#268bd2;">PrimState m</span><span>) </span><span style="color:#268bd2;">Int
+</span><span>         </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">L</span><span>.</span><span style="color:#268bd2;">ByteString
+</span><span>         </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m </span><span style="color:#859900;">()
+</span><span>addBytes v lbs </span><span style="color:#859900;">=</span><span> mapM_ (addByte v) (</span><span style="color:#cb4b16;">L</span><span style="color:#859900;">.</span><span>unpack lbs)
+</span><span>
+</span><span style="color:#b58900;">addByte </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">PrimMonad m</span><span>, </span><span style="color:#268bd2;">M</span><span>.</span><span style="color:#268bd2;">MVector v Int</span><span>)
+</span><span>        </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">v</span><span> (</span><span style="color:#268bd2;">PrimState m</span><span>) </span><span style="color:#268bd2;">Int
+</span><span>        </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Word8
+</span><span>        </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m </span><span style="color:#859900;">()
+</span><span>addByte v w </span><span style="color:#859900;">= do
+</span><span>    </span><span style="color:#93a1a1;">-- Read out the old count value
+</span><span>    oldCount </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">M</span><span style="color:#859900;">.</span><span>read v index
+</span><span>    </span><span style="color:#93a1a1;">-- Write back the updated count value
+</span><span>    </span><span style="color:#cb4b16;">M</span><span style="color:#859900;">.</span><span>write v index (oldCount </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1</span><span>)
+</span><span>  </span><span style="color:#859900;">where
+</span><span>    </span><span style="color:#93a1a1;">-- Indices in vectors are always Ints. Our bytes come in as Word8, so we
+</span><span>    </span><span style="color:#93a1a1;">-- need to convert them.
+</span><span>    </span><span style="color:#b58900;">index </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Int
+</span><span>    index </span><span style="color:#859900;">=</span><span> fromIntegral w
+</span><span>
+</span><span style="color:#b58900;">printFreq </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>printFreq index count </span><span style="color:#859900;">=</span><span> putStrLn </span><span style="color:#859900;">$</span><span> concat
+</span><span>    [ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Frequency of byte </span><span style="color:#839496;">&quot;
+</span><span>    , show index
+</span><span>    , </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">: </span><span style="color:#839496;">&quot;
+</span><span>    , show count
+</span><span>    ]
+</span></code></pre>
+<h2 id="terminology">Terminology</h2>
+<p>There are two different varieties of vectors: immutable and mutable. Immutable
+vectors (such as provided by the <code>Data.Vector</code> module) are essentially
+swappable with normal lists in Haskell, though with drastically different
+performance characteristics (discussed below). The high-level API is similar to
+lists, it implements common typeclasses like <code>Functor</code> and <code>Foldable</code>, and
+plays quite nicely with parallel code.</p>
+<p>By contrast, mutable vectors are much closer to C-style arrays. Operations
+working on these values must live in the <code>IO</code> or <code>ST</code> monads (see <code>PrimMonad</code>
+below for more details). Concurrent access from multiple threads has all of the
+normal concerns of shared mutable state. And perhaps most importantly for
+usage: mutable vectors can be <em>much</em> more efficient for certain use cases.</p>
+<p>However, that's not the only dimension of choice you get in the vector package.
+vector itself defines three flavors: boxed
+(<code>Data.Vector</code>/<code>Data.Vector.Mutable</code>), storable (<code>Data.Vector.Storable</code> and
+<code>Data.Vector.Storable.Mutable</code>), and unboxed (<code>Data.Vector.Unboxed</code> and
+<code>Data.Vector.Unboxed.Mutable</code>). (There's also technically primitive vectors,
+but in practice you should always prefer unboxed vectors; see the module
+documentation for more information on the distinction here.)</p>
+<p>All vectors a <em>spine strict</em>. Boxed vectors are value lazy, while
+storable and unboxed vectors are also value strict. We'll cover these
+points with examples below.</p>
+<p>And our final point: in addition to having these three flavors, the vector
+package provides a typeclass-based interface which allows you to write code
+that works in any of these three (plus other vector types that may be defined
+in other packages, like
+<a href="https://www.stackage.org/package/hybrid-vectors">hybrid-vectors</a>). These
+interfaces are in <code>Data.Vector.Generic</code> and <code>Data.Vector.Generic.Mutable</code>. When
+using these interfaces, you must still eventually choose a concrete
+representation, but your helper code can be agnostic to what it is.</p>
+<p>What's nice is that - with small differences - all four mutable modules have
+the same interface, and all four immutable modules have the same interface.
+This means you can focus on learning one type of vector, and almost for free
+have that knowledge apply to other types as well. It then just becomes a
+question of choosing the representation that best fits your use case, which
+we'll get to shortly.</p>
+<h2 id="efficiency">Efficiency</h2>
+<p>Standard lists in Haskell are immutable, singly-linked lists. Every time you
+add another value to the front of the list, it has to allocate another heap
+object for that cell, create a pointer to the head of the original list, and
+create a pointer to the value in the current cell. This takes up a lot of
+memory for holding pointers, and makes it inefficient to index or traverse the
+list (indexing to position N requires N pointer dereferences).</p>
+<p>In contrast, vectors are stored in a contiguous set of memory locations, meaning random access
+is a constant time operation, and the memory overhead per additional item in the vector
+is much smaller (depending on the type of vector, which we'll cover in a
+moment). However, compared to lists, prepending an item to a vector is
+relatively expensive: it requires creating a new buffer in memory, copying the
+old values, and then adding the new value.</p>
+<p>There are other data structures that can be considered for list-like data, such
+as <code>Seq</code> from containers, or in some cases a <code>Set</code>, <code>IntMap</code>, or <code>Map</code>.
+Figuring out the best choice for each use case can only be reliably determined
+via profiling and benchmarking. As a general rule though, a densely populated
+collection requiring integral or random access to the values will be best served by
+a vector.</p>
+<p>Now let's talk about some of the other things that make vector so efficient.</p>
+<h3 id="boxed-storable-and-unboxed">Boxed, storable and unboxed</h3>
+<p>Boxed vectors hold normal Haskell values. These can be <em>any</em> values at all, and
+are stored on the heap with pointers kept in the vector. The advantage is that
+this works for all datatypes, but the extra memory overhead for the pointers
+and the indirection of needing to dereference those pointers makes them
+(relative to the next two types) inefficient.</p>
+<p>Storable and unboxed vectors both store their data in a byte array, avoiding
+pointer indirection. This is more memory efficient and allows better usage of
+caches. The distinction between storable and unboxed vectors is subtle:</p>
+<ul>
+<li>Storable vectors require data which is an instance of the <a href="https://www.stackage.org/haddock/lts-3.11/base-4.8.1.0/Foreign-Storable.html#t:Storable"><code>Storable</code> type
+class</a>.
+This data is stored in <code>malloc</code>ed memory, which is <em>pinned</em> (the garbage
+collector can't move it around). This can lead to memory fragmentation, but
+allows the data to be shared over the C FFI.</li>
+<li>Unboxed vectors require data which is an instance of the <a href="https://www.stackage.org/haddock/lts-3.11/primitive-0.6.1.0/Data-Primitive-Types.html"><code>Prim</code> type
+class</a>.
+This data is stored in GC-managed <em>unpinned</em> memory, which helps avoid memory
+fragmentation. However, this data cannot be shared over the C FFI.</li>
+</ul>
+<p>Both the <code>Storable</code> and <code>Prim</code> typeclasses provide a way to store a value as
+bytes, and to load bytes into a value. The distinction is what type of
+bytearray is used.</p>
+<p>As usual, the only true measure of performance will be benchmarking. However,
+as a general guideline:</p>
+<ul>
+<li>If you don't need to pass values to a C FFI, and you have a <code>Prim</code> instance,
+use unboxed vectors.</li>
+<li>If you have a <code>Storable</code> instance, use a storable vector.</li>
+<li>Otherwise, use a boxed vector.</li>
+</ul>
+<p>There are also other issues to consider, such as the fact that boxed vectors
+are instances of <code>Functor</code> while storable and unboxed vectors are not.</p>
+<h3 id="stream-fusion">Stream fusion</h3>
+<p>Take a guess how much memory the following program will take to run:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">V
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> print </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>sum </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>enumFromTo </span><span style="color:#6c71c4;">1</span><span> (</span><span style="color:#6c71c4;">10</span><span>^</span><span style="color:#6c71c4;">9 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>)
+</span></code></pre>
+<p>A valid guess may be <code>10^9 * sizeof int</code> bytes. However, when compiled with
+optimizations (<code>-O2</code>) on my system, it allocates a total of only 52kb! How it
+is possible to create a one billion integer array without using up 4-8GB of
+memory?</p>
+<p>The vector package has a powerful technique: stream fusion. Using GHC rewrite
+rules, it's able to find many cases where creating a vector is unnecessary, and
+instead create a tight inner loop. In our case, GHC will end up generating code
+that can avoid touching system memory, and instead work on just the <a href="https://en.wikipedia.org/wiki/Processor_register">registers</a>,
+yielding not only a tiny memory footprint, but performance close to a for-loop
+in C. This is one of the beauties of this library: you can write high-level
+code, and optimizations can churn out something much more CPU-friendly.</p>
+<h3 id="slicing">Slicing</h3>
+<p>Above we discussed the problem of appending values to the front of a vector.
+However, one place where vector shines is with <em>slicing</em>, or taking a subset of
+the vector. When dealing with immutable vectors, slicing is a safe operation,
+with slices being sharable with multiple threads. Slicing also works with
+mutable vectors, but as usual you need to be a bit more careful.</p>
+<h2 id="replacing-lists">Replacing lists</h2>
+<p>Enough talk! Let's start using vector. Assuming you're familiar with the list
+API, this should look rather boring.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">V
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    </span><span style="color:#859900;">let</span><span> list </span><span style="color:#859900;">=</span><span> [</span><span style="color:#6c71c4;">1</span><span style="color:#859900;">..</span><span style="color:#6c71c4;">10</span><span>] </span><span style="color:#859900;">::</span><span> [</span><span style="color:#cb4b16;">Int</span><span>]
+</span><span>        vector </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>fromList list </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Vector Int
+</span><span>        vector2 </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>enumFromTo </span><span style="color:#6c71c4;">1 10 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Vector Int
+</span><span>    print </span><span style="color:#859900;">$</span><span> vector </span><span style="color:#859900;">==</span><span> vector2 </span><span style="color:#93a1a1;">-- True
+</span><span>    print </span><span style="color:#859900;">$</span><span> list </span><span style="color:#859900;">== </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>toList vector </span><span style="color:#93a1a1;">-- also True
+</span><span>    print </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>filter odd vector </span><span style="color:#93a1a1;">-- 1,3,5,7,9
+</span><span>    print </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>map (* </span><span style="color:#6c71c4;">2</span><span>) vector </span><span style="color:#93a1a1;">-- 2,4,6,...,20
+</span><span>    print </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>zip vector vector </span><span style="color:#93a1a1;">-- (1,1),(2,2),...(10,10)
+</span><span>    print </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>zipWith </span><span style="color:#b58900;">(*)</span><span> vector vector </span><span style="color:#93a1a1;">-- (1,4,9,16,...,100)
+</span><span>    print </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>reverse vector </span><span style="color:#93a1a1;">-- 10,9,...,1
+</span><span>    print </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>takeWhile (</span><span style="color:#859900;">&lt; </span><span style="color:#6c71c4;">6</span><span>) vector </span><span style="color:#93a1a1;">-- 1,2,3,4,5
+</span><span>    print </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>takeWhile odd vector </span><span style="color:#93a1a1;">-- 1
+</span><span>    print </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>takeWhile even vector </span><span style="color:#93a1a1;">-- []
+</span><span>    print </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>dropWhile (</span><span style="color:#859900;">&lt; </span><span style="color:#6c71c4;">6</span><span>) vector </span><span style="color:#93a1a1;">-- 6,7,8,9,10
+</span><span>    print </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>head vector </span><span style="color:#93a1a1;">-- 1
+</span><span>    print </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>tail vector </span><span style="color:#93a1a1;">-- 2,3,4,...,10
+</span><span>    print </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>head </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>takeWhile even vector </span><span style="color:#93a1a1;">-- exception!
+</span></code></pre>
+<p>Hopefully there's nothing too surprising about this. Most <code>Prelude</code> functions
+that apply to lists have a corresponding vector function. If you know what a
+function does in <code>Prelude</code>, you probably know what it does in <code>Data.Vector</code>.
+This is the simplest usage of the vector package: import <code>Data.Vector</code>
+qualified, convert to/from lists with <code>V.fromList</code> and <code>V.toList</code>, and then
+prefix your function calls with <code>V.</code>.</p>
+<ul>
+<li>
+<p>Exercise 1: Try out some other functions available in the <a href="https://www.stackage.org/haddock/lts-3.11/vector-0.10.12.3/Data-Vector.html"><code>Data.Vector</code>
+module</a>.
+In particular, try some of the fold functions, which we haven't covered here.</p>
+</li>
+<li>
+<p>Exercise 2: Try using the <code>Functor</code>, <code>Foldable</code>, and <code>Traversable</code> versions of
+functions with a vector</p>
+</li>
+<li>
+<p>Exercise 3: Use an unboxed (or storable) vector instead of the boxed vectors
+we were using above. What code did you have to change from the original
+example?  Do all of your examples from exercise 2 still work?</p>
+</li>
+</ul>
+<p>There are also a number of functions in the <code>Data.Vector</code> module with no
+corresponding function in <code>Prelude</code>. Many of these are related to mutable
+vectors (which we'll cover shortly). Others are present to provide more
+efficient means of manipulating a vector, based on their special in-memory
+representation.</p>
+<h2 id="mutable-vectors">Mutable vectors</h2>
+<p>I want to test how fair the <code>System.Random</code> number generator is at generating
+numbers between 0 and 9, inclusive. I want to generate 1,000,000 random values,
+count the frequency of each result, and then print how often each value
+appeared. Let's first implement this using immutable vectors:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">Data.Vector.Unboxed </span><span>(</span><span style="color:#b58900;">(!)</span><span>, </span><span style="color:#b58900;">(//)</span><span>)
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">V
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">System.Random       </span><span>(</span><span style="color:#b58900;">randomRIO</span><span>)
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    </span><span style="color:#859900;">let</span><span> v0 </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>replicate </span><span style="color:#6c71c4;">10</span><span> (</span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>)
+</span><span>
+</span><span>        loop v </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">=</span><span> return v
+</span><span>        loop v rest </span><span style="color:#859900;">= do
+</span><span>            i </span><span style="color:#859900;">&lt;-</span><span> randomRIO (</span><span style="color:#6c71c4;">0</span><span>, </span><span style="color:#6c71c4;">9</span><span>)
+</span><span>            </span><span style="color:#859900;">let</span><span> oldCount </span><span style="color:#859900;">=</span><span> v </span><span style="color:#859900;">!</span><span> i
+</span><span>                v&#39; </span><span style="color:#859900;">=</span><span> v </span><span style="color:#859900;">//</span><span> [(i, oldCount </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1</span><span>)]
+</span><span>            loop v&#39; (rest </span><span style="color:#859900;">- </span><span style="color:#6c71c4;">1</span><span>)
+</span><span>
+</span><span>    vector </span><span style="color:#859900;">&lt;-</span><span> loop v0 (</span><span style="color:#6c71c4;">10</span><span>^</span><span style="color:#6c71c4;">6</span><span>)
+</span><span>    print vector
+</span></code></pre>
+<p>We've introduced the <code>!</code> operator for indexing, and the <code>//</code> operator for
+updating. Other than that, this is fairly straightforward code. When I ran this
+on my system, it had 48MB maximum memory residency, and took 1.968s to
+complete. Surely we can do better.</p>
+<p>This problem is inherently better as a mutable state one: instead of generating
+a new immutable <code>Vector</code> for each random number generated, we'd like to simply
+increment a piece of memory. Let's rewrite this to use a mutable, unboxed
+vector:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">Control.Monad               </span><span>(</span><span style="color:#b58900;">replicateM_</span><span>)
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">Data.Vector.Unboxed         </span><span>(</span><span style="color:#b58900;">freeze</span><span>)
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed.Mutable </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">V
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">System.Random               </span><span>(</span><span style="color:#b58900;">randomRIO</span><span>)
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    vector </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>replicate </span><span style="color:#6c71c4;">10</span><span> (</span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>)
+</span><span>
+</span><span>    replicateM_ (</span><span style="color:#6c71c4;">10</span><span>^</span><span style="color:#6c71c4;">6</span><span>) </span><span style="color:#859900;">$ do
+</span><span>        i </span><span style="color:#859900;">&lt;-</span><span> randomRIO (</span><span style="color:#6c71c4;">0</span><span>, </span><span style="color:#6c71c4;">9</span><span>)
+</span><span>        oldCount </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>read vector i
+</span><span>        </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>write vector i (oldCount </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1</span><span>)
+</span><span>
+</span><span>    ivector </span><span style="color:#859900;">&lt;-</span><span> freeze vector
+</span><span>    print ivector
+</span></code></pre>
+<p>Once again, we use <code>replicate</code> to create a size-10 vector filled with 0. But
+now we've created a mutable vector (note the change in import). We then use
+<code>replicateM_</code> to perform the inner action 1,000,000 times, namely: generate a
+random index, read the old value at that index, increment it, and write it
+back.</p>
+<p>After we're finished, we <em>freeze</em> the vector (more on that in the next section)
+and print it. The resulting distribution of values is the same (or close - we are dealing with random
+numbers here) as the previous calculation using an immutable vector. But instead of 48MB and 1.968s,
+this program has a maximum residency of 44KB and runs in 0.247s! That's a
+significant improvement!</p>
+<p>If we feel like being even more adventurous, we can replace our <code>read</code> and
+<code>write</code> calls with <code>unsafeRead</code> and <code>unsafeWrite</code>. That will disable some
+bounds checks before reading and writing. This can be a nice performance boost
+in very tight loops, but has the potential to <a href="https://en.wikipedia.org/wiki/Segmentation_fault">segfault</a>
+your program, so caveat
+emptor! For example, try replacing <code>replicate 10</code> with <code>replicate 9</code>, change
+the <code>read</code> for an <code>unsafeRead</code>, and run your program. You'll see something
+like:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>internal error: evacuate: strange closure type -1944718914
+</span><span>    (GHC version 7.10.2 for x86_64_unknown_linux)
+</span><span>    Please report this as a GHC bug:  https://www.haskell.org/ghc/reportabug
+</span><span>Aborted (core dumped)
+</span></code></pre>
+<p>The same logic applies to the other <code>unsafe</code> functions in vector. The
+nomenclature means: <code>unsafe</code> may segfault your whole process, while
+not-marked-unsafe may just throw an impure exception (also not great, but
+certainly better than a segfault).</p>
+<p>And if you were curious: on my system using <code>unsafeRead</code> and <code>unsafeWrite</code>
+speeds the program up marginally, from 0.247s to 0.233s. In our example, most
+of our time is spent on generating the random numbers, so taking off the safety
+checks does not have a significant impact.</p>
+<h2 id="freezing-and-thawing">Freezing and thawing</h2>
+<p>We used the <code>freeze</code> function above. The behavior of this may not be
+immediately obvious. When you freeze a mutable vector, what happens is:</p>
+<ol>
+<li>A new mutable vector of the same size is created</li>
+<li>Each value in the original mutable vector is copied to the new mutable vector</li>
+<li>A new immutable vector is created out of the memory space used by the new mutable vector</li>
+</ol>
+<p>Why not just freeze it in place? Two reasons, actually:</p>
+<ol>
+<li>
+<p>It has the potential to break referential transparency. Consider this code:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">Data.Vector.Unboxed         </span><span>(</span><span style="color:#b58900;">freeze</span><span>)
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed.Mutable </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">V
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    vector </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>replicate </span><span style="color:#6c71c4;">1</span><span> (</span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>)
+</span><span>    </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>write vector </span><span style="color:#6c71c4;">0 1
+</span><span>    ivector </span><span style="color:#859900;">&lt;-</span><span> freeze vector
+</span><span>    print ivector
+</span><span>    </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>write vector </span><span style="color:#6c71c4;">0 2
+</span><span>    print ivector
+</span></code></pre>
+<p>If we froze the vector in-place in the call to <code>freeze</code>, then the second
+<code>write</code> call would modify our <code>ivector</code> value, meaning that the first and
+second call to <code>print ivector</code> would have different results!</p>
+</li>
+<li>
+<p>When you freeze a mutable vector, its memory is marked differently for
+garbage collection purposes. Later attempts to write to that same memory can
+lead to a segfault.</p>
+</li>
+</ol>
+<p>However, if you really want to avoid that extra buffer copy, and are certain
+it's safe, you can use <code>unsafeFreeze</code>. And in fact, our random number example
+above is a case where <code>freeze</code> can be safely replaced by <code>unsafeFreeze</code>, since
+after the freeze, the original mutable vector is never used again.</p>
+<ul>
+<li>Exercise 1: Go ahead and make that swap and confirm that your program works
+as expected.</li>
+<li>Exercise 2: In the program just above (with <code>V.replicate 1 (0 :: Int)</code>),
+replace <code>freeze</code> with <code>unsafeFreeze</code>. What result do you see?</li>
+</ul>
+<p>The opposite of <code>freeze</code> is <code>thaw</code>. Similar to <code>freeze</code>, <code>thaw</code> will copy to a
+new mutable vector instead of exposing the current memory buffer. And also,
+like <code>freeze</code>, there's an <code>unsafeThaw</code> that turns off the safety measures. Like
+everything <code>unsafe</code>: caveat emptor!</p>
+<p>(We'll cover some functions like <code>create</code> that provide safe wrappers around
+<code>unsafeFreeze</code> and <code>unsafeThaw</code> later.)</p>
+<h2 id="primmonad">PrimMonad</h2>
+<p>If you look at the mutation functions we used above like <code>read</code> and <code>write</code>,
+you can tell that they were looking in the <code>IO</code> monad. However, vector is more
+generic than that, and will allow your mutations to live in any <em>primitive
+monad</em>, meaning: <code>IO</code>, strict <code>ST s</code>, and transformers sitting on top of those
+two. The type class controlling this is <code>PrimMonad</code>.</p>
+<p>You can get more information on <code>PrimMonad</code> in the <a href="https://tech.fpcomplete.com/haskell/tutorial/primitive-haskell/">Primitive
+Haskell</a> article. Without diving into details: every
+primitive monad also has an associated primitive state token type, which is
+captured with <code>PrimState</code>. As a result, the type signatures for <code>read</code> and
+<code>write</code> (for boxed vectors) look like:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">read </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">PrimMonad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">MVector</span><span> (</span><span style="color:#268bd2;">PrimState m</span><span>) </span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m a
+</span><span style="color:#b58900;">write </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">PrimMonad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">MVector</span><span> (</span><span style="color:#268bd2;">PrimState m</span><span>) </span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m </span><span style="color:#859900;">()
+</span></code></pre>
+<p>Every mutable vector takes two type parameters: the state token of the monad it
+lives in, and the type of value it holds. These gymnastics may seem overkill
+now, but are necessary for making mutable vectors both versatile in multiple
+monads, and type safe.</p>
+<h2 id="modify-and-the-st-monad">modify and the ST monad</h2>
+<p>Let's check out a particularly complicated type signature (for unboxed vectors):</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">modify </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Unbox a </span><span style="color:#859900;">=&gt;</span><span> (</span><span style="color:#268bd2;">forall s</span><span>. </span><span style="color:#268bd2;">MVector s a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">ST s </span><span style="color:#859900;">()</span><span>) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Vector a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Vector a
+</span></code></pre>
+<p>What this function does is:</p>
+<ol>
+<li>Creates a new mutable buffer the same length as the original vector</li>
+<li>Copies the values from the original vector into the new mutable vector</li>
+<li>Runs the provided <code>ST</code> action on the provided mutable vector</li>
+<li>Unsafely freezes the mutable vector and returns it.</li>
+</ol>
+<p>What's great about this function is that it does the minimal amount of buffer
+copying to be safe, and that it can be used from pure code (since all
+side-effects are captured inside the <code>ST</code> action you provide).</p>
+<ul>
+<li>Exercise 1: Steps 1 and 2 should look pretty similar to a function we
+discussed above. Can you figure out which one it is?</li>
+<li>Exercise 2: Implement <code>modify</code> yourself using functions we've discussed and
+<code>runST</code> from <code>Control.Monad.ST</code>.</li>
+</ul>
+<p>Let's use our new function to implement a Fisher-Yates shuffle. If we start
+with a vector of size 20, we'll generate a random number between 0 and 19. Then
+we'll swap position 19 with that generated random number. Then we'll loop, but
+this time with a random number between 0 and 18 and swapping with position 18.
+We continue until we get down to 0.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#cb4b16;">import           </span><span style="color:#859900;">Control.Monad.Primitive     </span><span>(</span><span style="color:#268bd2;">PrimMonad</span><span>, </span><span style="color:#268bd2;">PrimState</span><span>)
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed         </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">V
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed.Mutable </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">M
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">System.Random               </span><span>(</span><span style="color:#268bd2;">StdGen</span><span>, </span><span style="color:#b58900;">getStdGen</span><span>, </span><span style="color:#b58900;">randomR</span><span>)
+</span><span>
+</span><span style="color:#b58900;">shuffleM </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">PrimMonad m</span><span>, </span><span style="color:#268bd2;">V</span><span>.</span><span style="color:#268bd2;">Unbox a</span><span>)
+</span><span>         </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">StdGen
+</span><span>         </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#93a1a1;">-- ^ count to shuffle
+</span><span>         </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">M</span><span>.</span><span style="color:#268bd2;">MVector</span><span> (</span><span style="color:#268bd2;">PrimState m</span><span>) </span><span style="color:#268bd2;">a
+</span><span>         </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m </span><span style="color:#859900;">()
+</span><span>shuffleM _ i _ </span><span style="color:#859900;">|</span><span> i </span><span style="color:#859900;">&lt;= </span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">=</span><span> return </span><span style="color:#b58900;">()
+</span><span>shuffleM gen i v </span><span style="color:#859900;">= do
+</span><span>    </span><span style="color:#cb4b16;">M</span><span style="color:#859900;">.</span><span>swap v i&#39; index
+</span><span>    shuffleM gen&#39; i&#39; v
+</span><span>  </span><span style="color:#859900;">where
+</span><span>    (index, gen&#39;) </span><span style="color:#859900;">=</span><span> randomR (</span><span style="color:#6c71c4;">0</span><span>, i&#39;) gen
+</span><span>    i&#39; </span><span style="color:#859900;">=</span><span> i </span><span style="color:#859900;">- </span><span style="color:#6c71c4;">1
+</span><span>
+</span><span style="color:#b58900;">shuffle </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">V</span><span>.</span><span style="color:#268bd2;">Unbox a
+</span><span>        </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">StdGen
+</span><span>        </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">V</span><span>.</span><span style="color:#268bd2;">Vector a
+</span><span>        </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">V</span><span>.</span><span style="color:#268bd2;">Vector a
+</span><span>shuffle gen vector </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>modify (shuffleM gen (</span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>length vector)) vector
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    gen </span><span style="color:#859900;">&lt;-</span><span> getStdGen
+</span><span>    print </span><span style="color:#859900;">$</span><span> shuffle gen </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>enumFromTo </span><span style="color:#6c71c4;">1</span><span> (</span><span style="color:#6c71c4;">20 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>)
+</span></code></pre>
+<p>Notice how <code>shuffleM</code> is a mutable, side-effecting function. However, <code>shuffle</code>
+itself is pure.</p>
+<h2 id="generic">Generic</h2>
+<p>After everything else we've dealt with, <code>Generic</code> is a relatively easy
+addition. We introduce two new typeclasses:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">class </span><span style="color:#268bd2;">MVector v a
+</span><span style="color:#268bd2;">class MVector</span><span> (</span><span style="color:#268bd2;">Mutable v</span><span>) </span><span style="color:#268bd2;">a</span><span> =&gt; </span><span style="color:#268bd2;">Vector v a
+</span></code></pre>
+<p>Said in English: an instance <code>MVector v a</code> is a mutable vector of type <code>v</code> that
+can hold values of type <code>a</code>. The <code>Vector v a</code> is the immutable counterpart to
+some mutable vector. You can find the mutable version with <code>Mutable v</code>.</p>
+<p>One important thing to keep in mind is <em>kinds</em>. The kind of the <code>v</code> is <code>MVector v a</code> is <code>* -&gt; * -&gt; *</code>, since it takes parameters for both the state token and
+the value it holds. With the immutable <code>Vector v a</code>, the <code>v</code> is of kind <code>* -&gt; *</code>. Was that a little abstract? No problem, some type signatures should help:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">length </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">MVector v a </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">v s a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int
+</span><span style="color:#b58900;">length </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Vector v a </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">v a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int
+</span><span>
+</span><span style="color:#b58900;">read </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">PrimMonad m</span><span>, </span><span style="color:#268bd2;">MVector v a</span><span>) </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">v</span><span> (</span><span style="color:#268bd2;">PrimState m</span><span>) </span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m a
+</span></code></pre>
+<p>It takes a bit of time to get used to these generic classes, but once you do
+it's fairly easy to use them. The best advice is to practice! And as such:</p>
+<ul>
+<li>Exercise: modify the <code>shuffle</code> program above to work on a generic vector
+instead of specifically on an unboxed vector.</li>
+</ul>
+<p>The final trick when working with generic vectors is that, ultimately, you will
+need to provide a concrete type. If you forget to do so, you'll end up with
+error messages that look like the following:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>stream</span><span style="color:#859900;">.</span><span>hs</span><span style="color:#859900;">:</span><span style="color:#6c71c4;">28</span><span style="color:#859900;">:</span><span style="color:#6c71c4;">13</span><span style="color:#859900;">:
+</span><span>    </span><span style="color:#cb4b16;">No </span><span style="color:#859900;">instance </span><span style="color:#268bd2;">for</span><span> (</span><span style="color:#268bd2;">V</span><span>.</span><span style="color:#268bd2;">Vector v0 Int</span><span>) </span><span style="color:#268bd2;">arising from a use of</span><span> ‘</span><span style="color:#268bd2;">shuffle</span><span>’
+</span><span>    </span><span style="color:#cb4b16;">In</span><span> the expression</span><span style="color:#859900;">:</span><span> shuffle gen
+</span><span>    </span><span style="color:#cb4b16;">In</span><span> the second argument </span><span style="color:#859900;">of</span><span> ‘</span><span style="color:#b58900;">($)</span><span>’, namely
+</span><span>      ‘shuffle gen </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>enumFromTo </span><span style="color:#6c71c4;">1</span><span> (</span><span style="color:#6c71c4;">20 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>)’
+</span><span>    </span><span style="color:#cb4b16;">In</span><span> a stmt </span><span style="color:#859900;">of</span><span> a &#39;</span><span style="color:#859900;">do</span><span>&#39; block</span><span style="color:#859900;">:
+</span><span>      print </span><span style="color:#859900;">$</span><span> shuffle gen </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>enumFromTo </span><span style="color:#6c71c4;">1</span><span> (</span><span style="color:#6c71c4;">20 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>)
+</span></code></pre>
+<p>As an example:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> FlexibleContexts #-}
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">VB
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Storable </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">VS
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">VU
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Generic </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">V
+</span><span>
+</span><span style="color:#b58900;">myFunc </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">V</span><span>.</span><span style="color:#268bd2;">Vector v Int </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">v Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>myFunc </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>mapM_ print </span><span style="color:#859900;">. </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>map (* </span><span style="color:#6c71c4;">2</span><span>) </span><span style="color:#859900;">. </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>filter odd
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  myFunc </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">VB</span><span style="color:#859900;">.</span><span>enumFromTo </span><span style="color:#6c71c4;">1 10
+</span><span>  myFunc </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">VS</span><span style="color:#859900;">.</span><span>enumFromTo </span><span style="color:#6c71c4;">1 10
+</span><span>  myFunc </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">VU</span><span style="color:#859900;">.</span><span>enumFromTo </span><span style="color:#6c71c4;">1 10
+</span></code></pre>
+<h2 id="vector-algorithms">vector-algorithms</h2>
+<p>A package of note is
+<a href="https://www.stackage.org/package/vector-algorithms">vector-algorithms</a>, which
+provides some algorithms (mostly sort) on mutable vectors. For example, let's
+generate 100 random numbers and then sort them.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#cb4b16;">import           </span><span style="color:#859900;">Data.Vector.Algorithms.Merge </span><span>(</span><span style="color:#b58900;">sort</span><span>)
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Generic.Mutable  </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">M
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed          </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">V
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">System.Random                </span><span>(</span><span style="color:#b58900;">randomRIO</span><span>)
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    vector </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">M</span><span style="color:#859900;">.</span><span>replicateM </span><span style="color:#6c71c4;">100 </span><span style="color:#859900;">$</span><span> randomRIO (</span><span style="color:#6c71c4;">0</span><span>, </span><span style="color:#6c71c4;">999 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>)
+</span><span>    sort vector
+</span><span>    </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>unsafeFreeze vector </span><span style="color:#859900;">&gt;&gt;=</span><span> print
+</span></code></pre>
+<ul>
+<li>Exercise 1: write a helper function <code>sortImmutable</code> that uses <code>modify</code> and <code>sort</code> from vector-algorithms to sort an immutable vector safely</li>
+<li>Exercise 2: rewrite the main function above to use <code>sortImmutable</code> and only the immutable vector API</li>
+<li>Exercise 3: is your new version more efficient, less efficient, or the same? Explain.</li>
+</ul>
+<h2 id="mwc-random">mwc-random</h2>
+<p>Another library to mention now is mwc-random, a random number generation
+library built on top of vector and primitive. Its API can be a bit daunting
+initially, but given your newfound understanding of the vector package, the API
+might make a lot more sense now. It provides a <code>Gen s</code> type, where <code>s</code> is some
+state token. You can then use <code>uniform</code> and <code>uniformR</code> to get random numbers
+out of that generator.</p>
+<p>As a final example, here's how we can shuffle the numbers 1-20 using
+mwc-random.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">Control.Monad.ST            </span><span>(</span><span style="color:#268bd2;">ST</span><span>)
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed         </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">V
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed.Mutable </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">M
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">System.Random.MWC           </span><span>(</span><span style="color:#268bd2;">Gen</span><span>, </span><span style="color:#b58900;">uniformR</span><span>, </span><span style="color:#b58900;">withSystemRandom</span><span>)
+</span><span>
+</span><span style="color:#b58900;">shuffleM </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">V</span><span>.</span><span style="color:#268bd2;">Unbox a
+</span><span>         </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Gen s
+</span><span>         </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#93a1a1;">-- ^ count to shuffle
+</span><span>         </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">M</span><span>.</span><span style="color:#268bd2;">MVector s a
+</span><span>         </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">ST s </span><span style="color:#859900;">()
+</span><span>shuffleM _ i _ </span><span style="color:#859900;">|</span><span> i </span><span style="color:#859900;">&lt;= </span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">=</span><span> return </span><span style="color:#b58900;">()
+</span><span>shuffleM gen i v </span><span style="color:#859900;">= do
+</span><span>    index </span><span style="color:#859900;">&lt;-</span><span> uniformR (</span><span style="color:#6c71c4;">0</span><span>, i&#39;) gen
+</span><span>    </span><span style="color:#cb4b16;">M</span><span style="color:#859900;">.</span><span>swap v i&#39; index
+</span><span>    shuffleM gen i&#39; v
+</span><span>  </span><span style="color:#859900;">where
+</span><span>    i&#39; </span><span style="color:#859900;">=</span><span> i </span><span style="color:#859900;">- </span><span style="color:#6c71c4;">1
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    vector </span><span style="color:#859900;">&lt;-</span><span> withSystemRandom </span><span style="color:#859900;">$ \</span><span>gen </span><span style="color:#859900;">-&gt; do
+</span><span>        vector </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>unsafeThaw </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>enumFromTo </span><span style="color:#6c71c4;">1</span><span> (</span><span style="color:#6c71c4;">20 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>)
+</span><span>        shuffleM gen (</span><span style="color:#cb4b16;">M</span><span style="color:#859900;">.</span><span>length vector) vector
+</span><span>        </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>unsafeFreeze vector
+</span><span>    print vector
+</span></code></pre>
+<h2 id="strictness">Strictness</h2>
+<p>Guess the output:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> FlexibleContexts #-}
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">VB
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Storable </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">VS
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">VU
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">UnliftIO.Exception </span><span>(</span><span style="color:#b58900;">pureTry</span><span>)
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  print </span><span style="color:#859900;">$</span><span> pureTry </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">VB</span><span style="color:#859900;">.</span><span>head </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">VB</span><span style="color:#859900;">.</span><span>fromList (</span><span style="color:#b58900;">()</span><span style="color:#859900;">:</span><span>undefined)
+</span><span>  print </span><span style="color:#859900;">$</span><span> pureTry </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">VS</span><span style="color:#859900;">.</span><span>head </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">VS</span><span style="color:#859900;">.</span><span>fromList (</span><span style="color:#b58900;">()</span><span style="color:#859900;">:</span><span>undefined)
+</span><span>  print </span><span style="color:#859900;">$</span><span> pureTry </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">VU</span><span style="color:#859900;">.</span><span>head </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">VU</span><span style="color:#859900;">.</span><span>fromList (</span><span style="color:#b58900;">()</span><span style="color:#859900;">:</span><span>undefined)
+</span><span>
+</span><span>  print </span><span style="color:#859900;">$</span><span> pureTry </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">VB</span><span style="color:#859900;">.</span><span>head </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">VB</span><span style="color:#859900;">.</span><span>fromList [</span><span style="color:#b58900;">()</span><span>, undefined]
+</span><span>  print </span><span style="color:#859900;">$</span><span> pureTry </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">VS</span><span style="color:#859900;">.</span><span>head </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">VS</span><span style="color:#859900;">.</span><span>fromList [</span><span style="color:#b58900;">()</span><span>, undefined]
+</span><span>  print </span><span style="color:#859900;">$</span><span> pureTry </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">VU</span><span style="color:#859900;">.</span><span>head </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">VU</span><span style="color:#859900;">.</span><span>fromList [</span><span style="color:#b58900;">()</span><span>, undefined]
+</span></code></pre>
+<ul>
+<li>Boxed: spine strict</li>
+<li>Storable and unboxed: value strict</li>
+</ul>
+<p><strong>Question</strong> Why does this difference exist?</p>
+<h2 id="vector-algorithms-1">vector-algorithms</h2>
+<p><strong>Exercise</strong> Fill a vector with 100 random integers between 1 and
+10000 and sort it. Use vector-algorithms.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">V
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Vector.Algorithms.Insertion </span><span>(</span><span style="color:#b58900;">sort</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">System.Random </span><span>(</span><span style="color:#b58900;">randomRIO</span><span>)
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  v </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>replicateM </span><span style="color:#6c71c4;">100 </span><span style="color:#859900;">$</span><span> randomRIO (</span><span style="color:#6c71c4;">1</span><span>, </span><span style="color:#6c71c4;">10000 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>)
+</span><span>  print </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>modify sort v
+</span></code></pre>
+<p>Or</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">V
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed.Mutable </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">VM
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Vector.Algorithms.Insertion </span><span>(</span><span style="color:#b58900;">sort</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">System.Random
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  gen0 </span><span style="color:#859900;">&lt;-</span><span> getStdGen
+</span><span>  print </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>create </span><span style="color:#859900;">$ do
+</span><span>    mv </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">VM</span><span style="color:#859900;">.</span><span>new </span><span style="color:#6c71c4;">100
+</span><span>    </span><span style="color:#859900;">let</span><span> loop gen idx
+</span><span>          </span><span style="color:#859900;">|</span><span> idx </span><span style="color:#859900;">&gt;= </span><span style="color:#6c71c4;">100 </span><span style="color:#859900;">=</span><span> return </span><span style="color:#b58900;">()
+</span><span>          </span><span style="color:#859900;">|</span><span> otherwise </span><span style="color:#859900;">= do
+</span><span>              </span><span style="color:#859900;">let</span><span> (x, gen&#39;) </span><span style="color:#859900;">=</span><span> randomR (</span><span style="color:#6c71c4;">1</span><span>, </span><span style="color:#6c71c4;">10000</span><span>) gen
+</span><span>              </span><span style="color:#cb4b16;">VM</span><span style="color:#859900;">.</span><span>write mv idx (x </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>)
+</span><span>              loop gen&#39; (idx </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1</span><span>)
+</span><span>    loop gen0 </span><span style="color:#6c71c4;">0
+</span><span>    sort mv
+</span><span>    return mv
+</span></code></pre>
+<p>Or</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">V
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed.Mutable </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">VM
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Vector.Algorithms.Insertion </span><span>(</span><span style="color:#b58900;">sort</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">System.Random
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Foldable </span><span>(</span><span style="color:#b58900;">forM_</span><span>)
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  mv </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">VM</span><span style="color:#859900;">.</span><span>new </span><span style="color:#6c71c4;">100
+</span><span>  forM_ [</span><span style="color:#6c71c4;">0</span><span style="color:#859900;">..</span><span style="color:#6c71c4;">99</span><span>] </span><span style="color:#859900;">$ \</span><span>idx </span><span style="color:#859900;">-&gt; do
+</span><span>    x </span><span style="color:#859900;">&lt;-</span><span> randomRIO (</span><span style="color:#6c71c4;">1</span><span>, </span><span style="color:#6c71c4;">10000</span><span>)
+</span><span>    </span><span style="color:#cb4b16;">VM</span><span style="color:#859900;">.</span><span>write mv idx (x </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>)
+</span><span>  sort mv
+</span><span>  v </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>unsafeFreeze mv
+</span><span>  print v
+</span></code></pre>
+<h2 id="recommendations">Recommendations</h2>
+<p>There's some confusion about which data structure to use among the
+different kinds of vectors and lists. I typically advise using vectors
+over list. If so, why are lists so ubiquitous?</p>
+<ul>
+<li>The Prelude encourages them</li>
+<li>They're in base</li>
+<li>There's built-in syntax for them</li>
+<li>Sometimes they <em>are</em> better than vectors, such as using them as a
+control structure instead of for data storage</li>
+</ul>
+<p>Here's a checklist I follow for choosing a data structure:</p>
+<ul>
+<li>Unless you have a good reason to do otherwise: use an immutable structure</li>
+<li>If unboxed is possible, use it</li>
+<li>Otherwise, if storable is possible, use it</li>
+<li>Otherwise, use boxed</li>
+<li>Generic algorithm? Use <code>Generic</code></li>
+<li>Polymorphic container? Stick with boxed</li>
+</ul>
+<h2 id="exercises">Exercises</h2>
+<p>Test the randomness of <code>System.Random</code>: use <code>randomRIO (0, 9)</code>
+repeatedly to generate a random values and see if the distribution is
+close to uniform. First use immutable vectors:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">Data.Vector.Unboxed </span><span>(</span><span style="color:#b58900;">(!)</span><span>, </span><span style="color:#b58900;">(//)</span><span>)
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">V
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">System.Random       </span><span>(</span><span style="color:#b58900;">randomRIO</span><span>)
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    </span><span style="color:#859900;">let</span><span> v0 </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>replicate </span><span style="color:#6c71c4;">10</span><span> (</span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>)
+</span><span>
+</span><span>        loop v </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">=</span><span> return v
+</span><span>        loop v rest </span><span style="color:#859900;">= do
+</span><span>            i </span><span style="color:#859900;">&lt;-</span><span> randomRIO (</span><span style="color:#6c71c4;">0</span><span>, </span><span style="color:#6c71c4;">9</span><span>)
+</span><span>            </span><span style="color:#859900;">let</span><span> oldCount </span><span style="color:#859900;">=</span><span> v </span><span style="color:#859900;">!</span><span> i
+</span><span>                v&#39; </span><span style="color:#859900;">=</span><span> v </span><span style="color:#859900;">//</span><span> [(i, oldCount </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1</span><span>)]
+</span><span>            loop v&#39; (rest </span><span style="color:#859900;">- </span><span style="color:#6c71c4;">1</span><span>)
+</span><span>
+</span><span>    vector </span><span style="color:#859900;">&lt;-</span><span> loop v0 (</span><span style="color:#6c71c4;">10</span><span>^</span><span style="color:#6c71c4;">6</span><span>)
+</span><span>    print vector
+</span></code></pre>
+<p><strong>Question</strong> Is this efficient?</p>
+<p>Now use mutable vectors:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">Control.Monad               </span><span>(</span><span style="color:#b58900;">replicateM_</span><span>)
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">Data.Vector.Unboxed         </span><span>(</span><span style="color:#b58900;">freeze</span><span>)
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed.Mutable </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">V
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">System.Random               </span><span>(</span><span style="color:#b58900;">randomRIO</span><span>)
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    vector </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>replicate </span><span style="color:#6c71c4;">10</span><span> (</span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>)
+</span><span>
+</span><span>    replicateM_ (</span><span style="color:#6c71c4;">10</span><span>^</span><span style="color:#6c71c4;">6</span><span>) </span><span style="color:#859900;">$ do
+</span><span>        i </span><span style="color:#859900;">&lt;-</span><span> randomRIO (</span><span style="color:#6c71c4;">0</span><span>, </span><span style="color:#6c71c4;">9</span><span>)
+</span><span>        oldCount </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>read vector i
+</span><span>        </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>write vector i (oldCount </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1</span><span>)
+</span><span>
+</span><span>    ivector </span><span style="color:#859900;">&lt;-</span><span> freeze vector
+</span><span>    print ivector
+</span></code></pre>
+<p>Calculate the frequency of each byte (0-255) for the content coming
+from standard input.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> FlexibleContexts #-}
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">Control.Monad.Primitive     </span><span>(</span><span style="color:#268bd2;">PrimMonad</span><span>, </span><span style="color:#268bd2;">PrimState</span><span>)
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.ByteString.Lazy        </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">L
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Generic.Mutable </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">M
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed         </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">U
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">Data.Word                   </span><span>(</span><span style="color:#268bd2;">Word8</span><span>)
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    </span><span style="color:#93a1a1;">-- Get all of the contents from stdin
+</span><span>    lbs </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">L</span><span style="color:#859900;">.</span><span>getContents
+</span><span>
+</span><span>    </span><span style="color:#93a1a1;">-- Create a new 256-size mutable vector
+</span><span>    </span><span style="color:#93a1a1;">-- Fill the vector with zeros
+</span><span>    mutable </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">M</span><span style="color:#859900;">.</span><span>replicate </span><span style="color:#6c71c4;">256 0
+</span><span>
+</span><span>    </span><span style="color:#93a1a1;">-- Add all of the bytes from stdin
+</span><span>    addBytes mutable lbs
+</span><span>
+</span><span>    </span><span style="color:#93a1a1;">-- Freeze to get an immutable version
+</span><span>    vector </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">U</span><span style="color:#859900;">.</span><span>unsafeFreeze mutable
+</span><span>
+</span><span>    </span><span style="color:#93a1a1;">-- Print the frequency of each byte
+</span><span>    </span><span style="color:#93a1a1;">-- In newer vectors: we can use imapM_
+</span><span>    </span><span style="color:#cb4b16;">U</span><span style="color:#859900;">.</span><span>zipWithM_ printFreq (</span><span style="color:#cb4b16;">U</span><span style="color:#859900;">.</span><span>enumFromTo </span><span style="color:#6c71c4;">0 255</span><span>) vector
+</span><span>
+</span><span style="color:#b58900;">addBytes </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">PrimMonad m</span><span>, </span><span style="color:#268bd2;">M</span><span>.</span><span style="color:#268bd2;">MVector v Int</span><span>)
+</span><span>         </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">v</span><span> (</span><span style="color:#268bd2;">PrimState m</span><span>) </span><span style="color:#268bd2;">Int
+</span><span>         </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">L</span><span>.</span><span style="color:#268bd2;">ByteString
+</span><span>         </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m </span><span style="color:#859900;">()
+</span><span>addBytes v lbs </span><span style="color:#859900;">=</span><span> mapM_ (addByte v) (</span><span style="color:#cb4b16;">L</span><span style="color:#859900;">.</span><span>unpack lbs)
+</span><span>
+</span><span style="color:#b58900;">addByte </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">PrimMonad m</span><span>, </span><span style="color:#268bd2;">M</span><span>.</span><span style="color:#268bd2;">MVector v Int</span><span>)
+</span><span>        </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">v</span><span> (</span><span style="color:#268bd2;">PrimState m</span><span>) </span><span style="color:#268bd2;">Int
+</span><span>        </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Word8
+</span><span>        </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m </span><span style="color:#859900;">()
+</span><span>addByte v w </span><span style="color:#859900;">= do
+</span><span>    </span><span style="color:#93a1a1;">-- Read out the old count value
+</span><span>    oldCount </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">M</span><span style="color:#859900;">.</span><span>read v index
+</span><span>    </span><span style="color:#93a1a1;">-- Write back the updated count value
+</span><span>    </span><span style="color:#cb4b16;">M</span><span style="color:#859900;">.</span><span>write v index (oldCount </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1</span><span>)
+</span><span>  </span><span style="color:#859900;">where
+</span><span>    </span><span style="color:#93a1a1;">-- Indices in vectors are always Ints. Our bytes come in as Word8, so we
+</span><span>    </span><span style="color:#93a1a1;">-- need to convert them.
+</span><span>    </span><span style="color:#b58900;">index </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Int
+</span><span>    index </span><span style="color:#859900;">=</span><span> fromIntegral w
+</span><span>
+</span><span style="color:#b58900;">printFreq </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>printFreq index count </span><span style="color:#859900;">=</span><span> putStrLn </span><span style="color:#859900;">$</span><span> concat
+</span><span>    [ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Frequency of byte </span><span style="color:#839496;">&quot;
+</span><span>    , show index
+</span><span>    , </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">: </span><span style="color:#839496;">&quot;
+</span><span>    , show count
+</span><span>    ]
+</span></code></pre>
+<h2 id="tutorial-exercise-above">Tutorial exercise above</h2>
+<p>Now try taking a crack at the tutorial exercise we mentioned at the
+top. Some advice:</p>
+<ul>
+<li>Use <code>mwc-random</code> package
+<ul>
+<li>Not a recommendation for random packages, just a good way to
+practice vectors</li>
+</ul>
+</li>
+<li>May want to consider:
+<a href="https://www.stackage.org/package/vector-th-unbox">vector-th-unbox</a></li>
+<li>Note: that won't provide the tightest representation!</li>
+<li>Hard core: write an <code>Unbox</code> instance by hand</li>
+<li>Less hard core (what I'd probably do): can you use
+<code>GeneralizedNewtypeDeriving</code>?</li>
+</ul>
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#3a495b565f497a5c4a5955574a565f4e5f14595557" targe="_blank"><span class="__cf_email__" data-cfemail="196a78757c6a597f697a767469757c6d7c377a7674">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

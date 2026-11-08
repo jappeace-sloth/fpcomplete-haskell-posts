@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Randomization Testing for an SQL Translator</title>
+  <meta property="og:title" content="Randomization Testing for an SQL Translator">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Learn how to implement an automatic translator from one SQL dialect to another in Haskell &amp; how to use randomization tests to drive the translator forward.">
+  <meta property="og:description" content="Learn how to implement an automatic translator from one SQL dialect to another in Haskell &amp; how to use randomization tests to drive the translator forward.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;randomization-testing-for-an-sql-translator&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Randomization Testing for an SQL Translator</h1>
+      
+      <p id="page-description">By Alexey Kuleshevich, February 13, 2019</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Randomization%20Testing%20for%20an%20SQL%20Translator https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;randomization-testing-for-an-sql-translator&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;randomization-testing-for-an-sql-translator&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;randomization-testing-for-an-sql-translator&#x2F;&amp;title=Randomization%20Testing%20for%20an%20SQL%20Translator"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;randomization-testing-for-an-sql-translator&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>Not all SQLs are created equal. I’ll say even more, none of the
+SQL dialects are even close to being equal. In particular, when
+talking about Microsoft SQL Server and PostgreSQL, their syntax
+might look similar. However, in their semantics, they are mountains
+apart. Today I will describe</p>
+<ul>
+<li>How we implemented an automatic translator from one SQL dialect
+to another in Haskell</li>
+<li>Some of the challenges we faced along the way</li>
+<li>And most importantly, how we used randomization tests to drive
+our translator forward, while discovering some of those mountains
+of between the two database engines.</li>
+</ul>
+<h2>Problem at hand</h2>
+<p>A short introduction to the motivation that caused all the work
+is pretty important. In fact, people who are even vaguely familiar
+with differences between the two dialects might wonder: Why would
+anyone even bother with such a translator in a first place? In most
+cases it would be much simpler to just rewrite the code in the
+target language manually, test that it behaves as expected and be
+done with it.</p>
+<p>One of our customers made a plan to transition their database
+engine from Microsoft SQL Server to PostgreSQL. While this is a
+reasonable thing to do, a major hurdle was that a lot of their data
+handling logic was written in T-SQL, rather than in some database
+agnostic programming language. To be more precise, our engineers at
+FP Complete were presented with a 10MiB file of approximately 200K
+lines of T-SQL code. No sane person would ever be eager to perform
+this translation by hand. Besides, translation of languages that
+are meant to be understood by computers is also a good task for a
+computer rather than a human being.</p>
+<h2>The planned solution</h2>
+<p>The plan was pretty straightforward:</p>
+<ul>
+<li>Isolate a subset of all language features that are actually
+being utilized.</li>
+<li>Write a parser for Transact-SQL (T-SQL).</li>
+<li>Figure out a direct translation for each data type, function,
+query, etc. into the target language.</li>
+<li>Generate a printer that will write out the code in Procedural
+Language/PostgreSQL (PL/pgSQL).</li>
+</ul>
+<p>No matter how much research you do or how intimate you are with
+a particular language you can’t know all of the nitty-gritty
+details, especially in two languages at the same time. In order to
+have confidence in our translator we decided to also employ
+randomized testing to guide us with the last three stages of the
+plan.</p>
+<h2>Iterative process</h2>
+<p>Despite their importance, syntactic differences are not of much
+interest to us, as far as this blog post is concerned. Therefore, I
+won’t be talking about parsing or printing. What we do care about
+is the semantic correspondence of functions, data types, queries
+and most definitely procedures between T-SQL and PL/pgSQL. In other
+words we do care about their correct translation.</p>
+<p>Below I will try to describe how we allowed randomized testing
+to drive our translation efforts in discovery of undocumented or
+hard to find differences between the languages. A simplified
+version of the process was:</p>
+<ul>
+<li>take a function from T-SQL</li>
+<li>figure out a matching one in PL/pgSQL</li>
+<li>if there is no match, then implement one and load it into
+Postgres as a custom function</li>
+<li>use QuickCheck to generate random values that the function
+would normally expect as input</li>
+<li>execute the query in MS SQL</li>
+<li>automatically translate the above query and execute it in
+PostgreSQL</li>
+<li>compare the returned results</li>
+<li>record all of the differences and investigate the reasons
+behind them</li>
+<li>use newly learned knowledge about the function to adjust either
+the translation or the tests</li>
+<li>repeat the process until output from both databases is exactly
+the same or good enough, whatever that might mean.</li>
+</ul>
+<p>In the above breakdown we used functions as an example, but that
+process extends to other concepts as well, which I will touch upon
+later.</p>
+<h2>Database connections</h2>
+<p>In order for us to start executing queries on those engines we
+needed to figure out a way to connect to them from Haskell. Doing
+so for Postres was very simple with the help of the
+postgresql-simple package. Getting connected to SQL Server was not
+as straightforward, since there was no reliable open source
+solution that we could use. Luckily for us we already had a
+semi-complete in-house FreeTDS bindings, which with some small
+adjustments we were able to successfully use for testing the
+translator.</p>
+<p>For anyone interested in connecting to an ODBC compliant
+databases, Chris Done did some more work in that area and released
+a fully featured <a href=
+"/blog/2018/05/haskell-library-talking-odbc-databases" rel=
+"noopener" target="_blank">odbc</a> bindings, which you could also
+use to connect to SQL Server and others.</p>
+<p style="text-align: center;"><span style=
+"color: #9a00ff;"><strong>Click below to&nbsp;learn more about a
+unique offer</strong></span></p>
+<h2>Data types</h2>
+<p>We started testing at the most natural place for any Haskeller,
+namely the data types. Luckily for us the SQL standard had the most
+influence in that area on the languages in question. We were able
+to create data types in Haskell that corresponded to similar data
+types in both engines: <code>DATETIME2</code> was similar to
+<code>TIMESTAMP</code>, <code>INT</code> to <code>INTEGER</code>,
+and so on.</p>
+<p>One of the fun things was finding the correct range of values
+that would be supported equally in both engines, such as timestamp
+ranges for instance. Because we used <code>freetds</code> for
+communication, we ran into some tighter restrictions on ranges when
+compared to what SQL Server natively supports. For example, year
+values for <code>DATE</code> could be between 1753 and 9999, while
+the documented range for SQL server is from 0001 to 9999. However,
+those were good enough bounds for the code we tried to
+translate.</p>
+<p>The least trivial of all were the ranges of unicode characters.
+The first issue was that PostgreSQL uses UTF-8, while SQL Server
+uses:</p>
+<ul>
+<li>For <code>NVARCHAR</code>: UCS-2, the grandparent of
+UTF-16</li>
+<li>For <code>VARCHAR</code>: <code>Windows-1252</code>, an even
+older extended ASCII encoding</li>
+</ul>
+<p>Actual encoding/decoding of codepoints was pretty much solved
+for us in Haskell, so by using a few helper functions we could pass
+generated data to the corresponding databases in the format that
+they expect.</p>
+<p>Finding a subset of valid characters from the Unicode standard
+was the more challenging part. But with help of randomized testing
+we were able to quickly identify all the characters—amongst the
+ones we cared about—which behaved differently between the two
+engines. Instead of manually writing generators that would produce
+valid Unicode codepoints we went a simpler way and just downloaded
+a file with all characters for an old Unicode-1.1.5 standard. We
+further reduced the input by disabling blocks of characters that we
+knew where irrelevant to us: eg. Hiragana, Katakana, Bopomofo and
+many others. Then all we did was generate random strings by
+selecting codepoints from a predefined list and fed them as input
+to various functions. That simple technique not only quickly
+revealed all the codepoints unsupported in UCS-2, but also a few
+important differences:</p>
+<ul>
+<li>SQL Server treats Unicode characters as if they are normalized,
+while PostgreSQL does no such thing. For example combination of
+<code>a</code>+<code>˛</code> would be equivalent to
+<code>ą</code>, <code>ss</code> to <code>ß</code>, etc.</li>
+<li>Case insensitive collation in SQL Server turned out to be a bit
+problematic, since Postgres can’t do that out of the box.</li>
+<li>Older collations can produce unexpected results on some
+codepoints, even though they are present in UCS-2</li>
+</ul>
+<p>The most critical feature of QuickCheck in this approach,
+besides arbitrary data generation, was shrinking. Trying to
+identify some mismatched hieroglyph on a screen full of random
+garbage is ridiculously hard and pointless, especially when the
+library can automatically reduce the size of that data, which still
+triggers the failure.</p>
+<p>In case you are not familiar with QuickCheck, here is an
+introduction level blog that I’ve written a couple years ago:
+<a href="/blog/2017/01/quickcheck" rel="noopener" target=
+"_blank">QuickCheck and Magic of Testing</a>. We also have a very
+detailed blog post on property testing coming up in the near
+future, so stay tuned.</p>
+<h2>Functions</h2>
+<p>Since functions are so tightly coupled with the generated data,
+we’ll extend the previous section with a concrete example. Consider
+a simple pure <code>LEN()</code> function that operates on strings
+(such as <code>CHAR,</code>, <code>VARCHAR</code>, etc.) and
+returns the number of characters. With a quick inspection of the
+documentation it’s trivial to reveal a matching function in
+Postgres, which would be <code>length()</code>. The easy to miss
+part is the fact that they do produce different results on some
+inputs. Specifically, <code>LEN()</code> treats trailing white
+spaces as insignificant, while PostgreSQL trims all trailing white
+space only for the <code>CHAR</code> data type, but not the other
+string like types <code>VARCHAR</code> and <code>TEXT</code>. Since
+this is done at the type level, this behavior affects all
+functions, while in SQL Server it is only <code>LEN()</code>
+specific.</p>
+<p>Some might find the above difference unimportant, but small
+things like that can drastically change the logic of a large
+program in surprising ways. The point is, though, that we were able
+to quickly identify such a peculiar difference simply by feeding
+random strings into both functions and comparing the output.</p>
+<p>Another fun one was <code>ISNUMERIC()</code>. We had to ignore a
+whole lot of characters as input during testing, such as currency
+symbols, box characters, comma, tab, carriage return etc. Those are
+also considered as numeric in T-SQL whenever they are by themselves
+or at the beginning of the string. We did need to produce a
+translation that was as close as possible, but translating all the
+bugs too seemed overkill.</p>
+<p>The easiest ones to translate were, of course, pure math
+functions, but not all of them were a one-to-one mapping either.
+Important to note, when comparing produced floating point results,
+we can not expect them to be identical, and must check equality up
+to an error. There are a few ways to account for small errors, but
+here is my favorite one that worked well for me in the past, namely
+compare up to a relative error:</p>
+<pre><code class=
+"language-haskell">epsilonEq :: (Num a, Ord a) =&gt;
+             a -- ^ Epsilon, a maximum tolerated error. Sign is ignored.
+          -&gt; a -- ^ Expected result.
+          -&gt; a -- ^ Tested value.
+          -&gt; Bool
+epsilonEq epsilon x y = x == y || abs (y - x) &lt;= n * epsilon
+  where n = 1 + if abs x &lt; abs y then abs y else abs x
+</code></pre>
+<h2>Queries and Procedures</h2>
+<p>Both T-SQL and PL/pgSQL are procedural languages, as such they
+depend on the state of the world as well as the data in the
+database. For that reason designing reproducible tests is much
+harder than in a pure setting. Nevertheless, it is still
+possible.</p>
+<p>The simplest procedures that come to mind that are stateful are
+the ones that return the current time (eg.
+<code>GETUTCDATE()</code>) or a random number (eg.
+<code>RAND()</code>). Testing these kind of procedures and other
+ones that depend on them must be done manually, possibly with some
+trivial unit tests. But randomized testing is simply not applicable
+in such scenarios.</p>
+<p>Various queries and procedures that depend only on data stored
+in the database and the input arguments can still be tested with
+randomized testing. In order to do so, prior to running the
+property, we need to clear out the database or maybe just a few
+tables and then load initial data into the required tables. We can
+even select the initial data randomly from some predefined large
+set, as long as we know that all of that data is valid and the
+procedure we are trying to test is expected to return the same
+output or modify the state of the database in exactly the same
+way.</p>
+<p>The point is that, in the presence of mutable state, it is our
+responsibility as a QA engineer to identify which parts of our
+global state the procedure depends on and make sure that it is
+initialized to the equivalent state for both databases before each
+test case is executed. Similarly we need to identify which parts of
+the database it is expected to modify, so we can retrieve that data
+and reliably validate its equivalence between the databases. In
+some situations we can speed up and even improve the quality of our
+tests if we are able to not reinitialize the state until an actual
+test failure, but that is very much dependent on the logic inside
+the procedures we are trying to test.</p>
+<h2>Conclusion</h2>
+<p>The power of Haskell and randomization testing with such
+libraries as QuickCheck and Validity can be used in some unexpected
+settings. It turns out to be an invaluable tool, not only for
+validating the implemented logic, but also for driving the actual
+implementation, as it is known from the “tests first” approach.
+Moreover, the process we describe, could just as well be applied to
+translation between other programming languages, it doesn’t have to
+be SQL specific.</p>
+<p>Another fascinating observation here I’d like to make is that
+the translator itself didn’t have to be written in Haskell—although
+I don’t know why you would choose another language. But the gist of
+it is that the randomization test suite I’ve described in this post
+did not directly depend on the translator as a library, just on the
+output it produces, so we could simply treat it is a black box if
+necessary, while using all of our favorite tools for testing
+it.</p>
+<p>If you would like some help with your database problems please
+<a href="/contact-us" rel="noopener" target="_blank">contact us</a>
+to see how we can assist.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Randomization%20Testing%20for%20an%20SQL%20Translator https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;randomization-testing-for-an-sql-translator&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;randomization-testing-for-an-sql-translator&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;randomization-testing-for-an-sql-translator&#x2F;&amp;title=Randomization%20Testing%20for%20an%20SQL%20Translator"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;randomization-testing-for-an-sql-translator&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#a8dbc9c4cddbe8ced8cbc7c5d8c4cddccd86cbc7c5" targe="_blank"><span class="__cf_email__" data-cfemail="493a28252c3a092f392a262439252c3d2c672a2624">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

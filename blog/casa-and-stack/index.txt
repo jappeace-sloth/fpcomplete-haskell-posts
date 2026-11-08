@@ -1,0 +1,285 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Casa and Stack
+
+By Chris Done, December 16, 2019
+
+Share this     
+
+This post is aimed at Haskellers who are roughly aware of how build infrastructure works for
+Haskell.
+
+But the topic may have general audience outside of the Haskell community, so this post will briefly
+describe each part of the infrastructure from the bottom up: compiling modules, building and
+configuring packages, to downloading and storing those packages online.
+
+This post is a semi-continuation from last week's post on Casa.
+
+GHC
+
+GHC is the de facto standard Haskell compiler. It knows how to load packages and compile files, and
+produce binary libraries and executables. It has a small database of installed packages, with a
+simple command-line interface for registering and querying them:
+
+$ ghc-pkg register yourpackage
+$ ghc-pkg list
+
+Apart from that, it doesn't know anything else about how to build packages or where to get them.
+
+Cabal
+
+Cabal is the library which builds Haskell packages from a .cabal file package description, which
+consists of a name, version, package dependencies and build flags. To build a Haskell package, you
+create a file (typically Setup.hs), with contents roughly like:
+
+import Distribution.Simple -- from the Cabal library
+main = defaultMain
+
+This (referred to as a "Simple" build), creates a program that you can run to configure, build and
+install your package.
+
+$ ghc Setup.hs
+$ ./Setup configure # Checks dependencies via ghc-pkg
+$ ./Setup build # Compiles the modules with GHC
+$ ./Setup install # Runs the register step via ghc-pkg
+
+This file tends to be included in the source repository of your package. And modern package build
+tools tend to create this file automatically if it doesn't already exist. The reason the build
+system works like this is so that you can have custom build setups: you can make pre/post build
+hooks and things like that.
+
+But the Cabal library doesn't download packages or manage projects consisting of multiple packages,
+etc.
+
+Hackage
+
+Hackage is an online archive of versioned package tarballs. Anyone can upload packages to this
+archive, where the package must have a version associated with it, so that you can later download a
+specific instance of the package that you want, e.g. text-1.2.4.0. Each package is restricted to a
+set of maintainers (such as the author) who is able to upload to it.
+
+The Hackage admins and authors are able to revise the .cabal package description without publishing
+a new version, and regularly do. These new revisions supersede previous revisions of the cabal
+files, while the original revisions still remain available if specifically requested (if supported
+by tooling being used).
+
+cabal-install
+
+There is a program called cabal-install which is able to download packages from Hackage
+automatically and does some constraint solving to produce a build plan. A build plan is when the
+tool picks what versions of package dependencies your package needs to build.
+
+It might look like:
+
+  • base-4.12.0.0
+  • bytestring-0.10.10.0
+  • your-package-0.0
+
+Version bounds (<2.1 and >1.3) are used by cabal-install as heuristics to do the solving. It isn't
+actually known whether any of these packages build together, or that the build plan will succeed.
+It's a best guess.
+
+Finally, once it has a build plan, it uses both GHC and the Cabal library to build Haskell
+packages, by creating the aforementioned Setup.hs automatically if it doesn't already exist, and
+running the ./Setup configure, build, etc. step.
+
+Stackage
+
+As mentioned, the build plans produced by cabal-install are a best guess based on constraint
+solving of version bounds. There is a matrix of possible build plans, and the particular one you
+get may be entirely novel, that no one has ever tried before. Some call this "version hell".
+
+To rectify this situation, Stackage is a "stable Hackage" service, which publishes known subsets of
+Hackage that are known to build and pass tests together, called snapshots. There are nightly
+snapshots published, and long-term snapshots called lts-1.0, lts-2.2, etc. which tend to steadily
+roll along with the GHC release cycle. These LTS releases are intended to be what people put in
+source control for their projects.
+
+The Stackage initiative has been running since it was announced in 2012.
+
+stack
+
+The stack program was created to specifically make reproducible build plans based on Stackage.
+Authors include a stack.yaml file in their project root, which looks like this:
+
+snapshot: lts-1.2
+packages: [mypackage1, mypackage2]
+
+This tells stack that:
+
+ 1. We want to use the lts-1.2 snapshot, therefore any package dependencies that we need for this
+    project will come from there.
+ 2. That within this directory, there are two package directories that we want to build.
+
+The snapshot also indicates which version of GHC is used to build that snapshot; so stack also
+automatically downloads, installs and manages the GHC version for the user. GHC releases tend to
+come out every 6 months to one year, depending on scheduling, so it's common to have several GHC
+versions installed on your machine at once. This is handled transparently out of the box with
+stack.
+
+Additionally, we can add extra dependencies for when we have patched versions of upstream
+libraries, which happens a lot in the fast-moving world of Haskell:
+
+snapshot: lts-1.2
+packages: [mypackage1, mypackage2]
+extra-deps: ["bifunctors-5.5.4"]
+
+The build plan for Stack is easy: the snapshot is already a build plan. We just need to add our
+source packages and extra dependencies on top of the pristine build plan.
+
+Finally, once it has a build plan, it uses both GHC and the Cabal library to build Haskell
+packages, by creating the aforementioned Setup.hs automatically if it doesn't already exist, and
+running the ./Setup configure, build, etc. step.
+
+Pantry
+
+Since new revisions of cabal files can be made available at any time, a package identifier like
+bifunctors-5.5.4 is not reproducible. Its meaning can change over time as new revisions become
+available. In order to get reproducible build plans, we have to track "revisions" such as
+bifunctors-5.5.4@rev:1.
+
+Stack has a library called Pantry to store all of this package metadata into an sqlite database on
+the developer's machine. It does so in a content-addressable way (CAS), so that every variation on
+version and revision of a package has a unique SHA256 cryptographic hash summarising both the
+.cabal package description, and the complete contents of the package.
+
+This lets Stackage be exactly precise. Stackage snapshots used to look like this:
+
+packages:
+- hackage: List-0.5.2
+- hackage: ListLike-4.2.1
+...
+
+Now it looks like this:
+
+packages:
+- hackage: ALUT-2.4.0.3@sha256:ab8c2af4c13bc04c7f0f71433ca396664a4c01873f68180983718c8286d8ee05,4118
+  pantry-tree:
+    size: 1562
+    sha256: c9968ebed74fd3956ec7fb67d68e23266b52f55b2d53745defeae20fbcba5579
+- hackage: ANum-0.2.0.2@sha256:c28c0a9779ba6e7c68b5bf9e395ea886563889bfa2c38583c69dd10aa283822e,1075
+  pantry-tree:
+    size: 355
+    sha256: ba7baa3fadf0a733517fd49c73116af23ccb2e243e08b3e09848dcc40de6bc90
+
+So we're able to CAS identify the .cabal file by a hash and length,
+
+ALUT-2.4.0.3@sha256:ab8c2af4c13bc04c7f0f71433ca396664a4c01873f68180983718c8286d8ee05,4118
+
+And we're able to CAS identify the contents of the package:
+
+pantry-tree:
+  size: 355
+  sha256: ba7baa3fadf0a733517fd49c73116af23ccb2e243e08b3e09848dcc40de6bc90
+
+Additionally, each and every file within the package is CAS-stored. The "pantry-tree" refers to a
+list of CAS hash-len keys (which is also serialised to a binary blob and stored in the same CAS
+store as the files inside the tarball themselves). With every file stored, we remove a lot of
+duplication that we had storing a whole tarball for every single variation of a package.
+
+Parenthetically, the 01-index.tar that Hackage serves up with all the latest .cabal files and
+revisions has to be downloaded every time. As this file is quite large this is slow and wasteful.
+
+Another side point: Hackage Security is not needed or consulted for this. CAS already allows us to
+know in advance whether what we are receiving is correct or not, as stated elsewhere.
+
+When switching to a newer snapshot, lots of packages will be updated, but within each package, only
+a few files will have changed. Therefore we only need to download those few files that are
+different. However, to achieve that, we need an online service capable of serving up those blobs by
+their SHA256...
+
+Enter Casa
+
+As announced in our casa post, Casa stands for "content-addressable storage archive", and also
+means "home" in romance languages, and it is an online service we're announcing to store packages
+in a content-addressable way.
+
+Now, the same process which produces Stackage snapshots, can also:
+
+  • Download all package versions and revisions from Hackage, and store them in a Pantry database.
+  • Download all Stackage snapshots, and store them in the same Pantry database.
+  • All the unique CAS blobs stored in the pantry database are then pushed to Casa, completing the
+    circle.
+
+Stack can now download all its assets needed to build a package from Casa:
+
+  • Stackage snapshots.
+  • Cabal files.
+  • Individual package files.
+
+Furthermore, the snapshot format of Stackage supports specifying locations other than Hackage, such
+as a git repository at a given commit, or a URL with a tarball. These would also be automatically
+pushed to Casa, and Stack would download them from Casa automatically like any other package.
+Parenthetically, Stackage does not currently include packages from outside of Hackage, but Stack's
+custom snapshots--which use the same format--do support that.
+
+Internal Company Casas
+
+Companies often run their own Hackage on their own network (or IP-limited public server) and upload
+their custom packages to it, to be used by everyone in the company.
+
+With the advent of Stack, this became less needed because it's trivial to fork any package on
+GitHub and then link to the Git repo in a stack.yaml. Plus, it's more reproducible, because you
+refer to a hash rather than a mutable version. Combined with the additional Pantry-based
+SHA256+length described above, you don't have to trust GitHub to serve the right content, either.
+
+The Casa repository is here which includes both the server and a (Haskell) client library with
+which you can push arbitrary files to the casa service. Additionally, to populate your Casa server
+with everything from a given snapshot, or all of Hackage, you can use casa-curator from the curator
+repo, which is what we use ourselves.
+
+If you're a company interested in running your own Casa server, please contact us. Or, if you'd
+like to discuss the possibility of caching packages in binary form and therefore skipping the build
+step altogther, please contact us. Also contact us if you would like to discuss storing GHC binary
+releases into Casa and have Stack pull from it, to allow for a completely Casa-enabled toolchain.
+
+Summary
+
+Here's what we've brought to Haskell build infrastructure:
+
+  • Reliable, reproducible referring to packages and their files.
+  • De-duplication of package files; fewer things to download, on your dev machine or on CI.
+  • An easy to use and rely on server.
+  • A way to run an archive of your own that is trivial to run.
+
+When you upgrade to Stack master or the next release of Stack, you will automatically be using the
+Casa server.
+
+We believe this CAS architecture has use in other language ecosystems, not just Haskell. See the
+Casa post for more details.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

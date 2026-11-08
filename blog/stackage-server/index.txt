@@ -1,0 +1,230 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Stackage Server
+
+By Chris Done, May 20, 2014
+
+Share this     
+
+Stackage is an infrastructure to create stable builds of complete package sets (henceforth we call
+them “snapshots”). Think “stable Hackage”. Let's recap.
+
+As a user
+
+By running automated builds before releasing a new snapshot, Stackage gives the following
+assurances:
+
+  • There is always a build plan.¹
+  • All packages actually compile.²
+  • All tests suites pass.
+  • All of the above work across three GHC versions.
+
+This means that as a user of an snapshot verified by Stackage, you can expect all packages to
+install first time.
+
+Also, we are currently building on these GHC versions:
+
+  • GHC 7.8 (2014)
+  • GHC 7.6 (2013)
+  • GHC 7.4 (2012)
+
+This gives plenty of time to update your GHC versions in a gradual manner.
+
+Each snapshot is given a unique hash which is a digest of that snapshot's package set. Snapshots
+don't change. Once you have the hash, it refers only to that snapshot. So if you write a project
+using snapshot aba1b51af, and in two months you switch to another machine and build your project
+with aba1b51af, it will succeed. You can continue hacking without hopping onto the Hackage
+treadmill.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+¹ A build plan refers to the process Cabal makes when trying to install the dependencies of a
+package and then the package itself: it determines which packages are candidates by their version
+restrictions and produces a list of package versions that it will install. This is part I of
+version hell.
+
+² Versions don't necessarily mean a package really compiles, just that the author thought it might
+or did on their platform. This is part II of version hell.
+
+As an author
+
+To have the knowledge that your package builds and tests successfully across the current, stable
+and old GHC versions is valuable information. As a library author, you have guarantees that users
+of Stackage can easily use your library and can do so on a reasonable number of GHCs.
+
+You're also informed, as an author, when a newly uploaded package breaks yours, meaning it's time
+to update your package if you want to be included in the latest snapshot.
+
+In the two years since the initial announcement, library authors have been submitting their
+packages and contributing to this process. The steps are simple:³
+
+  • Open the Stackage project on Github.
+  • Fork it.
+  • Add a line to the Stackage.Config module.
+  • Push to your fork.
+  • Open a pull request.
+
+Some examples:
+
+  • A straight-forward pull request
+  • A pull request which failed to build, requiring correction
+
+Once you have submitted the pull request, a build will be started. There is a dedicated jenkins
+server at this location: jenkins.stackage.org From here you can track the progress, status and
+results of Stackage builds.
+
+If there is a problem, you will get a ping notifying you that there is a build problem. Once the
+problem is fixed, that change will be accepted into the next Stackage snapshot.
+
+Later on, if the uploading of a new package breaks your package, you will be pinged to update.
+
+For example, here is an issue created when haskell-src-exts bumped to 1.15.0. Each author of the
+packages were notified, made updates, and now we had a new snapshot.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+³ It's a little similar to the submission process of MELPA, if you've heard of it.
+
+Enter Stackage server
+
+In the past, use of Stackage was limited to either manually downloading the project and building it
+all locally, or by using FP Haskell Center. In the coming month, we will be announcing for beta
+testing a new project, based on the Stackage infrastructure: Stackage server.
+
+Upon release, you will be able to go to the server web site and pick a snapshot. On the build will
+be a simple copy/paste line to use as a Cabal repo, to replace your existing remote-repo line.
+
+remote-repo: stackage:https://the-stackage-server/stackage/ab547ab2ba
+
+Do a cabal update and you're set! You now have all the advantages listed in the users section.
+Everything will build in your cabal now.⁴
+
+When a new package is released and has been properly updated via the process explained for authors,
+if you want that package, you can go to the Stackage home page and get the latest snapshot and
+update your repo.
+
+We will also support uploading custom snapshots, so: as a company, as a Linux distribution,
+organisation, a university, or just as a general hacker who wants to keep all their projects under
+one package set, you can maintain your own custom series of snapshots, and also make it available
+to other people. Of course, then the burden will be on you to make sure it builds, rather than the
+recommended snapshots which we maintain and to which authors contribute.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⁴ It will be suggested on the web site that you start from a base install, with either instructions
+of how to clear your setup or start from scratch.
+
+Exclusive and inclusive Stackages
+
+Stackage doesn't include all of Hackage. So sometimes there will be packages that you want, which
+aren't included on Stackage. This means it's not certain that they will build or their tests will
+pass. However, we will distinguish between two types of snapshots:
+
+ 1. Exclusive: includes only the packages vetted by the Stackage process, all packages build and
+    pass tests. It will always work.
+ 2. Inclusive: includes the packages vetted by the Stackage process, and also any additional
+    packages from Hackage are available, should you wish to try installing them. It won't always
+    work.
+
+Which one you choose will depend on how “bleeding edge” you want to be.
+
+Comparison
+
+To compare with other approaches, here's a quick rundown:
+
+ 1. Hackage: super unstable, lots of build problems, but bleeding edge, loads of new packages.
+ 2. Haskell Platform: super stable and vetted by consensus, no build problems (unless combined with
+    Hackage), but packages tend to be older and not many packages (about 30, or loads when combined
+    with Hackage).
+ 3. Stackage inclusive: stable and no build problems (unless combined with Hackage), recent
+    packages and many of them (about 550, or loads when combined with Hackage).
+ 4. Stackage exclusive: stable, no build problems, with recent packages and many of them (about
+    550).
+
+Though, we also do snapshots which are based upon the Haskell Platform. This is especially
+important for Windows users.
+
+App writers
+
+An additional use-case not mentioned so far is for application writers. Programs that have lots of
+very particular dependencies. FP Haskell Center itself is such a piece of software. Any Haskeller
+who's worked on a big program knows that it's important to freeze all dependency versions so that:
+
+ 1. Builds always work.
+ 2. Tests always succeed.
+ 3. Build results and runtime results don't vary from developer to developer.
+
+There are various ways to tackle such a problem. I've seen all of them used in places I've worked
+or talked to about it:
+
+ 1. Just specify no versions in your project Cabal file, strap yourself in, scream “cowabunga,” and
+    hope for the best.
+ 2. Specify hard versions in your Cabal file. This leads to transient dependency differences.
+ 3. Specify hard versions for all packages, directly and indirectly used by your project.
+ 4. Run a local Hackage on your office network or VPN or publicly passworded, which contains only
+    the package versions which your project is using/should be using. (With this method you have to
+    be careful not to accidentally upload to real Hackage when doing updates!)
+ 5. Write a script which will reinstall all direct and transient dependencies whenever a package is
+    updated.
+
+Stackage is another way to do this. Similar to the local Hackage approach, you, as an author, or as
+a team of developers, would choose a snapshot to build your application against. Everyone shares
+the same remote-repo.
+
+Now if random Billy Opensauce wants to contribute to your big project, and wants to be able to
+build it, all you have to do is tell them to make a cabal sandbox and use the snapshot that your
+project builds with and it will work for him first time.
+
+This is a bit like doing cabal freeze. Although one handy side-effect is that you can have a big
+program consisting of many sub-systems, and they all just specify e.g. text in their dependency,
+and your whole project depends upon a snapshot, rather than keeping n .cabal build-depends entries
+in sync.
+
+Haskell businesses
+
+We're also offering custom installations for businesses who want to build their development
+platform upon Stackage. If you're considering this for your business and want to find out more,
+please email us at: [email protected]
+
+Coming release
+
+The next stable Stackage snapshot will be on GHC 7.8 (and included in the FP Haskell Center). This
+means that if you want your packages on that snapshot, you should submit them ahead of time.
+Currently we have 552 packages available on GHC 7.8. Submit your packages or packages you like and
+let's get them building!
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

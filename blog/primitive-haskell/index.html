@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Primitive Haskell</title>
+  <meta property="og:title" content="Primitive Haskell">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;02&#x2F;primitive-haskell&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Primitive Haskell</h1>
+      
+      <p id="page-description">By Michael Snoyman, February 17, 2015</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Primitive%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;02&#x2F;primitive-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;02&#x2F;primitive-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;02&#x2F;primitive-haskell&#x2F;&amp;title=Primitive%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;02&#x2F;primitive-haskell&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>I originally wrote this content as <a href=
+"https://github.com/fpco/mezzohaskell/blob/master/chapters/primitive-haskell.md">
+a chapter of Mezzo Haskell</a>. I'm going to be starting up a
+similar effort to Mezzo Haskell in the next few days, and I wanted
+to get a little more attention on this content to get feedback on
+style and teaching approach. I'll be discussing that new initiative
+on <a href="https://commercialhaskell.com">the Commercial Haskell
+mailing list</a>.</p>
+<hr>
+<p>The point of this chapter is to help you peel back some of the
+layers of abstraction in Haskell coding, with the goal of
+understanding things like primitive operations, evaluation order,
+and mutation. Some concepts covered here are generally "common
+knowledge" in the community, while others are less well understood.
+The goal is to cover the entire topic in a cohesive manner. If a
+specific section seems like it's not covering anything you don't
+already know, skim through it and move on to the next one.</p>
+<p>While this chapter is called "Primitive Haskell," the topics are
+very much GHC-specific. I avoided calling it "Primitive GHC" for
+fear of people assuming it was about the internals of GHC itself.
+To be clear: these topics apply to anyone compiling their Haskell
+code using the GHC compiler.</p>
+<p>Note that we will not be fully covering all topics here. There
+is a "further reading" section at the end of this chapter with
+links for more details.</p>
+<h2 id="let39s-do-addition">Let's do addition</h2>
+<p>Let's start with a really simple question: tell me how GHC deals
+with the expression <code>1 + 2</code>. What <i>actually</i>
+happens inside GHC? Well, that's a bit of a trick question, since
+the expression is polymorphic. Let's instead use the more concrete
+expression <code>1 + 2 :: Int</code>.</p>
+<p>The <code>+</code> operator is actually a method of <a href=
+"https://www.stackage.org/haddock/lts-1.0/base-4.7.0.2/Prelude.html#t:Num">
+the <code>Num</code> type class</a>, so we need to look at <a href=
+"https://www.stackage.org/haddock/lts-1.0/base-4.7.0.2/src/GHC-Num.html#Num">
+the <code>Num Int</code> instance</a>:</p>
+<pre><span class="hs-keyword">instance</span>  <span class=
+"hs-conid">Num</span> <span class=
+"hs-conid">Int</span>  <span class="hs-keyword">where</span>
+    <span class="hs-conid">I</span><span class=
+"hs-cpp">#</span> <span class="hs-varid">x</span> <span class=
+"hs-varop">+</span> <span class="hs-conid">I</span><span class=
+"hs-cpp">#</span> <span class="hs-varid">y</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">I</span><span class=
+"hs-cpp">#</span> <span class="hs-layout">(</span><span class=
+"hs-varid">x</span> <span class="hs-varop">+#</span> <span class=
+"hs-varid">y</span><span class="hs-layout">)</span></pre>
+<p>Huh... well <i>that</i> looks somewhat magical. Now we need to
+understand both the <code>I#</code> constructor and the
+<code>+#</code> operator (and what's with the hashes all of a
+sudden?). If we <a href=
+"https://www.stackage.org/snapshot/lts-1.0/hoogle?q=I%23">do a
+Hoogle search</a>, we can easily <a href=
+"https://www.stackage.org/haddock/lts-1.0/ghc-prim-0.3.1.0/GHC-Types.html#t:Int">
+find the relevant docs</a>, which leads us to the following
+definition:</p>
+<pre><span class="hs-keyword">data</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">I</span><span class=
+"hs-cpp">#</span> <span class="hs-conid">Int</span><span class=
+"hs-cpp">#</span></pre>
+<p>So our first lesson: the <code>Int</code> data type you've been
+using since you first started with Haskell isn't magical at all,
+it's defined just like any other algebraic data type... except for
+those hashes. We can also <a href=
+"https://www.stackage.org/snapshot/lts-1.0/hoogle?q=%2B%23">search
+for <code>+#</code></a>, and end up at <a href=
+"https://www.stackage.org/haddock/lts-1.0/ghc-prim-0.3.1.0/GHC-Prim.html#v:-43--35-">
+some documentation</a> giving the type:</p>
+<pre><span class="hs-varop">+#</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Int</span><span class="hs-cpp">#</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Int</span><span class="hs-cpp">#</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Int</span><span class="hs-cpp">#</span></pre>
+<p>Now that we know all the types involved, go back and look at the
+<code>Num</code> instance I quoted above, and make sure you feel
+comfortable that all the types add up (no pun intended). Hurrah, we
+now understand exactly how addition of <code>Int</code>s works.
+Right?</p>
+<p>Well, not so fast. The Haddocks for <code>+#</code> have a very
+convenient source link... which (apparently due to a Haddock bug)
+doesn't actually work. However, it's easy enough <a href=
+"https://www.stackage.org/haddock/lts-1.0/ghc-prim-0.3.1.0/src/GHC-Prim.html#line-1386">
+to find the correct hyperlinked source</a>. And now we see the
+implementation of <code>+#</code>, which is:</p>
+<pre><span class="hs-keyword">infixl</span> <span class=
+"hs-num">6</span> <span class="hs-varop">+#</span>
+<span class="hs-layout">(</span><span class=
+"hs-varop">+#</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Int</span><span class="hs-cpp">#</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Int</span><span class="hs-cpp">#</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Int</span><span class="hs-cpp">#</span>
+<span class="hs-layout">(</span><span class=
+"hs-varop">+#</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-keyword">let</span> <span class=
+"hs-varid">x</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">x</span> <span class="hs-keyword">in</span> <span class=
+"hs-varid">x</span></pre>
+<p>That doesn't look like addition, does it? In fact, <code>let x =
+x in x</code> is another way of saying bottom, or
+<code>undefined</code>, or infinite loop. We have now officially
+entered the world of primops.</p>
+<h2 id="primops">primops</h2>
+<p>primops, short for primary operations, are core pieces of
+functionality provided by GHC itself. They are the magical boundary
+between "things we do in Haskell itself" and "things which our
+implementation provides." This division is actually quite elegant;
+as we already explored, the standard <code>+</code> operator and
+<code>Int</code> data type you're used to are actually themselves
+defined in normal Haskell code, which provides many benefits: you
+get standard type class support, laziness, etc. We'll explore some
+of that in more detail later.</p>
+<p>Look at <a href=
+"https://www.stackage.org/haddock/lts-1.0/ghc-prim-0.3.1.0/src/GHC-Prim.html">
+the implementation of other functions in <code>GHC.Prim</code></a>;
+they're <i>all</i> defined as <code>let x = x in x</code>. When GHC
+reaches a call to one of these primops, it automatically replaces
+it with the real implementation for you, which will be some
+assembly code, LLVM code, or something similar.</p>
+<p>Why do all of these functions end in a <code>#</code>? That's
+called the magic hash (enabled by the <code>MagicHash</code>
+language extension), and it is a convention to distinguish boxed
+and unboxed types and operations. Which, of course, brings us to
+our next topic.</p>
+<h2 id="unboxed-types">Unboxed types</h2>
+<p>The <code>I#</code> constructor is actually just a normal data
+constructor in Haskell, which happens to end with a magic hash.
+However, <code>Int#</code> is <i>not</i> a normal Haskell data
+type. In <code>GHC.Prim</code>, we can see that it's implementation
+is:</p>
+<pre><span class="hs-keyword">data</span> <span class=
+"hs-conid">Int</span><span class="hs-cpp">#</span></pre>
+<p>Which, like everything else in <code>GHC.Prim</code> is really a
+lie. In fact, it's provided by the implementation, and is in fact a
+normal <code>long int</code> from C (32-bit or 64-bit, depending on
+architecture). We can see something even funnier about it in
+GHCi:</p>
+<pre><code>&gt; :k Int
+Int :: *
+&gt; :k Int#
+Int# :: #</code></pre>
+<p>That's right, <code>Int#</code> has a different <i>kind</i> than
+normal Haskell datatypes: <code>#</code>. To quote <a href=
+"https://downloads.haskell.org/~ghc/7.8.3/docs/html/users_guide/primitives.html">
+the GHC docs</a>:</p>
+<blockquote>
+<p>Most types in GHC are boxed, which means that values of that
+type are represented by a pointer to a heap object. The
+representation of a Haskell <code>Int</code>, for example, is a
+two-word heap object. An unboxed type, however, is represented by
+the value itself, no pointers or heap allocation are involved.</p>
+</blockquote>
+<p>See those docs for more information on distinctions between
+boxed and unboxed types. It is vital to understand those
+differences when working with unboxed values. However, we're not
+going to go into those details now. Instead, let's sum up what
+we've learnt so far:</p>
+<ul>
+<li><code>Int</code> addition is just normal Haskell code in a
+typeclass</li>
+<li><code>Int</code> itself is a normal Haskell datatype</li>
+<li>GHC provides <code>Int#</code> and <code>+#</code> as an
+unboxed <code>long int</code> and addition on that type,
+respectively. This is exported by <code>GHC.Prim</code>, but the
+real implementation is "inside" GHC.</li>
+<li>An <code>Int</code> contains an <code>Int#</code>, which is an
+unboxed type.</li>
+<li>Addition of <code>Int</code>s takes advantage of the
+<code>+#</code> primop.</li>
+</ul>
+<h2 id="more-addition">More addition</h2>
+<p>Alright, we understand basic addition! Let's make things a bit
+more complicated. Consider the program:</p>
+<pre><span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-varid">x</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-num">1</span> <span class="hs-varop">+</span> <span class=
+"hs-num">2</span>
+        <span class="hs-varid">y</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-num">3</span> <span class=
+"hs-varop">+</span> <span class="hs-num">4</span>
+    <span class="hs-varid">print</span> <span class=
+"hs-varid">x</span>
+    <span class="hs-varid">print</span> <span class=
+"hs-varid">y</span></pre>
+<p>We know for certain that the program will first print
+<code>3</code>, and then print <code>7</code>. But let me ask you a
+different question. Which operation will GHC perform first: <code>1
++ 2</code> or <code>3 + 4</code>? If you guessed <code>1 +
+2</code>, you're <i>probably</i> right, but not necessarily! Thanks
+to referential transparency, GHC is fully within its rights to
+rearrange evaluation of those expressions and add <code>3 +
+4</code> before <code>1 + 2</code>. Since neither expression
+depends on the result of the other, we know that it is irrelevant
+which evaluation occurs first.</p>
+<p>Note: This is covered in much more detail on the GHC wiki's
+<a href=
+"https://www.haskell.org/haskellwiki/Evaluation_order_and_state_tokens">
+evaluation order and state tokens</a> page.</p>
+<p>That begs the question: if GHC is free to rearrange evaluation
+like that, how could I say in the previous paragraph that the
+program will always print <code>3</code> before printing
+<code>7</code>? After all, it doesn't appear that <code>print
+y</code> uses the result of <code>print x</code> at all, so we not
+rearrange the calls? To answer that, we again need to unwrap some
+layers of abstraction. First, let's evaluate and inline
+<code>x</code> and <code>y</code> and get rid of the
+<code>do</code>-notation sugar. We end up with the program:</p>
+<pre><span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">print</span> <span class="hs-num">3</span> <span class=
+"hs-varop">&gt;&gt;</span> <span class=
+"hs-varid">print</span> <span class="hs-num">7</span></pre>
+<p>We know that <code>print 3</code> and <code>print 7</code> each
+have type <code>IO ()</code>, so the <code>&gt;&gt;</code> operator
+being used comes from the <code>Monad IO</code> instance. Before we
+can understand that, though, we need to look at <a href=
+"https://www.stackage.org/haddock/lts-1.0/ghc-prim-0.3.1.0/src/GHC-Types.html#IO">
+the definition of <code>IO</code> itself</a></p>
+<pre><span class="hs-keyword">newtype</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">State</span><span class="hs-cpp">#</span> <span class=
+"hs-conid">RealWorld</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-cpp">#</span> <span class=
+"hs-conid">State</span><span class="hs-cpp">#</span> <span class=
+"hs-conid">RealWorld</span><span class=
+"hs-layout">,</span> <span class="hs-varid">a</span> <span class=
+"hs-cpp">#</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span></pre>
+<p>We have a few things to understand about this line. Firstly,
+<a href=
+"https://www.stackage.org/haddock/lts-1.0/ghc-prim-0.3.1.0/GHC-Prim.html#t:State-35-">
+<code>State#</code></a> and <a href=
+"https://www.stackage.org/haddock/lts-1.0/ghc-prim-0.3.1.0/GHC-Prim.html#t:RealWorld">
+<code>RealWorld</code></a>. For now, just pretend like they are a
+single type; we'll see when we get to <code>ST</code> why
+<code>State#</code> has a type parameter.</p>
+<p>The other thing to understand is that <code>(# ... #)</code>
+syntax. That's an <i>unboxed tuple</i>, and it's a way of returning
+multiple values from a function. Unlike a normal, boxed tuple,
+unboxed tuples involve no extra allocation and create no
+thunks.</p>
+<p>So <code>IO</code> takes a real world state, and gives you back
+a real world state and some value. And that right there is how we
+model side effects and mutation in a referentially transparent
+language. You may have heard the description of <code>IO</code> as
+"taking the world and giving you a new one back." What we're doing
+here is threading a specific state token through a series of
+function calls. By creating a dependency on the result of a
+previous function, we are able to ensure evaluation order, yet
+still remain purely functional.</p>
+<p>Let's see this in action, by coming back to our example from
+above. We're now ready to look at <a href=
+"https://www.stackage.org/haddock/lts-1.0/base-4.7.0.2/src/GHC-Base.html">
+the <code>Monad IO</code> instance</a>:</p>
+<pre><span class="hs-keyword">instance</span>  <span class=
+"hs-conid">Monad</span> <span class=
+"hs-conid">IO</span>  <span class="hs-keyword">where</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varop">&gt;&gt;</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">thenIO</span>
+
+<span class="hs-definition">thenIO</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">b</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">b</span>
+<span class="hs-definition">thenIO</span> <span class=
+"hs-layout">(</span><span class="hs-conid">IO</span> <span class=
+"hs-varid">m</span><span class="hs-layout">)</span> <span class=
+"hs-varid">k</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">IO</span> <span class="hs-varop">$</span> <span class=
+"hs-keyglyph">\</span> <span class="hs-varid">s</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-keyword">case</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">s</span> <span class=
+"hs-keyword">of</span> <span class="hs-layout">(</span><span class=
+"hs-cpp">#</span> <span class="hs-varid">new_s</span><span class=
+"hs-layout">,</span> <span class="hs-keyword">_</span> <span class=
+"hs-cpp">#</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">unIO</span> <span class="hs-varid">k</span> <span class=
+"hs-varid">new_s</span>
+
+<span class="hs-definition">unIO</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-conid">State</span><span class=
+"hs-cpp">#</span> <span class=
+"hs-conid">RealWorld</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-cpp">#</span> <span class=
+"hs-conid">State</span><span class="hs-cpp">#</span> <span class=
+"hs-conid">RealWorld</span><span class=
+"hs-layout">,</span> <span class="hs-varid">a</span> <span class=
+"hs-cpp">#</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span>
+<span class="hs-definition">unIO</span> <span class=
+"hs-layout">(</span><span class="hs-conid">IO</span> <span class=
+"hs-varid">a</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">a</span></pre>
+<p>(Yes, I changed things a bit to make them easier to understand.
+As an exercise, compare that this version is in fact equivalent to
+what is actually defined in <code>GHC.Base</code>.)</p>
+<p>Let's inline these definitions into <code>print 3 &gt;&gt; print
+7</code>:</p>
+<pre><span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">IO</span> <span class="hs-varop">$</span> <span class=
+"hs-keyglyph">\</span><span class="hs-varid">s0</span> <span class=
+"hs-keyglyph">-&gt;</span>
+    <span class="hs-keyword">case</span> <span class=
+"hs-varid">unIO</span> <span class="hs-layout">(</span><span class=
+"hs-varid">print</span> <span class="hs-num">3</span><span class=
+"hs-layout">)</span> <span class="hs-varid">s0</span> <span class=
+"hs-keyword">of</span>
+        <span class="hs-layout">(</span><span class=
+"hs-cpp">#</span> <span class="hs-varid">s1</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">res1</span> <span class="hs-cpp">#</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">unIO</span> <span class="hs-layout">(</span><span class=
+"hs-varid">print</span> <span class="hs-num">7</span><span class=
+"hs-layout">)</span> <span class="hs-varid">s1</span></pre>
+<p>Notice how, even though we ignore the <i>result</i> of
+<code>print 3</code> (the <code>res1</code> value), we still depend
+on the new state token <code>s1</code> when we evaluate <code>print
+7</code>, which forces the order of evaluation to first evaluate
+<code>print 3</code> and then evaluate <code>print 7</code>.</p>
+<p>If you look through <code>GHC.Prim</code>, you'll see that a
+number of primitive operations are defined in terms of <code>State#
+RealWorld</code> or <code>State# s</code>, which allows us to force
+evaluation order.</p>
+<p><b>Exercise</b>: implement a function <code>getMaskingState ::
+IO Int</code> using the <code>getMaskingState#</code> primop and
+the <code>IO</code> data constructor.</p>
+<h2 id="the-st-monad">The ST monad</h2>
+<p>Let's compare the definitions of the <code>IO</code> and
+<a href="https://www.stackage.org/haddock/lts-1.0/base-4.7.0.2/src/GHC-ST.html#ST">
+<code>ST</code></a> types:</p>
+<pre><span class="hs-keyword">newtype</span> <span class=
+"hs-conid">IO</span>   <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">State</span><span class="hs-cpp">#</span> <span class=
+"hs-conid">RealWorld</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-cpp">#</span> <span class=
+"hs-conid">State</span><span class="hs-cpp">#</span> <span class=
+"hs-conid">RealWorld</span><span class=
+"hs-layout">,</span> <span class="hs-varid">a</span> <span class=
+"hs-cpp">#</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span>
+<span class="hs-keyword">newtype</span> <span class=
+"hs-conid">ST</span> <span class="hs-varid">s</span> <span class=
+"hs-varid">a</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">ST</span> <span class="hs-layout">(</span><span class=
+"hs-conid">State</span><span class="hs-cpp">#</span> <span class=
+"hs-varid">s</span>         <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-cpp">#</span> <span class=
+"hs-conid">State</span><span class="hs-cpp">#</span> <span class=
+"hs-varid">s</span><span class=
+"hs-layout">,</span>         <span class=
+"hs-varid">a</span> <span class="hs-cpp">#</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span></pre>
+<p>Well <i>that</i> looks oddly similar. Said more precisely,
+<code>IO</code> is isomorphic to <code>ST RealWorld</code>.
+<code>ST</code> works under the exact same principles as
+<code>IO</code> for threading state through, which is why we're
+able to have things like mutable references in the <code>ST</code>
+monad.</p>
+<p>By using an uninstantiated <code>s</code> value, we can ensure
+that we aren't "cheating" and running arbitrary <code>IO</code>
+actions inside an <code>ST</code> action. Instead, we just have
+"local state" modifications, for some definition of local state.
+The details of using <code>ST</code> correctly and the Rank2Types
+approach to <code>runST</code> are interesting, but beyond the
+scope of this chapter, so we'll stop discussing them here.</p>
+<p>Since <code>ST RealWorld</code> is isomorphic to
+<code>IO</code>, we should be able to convert between the two of
+them. <code>base</code> does in fact <a href=
+"https://www.stackage.org/haddock/lts-1.0/base-4.7.0.2/Control-Monad-ST.html#v:stToIO">
+provide the <code>stToIO</code></a> function.</p>
+<p><b>Exercise</b>: write a pair of functions to convert between
+<code>IO a</code> and <code>ST RealWorld a</code>.</p>
+<p><b>Exercise</b>: <code>GHC.Prim</code> has a <a href=
+"https://www.stackage.org/haddock/lts-1.0/ghc-prim-0.3.1.0/GHC-Prim.html#g:12">
+section on mutable variables</a>, which forms the basis on
+<code>IORef</code> and <code>STRef</code>. Provide a new
+implementation of <code>STRef</code>, including
+<code>newSTRef,</code> readSTRef<code>, and</code> writeSTRef`.</p>
+<h2 id="primmonad">PrimMonad</h2>
+<p>It's a bit unfortunate that we have to have two completely
+separate sets of APIs: one for <code>IO</code> and another for
+<code>ST</code>. One common example of this is <code>IORef</code>
+and <code>STRef</code>, but- as we'll see at the end of this
+section- there are plenty of operations that we'd like to be able
+to generalize.</p>
+<p>This is where <code>PrimMonad</code>, from the
+<code>primitive</code> package, comes into play. Let's look at
+<a href=
+"https://www.stackage.org/haddock/lts-1.0/primitive-0.5.4.0/src/Control-Monad-Primitive.html#PrimMonad">
+its definition</a>:</p>
+<pre><span class=
+"hs-comment">-- | Class of primitive state-transformer monads</span>
+<span class="hs-keyword">class</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-conid">PrimMonad</span> <span class="hs-varid">m</span> <span class="hs-keyword">where</span>
+  <span class="hs-comment">-- | State token type</span>
+  <span class="hs-keyword">type</span> <span class=
+"hs-conid">PrimState</span> <span class="hs-varid">m</span>
+
+  <span class=
+"hs-comment">-- | Execute a primitive operation</span>
+  <span class="hs-varid">primitive</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-conid">State</span><span class=
+"hs-cpp">#</span> <span class="hs-layout">(</span><span class=
+"hs-conid">PrimState</span> <span class=
+"hs-varid">m</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-cpp">#</span> <span class=
+"hs-conid">State</span><span class="hs-cpp">#</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">PrimState</span> <span class=
+"hs-varid">m</span><span class="hs-layout">)</span><span class=
+"hs-layout">,</span> <span class="hs-varid">a</span> <span class=
+"hs-cpp">#</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span></pre>
+<p>Note: I have <i>not</i> included the <code>internal</code>
+method, since <a href=
+"https://github.com/haskell/primitive/pull/19">it will likely be
+removed</a>. In fact, at the time you're reading this, it may
+already be gone!</p>
+<p><code>PrimState</code> is an associated type giving the type of
+the state token. For <code>IO</code>, that's
+<code>RealWorld</code>, and for <code>ST s</code>, it's
+<code>s</code>. <code>primitive</code> gives a way to lift the
+internal implementation of both <code>IO</code> and <code>ST</code>
+to the monad under question.</p>
+<p><b>Exercise</b>: Write implementations of the <code>PrimMonad
+IO</code> and <code>PrimMonad (ST s)</code> instances, and compare
+against the real ones.</p>
+<p>The primitive package provides a number of wrappers around types
+and functions from <code>GHC.Prim</code> and generalizes them to
+both <code>IO</code> and <code>ST</code> via the
+<code>PrimMonad</code> type class.</p>
+<p><b>Exercise</b>: Extend your previous <code>STRef</code>
+implementation to work in any <code>PrimMonad</code>. After you're
+done, you may want to <a href=
+"https://www.stackage.org/haddock/lts-1.0/primitive-0.5.4.0/Data-Primitive-MutVar.html">
+have a look at Data.Primitive.MutVar</a>.</p>
+<p>The <code>vector</code> package builds on top of the
+<code>primitive</code> package to provide mutable vectors that can
+be used from both <code>IO</code> and <code>ST</code>. This chapter
+is <i>not</i> a tutorial on the <code>vector</code> package, so we
+won't go into any more details now. However, if you're curious,
+please <a href=
+"https://www.stackage.org/haddock/nightly-2015-01-08/vector-0.10.12.2/Data-Vector-Generic-Mutable.html">
+look through the <code>Data.Vector.Generic.Mutable</code>
+docs</a>.</p>
+<h2 id="readerio-monad">ReaderIO monad</h2>
+<p>To tie this off, we're going to implement a
+<code>ReaderIO</code> type. This will flatten together the
+implementations of <code>ReaderT</code> and <code>IO</code>.
+Generally speaking, there's no advantage to doing this: GHC should
+always be smart enough to generate the same code for this and for
+<code>ReaderT r IO</code> (and in my benchmarks, they perform
+identically). But it's a good way to test that you understand the
+details here.</p>
+<p>You may want to try implementing this yourself before looking at
+the implementation below.</p>
+<pre><span class=
+"hs-comment">{-# LANGUAGE FlexibleInstances     #-}</span>
+<span class=
+"hs-comment">{-# LANGUAGE MagicHash             #-}</span>
+<span class=
+"hs-comment">{-# LANGUAGE MultiParamTypeClasses #-}</span>
+<span class=
+"hs-comment">{-# LANGUAGE TypeFamilies          #-}</span>
+<span class=
+"hs-comment">{-# LANGUAGE UnboxedTuples         #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Applicative</span>        <span class="hs-layout">(</span><span class="hs-conid">Applicative</span> <span class="hs-layout">(</span><span class="hs-keyglyph">..</span><span class="hs-layout">)</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Monad</span>              <span class="hs-layout">(</span><span class="hs-varid">ap</span><span class="hs-layout">,</span> <span class="hs-varid">liftM</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Monad</span><span class=
+"hs-varop">.</span><span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class=
+"hs-conid">Class</span>     <span class=
+"hs-layout">(</span><span class=
+"hs-conid">MonadIO</span> <span class=
+"hs-layout">(</span><span class="hs-keyglyph">..</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Monad</span><span class=
+"hs-varop">.</span><span class=
+"hs-conid">Primitive</span>    <span class=
+"hs-layout">(</span><span class=
+"hs-conid">PrimMonad</span> <span class=
+"hs-layout">(</span><span class="hs-keyglyph">..</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Monad</span><span class=
+"hs-varop">.</span><span class="hs-conid">Reader</span><span class=
+"hs-varop">.</span><span class="hs-conid">Class</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">MonadReader</span> <span class=
+"hs-layout">(</span><span class="hs-keyglyph">..</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">GHC</span><span class="hs-varop">.</span><span class=
+"hs-conid">Base</span>                   <span class=
+"hs-layout">(</span><span class="hs-conid">IO</span> <span class=
+"hs-layout">(</span><span class="hs-keyglyph">..</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">GHC</span><span class="hs-varop">.</span><span class=
+"hs-conid">Prim</span>                   <span class=
+"hs-layout">(</span><span class=
+"hs-conid">RealWorld</span><span class=
+"hs-layout">,</span> <span class=
+"hs-conid">State</span><span class="hs-cpp">#</span><span class=
+"hs-layout">)</span>
+
+<span class=
+"hs-comment">-- | Behaves like a @ReaderT r IO a@.</span>
+<span class="hs-keyword">newtype</span> <span class=
+"hs-conid">ReaderIO</span> <span class=
+"hs-varid">r</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">ReaderIO</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">r</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">State</span><span class="hs-cpp">#</span> <span class=
+"hs-conid">RealWorld</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-cpp">#</span> <span class=
+"hs-conid">State</span><span class="hs-cpp">#</span> <span class=
+"hs-conid">RealWorld</span><span class=
+"hs-layout">,</span> <span class="hs-varid">a</span> <span class=
+"hs-cpp">#</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span>
+
+<span class="hs-comment">-- standard implementations...</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">Functor</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ReaderIO</span> <span class=
+"hs-varid">r</span><span class="hs-layout">)</span> <span class=
+"hs-keyword">where</span>
+    <span class="hs-varid">fmap</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">liftM</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">Applicative</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ReaderIO</span> <span class=
+"hs-varid">r</span><span class="hs-layout">)</span> <span class=
+"hs-keyword">where</span>
+    <span class="hs-varid">pure</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">return</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varop">&lt;*&gt;</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">ap</span>
+
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-layout">(</span><span class="hs-conid">ReaderIO</span> <span class="hs-varid">r</span><span class="hs-layout">)</span> <span class="hs-keyword">where</span>
+    <span class="hs-varid">return</span> <span class=
+"hs-varid">x</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">ReaderIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-keyword">_</span> <span class="hs-varid">s</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-cpp">#</span> <span class=
+"hs-varid">s</span><span class="hs-layout">,</span> <span class=
+"hs-varid">x</span> <span class="hs-cpp">#</span><span class=
+"hs-layout">)</span>
+    <span class="hs-conid">ReaderIO</span> <span class=
+"hs-varid">f</span> <span class=
+"hs-varop">&gt;&gt;=</span> <span class=
+"hs-varid">g</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">ReaderIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">r</span> <span class="hs-varid">s0</span> <span class=
+"hs-keyglyph">-&gt;</span>
+        <span class="hs-keyword">case</span> <span class=
+"hs-varid">f</span> <span class="hs-varid">r</span> <span class=
+"hs-varid">s0</span> <span class="hs-keyword">of</span>
+            <span class="hs-layout">(</span><span class=
+"hs-cpp">#</span> <span class="hs-varid">s1</span><span class=
+"hs-layout">,</span> <span class="hs-varid">x</span> <span class=
+"hs-cpp">#</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span>
+                <span class="hs-keyword">let</span> <span class=
+"hs-conid">ReaderIO</span> <span class=
+"hs-varid">g'</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">g</span> <span class=
+"hs-varid">x</span>
+                 <span class="hs-keyword">in</span> <span class=
+"hs-varid">g'</span> <span class="hs-varid">r</span> <span class=
+"hs-varid">s1</span>
+
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">MonadReader</span> <span class=
+"hs-varid">r</span> <span class="hs-layout">(</span><span class=
+"hs-conid">ReaderIO</span> <span class=
+"hs-varid">r</span><span class="hs-layout">)</span> <span class=
+"hs-keyword">where</span>
+    <span class="hs-varid">ask</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">ReaderIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">r</span> <span class="hs-varid">s</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-cpp">#</span> <span class=
+"hs-varid">s</span><span class="hs-layout">,</span> <span class=
+"hs-varid">r</span> <span class="hs-cpp">#</span><span class=
+"hs-layout">)</span>
+    <span class="hs-varid">local</span> <span class=
+"hs-varid">f</span> <span class="hs-layout">(</span><span class=
+"hs-conid">ReaderIO</span> <span class=
+"hs-varid">m</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">ReaderIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">r</span> <span class="hs-varid">s</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-layout">(</span><span class=
+"hs-varid">f</span> <span class="hs-varid">r</span><span class=
+"hs-layout">)</span> <span class="hs-varid">s</span>
+
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">MonadIO</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ReaderIO</span> <span class=
+"hs-varid">r</span><span class="hs-layout">)</span> <span class=
+"hs-keyword">where</span>
+    <span class="hs-varid">liftIO</span> <span class=
+"hs-layout">(</span><span class="hs-conid">IO</span> <span class=
+"hs-varid">f</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">ReaderIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-keyword">_</span> <span class="hs-varid">s</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">f</span> <span class="hs-varid">s</span>
+
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">PrimMonad</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ReaderIO</span> <span class=
+"hs-varid">r</span><span class="hs-layout">)</span> <span class=
+"hs-keyword">where</span>
+    <span class="hs-keyword">type</span> <span class=
+"hs-conid">PrimState</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ReaderIO</span> <span class=
+"hs-varid">r</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">RealWorld</span>
+
+    <span class="hs-varid">primitive</span> <span class=
+"hs-varid">f</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">ReaderIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-keyword">_</span> <span class="hs-varid">s</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">f</span> <span class="hs-varid">s</span>
+
+    <span class=
+"hs-comment">-- Cannot properly define internal, since there's no way to express a</span>
+    <span class=
+"hs-comment">-- computation that requires an @r@ input value as one that doesn't. This</span>
+    <span class=
+"hs-comment">-- limitation of @PrimMonad@ is being addressed:</span>
+    <span class="hs-comment">--</span>
+    <span class=
+"hs-comment">-- https://github.com/haskell/primitive/pull/19</span>
+    <span class="hs-varid">internal</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ReaderIO</span> <span class=
+"hs-varid">f</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span>
+        <span class="hs-varid">f</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">error</span> <span class="hs-str">"PrimMonad.internal: environment evaluated"</span><span class="hs-layout">)</span></pre>
+<p><b>Exercise</b>: Modify the <code>ReaderIO</code> monad to
+instead be a <code>ReaderST</code> monad, and take an
+<code>s</code> parameter for the specific state token.</p>
+<h2 id="further-reading">Further reading</h2>
+<ul>
+<li><a href=
+"https://downloads.haskell.org/~ghc/7.8.3/docs/html/users_guide/primitives.html">
+GHC docs on primitives</a></li>
+<li><a href=
+"https://ghc.haskell.org/trac/ghc/wiki/Commentary/PrimOps">GHC Wiki
+on PrimOps</a></li>
+<li><a href=
+"https://www.haskell.org/haskellwiki/Evaluation_order_and_state_tokens">
+Evaluation order and state tokens</a></li>
+</ul>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Primitive%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;02&#x2F;primitive-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;02&#x2F;primitive-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;02&#x2F;primitive-haskell&#x2F;&amp;title=Primitive%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;02&#x2F;primitive-haskell&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#f784969b9284b7918794989a879b928392d994989a" targe="_blank"><span class="__cf_email__" data-cfemail="81f2e0ede4f2c1e7f1e2eeecf1ede4f5e4afe2eeec">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

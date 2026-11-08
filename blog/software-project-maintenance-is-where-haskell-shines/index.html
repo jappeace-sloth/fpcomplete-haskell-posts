@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Software project maintenance is where Haskell shines</title>
+  <meta property="og:title" content="Software project maintenance is where Haskell shines">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Software Maintenance is the single biggest activity in developing successful software. Learn how Haskell makes this job better, saving your project time and money.">
+  <meta property="og:description" content="Software Maintenance is the single biggest activity in developing successful software. Learn how Haskell makes this job better, saving your project time and money.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;12&#x2F;software-project-maintenance-is-where-haskell-shines&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Software project maintenance is where Haskell shines</h1>
+      
+      <p id="page-description">By Chris Done, December 30, 2016</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Software%20project%20maintenance%20is%20where%20Haskell%20shines https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;12&#x2F;software-project-maintenance-is-where-haskell-shines&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;12&#x2F;software-project-maintenance-is-where-haskell-shines&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;12&#x2F;software-project-maintenance-is-where-haskell-shines&#x2F;&amp;title=Software%20project%20maintenance%20is%20where%20Haskell%20shines"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;12&#x2F;software-project-maintenance-is-where-haskell-shines&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <h1 id="maintenance-matters-and-it39s-where-haskell-shines">
+Maintenance matters and it's where Haskell shines</h1>
+<h2 id="we-spend-most-of-our-time-on-maintenance">We Spend Most of
+Our Time on Maintenance</h2>
+<p>Look at the budget spent on your software projects. Most of it
+goes towards maintenance. <a href=
+"https://en.wikipedia.org/wiki/The_Mythical_Man-Month"><i>The
+Mythical Man-Month</i></a> by Fred Brooks states that over 90% of
+the costs of a typical system arise in the maintenance phase, and
+that any successful piece of software will inevitably be
+maintained, and <a href=
+"https://www.amazon.co.uk/Facts-Fallacies-Software-Engineering-Development/dp/0321117425">
+<i>Facts and Fallacies of Software Engineering</i></a> by Robert L.
+Glass reports that maintenance typically consumes 40% to 80%
+(averaging 60%) of software costs.</p>
+<p>From our own experience and the literature, we can conclude that
+maintenance is perhaps <i>the most important part of developing
+software</i>. In this article we'll explore <b>why Haskell shines
+in maintenance</b>.</p>
+<h2 id="the-five-bases-of-maintenance">The Five Bases of
+Maintenance</h2>
+<p>Based on the article <a href=
+"https://clarityincode.com/software-maintenance/"><i>Software
+Maintenance</i></a> by Chris Newton, I'm going to write about five
+bases for doing software maintenance:</p>
+<ul>
+<li><b>Readability</b>: The source code is comprehensible, and
+describes the domain well to the reader.</li>
+<li><b>Testability</b>: The code is friendly to being tested, via
+unit tests, integration tests, property tests, code review, static
+analysis, etc.</li>
+<li><b>Preservation of knowledge</b>: Teams working on the software
+retain the knowledge of the design and functioning of the system
+over time.</li>
+<li><b>Modifiability</b>: The ease with which we can fix, update,
+refactor, adapt, and generally mechanically change.</li>
+<li><b>Correctness</b>: The software is constructed in a
+self-consistent way, by using means of combination that rule out
+erroneous cases that maintainers shouldn't have to deal with.</li>
+</ul>
+<p>We'll see below what Haskell brings to the table for each of
+these bases.</p>
+<h2 id="readability">Readability</h2>
+<blockquote>
+<p>The source code is comprehensible, and describes the domain well
+to the reader.</p>
+</blockquote>
+<p><b>Reduce state:</b> Developers must hold a "state of the world"
+in their head when understanding imperative and object-oriented
+source code. In Haskell, which is a pure functional language,
+developers only have to look at the inputs to a function, making it
+far easier to consider a portion of code and to approach working on
+it.</p>
+<p><b>Narrowing the problem space:</b> A rich type system like
+Haskell's guides less-experienced developers, or newcomers to the
+project, to the right places. Because the domain can be modeled in
+types, which formally narrow down the problem. Developers can
+literally define problems away, turning their attention to the real
+problems of your business's domain.</p>
+<p><b>Coupling where it counts:</b> Haskell's type system supports
+modeling <i>cases</i> of a problem, coupling the case (such as:
+logged in/logged out) with the values associated with that state
+(such as: user session id/no session id). Developers can work with
+fewer variables to hold in their head, instead concentrating on
+your business logic.</p>
+<p><b>Encapsulation:</b> Like in object oriented languages (Java,
+C++, Ruby, Python), encapsulation in Haskell allows developers to
+hide irrelevant details when exposing the interfaces between
+modules, leaving other developers fewer details to worry about.</p>
+<h2 id="testability">Testability</h2>
+<blockquote>
+<p>The code is friendly to being tested, via unit tests,
+integration tests, property tests, code review, static analysis,
+etc.</p>
+</blockquote>
+<p><b>Explicit inputs:</b> Haskell programs are the easiest to
+write tests for, because they are composed of pure functions, which
+either require no conditions under which your developers should run
+them, or the conditions are explicitly defined inputs to the
+function.</p>
+<p><b>Mock the world:</b> With excellent support for embedded
+domain-specific languages (DSLs), Haskell empowers developers to
+write programs in an imperative fashion which can then be
+interpreted as a real world program (interacting with file I/O,
+using time, etc.) or as a mock program which does nothing to the
+real world but compute a result. This is valuable for testing the
+<b>business logic</b> of the software without having to setup a
+whole real environment just to do so.</p>
+<p><b>Automatically test properties:</b> Haskell's unique type
+system <a href=
+"https://www.schoolofhaskell.com/user/pbv/an-introduction-to-quickcheck-testing">
+supports trivially generating thousands of valid inputs to a
+function</a>, in order to test that every output of the function is
+correct. Anything from parsers, financial calculations, state
+machine transformations, etc. can be generated and tested for.</p>
+<p><b>Static analysis:</b> It may go without saying, but Haskell's
+static type system brings substantial potential for eliminating
+whole classes of bugs, and maintaining invariants <i>while changing
+software</i>, as a continuous feedback to the developer. A level-up
+from Java or C++ or C#, Haskell's purity and rich type system is
+able to check a far greater region of source code and to greater
+precision.</p>
+<p><b>Taking testing seriously:</b> Haskell has a large number of
+testing libraries which range from standard unit testing (like
+JUnit or RSpec), web framework-based testing, property-based
+testing (like QuickCheck) and other randomly generated testing,
+testing documentation, concurrency testing, and mock testing.</p>
+<h2 id="preservation-of-knowledge">Preservation of knowledge</h2>
+<blockquote>
+<p>Teams working on the software retain the knowledge of the design
+and functioning of the system over time.</p>
+</blockquote>
+<p><b>Model the domain precisely:</b> Because Haskell's rich type
+system lets your developers model the domain precisely and in a
+complete way, it's easier for the same developers to return months
+or a year from now, or new developers to arrive, and gain a good
+grasp of what's happening in the system.</p>
+<h2 id="modifiability">Modifiability</h2>
+<blockquote>
+<p>The ease with which we can fix, update, refactor, adapt, and
+generally mechanically change.</p>
+</blockquote>
+<p><b>Automatic memory management:</b> Haskell is high-level with
+automatically managed memory, like Python or Ruby, and does not
+suffer from memory corruption issues or leaks, like C or C++, which
+can arise from developers making changes to your system and
+mistakenly mismanaging memory manually.</p>
+<p><b>Automate completeness:</b> As mentioned in the readability
+section, Haskell allows developers to define data types as a set of
+cases that model the business domain logic. From simple things like
+results (success/fail/other), to finite state machines, etc. Along
+with this comes the ability for the compiler to <b>statically
+determine and tell your developers when a case is missing</b>,
+which they need go to and correct. This is <i>extraordinarily
+useful</i> when changing and extending a system.</p>
+<p><b>Break up the problem:</b> Haskell's pure functions only
+depend on their parameters, and so any expression can be easily
+factored out into separate functions. Breaking a problem down into
+smaller problems helps maintainers deal with smaller problems,
+taking fewer things into account.</p>
+<p><b>Encapsulate:</b> As encapsulation allows developers to hide
+irrelevant details when exposing the interfaces between Haskell
+modules, this allows developers to change the underlying
+implementation of modules without consumers of that module having
+to be changed.</p>
+<p><b>Decouple orthogonal concepts:</b> In Haskell, unlike in
+popular object oriented languages like Java or C++, data and
+behavior are not coupled together: a photograph is a photograph,
+and a printer knows how to print it, it's not that a photograph
+contains printing inside it. The data is the photograph, and the
+behavior is printing a photograph. In Haskell, these two are
+decoupled, allowing developers to simply define the data that
+counts, and freely add more behaviors later, without getting lost
+in object hierarchies and inheritance issues.</p>
+<h2 id="correctness">Correctness</h2>
+<blockquote>
+<p>The software is constructed in a self-consistent way, by using
+means of combination that rule out erroneous cases that maintainers
+shouldn't have to deal with.</p>
+</blockquote>
+<p><b>Correct combination:</b> In Python, <a href=
+"https://www.python.org/download/releases/3.0/">a whole new version
+of the language, Python 3</a>, had to be implemented to properly
+handle Unicode text in a backwards-incompatible way. This <a href=
+"https://lucumr.pocoo.org/2014/5/12/everything-about-unicode/">broke
+lots of existing Python code</a> and <a href=
+"https://lucumr.pocoo.org/2014/1/5/unicode-in-2-and-3/">many large
+projects have still not upgraded</a>. In Haskell, text and binary
+data are unmixable data types. They cannot be mistakenly combined,
+as in Python and many other languages. This throws a whole class of
+encoding issues out of the window, which is less for your
+developers to worry about.</p>
+<p><b>No implicit null:</b> In <i><a href=
+"https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare">
+The Billion Dollar Mistake</a></i> Tony Hoare apologizes for the
+"null" value, present in almost all popular programming languages.
+Haskell does not have a null value. It explicitly models
+nullability with a data type. Given the countless bugs caused by
+null, and maintenance burden due to tracking down or introducing
+such bugs, Haskell's contribution by removing it is substantial.
+Languages that include an implicit null value are: Java, C, C++,
+C#, Python, Ruby, JavaScript, Lisp, Clojure, etc.</p>
+<p><b>Avoid multiple writers:</b> In concurrent code, developers
+have to be very careful when more than one thread changes the same
+data. Imperative languages tend to allow any thread to change
+anything, so it's frighteningly easy to make mistakes. In Haskell,
+data structures are immutable, and a mutable "box" has to be
+created to share data between threads, ruling out a plethora of
+potential bugs.</p>
+<h2 id="summary">Summary</h2>
+<p>Maintenance is our biggest activity when developing successful
+software. There are five bases that really make maintenance work
+better, and this is where Haskell really shines:</p>
+<ul>
+<li><b>Readability</b>: Haskell's purity and type system lend
+themselves perfectly to comprehensible code.</li>
+<li><b>Testability</b>: Haskell code is inherently more testable,
+due to being pure, safely statically typed, and coming with a
+variety of testing packages.</li>
+<li><b>Preservation of knowledge</b>: A rich type system like
+Haskell's can model the domain so well that developers have to
+remember less, and educate each-other less, saving time.</li>
+<li><b>Modifiability</b>: Haskell's strong types, completeness
+analysis and purity assure that when you break something, you know
+it sooner.</li>
+<li><b>Correctness</b>: Developers can work within a consistent
+model of your domain, removing whole classes of irrelevant
+problems. Concurrent code is easier to maintain too.</li>
+</ul>
+<p>All in all, Haskell really shines in maintenance, and, while it
+has other novel features, it's really for <b>this reason</b> that
+developers and companies are increasingly switching to it.</p>
+<p>You can learn more about using Haskell as a business at <a href=
+"/index">FP Complete's home page</a>, in particular the <a href=
+"/consulting">Consulting page</a>, or go and <a href=
+"/contact-us">contact us</a> straight away and we'll be in
+touch.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Software%20project%20maintenance%20is%20where%20Haskell%20shines https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;12&#x2F;software-project-maintenance-is-where-haskell-shines&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;12&#x2F;software-project-maintenance-is-where-haskell-shines&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;12&#x2F;software-project-maintenance-is-where-haskell-shines&#x2F;&amp;title=Software%20project%20maintenance%20is%20where%20Haskell%20shines"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;12&#x2F;software-project-maintenance-is-where-haskell-shines&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#6e1d0f020b1d2e081e0d01031e020b1a0b400d0103" targe="_blank"><span class="__cf_email__" data-cfemail="dcafbdb0b9af9cbaacbfb3b1acb0b9a8b9f2bfb3b1">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

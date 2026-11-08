@@ -1,0 +1,280 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Haskell Support in Mainstream IDEs
+
+By Chris Done, December 2, 2019
+
+Share this     
+
+Haskell Support in Mainstream IDEs
+
+I've tested out the Haskell support of the top mainstream IDEs. Here's a rundown of the current
+state of things.
+
+As a dyed-in-the-wool Emacs hacker I've never used any of the more recent mainstream IDEs, so I can
+probably offer an unbiased review of the support provided by each.
+
+Note: I tried approaching it as a client would, or prospective Haskell user, so for any manual
+intervention I had to do, I've used a tone that indicates I'm not happy about having to do it, and
+anything that doesn't just work I just discard with little patience, as a real person would and do
+today. Even if I know there are probably extra manual investigations that I could do knowing what I
+do about Haskell, a normal user wouldn't have that advantage.
+
+IntelliJ IDEA
+
+I installed it according to the instructions on the IntelliJ IDEA web site. I downloaded it to my
+Ubuntu laptop and installed it under /opt/intellij.
+
+After installing IntelliJ, running it opens up a splash screen. Rather than starting a project, I
+went straight to the Configure->Plugins button. In the plugins list, I chose IntelliJ-Haskell.
+After that, it was suggested that I restart, so I hit Restart IDE.
+
+After restarting, on the splash screen I hit Create New Project and chose "Haskell module". At this
+point, it asked me to "Select the stack binary". I picked the one at /home/chris/.local/bin/stack,
+but someone else might find it under /usr/local/bin/stack. I hit Next.
+
+Warning: there was a long wait after this step. I entered my project name and proceeded. Opening
+the project workspace, it now claims "busy installing hlint", which is a Haskell linting tool. It
+does this for various tools; hlint, hindent, stylish-haskell, hoogle. This took easily 15 minutes
+on my machine. Go make a cup of tea.
+
+Finally, after finishing this process, it's ready to go. Here are some things that I observed work
+correctly:
+
+ 1. Compile errors when changing code on the fly. Slow, but works. You can hit the "Haskell
+    Problems" tab to see the actual compiler messages.
+ 2. Hitting Ctrl and mousing over something, which is how you get metadata in IDEA.
+     1. Go to definition of library code.
+     2. Go to definition of local code.
+     3. Type info at point.
+     4. Go to definition of local bindings.
+
+I tested this out by opening the Stack codebase itself. Took about 10 seconds on "Indexing..." and
+then was ready.
+
+There's a very picky set of steps to opening an existing project properly:
+
+ 1. You have to go "Create project from existing source"
+ 2. Choose "Create from external model"
+ 3. Choose the "Haskell" SDK.
+
+Then it should be good to go. Other ways didn't work for me and I got stuck.
+
+I've also seen that it's possible to define test and executable targets quite reasonably.
+
+IntelliJ has support to "optimize imports" which will remove unneeded ones, which is very common
+when refactoring. I'd call that feature a must-have.
+
+Overall, this IDE experience is not bad. As a Haskeller, I could get by if I had to use this.
+
+Visual Studio Code
+
+I followed along with the install instructions for Linux. I downloaded the .deb and ran sudo apt
+install ./<file>.deb.
+
+I launched Visual Studio Code from the Ubuntu Activities menu. It displays its full UI immediately,
+which was quite a lot faster than IntelliJ, which takes about 5 seconds before displaying a UI
+window. Not that I care about start-up times: I use Emacs.
+
+Visual Studio Code: Haskero
+
+I went to the Customize section and then "Tools and languages". Up pops a menu for language choices
+(also quite quickly). I tried installing the Haskero plugin, which, as I understand, is in spirit
+the same backend and functionality of IntelliJ-Haskell. It said "This extension is enabled
+globally".
+
+Assuming that it was ready to use, I looked for a way to create a project. I didn't find one, so I
+opted to try opening an existing Haskell project: stack. I used File -> Open Workspace and chose
+the repository root directory.
+
+VSC reports "Unable to watch for file changes in this large workspace." I followed the link which
+had a hint to increase the limit. I edited my sysctl.conf file as instructed to allow VSC to watch
+all the files in my project.
+
+Opening, for example, src/main/Main.hs, it opens quickly, but doesn't appear to be doing any work
+like IntelliJ was. So I create some obvious errors in the file to see whether anything works.
+
+After waiting a while, it seems that I have to save the file to see any kind of reaction from VSC.
+So I save the file and wait. I timed it:
+
+$ date
+Wed 13 Nov 10:09:38 CET 2019
+$ date
+Wed 13 Nov 10:10:40 CET 2019
+
+After a full minute, I got in the Problems tab the problem.
+
+It seems to be recompiling the whole project on every change. This pretty much makes this plugin
+unusable. I don't think the author has tested this on a large project.
+
+In its current state, I would not recommend Haskero. I uninstalled it and decided to look at
+others.
+
+Visual Studio Code: Haskelly
+
+I decided to try the other similar offering called Haskelly. After a reload and re-opening Stack, I
+made an intentional error in src/main/Main.hs again and found that nothing happened. No CPU usage
+by any process.
+
+There weren't any indicators on the screen of anything failing to work. However, I had an
+intentional type error in my file that was not flagged up anywhere.
+
+Another plugin that I would rate as not usable. I uninstalled it.
+
+Visual Studio Code: Haskell Language Server
+
+I installed the "Haskell Language Server", which is supposed to be the latest state of the art in
+language backends for Haskell.
+
+Enabling it, I see the message:
+
+    hie executable missing, please make sure it is installed, see github.com/haskell/
+    haskell-ide-engine.
+
+Apparently I have to manually install something. Okay, sure, why not?
+
+There's a variety of installation methods. I'm not sure which one will work. But I already have
+stack installed, so I try the install from source option:
+
+$ git clone https://github.com/haskell/haskell-ide-engine --recurse-submodules --depth 1
+
+This seems to clone the whole world and takes a while. Definitely a get a cup of tea moment. After
+that was done, I went to the directory and ran this as per the instructions:
+
+$ stack ./install.hs help
+
+I am presented with a myriad of options:
+
+Targets:
+   [snip]
+    stack-build             Builds hie with all installed GHCs; with stack
+    stack-build-all         Builds hie for all installed GHC versions and the data files; with stack
+    stack-build-data        Get the required data-files for `hie` (Hoogle DB); with stack
+    stack-install-cabal     Install the cabal executable. It will install the required minimum version for hie (currently 2.4.1.0) if it isn't already present in $PATH; with stack
+    stack-hie-8.4.2         Builds hie for GHC version 8.4.2; with stack
+    stack-hie-8.4.3         Builds hie for GHC version 8.4.3; with stack
+    stack-hie-8.4.4         Builds hie for GHC version 8.4.4; with stack
+    stack-hie-8.6.1         Builds hie for GHC version 8.6.1; with stack
+    stack-hie-8.6.2         Builds hie for GHC version 8.6.2; with stack
+    stack-hie-8.6.3         Builds hie for GHC version 8.6.3; with stack
+    stack-hie-8.6.4         Builds hie for GHC version 8.6.4; with stack
+    stack-hie-8.6.5         Builds hie for GHC version 8.6.5; with stack
+   [snip]
+
+I lookup the GHC version that's being used by the stack source code:
+
+~/Work/fpco/stack$ stack ghc -- --version
+The Glorious Glasgow Haskell Compilation System, version 8.2.2
+
+Apparently the GHC version in use by stack is too old. At this point I stop and uninstall the
+plugin.
+
+Visual Studio Code: ghcid
+
+As a last resort, I tried one more plugin. But nothing seemed to happen with this one either. So I
+uninstalled it.
+
+SublimeText
+
+Another popular editor is SublimeText. I installed it via the apt repository documented here. I
+decided to try the SublimeHaskell plugin which seems popular.
+
+Installing things in SublimeHaskell is a little arcane: you first have to install "Package
+Control". I don't remember which menu item this was from. However, SublimeText installs this for
+you. Once that's done, you have to use Tools->Command Pallete, which is a kind of quick-access tool
+that's apparently common in SublimeText. In there you have to literally type "package control" and
+then go to "Package Control: Install Package" and hit RET. Then you can type SublimeHaskell and hit
+RET. As an Emacs user, I'm not afraid of arcane UIs.
+
+After installing, it pops up a dialog with:
+
+    No usable backends (hsdev, ghc-mod) found in PATH. [..] Please check or update your
+    SublimeHaskell user settings or install hsdev or ghc-mod.
+
+It displays a tab with the README from SublimeHaskell and I assume this is where SublimeText is
+done helping me.
+
+Okay, let's install hsdev!
+
+I had to create a file hsdev.yaml:
+
+packages: []
+resolver: lts-13.29
+extra-deps:
+- hsdev-0.3.3.1
+- haddock-api-2.21.0
+- hdocs-0.5.3.1
+- network-3.0.1.1
+
+And then run
+
+$ stack install hsdev --stack-yaml hsdev.yaml
+
+That took 5 minutes but succeeded. There isn't a "next button" on SublimeText, so I just restarted
+it. I did File->Open Folder and opened the stack directory and the Main.hs file.
+
+I see "Inspecting stack" which indicates that it's actually doing something. However, after that
+finishes, I still don't see any error messages for my type error. Finally, I make a new change and
+save the file, and a little messages area pops up below.
+
+Could not find module ‘Data.Aeson’
+
+And so one for pretty much every library module in the project.
+
+At this point I can't find a menu or anything else to help me configure packages or anything
+related.
+
+At this point it seems like SublimeText is almost workable. The cons appear to be the manual
+install process, and the complete lack of guidance in the user experience. I'm afraid I can't
+recommend this to clients either at the moment.
+
+Summary
+
+The story for Visual Studio Code is pretty dire. I did not find a straight-forward install or
+reliably working IDE for Haskell in Visual Studio Code, and therefore, at the moment, cannot
+recommend it to our clients. Perhaps a little work done on Haskero could bring it up to par.
+
+SublimeText falls over at the finish line. It seems like with a little work on the user experience
+could bring this up to par.
+
+IntelliJ IDEA however worked quite well with little to no intervention required. So I would indeed
+recommend it to clients.
+
+Read more about Haskell development, tooling and business on our blog. Email us to setup a free
+consultation with our engineering team to discuss editor options.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

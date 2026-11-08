@@ -1,0 +1,144 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Secure package distribution: ready to roll
+
+By Michael Snoyman, May 11, 2015
+
+Share this     
+
+We're happy to announce that all users of Haskell packages can now securely download packages. As a
+tl;dr, here are the changes you need to make:
+
+ 1. Add the relevant GPG key by following the instructions
+ 2. Install stackage-update and stackage-install: cabal update && cabal install stackage
+ 3. From now on, replace usage of cabal update with stk update --verify --hashes
+ 4. From now on, replace usage of cabal install ... with stk install ...
+
+This takes advantage of the all-cabal-hashes repository, which contains cabal files that are
+modified to contain package hashes and sizes. The way we generate the all-cabal-hashes is
+interesting in its own right, but I won't shoehorn that discussion into this blog post. Wait for a
+separate blog post soon for a description of our lightweight architecture for this.
+
+Note that this is an implementation of Mathieu's secure distribution proposal, with some details
+modified to work with the current state of our tooling (i.e., lack of package hash information from
+Hackage).
+
+How it works
+
+The all-cabal-hashes repository contains all of the cabal files Hackage knows about. These cabal
+files are tweaked to have a few extra metadata fields, including cryptographic hashes of the
+package tarball and the size of the package, in bytes. (It also contains the same data in a JSON
+file, which is what we currently use due to cabal issue #2585.) There is also a tag on the repo,
+current-hackage, which always points at the latest commit and is GPG signed. (If you're wondering,
+we use a tag instead of just commit signing since it's easier to verify a tag signature.)
+
+When you run stk update --verify --hashes, it fetches the latest content from that repository,
+verifies the GPG signature, generates a 00-index.tar file, and places it in the same location that
+cabal update would place it. At this point, you have a verified package index on your location
+machine, which contains cryptographic signatures and sizes for each package tarball.
+
+Now, when you run stk install ..., the stackage-install tool handles all downloads for you (subject
+to some caveats, like cabal issue #2566). stackage-install will look up all of the hashes and sizes
+that are present in your package index, and verify them during download. In particular:
+
+  • If the server tries to send more data than expected, the download stops immediately and an
+    exception is thrown.
+  • If the server sends less data than expected, an exception is thrown.
+  • If the hash does not match what was expected, an exception is thrown.
+
+Only when the hash and size match does the file get written. In this way, tarballs are only made
+available to the rest of your build tools after they have been verified.
+
+What about Windows?
+
+In mailing list discussions, some people were concerned about supporting Windows, in particular
+that Git and GPG may be difficult to install and configure on Windows. But as I shared on Google+
+last week, MinGHC will now be shipping with both of those tools. I've tested things myself on
+Windows with the new versions of MinGHC, stackage-update, and stackage-install, and the
+instructions above worked without a hitch.
+
+Of course, if others discover problems- either on Windows or elsewhere- please report them so they
+can be fixed.
+
+Speed and reliability
+
+In addition to the security benefits of this tool chain, there are also two other obvious benefits.
+By downloading the package index updates via Git, we are able to download only the differences
+since the last time we downloaded. This leads to less bandwidth usage and a quicker download.
+
+This toolchain also replaces connections to Hackage with two high reliability services: Amazon S3
+(which holds the package contents) and Github. Using off the shelf, widely used services in place
+of hosting everything ourself reduces our community burden and increases our ecosystem's
+reliability.
+
+Caveats
+
+There are unfortunately still some caveats with this.
+
+  • The biggest hole in the fence is that we have no way of securing distribution of packages from
+    Hackage itself. While all-cabal-hashes downloads the package index from Hackage via HTTPS
+    (avoiding MITM attacks), there are still other attack vectors to be concerned about (such as
+    breaching the Hackage server itself). The improved Hackage security page documents many of
+    these concerns. Ideally, Hackage would be modified to perform package index signing itself.
+  • Due to cabal issue #2566, it's still possible that cabal-install may download packages for you
+    instead of stackage-install, though these situations should be rare. Hopefully integrating this
+    download code directly with a build tool will eliminate that weakness.
+  • There is still no verification of package author signatures, so that if someone's Hackage
+    credentials are compromised (which is unfortunately very probable), a corrupted package could
+    be present. This is something Chris Done and Tim Dysinger are working on. We're looking for
+    others in the community to work with us on pushing forward on this. If you're interested,
+    please contact us.
+
+Using preexisting tools
+
+What's great about this toolchain is how shallow it is. All of the heavy lifting is handled by Git,
+GPG, Amazon S3, Github, and (as you'll see in a later blog post) Travis CI. We mostly just wrap
+around these high quality tools and services. Not only was this a practical decision (reduce
+development time and code burden), but also a security decision. Instead of creating a Haskell-only
+security and distribution framework, we're reusing the same components that are being tried and
+tested on a daily basis by the greater software community. While this doesn't guarantee the tooling
+we use is bug free, it does mean that the "many eyeballs" principle applies.
+
+Using preexisting tools also means that we open up the possibility of use cases never before
+considered. For example, someone contacted me (anonymity preserved) about a use case where he
+wanted to be able to identify which version of Hackage was being used. Until now, such a concept
+didn't exist. With a Git-based package index, the Hackage version can be identified by its commit.
+
+I'm sure others will come up with new and innovative tricks to pull off, and I look forward to
+hearing about them.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

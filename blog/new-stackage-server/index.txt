@@ -1,0 +1,185 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+The new Stackage Server
+
+By Michael Snoyman, May 22, 2015
+
+Share this     
+
+tl;dr Please check out beta.stackage.org
+
+I made the first commit to the Stackage Server code base a little over a year ago. The goal was to
+provide a place to host package sets which both limited the number of packages from Hackage
+available, and modified packages where necessary. This server was to be populated by regular
+Stackage builds, targeted at multiple GHC versions, and consisted of both inclusive and exclusive
+sets. It also allowed interested individuals to create their own package sets.
+
+If any of those details seem surprising today, they should. A lot has happened for the Stackage
+project in the past year, making details of what was initially planned irrelevant, and making other
+things (like hosting of package documentation) vital. We now have LTS Haskell. Instead of running
+with multiple GHC versions, we have Stackage Nightly which is targeted at a single GHC major
+version. To accomodate goals for GPS Haskell (which unfortunately never materialized), Stackage no
+longer makes corrections to upstream packages.
+
+I could go into lots more detail on what is different in project requirements. Instead, I'll just
+summarize: I've been working on a simplified version of the Stackage Server codebase to address our
+goals better, more easily ensure high availability, and make the codebase easier to maintain. We
+also used this opportunity to test out a new hosting system our DevOps team put together. The
+result is running on beta.stackage.org, and will replace the official stackage.org after a bit more
+testing (which I hope readers will help with).
+
+The code
+
+All of this code lives on the simpler branch of the stackage-server code base, and much to my joy,
+resulted in quite a bit less code. In fact, there's just about a 2000 line reduction. The rest of
+this post will get into how that happened.
+
+No more custom package sets
+
+One of the features I mentioned above was custom package sets. This fell out automatically from the
+initial way Stackage Server was written, so it was natural to let others create package sets of
+their own. However, since release, only one person actually used that feature. I discussed with
+him, and he agreed with the decision to deprecate and then remove that functionality.
+
+So why get rid of it now? Two powerful reasons:
+
+  • We already host a public mirror of all packages on S3. Since we no longer patch upstream
+    packages, it's best if tooling is able to just refer to that high-reliability service.
+  • We now have Git repositories for all of LTS Haskell and Stackage Nightly. Making these the
+    sources of package sets means we don't have two (possibly conflicting) sources of data. That
+    brings me to the second point
+
+Upload code is gone
+
+We had some complicated logic to allow users to upload package sets. It started off simple, but
+over time we added Haddock hosting and other metadata features, making the code more complex.
+Actually, it ended up having two parallel code paths for this. So instead, we now just upload
+information on the package sets to the Git repositories, and leave it up to a separate process
+(described below) to clone these repositories and make the data available to the server.
+
+Haddocks on S3
+
+After generating a snapshot, the Haddocks used to be tarred and compressed, and then uploaded as a
+compressed bundle to S3. Then, Stackage Server would receive a request for files, unpack them, and
+serve them. This presented some problems:
+
+  • Users would have to wait for a first request to succeed during the unpacking
+  • With enough snapshots being generated, we would eventually run out of disk space and need to
+    clear our temp directory
+  • Since we run our cluster in a high availabilty mode with multiple horizontally-scaled machines,
+    one machine may have finished unpacking when another didn't, resulting in unstyled content (see
+    issue #82).
+
+Instead, we now just upload the files to S3 and redirect there from stackage-server (though we'll
+likely switch to reverse proxying to allow for nicer SSL urls). In fact, you can easily view these
+docs, at URLs such as https://haddock.stackage.org/lts-2.9/ or https://s3.amazonaws.com/
+haddock.stackage.org/nightly-2015-05-21/index.html.
+
+These Haddocks are publicly available, and linkable from projects beyond Stackage Server. Each set
+of Haddocks is guaranteed to have consistent internal links to other compatible packages. And while
+some documentation doesn't generate due to known package bugs, the generation is otherwise
+reliable.
+
+I've already offered access to these docs to Duncan for usage on Hackage, and hope that will
+improve the experience for users there.
+
+Metadata SQLite database
+
+Previously, information on snapshots was stored in a PostgreSQL database that was maintained by
+Stackage Server. This database also had package metadata, like author, homepage, and description.
+Now, we have a completely different process:
+
+  • The all-cabal-metadata from the Commercial Haskell Special Interest Group provides an easily
+    cloneable Git repo with package metadata, which is automatically updated by Travis.
+  • We run a cron job on the stackage-build server that updates the lts-haskell, stackage-nightly,
+    and all-cabal-metadata repos and generates a SQLite database from them with all of the data
+    that Stackage Server needs. You can look at the Stackage.Database module for some ideas of what
+    this consists of. That database gets uploaded to Amazon S3, and is actually publicly available
+    if you want to poke at it
+  • The live server downloads a new version of this file on a regular basis
+
+I've considered spinning off the Stackage.Download code into its own repository so that others can
+take advantage of this functionality in different contexts if desired. Let me know if you're
+interested.
+
+At this point, the PostgreSQL database is just used for non-critical functionality, such as social
+features (tags and likes).
+
+Slightly nicer URLs
+
+When referring to a snapshot, there are "official" short names (slugs), of the form lts-2.9 and
+nightly-2015-05-22. The URLs on the new server now reflect this perfectly, e.g.: https://
+beta.stackage.org/nightly-2015-05-22. We originally used hashes of the snapshot content for the
+original URLs, but that was fixed a while ago. Now that we only have to support these official
+snapshots, we can always (and exclusively) use these short names.
+
+As a convenience, if you visit the following URLs, you get automatic redirects:
+
+  • /nightly redirects to the most recent nightly
+  • /lts to the latest LTS
+  • /lts-X to the latest LTS in the X.* major version (e.g., today, /lts-2 redirects to /lts-2.9)
+
+This also works for URLs under that hierarchy. For example, consider https://beta.stackage.org/lts/
+cabal.config, which is an easy way to get set up with LTS in your project (by running wget https://
+beta.stackage.org/lts/cabal.config).
+
+ECS-based hosting
+
+While not a new feature of the server itself, the hosting cluster we're running this on is brand
+new. Amazon recently released EC2 Container Service, which is a service for running Docker
+containers. Since we're going to be using this for the new School of Haskell, it's nice to be
+giving it a serious usage now. We also make extensive use of Docker for customer projects, both for
+builds and hosting, so it's a natural extension for us.
+
+This ECS cluster uses standard Amazon services like Elastic Load Balancer (ELB) and auto-scaling to
+provide for high availability in the case of machine failure. And while we have a lot of confidence
+in our ability to keep Stackage Server up and running regularly, it's nice that our most important
+user-facing content is provided by these external services:
+
+  • Haddocks on S3
+  • Package mirroring on S3
+  • LTS Haskell and Stackage Nightly build plans on Github
+  • Package metadata on Github
+  • Package index metadata on Github (via stackage-update and all-cabal-files/hashes)
+
+This provides for a pleasant experience in both browsing the website and using Stackage in your
+build system.
+
+A special thanks to Jason Boyer for providing this new hosting cluster, which the whole FP Complete
+team is looking forward to putting through its paces.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

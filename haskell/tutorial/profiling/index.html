@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Profiling and Performance</title>
+  <meta property="og:title" content="Profiling and Performance">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;tutorial&#x2F;profiling&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+  
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+<section class="hero grid-bg">
+  <div class="container">
+    <h1>Profiling and Performance
+    </h1></div>
+</section>
+
+
+
+  
+<div class="container py-3">
+  <p>Section exercise: write a Gauge benchmark suite to test various
+implementations of <code>average</code> against each other.</p>
+<ul>
+<li>Profiling</li>
+<li>Optimization</li>
+<li>Analyzing core</li>
+<li>A few common problems</li>
+</ul>
+<h2 id="some-bad-code">Some bad code</h2>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=
+</span><span>  </span><span style="color:#859900;">let</span><span> nums </span><span style="color:#859900;">=</span><span> [</span><span style="color:#6c71c4;">1</span><span style="color:#859900;">..</span><span style="color:#6c71c4;">10000000 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>]
+</span><span>   </span><span style="color:#859900;">in</span><span> print </span><span style="color:#859900;">$</span><span> fromIntegral (sum nums) </span><span style="color:#859900;">/</span><span> fromIntegral (length nums)
+</span></code></pre>
+<p>Run it, it's slow:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ time ./Main.hs
+</span><span>5000000.5
+</span><span>
+</span><span>real	0m5.478s
+</span><span>user	0m4.048s
+</span><span>sys	0m1.114s
+</span></code></pre>
+<p>First question: can anyone spot the problem? That's the easiest
+solution to a problem... (If you do know, don't say anything yet.)</p>
+<p>OK, assuming no one knows why this is so slow (or we can pretend we
+don't know)...</p>
+<h3 id="basic-statistics">Basic statistics</h3>
+<p>Run it with:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ stack exec -- ghc Main.hs -rtsopts -fforce-recomp &amp;&amp; ./Main +RTS -s
+</span><span>5000000.5
+</span><span>   2,742,160,608 bytes allocated in the heap
+</span><span>   5,360,152,448 bytes copied during GC
+</span><span>   1,551,144,024 bytes maximum residency (14 sample(s))
+</span><span>     137,354,776 bytes maximum slop
+</span><span>            2954 MB total memory in use (0 MB lost due to fragmentation)
+</span><span>
+</span><span>                                     Tot time (elapsed)  Avg pause  Max pause
+</span><span>  Gen  0      5258 colls,     0 par    1.547s   1.586s     0.0003s    0.0018s
+</span><span>  Gen  1        14 colls,     0 par    2.835s   5.626s     0.4019s    2.0202s
+</span><span>
+</span><span>  INIT    time    0.000s  (  0.002s elapsed)
+</span><span>  MUT     time    0.781s  (  0.602s elapsed)
+</span><span>  GC      time    4.382s  (  7.212s elapsed)
+</span><span>  RP      time    0.000s  (  0.000s elapsed)
+</span><span>  PROF    time    0.000s  (  0.000s elapsed)
+</span><span>  EXIT    time    0.012s  (  0.278s elapsed)
+</span><span>  Total   time    5.176s  (  8.094s elapsed)
+</span><span>
+</span><span>  %GC     time      84.7%  (89.1% elapsed)
+</span><span>
+</span><span>  Alloc rate    3,511,417,338 bytes per MUT second
+</span><span>
+</span><span>  Productivity  15.3% of total user, 9.8% of total elapsed
+</span></code></pre>
+<ul>
+<li>Max residency: largest amount of memory used at any time</li>
+<li>Bytes allocated in heap: total amount of memory allocated</li>
+<li>If max residency is high: usually a space leak</li>
+<li>If allocations are high, usually GC pressure from lots of temporary
+objects</li>
+</ul>
+<h2 id="profiling">Profiling</h2>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ stack exec -- ghc Main.hs -rtsopts -fforce-recomp -prof
+</span><span>$ ./Main +RTS -p -hc
+</span><span>$ stack exec -- hp2ps -e8in -c Main.hp
+</span><span>$ open Main.ps
+</span></code></pre>
+<img src="https://i.imgur.com/G8SsJxv.png" width="100%"/>
+<ul>
+<li>Linear increase in memory used by lists and <code>Int</code>s</li>
+<li>Then it starts going down</li>
+<li>Any guesses now?</li>
+</ul>
+<h2 id="looking-at-core">Looking at core</h2>
+<p>Let's see what GHC compiles this into:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ stack exec -- ghc Main.hs -rtsopts -fforce-recomp -ddump-simpl -ddump-to-file
+</span></code></pre>
+<p>Excerpt from <code>Main.dump-simpl</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#93a1a1;">-- RHS size: {terms: 6, types: 1, coercions: 0}
+</span><span style="color:#b58900;">nums_r4a2 </span><span style="color:#859900;">::</span><span> [</span><span style="color:#268bd2;">Int</span><span>]
+</span><span>[</span><span style="color:#cb4b16;">GblId</span><span>, </span><span style="color:#cb4b16;">Str</span><span style="color:#859900;">=</span><span style="color:#cb4b16;">DmdType</span><span>]
+</span><span>nums_r4a2 </span><span style="color:#859900;">=
+</span><span>  enumFromTo
+</span><span>    @ </span><span style="color:#cb4b16;">Int GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Enum</span><span style="color:#859900;">.$</span><span>fEnumInt (</span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Types</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">I</span><span># </span><span style="color:#6c71c4;">1</span><span>#) (</span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Types</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">I</span><span># </span><span style="color:#6c71c4;">10000000</span><span>#)
+</span><span>
+</span><span style="color:#93a1a1;">-- RHS size: {terms: 17, types: 10, coercions: 0}
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>[</span><span style="color:#cb4b16;">GblId</span><span>, </span><span style="color:#cb4b16;">Str</span><span style="color:#859900;">=</span><span style="color:#cb4b16;">DmdType</span><span>]
+</span><span>main </span><span style="color:#859900;">=
+</span><span>  print
+</span><span>    @ </span><span style="color:#cb4b16;">Double
+</span><span>    </span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Float</span><span style="color:#859900;">.$</span><span>fShowDouble
+</span><span>    (</span><span style="color:#859900;">/</span><span> @ </span><span style="color:#cb4b16;">Double
+</span><span>       </span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Float</span><span style="color:#859900;">.$</span><span>fFractionalDouble
+</span><span>       (fromIntegral
+</span><span>          @ </span><span style="color:#cb4b16;">Int
+</span><span>          @ </span><span style="color:#cb4b16;">Double
+</span><span>          </span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Real</span><span style="color:#859900;">.$</span><span>fIntegralInt
+</span><span>          </span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Float</span><span style="color:#859900;">.$</span><span>fNumDouble
+</span><span>          (sum
+</span><span>             @ </span><span style="color:#b58900;">[] </span><span style="color:#cb4b16;">Data</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Foldable</span><span style="color:#859900;">.$</span><span>fFoldable</span><span style="color:#b58900;">[]</span><span> @ </span><span style="color:#cb4b16;">Int GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Num</span><span style="color:#859900;">.$</span><span>fNumInt nums_r4a2))
+</span><span>       (fromIntegral
+</span><span>          @ </span><span style="color:#cb4b16;">Int
+</span><span>          @ </span><span style="color:#cb4b16;">Double
+</span><span>          </span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Real</span><span style="color:#859900;">.$</span><span>fIntegralInt
+</span><span>          </span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Float</span><span style="color:#859900;">.$</span><span>fNumDouble
+</span><span>          (length @ </span><span style="color:#b58900;">[] </span><span style="color:#cb4b16;">Data</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Foldable</span><span style="color:#859900;">.$</span><span>fFoldable</span><span style="color:#b58900;">[]</span><span> @ </span><span style="color:#cb4b16;">Int</span><span> nums_r4a2)))
+</span></code></pre>
+<p>OK, now everyone can guess.</p>
+<h2 id="solution-1-two-lists">Solution 1: two lists</h2>
+<p>Let's trick GHC into not keeping the list in memory.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=
+</span><span>  </span><span style="color:#859900;">let</span><span> nums1 </span><span style="color:#859900;">=</span><span> [</span><span style="color:#6c71c4;">1</span><span style="color:#859900;">..</span><span style="color:#6c71c4;">10000000 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>]
+</span><span>      nums2 </span><span style="color:#859900;">=</span><span> [</span><span style="color:#6c71c4;">1</span><span style="color:#859900;">..</span><span style="color:#6c71c4;">10000000 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>]
+</span><span>   </span><span style="color:#859900;">in</span><span> print </span><span style="color:#859900;">$</span><span> fromIntegral (sum nums1) </span><span style="color:#859900;">/</span><span> fromIntegral (length nums2)
+</span></code></pre>
+<p>Some stats:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ stack exec -- ghc -O2 Main.hs -rtsopts -fforce-recomp -ddump-simpl -ddump-to-file &amp;&amp; ./Main +RTS -s
+</span><span>[1 of 1] Compiling Main             ( Main.hs, Main.o )
+</span><span>Linking Main ...
+</span><span>5000000.5
+</span><span>         102,944 bytes allocated in the heap
+</span><span>           3,480 bytes copied during GC
+</span><span>          44,384 bytes maximum residency (1 sample(s))
+</span><span>          17,056 bytes maximum slop
+</span><span>               1 MB total memory in use (0 MB lost due to fragmentation)
+</span><span>
+</span><span>                                     Tot time (elapsed)  Avg pause  Max pause
+</span><span>  Gen  0         0 colls,     0 par    0.000s   0.000s     0.0000s    0.0000s
+</span><span>  Gen  1         1 colls,     0 par    0.000s   0.003s     0.0027s    0.0027s
+</span><span>
+</span><span>  INIT    time    0.000s  (  0.003s elapsed)
+</span><span>  MUT     time    0.014s  (  0.019s elapsed)
+</span><span>  GC      time    0.000s  (  0.003s elapsed)
+</span><span>  EXIT    time    0.000s  (  0.003s elapsed)
+</span><span>  Total   time    0.015s  (  0.027s elapsed)
+</span><span>
+</span><span>  %GC     time       1.0%  (10.0% elapsed)
+</span><span>
+</span><span>  Alloc rate    7,549,981 bytes per MUT second
+</span><span>
+</span><span>  Productivity  98.5% of total user, 54.3% of total elapsed
+</span></code></pre>
+<p>The core for this
+is... hairy. <a href="https://gist.github.com/snoyberg/a26b4086834f7e5c39d75c55729f6c46">https://gist.github.com/snoyberg/a26b4086834f7e5c39d75c55729f6c46</a></p>
+<p>However: Running without <code>-O2</code> didn't turn out so well. Also, the code
+is ugly/repetitive. Let's try some additional approaches.</p>
+<h2 id="vector">vector</h2>
+<p>NOTE (from 2017): While preparing this bit, I discovered a bug in vector that's
+been fixed upstream but not yet released
+<a href="https://github.com/haskell/vector/issues/111">https://github.com/haskell/vector/issues/111</a>.</p>
+<p>2018: Still seems to be a problem</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">V
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=
+</span><span>  </span><span style="color:#859900;">let</span><span> nums1 </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>enumFromTo (</span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>) </span><span style="color:#6c71c4;">10000000
+</span><span>      nums2 </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>enumFromTo (</span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>) </span><span style="color:#6c71c4;">10000000
+</span><span>   </span><span style="color:#859900;">in</span><span> print </span><span style="color:#859900;">$</span><span> fromIntegral (</span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>sum nums1) </span><span style="color:#859900;">/</span><span> fromIntegral (</span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>length nums2)
+</span></code></pre>
+<h2 id="list-foldl">List foldl'</h2>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>import Data.List (foldl&#39;)
+</span><span>
+</span><span>data State = State
+</span><span>    { stateSum :: Int
+</span><span>    , stateLen :: Int
+</span><span>    }
+</span><span>
+</span><span>incrState :: State -&gt; Int -&gt; State
+</span><span>incrState (State s l) x = State (s + x) (l + 1)
+</span><span>
+</span><span>avgState :: State -&gt; Double
+</span><span>avgState (State s l) = fromIntegral s / fromIntegral l
+</span><span>
+</span><span>main :: IO ()
+</span><span>main = print $ avgState $ foldl&#39; incrState (State 0 0) [1..10000000]
+</span></code></pre>
+<p><strong>Question</strong> What's wrong with this code?</p>
+<p>Let's analyze core for this:</p>
+<p><a href="https://gist.github.com/snoyberg/0042a6653367366e5b789e70abf7d673">https://gist.github.com/snoyberg/0042a6653367366e5b789e70abf7d673</a></p>
+<p>And the important bits only:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#cb4b16;">Main</span><span style="color:#859900;">.</span><span>main2 </span><span style="color:#859900;">=
+</span><span>  </span><span style="color:#859900;">case </span><span style="color:#cb4b16;">Main</span><span style="color:#859900;">.$</span><span>wgo </span><span style="color:#6c71c4;">1</span><span># </span><span style="color:#6c71c4;">0</span><span># </span><span style="color:#6c71c4;">0</span><span>#
+</span><span>  </span><span style="color:#859900;">of</span><span> _ [</span><span style="color:#cb4b16;">Occ</span><span style="color:#859900;">=</span><span style="color:#cb4b16;">Dead</span><span>] { (# ww1_s6SB, ww2_s6SC #) </span><span style="color:#859900;">-&gt;
+</span><span>  </span><span style="color:#859900;">case </span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Prim</span><span style="color:#859900;">./</span><span>##
+</span><span>         (</span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Prim</span><span style="color:#859900;">.</span><span>int2Double# ww1_s6SB) (</span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Prim</span><span style="color:#859900;">.</span><span>int2Double# ww2_s6SC)
+</span><span>  </span><span style="color:#859900;">of</span><span> wild2_a4qy { __DEFAULT </span><span style="color:#859900;">-&gt;
+</span><span>  </span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Float</span><span style="color:#859900;">.$</span><span>w</span><span style="color:#859900;">$</span><span>sshowSignedFloat
+</span><span>    </span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Float</span><span style="color:#859900;">.$</span><span>fShowDouble_</span><span style="color:#859900;">$</span><span>sshowFloat
+</span><span>    </span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Show</span><span style="color:#859900;">.</span><span>shows22
+</span><span>    wild2_a4qy
+</span><span>    (</span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Types</span><span style="color:#859900;">.</span><span style="color:#b58900;">[]</span><span> @ </span><span style="color:#cb4b16;">Char</span><span>)
+</span><span>  }
+</span><span>  }
+</span><span>
+</span><span style="color:#cb4b16;">Main</span><span style="color:#859900;">.$</span><span>wgo </span><span style="color:#859900;">=
+</span><span>  </span><span style="color:#859900;">\</span><span> (w_s6Sp </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Prim</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Int</span><span>#)
+</span><span>    (ww_s6St [</span><span style="color:#cb4b16;">OS</span><span style="color:#859900;">=</span><span style="color:#cb4b16;">OneShot</span><span>] </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Prim</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Int</span><span>#)
+</span><span>    (ww1_s6Su [</span><span style="color:#cb4b16;">OS</span><span style="color:#859900;">=</span><span style="color:#cb4b16;">OneShot</span><span>] </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Prim</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Int</span><span>#) </span><span style="color:#859900;">-&gt;
+</span><span>    </span><span style="color:#859900;">case</span><span> w_s6Sp </span><span style="color:#859900;">of</span><span> wild_XC {
+</span><span>      __DEFAULT </span><span style="color:#859900;">-&gt;
+</span><span>        </span><span style="color:#cb4b16;">Main</span><span style="color:#859900;">.$</span><span>wgo
+</span><span>          (</span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Prim</span><span style="color:#859900;">.+</span><span># wild_XC </span><span style="color:#6c71c4;">1</span><span>#)
+</span><span>          (</span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Prim</span><span style="color:#859900;">.+</span><span># ww_s6St wild_XC)
+</span><span>          (</span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Prim</span><span style="color:#859900;">.+</span><span># ww1_s6Su </span><span style="color:#6c71c4;">1</span><span>#);
+</span><span>      </span><span style="color:#6c71c4;">10000000</span><span># </span><span style="color:#859900;">-&gt;
+</span><span>        (# </span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Prim</span><span style="color:#859900;">.+</span><span># ww_s6St </span><span style="color:#6c71c4;">10000000</span><span>#, </span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Prim</span><span style="color:#859900;">.+</span><span># ww1_s6Su </span><span style="color:#6c71c4;">1</span><span># #)
+</span><span>    }
+</span><span>end </span><span style="color:#cb4b16;">Rec</span><span> }
+</span></code></pre>
+<h2 id="foldl">foldl</h2>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span>
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Control.Foldl </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">L
+</span><span>
+</span><span style="color:#b58900;">average </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">L</span><span>.</span><span style="color:#268bd2;">Fold Int Double
+</span><span>average </span><span style="color:#859900;">= </span><span style="color:#b58900;">(/) </span><span style="color:#859900;">&lt;$&gt;</span><span> (fromIntegral </span><span style="color:#859900;">&lt;$&gt; </span><span style="color:#cb4b16;">L</span><span style="color:#859900;">.</span><span>sum) </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">L</span><span style="color:#859900;">.</span><span>genericLength
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> print </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">L</span><span style="color:#859900;">.</span><span>fold average [</span><span style="color:#6c71c4;">1</span><span style="color:#859900;">..</span><span style="color:#6c71c4;">10000000 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>]
+</span></code></pre>
+<ul>
+<li>Correct-by-construction</li>
+<li>Can't accidentally keep the list in memory</li>
+</ul>
+<h2 id="conduit">conduit</h2>
+<ul>
+<li>Same basic idea</li>
+<li>foldl will probably be faster</li>
+</ul>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span>
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Conduit
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> print
+</span><span>     </span><span style="color:#859900;">$</span><span> runConduitPure
+</span><span>     </span><span style="color:#859900;">$</span><span> enumFromToC </span><span style="color:#6c71c4;">1</span><span> (</span><span style="color:#6c71c4;">10000000 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>)
+</span><span>    </span><span style="color:#859900;">.|</span><span> getZipSink (</span><span style="color:#b58900;">(/)
+</span><span>         </span><span style="color:#859900;">&lt;$&gt; </span><span style="color:#cb4b16;">ZipSink</span><span> (fromIntegral </span><span style="color:#859900;">&lt;$&gt;</span><span> sumC)
+</span><span>         </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">ZipSink</span><span> lengthC)
+</span></code></pre>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ stack exec -- ghc -O2 foo.hs &amp;&amp; ./foo +RTS -s
+</span><span>[1 of 1] Compiling Main             ( foo.hs, foo.o )
+</span><span>Linking foo ...
+</span><span>5000000.5
+</span><span>   5,520,104,112 bytes allocated in the heap
+</span><span>       2,551,640 bytes copied during GC
+</span><span>          44,384 bytes maximum residency (2 sample(s))
+</span><span>          34,088 bytes maximum slop
+</span><span>               1 MB total memory in use (0 MB lost due to fragmentation)
+</span></code></pre>
+<ul>
+<li>Constant memory</li>
+<li>Doesn't fuse away intermediate structures</li>
+<li>Lots of garbage created</li>
+</ul>
+<h2 id="unneeded-here-straight-loop">Unneeded here: straight loop</h2>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> BangPatterns #-}
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">let</span><span> loop idx total len </span><span style="color:#859900;">=
+</span><span>          </span><span style="color:#859900;">let !</span><span>total&#39; </span><span style="color:#859900;">=</span><span> total </span><span style="color:#859900;">+</span><span> idx
+</span><span>              </span><span style="color:#859900;">!</span><span>len&#39; </span><span style="color:#859900;">=</span><span> len </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1
+</span><span>           </span><span style="color:#859900;">in if</span><span> idx </span><span style="color:#859900;">== </span><span style="color:#6c71c4;">10000000
+</span><span>                 </span><span style="color:#859900;">then</span><span> fromIntegral total&#39; </span><span style="color:#859900;">/</span><span> fromIntegral len&#39; </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Double
+</span><span>                 </span><span style="color:#859900;">else</span><span> loop (idx </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1</span><span>) total&#39; len&#39;
+</span><span>     </span><span style="color:#859900;">in</span><span> print </span><span style="color:#859900;">$</span><span> loop </span><span style="color:#6c71c4;">1 0 0
+</span></code></pre>
+<p>Result:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ stack exec -- ghc -O2 foo.hs &amp;&amp; ./foo +RTS -s
+</span><span>[1 of 1] Compiling Main             ( foo.hs, foo.o )
+</span><span>Linking foo ...
+</span><span>5000000.5
+</span><span>     480,102,896 bytes allocated in the heap
+</span><span>          57,696 bytes copied during GC
+</span><span>          44,384 bytes maximum residency (2 sample(s))
+</span><span>          21,152 bytes maximum slop
+</span><span>               1 MB total memory in use (0 MB lost due to fragmentation)
+</span></code></pre>
+<p>Why so much allocation? (Real question, I didn't expect this.)</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#cb4b16;">Main</span><span style="color:#859900;">.$</span><span>wloop </span><span style="color:#859900;">=
+</span><span>  </span><span style="color:#859900;">\</span><span> (w_s5bV </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Integer</span><span>) (w1_s5bW </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Integer</span><span>) (w2_s5bX </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Integer</span><span>) </span><span style="color:#859900;">-&gt;
+</span><span>    </span><span style="color:#859900;">case</span><span> integer</span><span style="color:#859900;">-</span><span>gmp</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1.0</span><span style="color:#859900;">.</span><span style="color:#6c71c4;">0.1</span><span style="color:#859900;">:</span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Integer</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Type</span><span style="color:#859900;">.</span><span>plusInteger
+</span><span>           w2_s5bX </span><span style="color:#cb4b16;">Main</span><span style="color:#859900;">.</span><span>main4
+</span><span>    </span><span style="color:#859900;">of</span><span> len&#39;_a1PN { __DEFAULT </span><span style="color:#859900;">-&gt;
+</span><span>    </span><span style="color:#859900;">case</span><span> integer</span><span style="color:#859900;">-</span><span>gmp</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1.0</span><span style="color:#859900;">.</span><span style="color:#6c71c4;">0.1</span><span style="color:#859900;">:</span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Integer</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Type</span><span style="color:#859900;">.</span><span>plusInteger
+</span><span>           w1_s5bW w_s5bV
+</span><span>    </span><span style="color:#859900;">of</span><span> total&#39;_a1ZJ { __DEFAULT </span><span style="color:#859900;">-&gt;
+</span><span>    </span><span style="color:#859900;">case</span><span> integer</span><span style="color:#859900;">-</span><span>gmp</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1.0</span><span style="color:#859900;">.</span><span style="color:#6c71c4;">0.1</span><span style="color:#859900;">:</span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Integer</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Type</span><span style="color:#859900;">.</span><span>eqInteger#
+</span><span>           w_s5bV lvl_r5cV
+</span><span>    </span><span style="color:#859900;">of</span><span> wild_a2In { __DEFAULT </span><span style="color:#859900;">-&gt;
+</span><span>    </span><span style="color:#859900;">case </span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Prim</span><span style="color:#859900;">.</span><span>tagToEnum# @ </span><span style="color:#cb4b16;">Bool</span><span> wild_a2In </span><span style="color:#859900;">of</span><span> _ [</span><span style="color:#cb4b16;">Occ</span><span style="color:#859900;">=</span><span style="color:#cb4b16;">Dead</span><span>] {
+</span><span>      </span><span style="color:#cb4b16;">False </span><span style="color:#859900;">-&gt;
+</span><span>        </span><span style="color:#cb4b16;">Main</span><span style="color:#859900;">.$</span><span>wloop
+</span><span>          (integer</span><span style="color:#859900;">-</span><span>gmp</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1.0</span><span style="color:#859900;">.</span><span style="color:#6c71c4;">0.1</span><span style="color:#859900;">:</span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Integer</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Type</span><span style="color:#859900;">.</span><span>plusInteger
+</span><span>             w_s5bV </span><span style="color:#cb4b16;">Main</span><span style="color:#859900;">.</span><span>main4)
+</span><span>          total&#39;_a1ZJ
+</span><span>          len&#39;_a1PN;
+</span><span>      </span><span style="color:#cb4b16;">True </span><span style="color:#859900;">-&gt;
+</span><span>        </span><span style="color:#859900;">case</span><span> integer</span><span style="color:#859900;">-</span><span>gmp</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1.0</span><span style="color:#859900;">.</span><span style="color:#6c71c4;">0.1</span><span style="color:#859900;">:</span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Integer</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Type</span><span style="color:#859900;">.</span><span>doubleFromInteger
+</span><span>               total&#39;_a1ZJ
+</span><span>        </span><span style="color:#859900;">of</span><span> wild2_a2Jl { __DEFAULT </span><span style="color:#859900;">-&gt;
+</span><span>        </span><span style="color:#859900;">case</span><span> integer</span><span style="color:#859900;">-</span><span>gmp</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1.0</span><span style="color:#859900;">.</span><span style="color:#6c71c4;">0.1</span><span style="color:#859900;">:</span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Integer</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Type</span><span style="color:#859900;">.</span><span>doubleFromInteger
+</span><span>               len&#39;_a1PN
+</span><span>        </span><span style="color:#859900;">of</span><span> wild3_X2JV { __DEFAULT </span><span style="color:#859900;">-&gt;
+</span><span>        </span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Prim</span><span style="color:#859900;">./</span><span>## wild2_a2Jl wild3_X2JV
+</span><span>        }
+</span><span>        }
+</span><span>    }
+</span><span>    }
+</span><span>    }
+</span><span>    }
+</span><span>end </span><span style="color:#cb4b16;">Rec</span><span> }
+</span></code></pre>
+<p>Doh, it's using <code>Integer</code> instead of <code>Int</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> BangPatterns #-}
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">let</span><span> loop idx total len </span><span style="color:#859900;">=
+</span><span>          </span><span style="color:#859900;">let !</span><span>total&#39; </span><span style="color:#859900;">=</span><span> total </span><span style="color:#859900;">+</span><span> idx </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int
+</span><span>              </span><span style="color:#859900;">!</span><span>len&#39; </span><span style="color:#859900;">=</span><span> len </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int
+</span><span>           </span><span style="color:#859900;">in if</span><span> idx </span><span style="color:#859900;">== </span><span style="color:#6c71c4;">10000000
+</span><span>                 </span><span style="color:#859900;">then</span><span> fromIntegral total&#39; </span><span style="color:#859900;">/</span><span> fromIntegral len&#39; </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Double
+</span><span>                 </span><span style="color:#859900;">else</span><span> loop (idx </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1</span><span>) total&#39; len&#39;
+</span><span>     </span><span style="color:#859900;">in</span><span> print </span><span style="color:#859900;">$</span><span> loop </span><span style="color:#6c71c4;">1 0 0
+</span></code></pre>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>         102,944 bytes allocated in the heap
+</span><span>           3,480 bytes copied during GC
+</span><span>          44,384 bytes maximum residency (1 sample(s))
+</span><span>          17,056 bytes maximum slop
+</span><span>               1 MB total memory in use (0 MB lost due to fragmentation)
+</span></code></pre>
+<p>Notice how close our code here looks to what GHC optimized out for us?</p>
+<h2 id="primitive-types-really-not-necessary">Primitive types (really not necessary!)</h2>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> MagicHash #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">GHC.Prim
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">GHC.Magic
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">GHC.Types
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">let</span><span> loop idx total len </span><span style="color:#859900;">=
+</span><span>          </span><span style="color:#859900;">case</span><span> total </span><span style="color:#859900;">+</span><span># idx </span><span style="color:#859900;">of
+</span><span>            total&#39; </span><span style="color:#859900;">-&gt;
+</span><span>              </span><span style="color:#859900;">case</span><span> len </span><span style="color:#859900;">+</span><span># </span><span style="color:#6c71c4;">1</span><span># </span><span style="color:#859900;">of
+</span><span>                len&#39; </span><span style="color:#859900;">-&gt;
+</span><span>                  </span><span style="color:#859900;">case</span><span> idx </span><span style="color:#859900;">of
+</span><span>                    </span><span style="color:#6c71c4;">10000000</span><span># </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">D</span><span># (int2Double# total&#39; </span><span style="color:#859900;">/</span><span>## int2Double# len&#39;)
+</span><span>                    _ </span><span style="color:#859900;">-&gt;</span><span> loop (idx </span><span style="color:#859900;">+</span><span># </span><span style="color:#6c71c4;">1</span><span>#) total&#39; len&#39;
+</span><span>     </span><span style="color:#859900;">in</span><span> print </span><span style="color:#859900;">$</span><span> loop </span><span style="color:#6c71c4;">1</span><span># </span><span style="color:#6c71c4;">0</span><span># </span><span style="color:#6c71c4;">0</span><span>#
+</span></code></pre>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>         102,944 bytes allocated in the heap
+</span><span>           3,480 bytes copied during GC
+</span><span>          44,384 bytes maximum residency (1 sample(s))
+</span><span>          17,056 bytes maximum slop
+</span><span>               1 MB total memory in use (0 MB lost due to fragmentation)
+</span></code></pre>
+<p><em>Exactly</em> the same. Yay!</p>
+<p><strong>Exercise</strong> Compare the core for the previous two examples.</p>
+<h2 id="core-for-vector">Core for vector</h2>
+<p>Let's pull up an old example:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> FlexibleContexts #-}
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">VB
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Storable </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">VS
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Unboxed </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">VU
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Generic </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">V
+</span><span>
+</span><span style="color:#b58900;">myFunc </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">V</span><span>.</span><span style="color:#268bd2;">Vector v Int </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">v Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>myFunc </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>mapM_ print </span><span style="color:#859900;">. </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>map (* </span><span style="color:#6c71c4;">2</span><span>) </span><span style="color:#859900;">. </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>filter odd
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  myFunc </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">VB</span><span style="color:#859900;">.</span><span>enumFromTo </span><span style="color:#6c71c4;">1 10
+</span></code></pre>
+<p>Does this allocate a vector? Let's look at the core:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ stack exec -- ghc -O2 -fforce-recomp foo.hs -ddump-to-file -ddump-simpl &amp;&amp; ./foo +RTS -s
+</span></code></pre>
+<p>Whole thing:
+<a href="https://gist.github.com/snoyberg/2210c4f67c5d91186501d8a8d3c570e3">https://gist.github.com/snoyberg/2210c4f67c5d91186501d8a8d3c570e3</a>. Relevant
+part:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>Main.main_$s$wconsume_loop =
+</span><span>  \ (sc_savi [OS=OneShot] :: GHC.Prim.State# GHC.Prim.RealWorld)
+</span><span>    (sc1_savh :: GHC.Prim.Int#) -&gt;
+</span><span>    case GHC.Prim.tagToEnum# @ Bool (GHC.Prim.&lt;=# sc1_savh 10#)
+</span><span>    of _ [Occ=Dead] {
+</span><span>      False -&gt; (# sc_savi, GHC.Tuple.() #);
+</span><span>      True -&gt;
+</span><span>        case GHC.Prim.remInt# sc1_savh 2# of _ [Occ=Dead] {
+</span><span>          __DEFAULT -&gt;
+</span><span>            case GHC.IO.Handle.Text.hPutStr2
+</span><span>                   GHC.IO.Handle.FD.stdout
+</span><span>                   (case GHC.Show.$wshowSignedInt
+</span><span>                           0# (GHC.Prim.*# sc1_savh 2#) (GHC.Types.[] @ Char)
+</span><span>                    of _ [Occ=Dead] { (# ww5_a9Pv, ww6_a9Pw #) -&gt;
+</span><span>                    GHC.Types.: @ Char ww5_a9Pv ww6_a9Pw
+</span><span>                    })
+</span><span>                   GHC.Types.True
+</span><span>                   sc_savi
+</span><span>            of _ [Occ=Dead] { (# ipv_X77v, ipv1_X77x #) -&gt;
+</span><span>            Main.main_$s$wconsume_loop ipv_X77v (GHC.Prim.+# sc1_savh 1#)
+</span><span>            };
+</span><span>          0# -&gt; Main.main_$s$wconsume_loop sc_savi (GHC.Prim.+# sc1_savh 1#)
+</span><span>        }
+</span><span>    }
+</span><span>end Rec }
+</span></code></pre>
+<p>QED, no arrays allocated. But let's try another trick:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ stack exec -- ghc -O2 -fforce-recomp foo.hs -ddump-to-file -ddump-rule-firings
+</span></code></pre>
+<p>Lots of output... if you know the internal GHC rewrite rules, it can
+be informative. In particular, this is encouraging:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>Rule fired: stream/unstream [Vector]
+</span><span>Rule fired: stream/unstream [Vector]
+</span><span>Rule fired: inplace/inplace [Vector]
+</span><span>Rule fired: stream/unstream [Vector]
+</span></code></pre>
+<p>The full output: <a href="https://gist.github.com/snoyberg/53b1257507d0b2d5ffc6124ba5ac97de">https://gist.github.com/snoyberg/53b1257507d0b2d5ffc6124ba5ac97de</a></p>
+<h2 id="exercise">Exercise</h2>
+<p>Section exercise: write a Gauge benchmark suite to test various
+implementations of <code>average</code> against each other.</p>
+<p><strong>Extra credit</strong> Also use weigh to measure allocations:
+<a href="https://www.stackage.org/package/weigh">https://www.stackage.org/package/weigh</a></p>
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#a7d4c6cbc2d4e7c1d7c4c8cad7cbc2d3c289c4c8ca" targe="_blank"><span class="__cf_email__" data-cfemail="97e4f6fbf2e4d7f1e7f4f8fae7fbf2e3f2b9f4f8fa">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

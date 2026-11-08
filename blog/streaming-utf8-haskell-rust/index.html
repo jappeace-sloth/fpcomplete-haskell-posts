@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Streaming UTF-8 in Haskell and Rust</title>
+  <meta property="og:title" content="Streaming UTF-8 in Haskell and Rust">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="An investigation into getting Haskell-like error handling ergonomics into a Rust application dealing with streaming UTF-8 encoding and decoding.">
+  <meta property="og:description" content="An investigation into getting Haskell-like error handling ergonomics into a Rust application dealing with streaming UTF-8 encoding and decoding.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;streaming-utf8-haskell-rust&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Streaming UTF-8 in Haskell and Rust</h1>
+      
+      <p id="page-description">By Michael Snoyman, July 30, 2018</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Streaming%20UTF-8%20in%20Haskell%20and%20Rust https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;streaming-utf8-haskell-rust&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;streaming-utf8-haskell-rust&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;streaming-utf8-haskell-rust&#x2F;&amp;title=Streaming%20UTF-8%20in%20Haskell%20and%20Rust"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;streaming-utf8-haskell-rust&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>Since I seem to be a one-trick pony, I decided to write <a href=
+"/blog/2017/07/iterators-streams-rust-haskell">yet again</a> to
+compare streaming data in Haskell and Rust. This was inspired by a
+<a href=
+"https://www.reddit.com/r/rust/comments/8z2i8t/%D1%81%D1%87%D1%8F%D1%81%D0%BE%D0%BF%D1%9F_fl%D0%B5%D1%85_%D0%BC%D0%B0%D1%80%D1%95_l%D0%B0%D1%82%D1%96%D0%BF_%D1%81%D0%BD%D0%B0%D0%B3%D0%B0%D1%81%D1%82%D0%B5%D0%B3%D1%95_%D1%96%D0%BF%D1%82%D0%BE_%D1%81%D1%87%D0%B3%D1%96ll%D1%96%D1%81/">
+cool post I saw on Reddit</a> about converting characters in the
+Latin alphabet into look-alikes in the Cyrilic alphabet.</p>
+<p>When reviewing the original code, I noticed that it was reading
+the full contents of the input into memory. Since I’m <a href=
+"https://haskell-lang.org/library/conduit">somewhat obsessed</a>
+with streaming data, I wanted to see what it would take to make
+this stream in Rust. But first, of course, I proved to myself that
+I could do this in Haskell.</p>
+<p><strong>Caveats</strong></p>
+<ul>
+<li>The solution I’ve created here is a <em>prototype</em>. Please
+do not use this Rust code in production, at the very least it does
+not handle some invalid UTF-8 encodings correctly.</li>
+<li>I am not covering some common libraries for character encoding
+like <code>encoding_rs</code>. This is intended to be more of a
+dive into streaming and error handling than character encoding
+itself.</li>
+<li>I haven’t done any performance optimization or even
+benchmarking on this. The focus here has been entirely about
+ergonomics. I may follow up with another blog post around
+performance analysis if there’s interest.</li>
+</ul>
+<p>All of the code is available <a href=
+"https://github.com/snoyberg/rust-streaming-utf8">in my Github
+repo</a>.</p>
+<h2>Haskell solution</h2>
+<p>In order to run the Haskell solution, please <a href=
+"https://haskell-lang.org/get-started">download and install
+Stack</a>, save the content below as <code>stream-hs.hs</code> and
+run something like <code>stack stream-hs.hs &lt;
+input.txt</code>.</p>
+<pre><code class="language-haskell">#!/usr/bin/env stack
+-- stack --resolver lts-12.0 script
+import Conduit
+import Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as HashMap
+
+mapper :: HashMap Char Char
+mapper = HashMap.fromList $ zip
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+  "ДВСDЁҒGНІЈКLМПОРQЯЅТЦЏШХЧZавсdёfgніјкlмпорqгѕтцѵшхчz"
+
+convertChar :: Char -&gt; Char
+convertChar c = HashMap.lookupDefault c c mapper
+
+main :: IO ()
+main = runConduit
+     $ stdinC
+    .| decodeUtf8C
+    .| omapCE convertChar
+    .| encodeUtf8C
+    .| stdoutC
+</code></pre>
+<p>We create a <code>HashMap</code> mapping the input Latin
+characters to the output Cyrilic characters, and then create a
+helper <code>convertChar</code> function to convert any incoming
+character, defaulting to the original if the input isn’t a Latin
+letter.</p>
+<p>Next, we use the conduit library for producing, transforming,
+and consuming the stream of data. We use the <code>.|</code>
+operator to pipe together different components of the pipeline, and
+then call <code>runConduit</code> on the completed pipeline to run
+it. Our pipeline looks like this:</p>
+<ul>
+<li>Stream out raw chunks of binary data from standard input using
+<code>stdinC</code></li>
+<li>UTF-8 decode the chunks of binary data into chunks of textual
+data using <code>decodeUtf8C</code>. This automatically handles
+issues of chunk boundaries grabbing incomplete UTF-8 sequences. If
+there is any invalid UTF-8 data, it will throw a runtime exception.
+<ul>
+<li>There is also a <code>decodeUtf8LenientC</code> function which
+uses the Unicode replacement function, but that’s not very
+interesting for us today. We <em>want</em> to compare how the two
+languages handle errors.</li>
+</ul>
+</li>
+<li>Apply our <code>convertChar</code> function to each character
+in the stream. We have to use the funnily-named <code>omapCE</code>
+function here. Let’s break it down a bit:
+<ul>
+<li><code>map</code>, since we’re applying a function to all the
+values in a stream. That makes sense.</li>
+<li><code>C</code>, because it’s a conduit function. Alright.</li>
+<li><code>E</code>, because we want to apply our function to the
+elements of the stream, not the chunks themselves. You see, our
+incoming stream is a stream of <code>Text</code> values,
+<em>not</em> <code>Char</code> values. <code>E</code> says “apply
+the function to the values <em>inside</em> the <code>Text</code>,
+not the <code>Text</code> itself.</li>
+<li><code>o</code>, because <code>Text</code> is a
+<em>monomorphic</em> container (it can only hold <code>Char</code>
+values). This comes from <code>mono-traversable</code>. The
+<code>o</code> choice is a bit strange, but it makes sense when you
+realize that the letter <code>m</code> is already used for a lot of
+things in Haskell.</li>
+</ul>
+</li>
+<li>We UTF-8 encode our text back to binary data using
+<code>encodeUtf8C</code></li>
+<li>And finally we dump the data to standard output with
+<code>stdoutC</code></li>
+</ul>
+<p>There are other ways to handle this in Haskell, both with and
+without conduit. You can use lazy I/O. You can use the built-in
+character encoding handling of <code>Handle</code>s. But the
+approach here is both pretty close to what we want to build in
+Rust, and is probably what I’d personally reach for in the first
+place. (Which makes sense; I wrote conduit.)</p>
+<p>Alright, that’s nice, Haskell’s awesome, blah blah blah. Let’s
+get onto the cool stuff: Rust!</p>
+<h2>Character mapping</h2>
+<p>Let’s knock out the easiest part of this. We want to create a
+<code>HashMap</code> to help us convert from Latin to Cyrilic. Our
+code looks remarkably similar in both Haskell and Rust. Let’s
+compare side-by-side:</p>
+<pre><code class="language-haskell">mapper :: HashMap Char Char
+mapper = HashMap.fromList $ zip
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+  "ДВСDЁҒGНІЈКLМПОРQЯЅТЦЏШХЧZавсdёfgніјкlмпорqгѕтцѵшхчz"
+
+convertChar :: Char -&gt; Char
+convertChar c = HashMap.lookupDefault c c mapper
+</code></pre>
+<pre><code class=
+"language-rust">let mapper: HashMap&lt;char, char&gt; =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".chars().zip(
+    "ДВСDЁҒGНІЈКLМПОРQЯЅТЦЏШХЧZавсdёfgніјкlмпорqгѕтцѵшхчz".chars())
+    .collect()
+    ;
+let convert_char = |c| *mapper.get(&amp;c).unwrap_or(&amp;c);
+</code></pre>
+<p>In both cases, we take our two strings, zip them into a sequence
+of pairs, and then turn that sequence of pairs into a
+<code>HashMap</code>. In Haskell, <code>String</code>s are a lazy
+list of characters, so the streaming nature of this is implicit. In
+Rust, we explicitly use an iterator interface (via
+<code>chars()</code>).</p>
+<p>Also, in Haskell, we can define this value and function at the
+top level, whereas in Rust it’s preferable to put this inside the
+<code>main</code> function (or face the wrath of <code>calls in
+constants are limited to tuple structs and tuple
+variants</code>).</p>
+<p>Let’s move on to something a bit more interesting.</p>
+<h2>UTF-8 in the Rust standard library</h2>
+<p>The first thing I wanted to find was some way to do UTF-8
+decoding in Rust. So I <a href=
+"https://doc.rust-lang.org/stable/std/?search=utf8">searched the
+standard library for <code>utf8</code></a>. I don’t remember
+exactly what steps I took originally, so consider this an artist’s
+rendering of my thought process.</p>
+<p>The first option that jumped out at me was <a href=
+"https://doc.rust-lang.org/stable/std/str/fn.from_utf8.html"><code>std::str::from_utf8</code></a>,
+which seemed like a good fit. Unfortunately, it had some
+issues:</p>
+<ul>
+<li>It took a <code>u8</code> slice as input, and that would mean
+choosing some arbitrary chunking size. That might be acceptable,
+except…</li>
+<li>The output is a simple <code>Result</code>, indicating either
+success or failure. However, there’s a third possibility in our
+streaming case: there were 1 or more bytes at the end of the input
+providing an incomplete UTF-8 encoding of a character, and we need
+to continue decoding with the next chunk of binary input.</li>
+</ul>
+<p>There may be workarounds with this, but they seem ugly, so I
+moved on. I also found <a href=
+"https://doc.rust-lang.org/stable/std/primitive.char.html#method.encode_utf8"><code>
+std::char::decode_utf8</code></a>, which looks like exactly what I
+would want. However:</p>
+<ul>
+<li>From the type signature, it does not appear to have any error
+handling capabilities.</li>
+<li>It’s a deprecated function, see <a href=
+"https://github.com/rust-lang/rust/issues/33906">#33906</a></li>
+</ul>
+<p>So this wasn’t looking too good. The final approach I considered
+was bypassing the UTF-8 decoding entirely, and working on the raw
+bytes. This would theoretically be possible, since the input
+characters we care about are all in the ASCII range. But:</p>
+<ul>
+<li>I wanted a challenge :)</li>
+<li>I wanted to match the Haskell code I wrote more closely</li>
+<li>I wanted to be able to support other conversions which may have
+involved non-ASCII input</li>
+</ul>
+<p>At this point, I <em>did</em> do a bit of research into existing
+streaming UTF-8 support in the Rust ecosystem, but didn’t get too
+far. If there is a go-to solution to this kind of thing, I’d love
+to hear about it. It looks like <code>encoding_rs</code> would
+support some of this, for example.</p>
+<p>Anyway, onward to my solution!</p>
+<h2><br>
+Difficult ergonomics with Iterators</h2>
+<p>I ultimately wanted to use the <a href=
+"https://doc.rust-lang.org/stable/std/io/trait.Read.html#method.bytes">
+<code>std::io::Read::bytes</code></a> function from the
+<code>StdinLock</code> struct to stream the bytes from standard
+input. To quote the docs:</p>
+<blockquote>
+<p>The returned type implements <code>Iterator</code> where the
+<code>Item</code> is <code>Result&lt;u8,io::Error&gt;</code>.</p>
+</blockquote>
+<p>Putting the error value into the stream like this is the
+idiomatic approach to dealing with errors in iterators in Rust.
+Rust By Example has <a href=
+"https://doc.rust-lang.org/stable/rust-by-example/error/iter_result.html">
+a page about iterating over <code>Result</code>s</a>, which could
+be useful if I were to follow this idiomatic approach.</p>
+<p>But that approach feels harder to my spoiled Haskeller brain,
+used to the bliss of relying on runtime exceptions to pretend like
+errors don’t occur. The iterator-of-results approach has extra
+ceremony. For example, instead of something like:</p>
+<pre><code class="language-rust">my_iter.map(convert_char)
+</code></pre>
+<p>I would end up needing something closer to:</p>
+<pre><code class=
+"language-rust">my_iter.map(|r| r.map(convert_char))
+</code></pre>
+<p>Can we somehow recover the Haskell-style ergonomics here?</p>
+<h2>Lift up error handling</h2>
+<p>When you take the iterating-over-result approach, you end up
+with a struct implementing <code>Iterator</code> providing a
+function:</p>
+<pre><code class=
+"language-rust">fn next(&amp;mut self) -&gt; Option&lt;Result&lt;T, E&gt;&gt;
+</code></pre>
+<p>That result type is isomorphic to something like:</p>
+<pre><code class="language-rust">pub enum Step&lt;T, E&gt; {
+  Done,
+  Yield(T),
+  Error(E),
+}
+</code></pre>
+<p>What if we just defined a new <code>trait</code> for error-able
+iterators that yield a stream of <code>T</code>s and error out with
+an <code>E</code>? Again, this is isomorphic to what we already
+defined, but might be easier to work with.</p>
+<pre><code class="language-rust">pub trait EIterator {
+    type Item;
+    type Error;
+
+    fn enext(&amp;mut self) -&gt; Step&lt;Self::Item, Self::Error&gt;;
+}
+</code></pre>
+<p>This works, but we’re going to make one more tweak.</p>
+<h2>Add in Skip</h2>
+<p>When I <a href=
+"/blog/2017/07/iterators-streams-rust-haskell">last blogged about
+iterators</a>, I explained why stream fusion in Haskell requires
+not just <code>Yield</code> and <code>Done</code> constructors, but
+also a <code>Skip</code> constructor. This had to do with
+performance in some cases by bypassing nested loops. Please see
+that blog post for more information.</p>
+<p>The <code>Skip</code> constructor signals that “hey, I don’t
+have any data for you yet, still processing, but I’m not done yet.”
+This turns out to be a perfect way to model UTF-8 decoding, where
+we’ll want to:</p>
+<ul>
+<li>Grab the next incoming byte</li>
+<li>If it’s in the ASCII range: turn it into a character and yield
+it</li>
+<li>Otherwise, consume the next 1, 2, or 3 bytes to complete the
+encoded character</li>
+</ul>
+<p>So we’ll modify the <code>Step</code> definition above to
+include that extra case:</p>
+<pre><code class="language-rust">pub enum Step&lt;T, E&gt; {
+    Done,
+    Yield(T),
+    Skip,
+    Error(E),
+}
+</code></pre>
+<p>Let’s make our first implementation of the
+<code>EIterator</code> trait.</p>
+<h2>Converting from iterators</h2>
+<p>We’re going to want to convert from iterators-of-results into
+our <code>EIterator</code>, at the very least to handle the
+<code>bytes()</code> call on <code>StdinLock</code> mentioned
+above. We’ll first define a newtype wrapper
+<code>ResultIterator</code>:</p>
+<pre><code class=
+"language-rust">pub struct ResultIterator&lt;I&gt;(I);
+</code></pre>
+<p>And then implement <code>EIterator</code> for it:</p>
+<pre><code class=
+"language-rust">impl&lt;I, T, E&gt; EIterator for ResultIterator&lt;I&gt;
+where
+    I: Iterator&lt;Item = Result&lt;T, E&gt;&gt;,
+{
+    type Item = T;
+    type Error = E;
+
+    fn enext(&amp;mut self) -&gt; Step&lt;Self::Item, Self::Error&gt; {
+        match self.0.next() {
+            Some(Ok(x)) =&gt; Step::Yield(x),
+            Some(Err(e)) =&gt; Step::Error(e),
+            None =&gt; Step::Done,
+        }
+    }
+}
+</code></pre>
+<p>The <code>Some&lt;Result&lt;T,E&gt;&gt;</code> maps directly to
+our <code>Step</code> enum, though there’s nothing to generate a
+<code>Skip</code>. Overall, pretty good. Now, to make it a bit
+easier to convert these, we want to add an <code>eiter()</code>
+method to all <code>Iterator</code>s of <code>Result</code>s:</p>
+<pre><code class="language-rust">pub trait ToEIter
+where
+    Self: Sized,
+{
+    fn eiter(self) -&gt; ResultIterator&lt;Self&gt; {
+        ResultIterator(self)
+    }
+}
+
+impl&lt;I, T, E&gt; ToEIter for I
+where
+    I: Iterator&lt;Item = Result&lt;T, E&gt;&gt;,
+{
+}
+</code></pre>
+<h2>Implementing map</h2>
+<p>One of the motivating cases for creating this new approach was
+the <code>map</code> function. First, I defined a helper function
+on the <code>EIterator</code> trait for stepping through an
+<code>EIterator</code> without having to pattern match all 4 cases
+each time:</p>
+<pre><code class=
+"language-rust">fn step&lt;F, B, E&gt;(&amp;mut self, mut f: F) -&gt; Step&lt;B, E&gt;
+where
+    F: FnMut(Self::Item) -&gt; Step&lt;B, E&gt;,
+    E: From&lt;Self::Error&gt;,
+{
+    match self.enext() {
+        Step::Done =&gt; Step::Done,
+        Step::Error(e) =&gt; Step::Error(From::from(e)),
+        Step::Skip =&gt; Step::Skip,
+        Step::Yield(x) =&gt; f(x),
+    }
+}
+</code></pre>
+<p>Notice that <code>Done</code> and <code>Skip</code> are returned
+verbatim, <code>Error</code> simply uses <code>From::from</code> to
+“upcast” the error type being used, and <code>Yield</code> calls
+the supplied closure. With this in place, creating our
+<code>Map</code> struct and implementing <code>EIterator</code>
+looks like this:</p>
+<pre><code class="language-rust">pub struct Map&lt;I, F&gt; {
+    iter: I,
+    func: F,
+}
+
+impl&lt;B, I: EIterator, F&gt; EIterator for Map&lt;I, F&gt;
+where
+    F: FnMut(I::Item) -&gt; B,
+{
+    type Item = B;
+    type Error = I::Error;
+
+    fn enext(&amp;mut self) -&gt; Step&lt;Self::Item, Self::Error&gt; {
+        let f = &amp;mut self.func;
+        self.iter.step(|x| Step::Yield(f(x)))
+    }
+}
+</code></pre>
+<p>With no need to deal with mapping on a <code>Result</code>
+value! Finally, we can add the following to the
+<code>EIterator</code> trait:</p>
+<pre><code class=
+"language-rust">fn map&lt;B, F&gt;(self, f: F) -&gt; Map&lt;Self, F&gt;
+where
+    Self: Sized,
+    F: FnMut(Self::Item) -&gt; B,
+{
+    Map {
+        iter: self,
+        func: f,
+    }
+}
+</code></pre>
+<p>That was a bit too easy, let’s go onto something a bit
+harder.</p>
+<h2>encode_utf8</h2>
+<p>UTF-8 encoding cannot fail, so we needn’t worry about any error
+cases. However, there is a different problem: 1 character of input
+can generate anywhere from 1 to 4 bytes of output. We need to keep
+track of bytes that still need to be yielded in our
+<code>EncodeUtf8</code> <code>struct</code>. I came up with
+this:</p>
+<pre><code class="language-rust">pub struct EncodeUtf8&lt;I&gt; {
+    iter: I,
+    buf: [u8; 4],
+    index: usize,
+}
+</code></pre>
+<p>This keeps the underlying <code>EIterator</code>, a buffer of up
+to 4 bytes in the UTF-8 encoding of the most recent character, and
+the next byte to be yielded from that buffer. If we have no bytes
+left to yield, then <code>index</code> is set to <code>4</code>
+(past the end of the buffer). We can add the following to the
+<code>EIterator</code> trait itself:</p>
+<pre><code class=
+"language-rust">fn encode_utf8(self) -&gt; EncodeUtf8&lt;Self&gt;
+where
+    Self: Sized,
+    Self: EIterator&lt;Item = char&gt;,
+{
+    EncodeUtf8 {
+        iter: self,
+        buf: [0; 4],
+        index: 4,
+    }
+}
+</code></pre>
+<p>And add this implementation of <code>EIterator</code> for
+<code>EncodeUtf8</code>:</p>
+<pre><code class=
+"language-rust">impl&lt;I, E&gt; EIterator for EncodeUtf8&lt;I&gt;
+where
+    I: EIterator&lt;Item = char, Error = E&gt;,
+{
+    type Item = u8;
+    type Error = E;
+
+    fn enext(&amp;mut self) -&gt; Step&lt;Self::Item, Self::Error&gt; {
+        if self.index &lt; 4 {
+            let res = self.buf[self.index];
+            self.index += 1;
+            if self.index &lt; 4 &amp;& self.buf[self.index] == 0 {
+                self.index = 4;
+            }
+            Step::Yield(res)
+        } else {
+            match self.iter.enext() {
+                Step::Done =&gt; Step::Done,
+                Step::Error(e) =&gt; Step::Error(e),
+                Step::Skip =&gt; Step::Skip,
+                Step::Yield(c) =&gt; {
+                    let len = c.encode_utf8(&amp;mut self.buf).len();
+                    if len &gt; 1 {
+                        self.index = 1;
+                        if len &lt; 4 {
+                            self.buf[len] = 0;
+                        }
+                    }
+                    Step::Yield(self.buf[0])
+                }
+            }
+        }
+    }
+}
+</code></pre>
+<p>Note that we get to leverage <code>char</code>’s
+<code>encode_utf8</code> function. Yay, less code to implement
+ourselves! Each time <code>enext</code> is called, we do the
+following:</p>
+<ul>
+<li>Check if <code>index</code> is less than 4. If so, we have more
+bytes to yield now:
+<ul>
+<li>Increment the index</li>
+<li>Check if the next byte is null, and if so set the index to
+4</li>
+<li>Yield the current byte</li>
+</ul>
+</li>
+<li>Otherwise:
+<ul>
+<li>Get the next value from the wrapped iterator</li>
+<li>If it’s <code>Done</code>, <code>Error</code>, or
+<code>Skip</code>, return that value</li>
+<li>If it’s <code>Yield</code>:
+<ul>
+<li>UTF-8 encode the character into the buffer</li>
+<li>If the length is greater than 1, set the index to 1, so that
+the next call to <code>enext</code> will yield the other bytes</li>
+<li>Yield the first byte in the buffer</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Now we’re ready for the really bad boy:
+<code>decode_utf8</code></p>
+<h2>decode_utf8</h2>
+<p>The first thing to tackle about UTF-8 decoding is how to handle
+errors. Each time we call <code>enext</code>, there are two
+possible errors that may occur:</p>
+<ul>
+<li>The underlying error from the wrapped <code>EIterator</code>,
+such as <code>std::io::Error</code></li>
+<li>Some UTF-8 decoding error</li>
+</ul>
+<p>For the latter, we can define an enum
+<code>DecodeUtf8Error</code> easily enough. In order to unify the
+two different error types, we’ll require <code>Self::Error:
+From&lt;DecodeUtf8Error&gt;</code>. Our <code>decode_utf8</code>
+implementation in <code>EIterator</code> looks like:</p>
+<pre><code class=
+"language-rust">fn decode_utf8(self) -&gt; DecodeUtf8&lt;Self&gt;
+where
+    Self: Sized,
+    Self: EIterator&lt;Item = u8&gt;,
+    Self::Error: From&lt;DecodeUtf8Error&gt;,
+{
+    DecodeUtf8 {
+        iter: self,
+        count: 0,
+        res: 0,
+    }
+}
+</code></pre>
+<p>You may be wondering: don’t we want to have an
+application-specific error type instead of using the underlying
+<code>std::io::Error</code>? Don’t worry, we’ll get to that in two
+sections.</p>
+<p>As you can see already, <code>DecodeUtf8</code> has three
+fields. Let’s see them more properly:</p>
+<pre><code class="language-rust">pub struct DecodeUtf8&lt;I&gt; {
+    iter: I,
+    count: u8,
+    res: u32,
+}
+</code></pre>
+<p><code>iter</code> is the wrapped <code>EIterator</code>.
+<code>count</code> is the number of bytes left to be processed in
+the current sequence. And <code>res</code> is the accumulator for
+the next character being decoded. This’ll make more sense as we
+look at the code.</p>
+<p>First, basic ceremony:</p>
+<pre><code class=
+"language-rust">impl&lt;I&gt; EIterator for DecodeUtf8&lt;I&gt;
+where
+    I: EIterator&lt;Item = u8&gt;,
+    I::Error: From&lt;DecodeUtf8Error&gt;,
+{
+    type Item = char;
+    type Error = I::Error;
+
+    fn enext(&amp;mut self) -&gt; Step&lt;Self::Item, Self::Error&gt; {
+</code></pre>
+<p>Next we want to grab the next incoming byte. If an error is
+returned, we’ll just return it ourselves. Same with a
+<code>Skip</code>. In the case of a <code>Yield</code>, we’ve
+gotten our byte. <code>Done</code> is the only special case:</p>
+<ul>
+<li>If we’re in the middle of decoding a sequence, we need to
+return an error about an invalid UTF-8 codepoint</li>
+<li>Otherwise, we’re simply done processing the stream</li>
+</ul>
+<pre><code class="language-rust">let b = match self.iter.enext() {
+    Step::Done =&gt; {
+        if self.count == 0 {
+            return Step::Done;
+        } else {
+            return Step::Error(From::from(DecodeUtf8Error::InvalidUtf8Codepoint));
+        }
+    }
+    Step::Error(e) =&gt; {
+        return Step::Error(e);
+    }
+    Step::Skip =&gt; {
+        return Step::Skip;
+    }
+    Step::Yield(b) =&gt; b,
+};
+</code></pre>
+<p>We’ve now got our next byte. If the <code>self.count</code> is
+0, it means that we are not in the middle of a codepoint, and so we
+can treat this as the first byte in a codepoint. With a bit of bit
+twiddling, we can determine the number of bytes in the codepoint.
+If it’s just 1 (ASCII), we yield the character. Otherwise, we
+prepare for a multibyte codepoint:</p>
+<pre><code class="language-rust">if self.count == 0 {
+    if b & 0b1000_0000 == 0 {
+        // ASCII
+        Step::Yield(unsafe { std::char::from_u32_unchecked(b.into()) })
+    } else {
+        self.count = if b & 0b1110_0000 == 0b1100_0000 {
+            // 2 bytes
+            self.res = u32::from(b & 0b0001_1111);
+            1
+        } else if b & 0b1111_0000 == 0b1110_0000 {
+            // 3 bytes
+            self.res = u32::from(b & 0b0000_1111);
+            2
+        } else {
+            // 4 bytes
+            assert!(b & 0b1111_1000 == 0b1111_0000);
+            self.res = u32::from(b & 0b0000_0111);
+            3
+        };
+        Step::Skip
+    }
+</code></pre>
+<p>Finally, when in the middle of a multibyte codepoint, we
+decrement the count of bytes left, shift the result 6 bits to the
+left, and bitwise-or in the 6 least significant bits of the next
+byte. If we get down to <code>count == 0</code>, then we yield the
+character:</p>
+<pre><code class="language-rust">self.count -= 1;
+self.res = (self.res &lt;&lt; 6) | (u32::from(b) & 0b0011_1111);
+if self.count == 0 {
+    Step::Yield(unsafe { std::char::from_u32_unchecked(self.res) })
+} else {
+    Step::Skip
+}
+</code></pre>
+<p>Hurrah! Just one more helper function before our glorious
+program can be written.</p>
+<h2>write_to</h2>
+<p>We want to write out our resulting bytes to standard output. To
+do this, we’re going to fill up a buffer with bytes, flush to
+stdout, and repeat until we’re empty. We can just use a
+<code>for</code> loop to do that. Inside
+<code>EIterator</code>:</p>
+<pre><code class=
+"language-rust">fn write_to&lt;W: Write&gt;(self, mut hout: W) -&gt; Result&lt;(), Self::Error&gt;
+where
+    Self: EIterator&lt;Item = u8&gt;,
+    Self: Sized,
+    Self::Error: From&lt;io::Error&gt;,
+{
+    const SIZE: usize = 4096;
+    let mut buf = [0; SIZE];
+    let mut i: usize = 0;
+
+    for next in self.iter() {
+        let b = next?;
+        buf[i] = b;
+        i += 1;
+
+        if i == SIZE {
+            hout.write_all(&amp;buf)?;
+            i = 0;
+        }
+    }
+
+    if i &gt; 0 {
+        hout.write_all(&amp;buf[..i])?;
+    }
+
+    Ok(())
+}
+</code></pre>
+<p>Ah… I <em>almost</em> got to pull a fast one on you. Certainly
+<code>for</code> loops can’t work on our custom
+<code>EIterator</code> trait you say. And you’d be right. We have
+to write some way to convert back into a normal
+<code>Iterator</code>:</p>
+<pre><code class="language-rust">pub trait EITerator {
+    ...
+    fn iter(self) -&gt; ToResultIterator&lt;Self&gt;
+    where
+        Self: Sized,
+    {
+        ToResultIterator(self)
+    }
+}
+
+pub struct ToResultIterator&lt;I&gt;(I);
+
+impl&lt;I&gt; Iterator for ToResultIterator&lt;I&gt;
+where
+    I: EIterator,
+{
+    type Item = Result&lt;I::Item, I::Error&gt;;
+
+    fn next(&amp;mut self) -&gt; Option&lt;Self::Item&gt; {
+        loop {
+            match self.0.enext() {
+                Step::Done =&gt; {
+                    return None;
+                }
+                Step::Skip =&gt; (),
+                Step::Error(e) =&gt; {
+                    return Some(Err(e));
+                }
+                Step::Yield(x) =&gt; {
+                    return Some(Ok(x));
+                }
+            }
+        }
+    }
+}
+</code></pre>
+<p>And notice how, within our <code>for</code> loop, we have
+this:</p>
+<pre><code class="language-rust">for next in self.iter() {
+    let b = next?;
+</code></pre>
+<p>This means that any errors raised anywhere in any of our
+iterators will end up getting returned as <code>Err</code> right
+here. Which mirrors the runtime exception behavior of Haskell
+pretty closely, and happens to be exactly what we want in this
+case.</p>
+<h2>The main function</h2>
+<p>After all of that, we can finally write our <code>main</code>
+function. Using the <code>convert_char</code> implementation
+described at the very beginning, we get:</p>
+<pre><code class="language-rust">let stdin = io::stdin();
+let stdout = io::stdout();
+
+stdin
+    .lock()
+    .bytes()
+    .eiter()
+    .map_error(MyAppError::IOError)
+    .decode_utf8()
+    .map(convert_char)
+    .encode_utf8()
+    .write_to(stdout.lock())?;
+
+Ok(())
+</code></pre>
+<p>Which, frankly, is pretty close to the original Haskell version!
+There’s a bit more overhead with locking the handles, and we need
+to deal with convert to <code>bytes()</code> and converting that
+<code>bytes()</code> into an <code>EIterator</code>. But that’s not
+too bad.</p>
+<p>The only other trick that I haven’t explained is that call to
+<code>map_error</code>. It works just like <code>map</code>, except
+it modifies the error value, not the stream value. I’ve defined an
+application enum error type:</p>
+<pre><code class="language-rust">pub enum MyAppError {
+    IOError(std::io::Error),
+    DecodeUtf8Error(DecodeUtf8Error),
+}
+</code></pre>
+<p>With appropriate <code>From</code> implementations for
+<code>std::io::Error</code> and <code>DecodeUtf8Error</code>. This
+is how we get all of the error types to line up: when we initially
+convert from an iterator-of-results, use <code>map_error</code> to
+convert that error type into the final error type for the entire
+stream, and make sure the <code>From</code> implementations are
+available as necessary.</p>
+<h2>Comparison</h2>
+<p>Haskell’s got some obvious advantages here:</p>
+<ul>
+<li>If you accept conduit as a standard solution: the standard
+solution solves the problem nicely</li>
+<li>There’s no need to think too hard about error handling:
+exceptions just do the right thing, and conduit’s types do a good
+job of ensuring resources are cleaned up</li>
+</ul>
+<p>However, Rust comes out not too shabby either:</p>
+<ul>
+<li>Sure, there was a lot of work to define that
+<code>EIterator</code> trait, but that’s work that in theory would
+happen once and be shared</li>
+<li>And again, sure, it’s using a non-standard approach, but it’s
+not like conduit is part of the Haskell standard library
+either</li>
+<li>In Rust, we get away without thinking at all about chunking,
+since the iterator approach is efficient enough to work directly on
+the values inside chunks
+<ul>
+<li>We can’t get away with this in conduit because of the GC
+overhead of creating and destroying a bunch of intermediate data
+constructors</li>
+<li>A more fusion-friendly approach like <a href=
+"https://www.yesodweb.com/blog/2016/02/first-class-stream-fusion">vegito</a>
+may be able to solve this problem</li>
+</ul>
+</li>
+<li>We know exactly what errors our code might generate</li>
+<li>And the <code>From</code> trait makes error handling
+not-terrible</li>
+</ul>
+<p>There is one final pain point that I’ve glossed over for Rust:
+the type inference in this kind of solution is fairly brittle. I
+had to play with things quite a bit to get it to line up perfect.
+Adding explicit type signatures may be necessary in real world
+code.</p>
+<h2>Conclusion</h2>
+<p>This was definitely a fun problem to tackle. As is probably
+obvious by now, I really like analyzing streaming data problems,
+and comparing Haskell and Rust for this is fascinating. I’m not at
+all convinced that this is a good approach in general though.
+Iterating-over-result can probably instead just be made more
+ergonomic with better helper functions and more documentation.</p>
+<h2>About Us</h2>
+<p>FP Complete specializes in using best in class tools and
+languages, including (as you may guess) Haskell and Rust, to help
+our customers solve complex problems. If you’re interested in
+hearing more or setting up a consultation, <a href="/cdn-cgi/l/email-protection#1e6d7f727b6d5e786e7d71736e727b6a7b307d7173">shoot us an email</a>.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Streaming%20UTF-8%20in%20Haskell%20and%20Rust https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;streaming-utf8-haskell-rust&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;streaming-utf8-haskell-rust&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;streaming-utf8-haskell-rust&#x2F;&amp;title=Streaming%20UTF-8%20in%20Haskell%20and%20Rust"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;streaming-utf8-haskell-rust&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#057664696076456375666a6875696071602b666a68" targe="_blank"><span class="__cf_email__" data-cfemail="4635272a233506203625292b362a2332236825292b">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

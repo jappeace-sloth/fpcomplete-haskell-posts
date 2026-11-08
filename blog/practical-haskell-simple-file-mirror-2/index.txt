@@ -1,0 +1,275 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Practical Haskell: Simple File Mirror (Part 2)
+
+By Michael Snoyman, September 21, 2016
+
+Share this     
+
+This is part 2 of a three part series. If you haven't seen it already, I'd recommend starting with
+the first part, which covers communication protocols and streaming of data. This second part will
+cover network communication and some basic concurrency in Haskell.
+
+Simple HTTP client
+
+We saw previously how to send and receive binary data using the conduit library. We're going to
+build on this with a conduit-aware network library. This first example will make a very simplistic,
+hard-coded HTTP request and send the entire response from the server to standard output.
+
+#!/usr/bin/env stack
+-- stack --resolver nightly-2016-09-10 --install-ghc runghc --package classy-prelude-conduit
+
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
+import ClassyPrelude.Conduit
+import Data.Conduit.Network (runTCPClient, appSource, appSink, clientSettings)
+
+main :: IO ()
+main = runTCPClient settings $ \appData -> do
+    yield request $$ appSink appData
+    appSource appData $$ stdoutC
+  where
+    settings = clientSettings 80 "httpbin.org"
+
+request :: ByteString
+request = encodeUtf8 $ unlines
+    [ "GET /get?foo=bar&baz=bin HTTP/1.1"
+    , "Host: httpbin.org"
+    , "User-Agent: Practical Haskell"
+    , "Connection: close"
+    , ""
+    ]
+
+The runTCPClient creates the actual TCP connection, and provides access to it via the appData
+value. This value allows us to send data to the server (via appSink) and get data from the server
+(via appSource). We can also get information about the connection such as the locally used port
+number, which we're not using in this example.
+
+We've hard-coded a settings value that states we should connect to host httpbin.org* on port 80.
+We've also hard-coded an HTTP request body, which is thoroughly uninteresting.
+
+Once our connection has been established, we send our hard-coded request to the server with yield
+request $$ appSink appData. When that's complete, we stream all data from the server to standard
+output with appSource appData $$ stdoutC.
+
+The output from this looks very much like you'd expect it to:
+
+HTTP/1.1 200 OK
+Server: nginx
+Date: Wed, 21 Sep 2016 07:38:30 GMT
+Content-Type: application/json
+Content-Length: 224
+Connection: close
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Credentials: true
+
+{
+  "args": {
+    "baz": "bin",
+    "foo": "bar"
+  },
+  "headers": {
+    "Host": "httpbin.org",
+    "User-Agent": "Practical Haskell"
+  },
+  "origin": "31.210.186.0",
+  "url": "https://httpbin.org/get?foo=bar&baz=bin"
+}
+
+* Side note: anyone playing with HTTP client software should definitely check out httpbin.org, it's
+a great resource.
+
+Upgrading to TLS
+
+On a small tangent, it's trivial to adapt the above program to work over secure HTTPS instead of
+plaintext HTTP. All we need to do is:
+
+  • Use the Data.Conduit.Network.TLS module from the network-conduit-tls library
+  • Swap runTLSClient for runTCPClient, and tlsClientConfig for clientSettings
+  • Change port 80 to port 443
+
+The code looks as follows. To convince yourself that this is real: go ahead and run it and see what
+the url value in the response body looks like.
+
+#!/usr/bin/env stack
+{- stack --resolver nightly-2016-09-10 --install-ghc runghc
+     --package classy-prelude-conduit
+     --package network-conduit-tls
+-}
+
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
+import ClassyPrelude.Conduit
+import Data.Conduit.Network (appSink, appSource)
+import Data.Conduit.Network.TLS (runTLSClient, tlsClientConfig)
+
+main :: IO ()
+main = runTLSClient settings $ \appData -> do
+    yield request $$ appSink appData
+    appSource appData $$ stdoutC
+  where
+    settings = tlsClientConfig 443 "httpbin.org"
+
+request :: ByteString
+request = encodeUtf8 $ unlines
+    [ "GET /get?foo=bar&baz=bin HTTP/1.1"
+    , "Host: httpbin.org"
+    , "User-Agent: Practical Haskell"
+    , "Connection: close"
+    , ""
+    ]
+
+Echo server
+
+Let's play with the server side of things. We're going to implement an echo server, which will
+receive a chunk of data from the client and then send it right back.
+
+#!/usr/bin/env stack
+-- stack --resolver nightly-2016-09-10 --install-ghc runghc --package classy-prelude-conduit
+
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
+import ClassyPrelude.Conduit
+import Data.Conduit.Network (appSink, appSource, runTCPServer, serverSettings)
+
+main :: IO ()
+main =
+    runTCPServer settings $ \appData -> appSource appData $$ appSink appData
+  where
+    settings = serverSettings 4200 "*"
+
+This listens on port 4200, on all network interfaces ("*"). We start our server with runTCPServer,
+which grabs a listening socket and waits for connections. For each connection, it forks a new
+thread, and runs the provided application. In this case, our application is trivial: we connect the
+source to the sink, automatically piping data from the connection back to itself.
+
+To stress a point above: this is a fully multithreaded server application. You can make multiple
+telnet connections to the server and interact with each of them independently. This is a lot of
+bang for very little buck.
+
+For those of you concerned about the inefficiency of forking a new thread for each incoming
+connection: Haskell's runtime is built on top of green threads, making the act of forking very
+cheap. There are more details available in a talk I gave on "Haskell for fast, concurrent, robust
+services" (video link).
+
+Full duplex
+
+The examples so far have all been half duplex, meaning they have always been either sending or
+receiving data. Let's implement a full duplex application: a simple telnet client replacement. We
+need to wait for any input from standard input, while at the same time waiting for any input from
+the socket. We're going to take advantage of Haskell threading to handle this case too:
+
+#!/usr/bin/env stack
+-- stack --resolver nightly-2016-09-10 --install-ghc runghc --package classy-prelude-conduit
+
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
+import ClassyPrelude.Conduit
+import Data.Conduit.Network (appSink, appSource, runTCPClient, clientSettings)
+
+main :: IO ()
+main = runTCPClient settings $ \appData -> race_
+    (stdinC $$ appSink appData)
+    (appSource appData $$ stdoutC)
+  where
+    settings = clientSettings 4200 "localhost"
+
+The race_ function is a wonderful helper for concurrency, which says "run these two actions, see
+which one finishes first, kill the other one, and ignore any results (the _ at the end of the
+name)." It has a sibling function, concurrently, for running two things until they both complete.
+You can implement a surprisingly large number of common concurrency solutions using just these two
+functions. For more information, see the library package tutorial on haskell-lang.org.
+
+You may be terrified of the performance characteristics of this: we've introduced two blocking
+threads, when theoretically callback-based I/O would be far more efficient! Not to worry: in
+Haskell, the runtime system uses a fully callback based system under the surface, using whatever
+system calls are relevant for your operating system. When a Haskell green thread makes a "blocking"
+I/O call, what actually happens is the runtime puts the thread to sleep, installs a callback
+handler to wait for data to be available, and when the callback is triggered, wakes the green
+thread up again.
+
+The details of the Haskell runtime are well described in the paper Mio: A High-Performance
+Multicore IO Manager for GHC. Fortunately, for most real world cases, you can write the naive,
+easy-to-conceptualize I/O operations based on blocking semantics, and automatically get the great
+performance you'd want from event/callback based system calls.
+
+Client and server in same process
+
+Just to prove that we can: let's throw our client and server into a single process, using the same
+concurrency approach we've had until now.
+
+#!/usr/bin/env stack
+-- stack --resolver nightly-2016-09-10 --install-ghc runghc --package classy-prelude-conduit
+
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
+import ClassyPrelude.Conduit
+import Data.Conduit.Network (appSink, appSource, runTCPClient, clientSettings, runTCPServer, serverSettings)
+
+main :: IO ()
+main = race_ server client
+
+server :: IO ()
+server =
+    runTCPServer settings $ \appData -> appSource appData $$ appSink appData
+  where
+    settings = serverSettings 4200 "*"
+
+client :: IO ()
+client = do
+    -- Sleep for 1 second (1 million microsecond) to give the server a
+    -- chance to start up. There are definitely better ways to do
+    -- this, but this is good enough for our example.
+    threadDelay 1000000
+
+    runTCPClient settings $ \appData -> race_
+        (stdinC $$ appSink appData)
+        (appSource appData $$ stdoutC)
+  where
+    settings = clientSettings 4200 "localhost"
+
+This isn't a particularly useful application (stdinC $$ stdoutC would do the same thing without
+wasting a network connection), but it does show how easy it is to combine various pieces of code in
+Haskell for concurrent applications.
+
+Next time on Practical Haskell
+
+We've so far figured out how to deal with our simple file mirror's communication protocol, and how
+to do network communication. All that's left is combining these two things together and wrapping it
+up with a command line interface. Stay tuned!
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

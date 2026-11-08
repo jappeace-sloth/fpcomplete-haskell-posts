@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta charset="UTF-8">
+        <title>The typed-process library</title>
+        
+        <meta name="description" content="The typed-process library is a newer library for launching external processes from Haskell. Learn why you may want to try it out.">
+        
+        <link rel="stylesheet" type="text/css" href="/default.css">
+        <link rel="stylesheet" type="text/css" href="/css/style.css">
+        <link href="/rss.xml" type="application/rss+xml" rel="alternate" title="tech.fpcomplete.com rss feed">
+
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'UA-36928035-3');
+        </script>
+
+        
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/zenburn.min.css">
+
+
+    </head>
+    <body>
+    <div class="container">
+      <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
+        <h5 class="my-0 mr-md-auto font-weight-normal">
+          <a href="/">
+              <img src="/images/fp-complete-logo-small.png">
+          </a>
+        </h5>
+          <nav class="my-2 my-md-0 mr-md-3">
+              <a class="p-2 text-dark" href="/blog">Blog</a>
+              <a class="p-2 text-dark" href="/tech">Technology</a>
+              <a class="p-2 text-dark" href="/haskell">Haskell</a>
+              <a class="p-2 text-dark" href="/rust">Rust</a>
+              <a class="p-2 text-dark" href="/devops">DevOps</a>
+          </nav>
+      </div>
+          
+
+        <main>
+          
+
+<h1>The typed-process library</h1>
+<p class="byline">By Michael Snoyman, published February 24, 2017</p>
+
+<article>
+
+  
+    
+    <p>In October of last year, I published a new library - <a href=
+"https://haskell-lang.org/library/typed-process">typed-process</a>.
+It builds on top of the veritable process package, and provides an
+alternative API (which I'll explain in a bit). It's not the first
+time I've written such a wrapper library; I first did so when
+creating <a href=
+"https://www.stackage.org/haddock/lts-8.2/conduit-extra-1.1.15/Data-Conduit-Process.html">
+Data.Conduit.Process</a>, which is just a thin wraper around
+<a href=
+"https://www.stackage.org/haddock/lts-8.2/streaming-commons-0.1.17/Data-Streaming-Process.html">
+Data.Streaming.Process</a>.</p>
+<p>With this proliferation of APIs, why did I go for another one?
+With Data.(Conduit/Streaming).Process, I tried to stay as close as
+possible to the underlying process API. And the underlying process
+API is rigid for (at least) two reasons:</p>
+<ul>
+<li>It's one of the most used APIs in the Haskell ecosystem, so
+breaking changes carry a very high cost</li>
+<li>Since process is a dependency of GHC itself (a boot library),
+we're limited in adding dependencies</li>
+</ul>
+<p>After I got sufficiently fed up with limitations in the existing
+APIs, I decided to take a crack at doing it all from scratch. I
+made a small announcement on Twitter, and have been using this
+library regularly since its release. In addition, a few people have
+raised questions on the process issue tracker whose simplest answer
+is IMO "use typed-process." Therefore, I think now's a good time to
+discuss the library more publicly and get some feedback as to what
+to do with it.</p>
+<h2 id="overview-of-typed-process">Overview of typed-process</h2>
+<p>There is both a <a href=
+"https://haskell-lang.org/library/typed-process">typed-process
+tutorial</a> and <a href=
+"https://www.stackage.org/haddock/lts/typed-process/System-Process-Typed.html">
+Haddock documentation</a> available. If you want details, you
+should read those. This section is intended to give a little taste
+of typed-process to set the stage for the rest of the post.</p>
+<p>Everything starts with the <code>ProcessConfig</code> datatype,
+which specified all the rules for how we're going to run an
+external process. This includes all of the common settings from the
+<code>CreateProcess</code> type in the process package, like
+changing the working directory or environment variables.
+Importantly (and the source of the "typed" in the library name),
+<code>ProcessConfig</code> takes three type parameters,
+representing the type of the three standard streams (input, output,
+and error). For example, <code>ProcessConfig Handle Handle
+Handle</code> indicates that all three streams will have
+<code>Handle</code>s, whereas <code>ProcessConfig () (STM
+ByteString) ()</code> indicates that input and error will be unit,
+but output can be access as an <code>STM</code> action which
+returns a <code>ByteString</code>. (Much more on this later.)</p>
+<p>There are multiple helper functions - like
+<code>withProcess</code> or <code>readProcess</code> - to take a
+<code>ProcessConfig</code> and turn it into a live, running
+process. These running processes are represented by the
+<code>Process</code> type, which like <code>ProcessConfig</code>
+takes three type parameters. There are underscore variants of these
+launch functions (like <code>withProcess_</code> and
+<code>readProcess_</code>) to automatically check the exit code of
+a process and, if unsuccessful, throw a runtime exception.</p>
+<p>You can access the exit code of a process with
+<code>waitExitCode</code> and <code>getExitCode</code>, which are
+blocking and non-blocking, respectively. These functions also come
+in <code>STM</code> variants to more easily work with processes
+from atomic sections of code.</p>
+<p>Alright, enough overview, let's start talking about
+motivation.</p>
+<h2 id="downsides-of-process">Downsides of process</h2>
+<p>The typed-process tutorial identifies five limitations in the
+process library that I wanted to overcome. (There's also a sixth
+issue I'm aware of, a race condition, which I've added as a bonus
+section.) Let's dive into these more deeply, and see how
+typed-process addresses them.</p>
+<h3 id="type-variables">Type variables</h3>
+<p>I've made a big deal about type variables so far. I believe this
+is the biggest driving force behind the more usable API in
+typed-process. Let's consider some idiomatic process-based
+code.</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --install-ghc --resolver lts-8.0 runghc</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Exception</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Process</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Exit</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-layout">(</span><span class=
+"hs-conid">Just</span> <span class=
+"hs-varid">inh</span><span class="hs-layout">,</span> <span class=
+"hs-conid">Just</span> <span class=
+"hs-varid">outh</span><span class="hs-layout">,</span> <span class=
+"hs-conid">Nothing</span><span class=
+"hs-layout">,</span> <span class="hs-varid">ph</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">createProcess</span>
+        <span class="hs-layout">(</span><span class=
+"hs-varid">proc</span> <span class=
+"hs-str">"cat"</span> <span class=
+"hs-keyglyph">[</span><span class="hs-str">"-"</span><span class=
+"hs-layout">,</span> <span class=
+"hs-str">"/usr/share/dict/words"</span><span class=
+"hs-keyglyph">]</span><span class="hs-layout">)</span>
+            <span class="hs-layout">{</span> <span class=
+"hs-varid">std_in</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">CreatePipe</span>
+            <span class="hs-layout">,</span> <span class=
+"hs-varid">std_out</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">CreatePipe</span>
+            <span class="hs-layout">}</span>
+    <span class="hs-varid">hPutStrLn</span> <span class=
+"hs-varid">inh</span> <span class=
+"hs-str">"This is the list of all words:"</span>
+    <span class="hs-varid">hClose</span> <span class=
+"hs-varid">inh</span>
+    <span class="hs-varid">out</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">hGetContents</span> <span class="hs-varid">outh</span>
+    <span class="hs-varid">evaluate</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">length</span> <span class=
+"hs-varid">out</span> <span class=
+"hs-comment">-- lazy I/O :(</span>
+    <span class="hs-varid">mapM_</span> <span class=
+"hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">take</span> <span class=
+"hs-num">100</span> <span class="hs-varop">$</span> <span class=
+"hs-varid">lines</span> <span class="hs-varid">out</span>
+    <span class="hs-varid">ec</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">waitForProcess</span> <span class="hs-varid">ph</span>
+    <span class="hs-keyword">if</span> <span class=
+"hs-layout">(</span><span class="hs-varid">ec</span> <span class=
+"hs-varop">==</span> <span class=
+"hs-conid">ExitSuccess</span><span class="hs-layout">)</span>
+        <span class="hs-keyword">then</span> <span class=
+"hs-varid">return</span> <span class="hs-conid">()</span>
+        <span class="hs-keyword">else</span> <span class=
+"hs-varid">error</span> <span class=
+"hs-varop">$</span> <span class="hs-str">"cat process failed: "</span> <span class="hs-varop">++</span> <span class="hs-varid">show</span> <span class="hs-varid">ec</span></pre>
+<p>The fact that <code>std_in</code> and <code>std_out</code>
+specify the creation of a <code>Handle</code> is not reflected in
+the types at all. If we left those changes out, our program would
+still compile, but our pattern match of <code>(Just inh, Just
+outh</code> would fail. By moving this information into the type
+system, we can catch bugs at compile time. Here's the equivalent
+code as above:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --install-ghc --resolver lts-8.0 runghc --package typed-process</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Exception</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Process</span><span class=
+"hs-varop">.</span><span class="hs-conid">Typed</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-varid">procConf</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">setStdin</span> <span class="hs-varid">createPipe</span>
+                 <span class="hs-varop">$</span> <span class=
+"hs-varid">setStdout</span> <span class=
+"hs-varid">createPipe</span>
+                 <span class="hs-varop">$</span> <span class=
+"hs-varid">proc</span> <span class=
+"hs-str">"cat"</span> <span class=
+"hs-keyglyph">[</span><span class="hs-str">"-"</span><span class=
+"hs-layout">,</span> <span class=
+"hs-str">"/usr/share/dict/words"</span><span class=
+"hs-keyglyph">]</span>
+    <span class="hs-varid">withProcess_</span> <span class=
+"hs-varid">procConf</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">p</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+        <span class="hs-varid">hPutStrLn</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">getStdin</span> <span class=
+"hs-varid">p</span><span class="hs-layout">)</span> <span class=
+"hs-str">"This is the list of all words:"</span>
+        <span class="hs-varid">hClose</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">getStdin</span> <span class="hs-varid">p</span>
+        <span class="hs-varid">out</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">hGetContents</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">getStdout</span> <span class="hs-varid">p</span>
+        <span class="hs-varid">evaluate</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">length</span> <span class=
+"hs-varid">out</span> <span class=
+"hs-comment">-- lazy I/O :(</span>
+        <span class="hs-varid">mapM_</span> <span class=
+"hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">take</span> <span class=
+"hs-num">100</span> <span class="hs-varop">$</span> <span class=
+"hs-varid">lines</span> <span class="hs-varid">out</span></pre>
+<p>If you leave off the <code>setStdin</code> or
+<code>setStdout</code> calls, the program will not compile. But
+this is only the beginning. Instead of being limited to either
+generating a <code>Handle</code> or not, we now have huge amounts
+of flexibility in how we configure our streams. For example, here's
+an alternative approach to providing standard input to the
+process:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --install-ghc --resolver lts-8.0 runghc --package typed-process</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Exception</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Process</span><span class=
+"hs-varop">.</span><span class="hs-conid">Typed</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-varid">procConf</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">setStdin</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">byteStringInput</span> <span class=
+"hs-str">"This is the list of all words:\n"</span><span class=
+"hs-layout">)</span>
+                 <span class="hs-varop">$</span> <span class=
+"hs-varid">setStdout</span> <span class=
+"hs-varid">createPipe</span>
+                 <span class="hs-varop">$</span> <span class=
+"hs-varid">proc</span> <span class=
+"hs-str">"cat"</span> <span class=
+"hs-keyglyph">[</span><span class="hs-str">"-"</span><span class=
+"hs-layout">,</span> <span class=
+"hs-str">"/usr/share/dict/words"</span><span class=
+"hs-keyglyph">]</span>
+    <span class="hs-varid">withProcess_</span> <span class=
+"hs-varid">procConf</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">p</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+        <span class="hs-varid">out</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">hGetContents</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">getStdout</span> <span class="hs-varid">p</span>
+        <span class="hs-varid">evaluate</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">length</span> <span class=
+"hs-varid">out</span> <span class=
+"hs-comment">-- lazy I/O :(</span>
+        <span class="hs-varid">mapM_</span> <span class=
+"hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">take</span> <span class=
+"hs-num">100</span> <span class="hs-varop">$</span> <span class=
+"hs-varid">lines</span> <span class="hs-varid">out</span></pre>
+<p>There <i>are</i> functions in the process package that allow
+specifying standard input this easily, but they are not as
+composable as this approach (as we'll discuss below).</p>
+<p>There's much more to be said about these type parameters, but
+hopefully this taste, plus the further examples in this post, will
+demonstrate their usefulness.</p>
+<h3 id="proper-concurrency">Proper concurrency</h3>
+<p>Functions like <code>readProcessWithExitCode</code> use some
+pretty hairy (IMO) lazy I/O tricks internally to read the output
+and error streams from a process. For the most part, you can simply
+use these functions without worrying about the crazy innards.
+However, consider if you want to do something off the beaten track,
+like capture the error stream while allowing the output stream to
+go to the parent process's stdout. There's no built-in function in
+process to handle that, so you'll be stuck implementing that
+behavior. And this functionality is far from trivial to get
+right.</p>
+<p>By contrast, typed-process does not use any lazy I/O. And while
+it provides a <code>readProcess</code> function, there's nothing
+magical about it; it's built on top of the
+<code>byteStringOutput</code> stream config, which uses proper
+threading under the surface and provides its output via
+<code>STM</code> for even nicer concurrent coding.</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --install-ghc --resolver lts-8.0 runghc --package typed-process</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Concurrent</span><span class="hs-varop">.</span><span class="hs-conid">STM</span> <span class="hs-layout">(</span><span class="hs-varid">atomically</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Process</span><span class=
+"hs-varop">.</span><span class="hs-conid">Typed</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span><span class=
+"hs-varop">.</span><span class="hs-conid">Lazy</span><span class=
+"hs-varop">.</span><span class="hs-conid">Char8</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">L8</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-varid">procConf</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">setStdin</span> <span class="hs-varid">closed</span>
+                 <span class="hs-varop">$</span> <span class=
+"hs-varid">setStderr</span> <span class=
+"hs-varid">byteStringOutput</span>
+                 <span class="hs-varop">$</span> <span class=
+"hs-varid">proc</span> <span class=
+"hs-str">"stack"</span> <span class=
+"hs-keyglyph">[</span><span class=
+"hs-str">"path"</span><span class="hs-layout">,</span> <span class=
+"hs-str">"--verbose"</span><span class="hs-keyglyph">]</span>
+    <span class="hs-varid">err</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">withProcess_</span> <span class=
+"hs-varid">procConf</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">atomically</span> <span class=
+"hs-varop">.</span> <span class="hs-varid">getStderr</span>
+    <span class="hs-varid">putStrLn</span> <span class=
+"hs-str">"\n\n\nCaptured the following stderr:\n\n"</span>
+    <span class="hs-conid">L8</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">putStrLn</span> <span class="hs-varid">err</span></pre>
+<h3 id="stm">STM</h3>
+<p>I won't dwell much on this one, since the benefits are less
+commonly useful. Since many functions in typed-process provide both
+<code>IO</code> and <code>STM</code> alternatives, it can
+significantly simplify some concurrent algorithms by letting you
+keep more logic within an atomic block. This is similar to (and
+inspired by) the design choices in the async library, which is my
+favorite library of all time.</p>
+<h3 id="binary-io">Binary I/O</h3>
+<p>All input and output in typed-process works on binary data as
+<code>ByteString</code>s, instead of textual <code>String</code>
+data. This is:</p>
+<ul>
+<li>More semantically correct</li>
+<li>More efficient</li>
+<li>Avoids <a href=
+"http://www.snoyman.com/blog/2016/12/beware-of-readfile">annoying
+platform-specific bugs</a></li>
+</ul>
+<h3 id="more-composable">More composable</h3>
+<p>A major goal of this library has been to be as composable as
+possible. I've been frustrated by two issues in the process
+package:</p>
+<ol>
+<li>Many common changes to the API necessitate a breaking API
+change (e.g., the addition of the <code>child_group</code> setting
+or <code>NoStream</code> constructor)</li>
+<li>There is a big split between helper functions that work on
+<code>CreateProcess</code> values (like
+<code>readCreateProcess</code>) and those that work on raw
+command/argument pairs (like <code>readProcess</code>). The
+situation has improved in recent releases, but in older process
+releases, the lack of <code>CreateProcess</code> variants of many
+functions made it very difficult to both modify the
+environment/working directory for a process <i>and</i> capture its
+output or error.</li>
+</ol>
+<p>For (1), I've gone the route of smart constructors throughout
+the API. You cannot access the <code>ProcessConfig</code> data
+constructor, but instead must use <code>proc</code>,
+<code>shell</code>, or <code>OverloadedStrings</code>. Instead of
+record accessors, there are setter and getter functions. And
+instead of a hard-coded list of stream types via a set of data
+constructors, you can create arbitrary <code>StreamSpec</code>s via
+the <code>mkStreamSpec</code> function. I hope this turns out to be
+an API that is resilient to breaking changes.</p>
+<p>For (2), the solution is easy: all launch functions in
+typed-process work exclusively on <code>ProcessConfig</code>.
+Problem solved. We now have a very clear breakdown in the API:
+first you configure everything you want about your process, and
+then you choose whichever launch function makes the most sense to
+you.</p>
+<h3 id="bonus:-race-condition">Bonus: Race condition</h3>
+<p>There's a <a href=
+"https://github.com/haskell/process/issues/46">long standing race
+condition</a> in process - which will hopefully be <a href=
+"https://github.com/haskell/process/pull/58">resolved soon</a> -
+that introduces a race condition on waiting for child processes. In
+typed-process, we've avoided this entirely with a different
+approach to child process exit codes. Namely: we fork a separate
+thread to wait for the process and fill an STM <code>TMVar</code>,
+which both ensures no race condition and makes it possible to
+observe the process exiting from within an atomic block.</p>
+<p>As a side benefit, this also avoids the possibility of
+accidentally creating zombie processes by not getting the process's
+exit code when it finishes. Similarly, by encouraging the bracket
+pattern (via <code>withProcess</code>) when interacting with a
+process, killing off child processes in the case of exceptions
+happens far more reliably.</p>
+<h2 id="limitations">Limitations</h2>
+<p>For the most part, I have not run into significant limitations
+with typed-process so far. The biggest annoyances I have with it
+are those inherited from process, specifically that command line
+arguments and environment variables are specified as
+<code>String</code>s, leading to some character encoding
+issues.</p>
+<p>I'm certain there <i>are</i> limitations of typed-process versus
+process. And for others, there may be a higher learning curve with
+typed-process versus process. I haven't received enough feedback on
+that yet to assess, however.</p>
+<p>The other downside is dependencies, for those who worry about
+such things. In addition to depending on process itself (and
+therefore inheriting its dependencies), typed-process depends on
+async, bytestring, conduit, conduit-extra, exceptions, stm, and
+transformers. The conduit deps can easily be moved out, it's just
+for providing a convenience function that could be provided
+elsewhere. Regarding the others:</p>
+<ul>
+<li>transformers is only needed for <code>MonadIO</code>. Now that
+<code>MonadIO</code> has moved into base, I could make that
+dependency conditional.</li>
+<li>The exceptions dependency makes <code>withProcess</code> more
+general, and would be a shame to lose.</li>
+<li>Dropping async and stm could be done by inlining their code
+here, which would work, but is a bad idea IMO.</li>
+</ul>
+<p>The only reason for considering these changes would be the next
+section...</p>
+<h2 id="what39s-next">What's next?</h2>
+<p>I'm left with the question of what to do with this package,
+especially as more people ask questions that can be answered with
+"just use typed-process."</p>
+<ul>
+<li>Do nothing. The package can live on Hackage/Stackage as-is,
+people who want to use it can use it, and that's it.</li>
+<li>Add a note to the package process mentioning it as a potential,
+alternative API. Even though I'm currently the process package
+maintainer, I feel it would be inappropriate for me to make such a
+decision myself.</li>
+<li>Even more radically: if there is strong support for this API,
+we could consider merging it back into the process package. I
+wouldn't be in favor of modifying the <code>System.Process</code>
+module (we should keep it as-is for backwards compatibility), but
+adding a new module with this API is certainly doable (sans the
+dependency issues mentioned aboved).</li>
+</ul>
+<p>At the very least, this library has scratched a personal itch.
+If it helps others, that's a great perk :).</p>
+
+
+  
+
+</article>
+
+
+        </main>
+
+        <div id="footer">
+          <p>
+            2012-2019 FP Complete Corp.
+            Subscribe to the
+            <a href="https://tech.fpcomplete.com/rss.xml">RSS feed</a>.
+          </p>
+        </div>
+      </div> <!-- .container -->
+      
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+    </body>
+</html>

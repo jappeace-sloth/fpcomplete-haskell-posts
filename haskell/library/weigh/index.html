@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>weigh: Memory benchmarking</title>
+  <meta property="og:title" content="weigh: Memory benchmarking">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;library&#x2F;weigh&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+  
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+<section class="hero grid-bg">
+  <div class="container">
+    <h1>weigh: Memory benchmarking
+    </h1></div>
+</section>
+
+
+
+  
+<div class="container py-3">
+  <p>weigh is a library for doing memory benchmarking. This tool was
+originally developed for one of the clients of
+<a href="https://tech.fpcomplete.com/">FP Complete</a> for high frequency trading
+sector.</p>
+<h2 id="get-started">Get started</h2>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ stack new mylib simple-hpack --resolver lts-13.8
+</span><span>$ cd mylib
+</span></code></pre>
+<p>Enable benchmarking by including the following lines in the
+<code>package.yaml</code> file:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>library:
+</span><span>  source-dirs: src
+</span><span>
+</span><span>dependencies:
+</span><span>  - base &gt;= 4.7 &amp;&amp; &lt; 5
+</span><span>  - deepseq
+</span><span>  - bytestring
+</span><span>  - text
+</span><span>  - conduit
+</span><span>  - foldl
+</span><span>
+</span><span>benchmarks:
+</span><span>  weigh-bench:
+</span><span>    main: main.hs
+</span><span>    source-dirs: bench
+</span><span>    dependencies:
+</span><span>    - mylib
+</span><span>    - weigh
+</span></code></pre>
+<p>Make sure that the ghc-option for the benchmark isn't threaded. Using
+the single threaded RTS is essential for deterministic results.</p>
+<p>Create an <code>src/WeighCheck.hs</code> module which will contain various values
+for which we want to do do benchmarking:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>{-# LANGUAGE DeriveAnyClass #-}
+</span><span>{-# LANGUAGE DeriveGeneric #-}
+</span><span>{-# LANGUAGE BangPatterns #-}
+</span><span>{-# LANGUAGE OverloadedStrings #-}
+</span><span>
+</span><span>module WeighCheck where
+</span><span>
+</span><span>import Control.DeepSeq
+</span><span>import Data.ByteString
+</span><span>import Data.Text
+</span><span>import GHC.Generics
+</span><span>
+</span><span>foo :: Int
+</span><span>foo = 3
+</span><span>
+</span><span>data Foo = Foo
+</span><span>  { myFoo :: Int
+</span><span>  , myMoo :: Int
+</span><span>  } deriving (Generic, NFData)
+</span><span>
+</span><span>fooRecord :: Foo
+</span><span>fooRecord = Foo 1 2
+</span><span>
+</span><span>data StrictFoo = StrictFoo
+</span><span>  { strictFoo :: !Int
+</span><span>  , strictMoo :: !Int
+</span><span>  } deriving (Generic, NFData)
+</span><span>
+</span><span>strictFooRecord :: StrictFoo
+</span><span>strictFooRecord = StrictFoo 3 4
+</span><span>
+</span><span>data UnpackedFoo = UnpackedFoo
+</span><span>  { unpackedFoo :: {-# UNPACK #-}!Int
+</span><span>  , unpackedMoo :: {-# UNPACK #-}!Int
+</span><span>  } deriving (Generic, NFData)
+</span><span>
+</span><span>unpackedFooRecord :: UnpackedFoo
+</span><span>unpackedFooRecord = UnpackedFoo 3 4
+</span><span>
+</span><span>type Mytuple = (Int, Int)
+</span><span>
+</span><span>myTuple :: Mytuple
+</span><span>myTuple = (3, 4)
+</span><span>
+</span><span>fooString :: String
+</span><span>fooString = &quot;hello world&quot;
+</span><span>
+</span><span>fooText :: Text
+</span><span>fooText = &quot;hello world&quot;
+</span><span>
+</span><span>fooByteString :: ByteString
+</span><span>fooByteString = &quot;hello world&quot;
+</span></code></pre>
+<h3 id="benchmarking-values">Benchmarking values</h3>
+<p>Create <code>bench/main.hs</code>:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>module Main where
+</span><span>
+</span><span>import Weigh
+</span><span>import WeighCheck
+</span><span>
+</span><span>main :: IO ()
+</span><span>main =
+</span><span>  mainWith $ do
+</span><span>    valueBenchmark
+</span><span>
+</span><span>valueBenchmark :: Weigh ()
+</span><span>valueBenchmark =
+</span><span>  wgroup &quot;Value Benchmark&quot; $ do
+</span><span>    setColumns [Case, Allocated, Max, Live, GCs, MaxOS]
+</span><span>    value &quot;foo&quot; foo
+</span><span>    value &quot;FooRecord&quot; fooRecord
+</span><span>    value &quot;strictFooRecord&quot; strictFooRecord
+</span><span>    value &quot;unpackedFooRecord&quot; unpackedFooRecord
+</span><span>    value &quot;myTuple&quot; myTuple
+</span><span>    value &quot;fooString&quot; fooString
+</span><span>    value &quot;fooText&quot; fooText
+</span><span>    value &quot;fooByteString&quot; fooByteString
+</span><span>    value &quot;myList&quot; ([1 .. 10000] :: [Int])
+</span></code></pre>
+<p>And now run in the terminal:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ stack bench --file-watch --fast
+</span><span>Running 1 benchmarks...
+</span><span>Benchmark weigh-bench: RUNNING...
+</span><span>
+</span><span>Value Benchmark
+</span><span>
+</span><span>  Case               Allocated      Max     Live  GCs      MaxOS
+</span><span>  foo                        0      408      408    0          0
+</span><span>  FooRecord                736      608      608    0          0
+</span><span>  strictFooRecord          736      608      608    0          0
+</span><span>  unpackedFooRecord        736      608      608    0          0
+</span><span>  myTuple                   40      432      432    0          0
+</span><span>  fooString                752      616      616    0          0
+</span><span>  fooText                    0      408      408    0          0
+</span><span>  fooByteString              0      408      408    0          0
+</span><span>  myList               799,920  400,072  400,072    0          0
+</span></code></pre>
+<h2 id="benchmarking-pure-functions">Benchmarking pure functions</h2>
+<p>Let's try to benchmark <code>sum</code> function with various variants. Create
+<code>src/WeighFunction.hs</code>:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>{-# LANGUAGE ScopedTypeVariables #-}
+</span><span>
+</span><span>module WeighFunction where
+</span><span>
+</span><span>import Conduit
+</span><span>import qualified Control.Foldl as F
+</span><span>import Data.Conduit.List (sourceList)
+</span><span>import Data.List (foldl&#39;)
+</span><span>
+</span><span>conduitSum :: [Int] -&gt; Int
+</span><span>conduitSum xs = runConduitPure $ sourceList xs .| sumC
+</span><span>
+</span><span>foldSum :: [Int] -&gt; Int
+</span><span>foldSum = foldl&#39; (\acc x -&gt; acc + x) (0 :: Int)
+</span><span>
+</span><span>ffoldSum :: [Int] -&gt; Int
+</span><span>ffoldSum = F.fold F.sum
+</span></code></pre>
+<p>and add the following function in <code>bench/main.hs</code>:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>functionBenchmark :: Weigh ()
+</span><span>functionBenchmark =
+</span><span>  wgroup &quot;Function Weigh&quot; $ do
+</span><span>    setColumns [Case, Allocated, Max, Live, GCs, MaxOS]
+</span><span>    func&#39; &quot;base sum&quot; sum ([1 .. 10000] :: [Int])
+</span><span>    func&#39; &quot;conduit sum&quot; (conduitSum) ([1 .. 10000] :: [Int])
+</span><span>    func&#39; &quot;FoldL sum&quot; (foldSum) ([1 .. 10000] :: [Int])
+</span><span>    func&#39; &quot;foldl&#39; sum&quot; (ffoldSum) ([1 .. 10000] :: [Int])
+</span></code></pre>
+<p>This will be the output you will get:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>  Case         Allocated     Max    Live  GCs      MaxOS
+</span><span>  base sum       920,464  32,240  32,240    0  1,048,576
+</span><span>  conduit sum  2,720,496     424     424    2          0
+</span><span>  FoldL sum      160,000     424     424    0          0
+</span><span>  foldl&#39; sum     880,152     456     456    0          0
+</span></code></pre>
+<p>It seems the base version of <code>sum</code> doesn't run in constant memory. All
+the other implementation run in constant memory. Note that the conduit
+version performs lots of allocations.</p>
+<h2 id="benchmarking-io-actions">Benchmarking IO actions</h2>
+<p>Let's try to read a huge file and benchmark them. First, let's create
+a huge file:</p>
+<pre data-lang="shellsession" style="background-color:#fdf6e3;color:#657b83;" class="language-shellsession "><code class="language-shellsession" data-lang="shellsession"><span>$ dd if=/dev/urandom of=/home/sibi/random.dat bs=1M count=2000
+</span><span>2000+0 records in
+</span><span>2000+0 records out
+</span><span>2097152000 bytes (2.1 GB, 2.0 GiB) copied, 11.1687 s, 188 MB/s
+</span><span>~/g/weigh-tutorial (master) $ ls -lh ~/random.dat
+</span><span>-rw-rw-r-- 1 sibi sibi 2.0G Jun 19 16:55 /home/sibi/random.dat
+</span></code></pre>
+<p>Now let's read the file. Create <code>src/WeighFile.hs</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> ScopedTypeVariables #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> BangPatterns #-}
+</span><span>
+</span><span style="color:#859900;">module WeighFile where
+</span><span>
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Conduit
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.ByteString </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">BS
+</span><span>
+</span><span style="color:#b58900;">strictBSLength </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">FilePath </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO Int
+</span><span>strictBSLength fname </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#859900;">!</span><span>bs </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">BS</span><span style="color:#859900;">.</span><span>readFile fname
+</span><span>  return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">BS</span><span style="color:#859900;">.</span><span>length bs
+</span><span>
+</span><span style="color:#b58900;">conduitLength </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">FilePath </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO Int
+</span><span>conduitLength fname </span><span style="color:#859900;">=</span><span> runConduitRes </span><span style="color:#859900;">$</span><span> sourceFile fname </span><span style="color:#859900;">.|</span><span> sumCo </span><span style="color:#6c71c4;">0
+</span><span>
+</span><span style="color:#b58900;">sumCo </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">ConduitT BS</span><span>.</span><span style="color:#268bd2;">ByteString o m Int
+</span><span>sumCo </span><span style="color:#859900;">!</span><span>acc </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#b58900;">val </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Maybe BS</span><span>.</span><span style="color:#268bd2;">ByteString</span><span> &lt;- </span><span style="color:#268bd2;">await
+</span><span>  </span><span style="color:#859900;">case</span><span> val </span><span style="color:#859900;">of
+</span><span>    </span><span style="color:#cb4b16;">Just</span><span> v </span><span style="color:#859900;">-&gt;</span><span> sumCo (acc </span><span style="color:#859900;">+</span><span> (</span><span style="color:#cb4b16;">BS</span><span style="color:#859900;">.</span><span>length v))
+</span><span>    </span><span style="color:#cb4b16;">Nothing </span><span style="color:#859900;">-&gt;</span><span> pure acc
+</span></code></pre>
+<p>and add the following function in <code>bench/main.hs</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">ioBenchmark </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Weigh </span><span style="color:#859900;">()
+</span><span>ioBenchmark </span><span style="color:#859900;">=
+</span><span>  wgroup </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">IO Benchmark</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">$ do
+</span><span>    setColumns [</span><span style="color:#cb4b16;">Case</span><span>, </span><span style="color:#cb4b16;">Allocated</span><span>, </span><span style="color:#cb4b16;">Max</span><span>, </span><span style="color:#cb4b16;">Live</span><span>, </span><span style="color:#cb4b16;">GCs</span><span>, </span><span style="color:#cb4b16;">MaxOS</span><span>]
+</span><span>    </span><span style="color:#859900;">let</span><span> fname </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">/home/sibi/random.dat</span><span style="color:#839496;">&quot;
+</span><span>    io </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">strict bs read</span><span style="color:#839496;">&quot;</span><span> (strictBSLength) fname
+</span><span>    io </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">conduit read</span><span style="color:#839496;">&quot;</span><span> (conduitLength) fname
+</span></code></pre>
+<p>This will be the output you will get:</p>
+<pre data-lang="shellsession" style="background-color:#fdf6e3;color:#657b83;" class="language-shellsession "><code class="language-shellsession" data-lang="shellsession"><span>IO Benchmark
+</span><span>
+</span><span>  Case                Allocated     Max    Live    GCs          MaxOS
+</span><span>  strict bs read  2,097,174,728   9,888   9,888      1  2,098,200,576
+</span><span>  conduit read    2,239,654,104  10,208  10,208  2,001              0
+</span></code></pre>
+<p>You can see from the column <code>MaxOS</code> that reading data via strict
+<code>ByteString</code> makes the entire data in the memory as opposed to the
+conduit version. But the conduit version has to perform more garbage
+collection because of it's streaming property.</p>
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#5d2e3c31382e1d3b2d3e32302d31382938733e3230" targe="_blank"><span class="__cf_email__" data-cfemail="a6d5c7cac3d5e6c0d6c5c9cbd6cac3d2c388c5c9cb">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

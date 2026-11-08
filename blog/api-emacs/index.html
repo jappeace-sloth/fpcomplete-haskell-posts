@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta charset="UTF-8">
+        <title>Emacs and our API</title>
+        
+        <meta name="description" content=".">
+        
+        <link rel="stylesheet" type="text/css" href="/default.css">
+        <link rel="stylesheet" type="text/css" href="/css/style.css">
+        <link href="/rss.xml" type="application/rss+xml" rel="alternate" title="tech.fpcomplete.com rss feed">
+
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'UA-36928035-3');
+        </script>
+
+        
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/zenburn.min.css">
+
+
+    </head>
+    <body>
+    <div class="container">
+      <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
+        <h5 class="my-0 mr-md-auto font-weight-normal">
+          <a href="/">
+              <img src="/images/fp-complete-logo-small.png">
+          </a>
+        </h5>
+          <nav class="my-2 my-md-0 mr-md-3">
+              <a class="p-2 text-dark" href="/blog">Blog</a>
+              <a class="p-2 text-dark" href="/tech">Technology</a>
+              <a class="p-2 text-dark" href="/haskell">Haskell</a>
+              <a class="p-2 text-dark" href="/rust">Rust</a>
+              <a class="p-2 text-dark" href="/devops">DevOps</a>
+          </nav>
+      </div>
+          
+
+        <main>
+          
+
+<h1>Emacs and our API</h1>
+<p class="byline">By Chris Done, published December 18, 2013</p>
+
+<article>
+
+  
+    
+    <p><b>NOTE</b> Since <a href="/blog/2015/10/retiring-fphc">FP
+Haskell Center has been retired</a>, this content is no longer
+relevant.</p>
+<p>Over the past month I've been working on integrating access to
+our IDE functionality from Emacs. The <i>official page for our API
+and Emacs support</i> (no longer available) documents how to
+install it and configure it. Here, I'm going to cover what's been
+implemented, how you can use it in detail, and what's planned for
+the future.</p>
+<p>For this first release of Emacs support, we weren't sure what
+features would be a good starting point. That lead to deciding that
+we'd essentially cover what is supported in the packages
+<code>ghc-mod</code> and <code>hdevtools</code>, so that our
+package would serve as a sort of drop-in replacement for those.
+Afterwards, we'll make incremental updates to the Emacs
+support.</p>
+<p>Here's a rundown of the features.</p>
+<h2 id="type-information">Type Information</h2>
+<p>A very useful feature is to get the type of a given identifier.
+To do that, we simply place the cursor on the identifier and run
+<code>C-c C-t</code>. What pops up below is a suave buffer listing
+all known types for this identifier in this position.</p>
+<p>We can see that the monomorphic type for <code>print</code> is
+<code>Value -&gt; IO ()</code> and the polymorphic type is
+<code>Show a =&gt; a -&gt; IO ()</code>. The types are also syntax
+highlighted using haskell-mode's highlighter. It also gives us the
+parent expressions, too.</p>
+<p><img alt="Basic Type Info" src=
+"http://chrisdone.com/fpco/basic-type-info.png"></p>
+<p>We can close the pop-up buffer by hitting <code>q</code> inside
+it, as in all Emacs help buffers. Or just <code>C-x 1</code>.</p>
+<p>Rather than just identifiers, we can also select a region and
+run the same command, revealing the type of the expression that we
+selected. A little preview of the expression is given below and its
+type:</p>
+<p><img alt="Region Type Info" src=
+"http://chrisdone.com/fpco/region-type-info.png"></p>
+<p>Not only expressions can be queried for their types; patterns
+can be, too! Syntactical!</p>
+<p><img alt="Pattern Type Info" src=
+"http://chrisdone.com/fpco/pattern-type-info.png"></p>
+<p>If you only want to see what the simple Haddock version of an
+identifier is, you can use <code>C-c C-i</code> on an identifier to
+get the type reported by Hoogle. This will simply print the type in
+the minibuffer. It's not a common use-case, but it's sometimes
+necessary.</p>
+<h2 id="go-to-definition">Go to definition</h2>
+<p>The common and indispensable task of jumping to the definition
+of a project-local identifier in Emacs is normally done with tags.
+Tags are a trivial plain-text database of identifiers and their
+source locations that you are supposed to update regularly. But
+it's unreliable.</p>
+<p>With our API, jumping to the definition just works, everywhere.
+If you want to jump to a local definition in a <code>where</code>
+clause, you can go ahead and do that in fpco-mode with the normal
+<code>M-.</code> binding:</p>
+<p><img alt="Goto Where" src=
+"http://chrisdone.com/fpco/goto-definition.png"></p>
+<p>You can also jump to names defined from patterns! Jumping isn't
+limited to names defined in declarations:</p>
+<p><img alt="Goto Pattern" src=
+"http://chrisdone.com/fpco/goto-pattern.png"></p>
+<p>If you use <code>M-.</code> on an identifier which is imported
+from an external externally, it will jump to the import line from
+where it is imported (optionally, disable with <code>M-x
+customize-group fpco-mode</code>), and it will report what module
+it is defined in and what package:</p>
+<p><img alt="Goto External" src=
+"http://chrisdone.com/fpco/goto-external.png"></p>
+<p>Of course, jumping to other files in the project works too.</p>
+<h2 id="documentation-of-identifier">Documentation of
+identifier</h2>
+<p>I particularly like this feature. To display the Haddock
+documentation of an identifier, simply put your cursor over it and
+hit <code>C-c C-d</code>. You will get a pop-up buffer containing a
+syntax highlighted and formatted version of the documentation:</p>
+<p><img alt="Haddocks" src=
+"http://chrisdone.com/fpco/haddocks.png"></p>
+<p>Algebraic!</p>
+<p>The documentation is formatted within 60 columns using Emacs's
+fill-paragraph. The link to the web version of the same
+documentation isn't clickable yet. I think more work can be done on
+getting a nice Haddock docs viewer in Emacs, so that we don't have
+to leave Emacs. Never leave Emacs. Never!</p>
+<h2 id="auto-complete">Auto-complete</h2>
+<p>There is an auto-complete module for Emacs which does all things
+completion. We use this library and simply provide a source of
+input for it. What we get out is a very nice search-as-you-type
+popup:</p>
+<p><img alt="Autocomplete" src=
+"http://chrisdone.com/fpco/autocomplete.png"></p>
+<p>This triggers on an idle timer. You're free to configure
+auto-complete more to your likings if you're an experienced Emacs
+user. We simply provide a reliable source of input for it.</p>
+<h2 id="type-checking">Type checking</h2>
+<p>Like the auto-completion feature, we re-use an existing Emacs
+library that does the job well: flycheck. Therefore fpco-mode
+simply provides a checker for flycheck to use. Flycheck responds to
+different things and is configurable. But in the default setup, it
+responds to movement of the cursor and changes to the buffer.</p>
+<p>What we end up with is very nice fringe annotations and
+underlines for when we mess up:</p>
+<p><img alt="Flycheckerror" src=
+"http://chrisdone.com/fpco/flycheckerror.png"></p>
+<p>Additional to these in-buffer annotations, flycheck also
+displays a count of <code>FlyC:errors/warnings</code> in the
+modeline. That's this thing here:</p>
+<p><img alt="Minibuffer-Errors" src=
+"http://chrisdone.com/fpco/minibuffer-errors.png"></p>
+<p>If I move my cursor to that error (I can do that by hitting
+<code>C-x `</code>, which is the standard Emacs way of jumping to
+compile errors), I can see in the minibuffer the actual error
+message:</p>
+<p><img alt="Err" src="http://chrisdone.com/fpco/err.png"></p>
+<p>If I'm the kind of person—and I am—who likes to see a list of
+errors, like when invoking <code>ghc</code> or <code>ghci</code>,
+then I can use the flycheck command <code>C-c ! l</code> (all
+flycheck commands start with <code>C-c !</code>) to get an error
+list.</p>
+<p><img alt="Flycheckerrors" src=
+"http://chrisdone.com/fpco/flycheckerrors.png"></p>
+<p>Needless to say, flycheck has many ways of interacting with it
+and getting information.</p>
+<p>Our checking mode also includes suggestions from the HLint
+package as warnings. For example:</p>
+<p><img alt="Hlint-Warnings" src=
+"http://chrisdone.com/fpco/hlint-warnings.png"></p>
+<p>Here you can see that the messages are only suggestions, but are
+given to flycheck and presented in the same way as any other
+compiler message. At present, it's not possible to disable HLint
+suggestions, but we'll add support for that.</p>
+<h2 id="hoogle-mode">Hoogle mode</h2>
+<p>An experimental mode that isn't quite fleshed out, but that I
+thought people might find useful in its current state is Hoogle
+mode.</p>
+<p>Launch it by running <code>M-x fpco/hoogle-mode</code> and then
+just type normal Hoogle searches in the box below:</p>
+<p><img alt="Hoogle-Buffer" src=
+"http://chrisdone.com/fpco/hoogle-buffer.png"></p>
+<p>The results are displayed similar to the haddock popup, syntax
+highlighted with their package and module. Another way to get this
+to launch is to use a prefix argument with the normal <code>C-c
+C-d</code> to get documentation of an identifier: <code>C-u C-c
+C-d</code></p>
+<p>This will prompt for a hoogle search query and open up the
+hoogle buffer automatically with the search prefilled.</p>
+<h2 id="how-it-all-works">How it all works</h2>
+<p>The architecture of this setup is the following:</p>
+<p><code>FP Complete Servers</code> — <code>fpco-api start</code> —
+<code>Your Editor</code></p>
+<p>Meaning:</p>
+<ul>
+<li>The FP Complete servers are the same servers that the web IDE
+talks to directly. These are running remotely on
+<code>www.fpcomplete.com</code>.</li>
+<li><code>fpco-api start</code> is the <code>start</code> command
+of the <code>fpco-api</code> tool that we provide. This runs
+locally on your computer. It talks to our obscure asynchronous Fay
+API so that you as an editor hacker don't have to. It also sheilds
+users from having to change anything when we change our internal
+API. See the <i>official page for documentation on getting it</i>
+(no longer available).</li>
+<li>Your editor connects to the local running <code>fpco-api</code>
+and makes queries and gets back responses in JSON.</li>
+</ul>
+<p>You have a local copy of your project that you open with Emacs,
+but when you save buffers, a hook automatically sends that to the
+FP Complete servers for recompilation.</p>
+<p>Here is an example. If you're using Emacs, then <code>M-x
+fpco/start</code> will start the following process in a
+<code>comint</code> buffer:</p>
+<pre><code>$ fpco-api start --agent Emacs</code></pre>
+<p>This will host (by default) on port 1990 (yay, Haskell!). You
+can configure the port in your <code>~/.fpco-api</code>
+configuration file.</p>
+<p>You need to know the ID of your project. You can get that
+with:</p>
+<pre>
+<code>$ fpco-api emacs-config http://www.fpcomplete.com/user/test/z12-1</code></pre>
+<p>This writes a <code>.dir-locals.el</code> file, which will
+contain something like <code>(fpco-pid . 247)</code>.
+<code>247</code> is our project ID. Now we can make direct queries
+to the <code>fpco-api</code> server directly.</p>
+<p>Here's how to get autocompletions:</p>
+<pre><code>$ echo | nc localhost 1990
+{"tag":"MsgAutoComplete","contents":[247,"src/Main.hs","getC"]}
+D^
+{"tag":"ReplyCompletions","contents":["getChanContents",
+"getChar","getContents","getCurrentRoute"]}</code></pre>
+<p>Here's how to get the type info of an expression:</p>
+<pre><code>$ echo | nc localhost 1990
+{"tag":"MsgTypeInfo","contents":[247,"src/Main.hs",11,11,11,22]}
+D^
+{"tag":"ReplyTypeInfo","contents":[[11,11,11,22,"getContents",
+"IO String"],[11,11,11,30,"getContents \u003e\u003e= run","IO ()"]]}</code></pre>
+<p>For now, integrators can use the existing Emacs implementation
+as a reference implementation (<code>fpco-mode.el</code>). The
+source for <code>fpco-api</code> can be browsed on <a href=
+"http://hackage.haskell.org/package/fpco-api">Hackage</a>.</p>
+<h2 id="future-support">Future support</h2>
+<p>Things that are not currently supported in Emacs are:</p>
+<ul>
+<li>Running processes / web applications.</li>
+<li>Deploying applications.</li>
+<li>Renaming/deleting files.</li>
+<li>Stylish haskell.</li>
+</ul>
+<p>For those you'll have to go into the web IDE for now.</p>
+
+
+  
+
+</article>
+
+
+        </main>
+
+        <div id="footer">
+          <p>
+            2012-2019 FP Complete Corp.
+            Subscribe to the
+            <a href="https://tech.fpcomplete.com/rss.xml">RSS feed</a>.
+          </p>
+        </div>
+      </div> <!-- .container -->
+      
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+    </body>
+</html>

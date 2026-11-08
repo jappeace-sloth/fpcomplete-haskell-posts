@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Hash Based Package Downloads - part 2 of 2</title>
+  <meta property="og:title" content="Hash Based Package Downloads - part 2 of 2">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="A plan for implementing hash-based content addressing in the Haskell build ecosystem.">
+  <meta property="og:description" content="A plan for implementing hash-based content addressing in the Haskell build ecosystem.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;01&#x2F;hash-based-package-downloads-part-2-of-2&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Hash Based Package Downloads - part 2 of 2</h1>
+      
+      <p id="page-description">By Michael Snoyman, January 31, 2018</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Hash%20Based%20Package%20Downloads%20-%20part%202%20of%202 https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;01&#x2F;hash-based-package-downloads-part-2-of-2&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;01&#x2F;hash-based-package-downloads-part-2-of-2&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;01&#x2F;hash-based-package-downloads-part-2-of-2&#x2F;&amp;title=Hash%20Based%20Package%20Downloads%20-%20part%202%20of%202"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;01&#x2F;hash-based-package-downloads-part-2-of-2&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>In our <a href=
+"/blog/2018/01/hash-based-package-downloads-part-1-of-2">previous
+post</a>, we define a common problem around reproducible build
+plans. The solution we desired was some form of cryptographic hash
+based configuration and download system for packages, package
+metadata, and snapshot definitions. This blog post will describe a
+potential concrete implementation.</p>
+<h2>Federated download service</h2>
+<p>Who hosts these files? Well, anyone. The level of trust needed
+in a service providing these files once again reduces to trusting
+cryptographic hashes. For example, if the protocol was simply to
+download the hash <code>deadbeef</code> from
+<code>https://totally-not-a-hacker.com/sha256/deadbeef</code>, that
+would be safe. It may not be <em>reliable</em>, because that
+website could go down, but I wouldn't worry about building with the
+wrong version of the package.</p>
+<p>This opens up a world where the complete federation of package
+hosting is possible. We could have a discovery mechanism for
+finding new hosts, a mechanism to detect broken hosts or hosts that
+regularly return incorrect data, and anything else we can dream up.
+Also, these hosts would not need to be tied to any specific
+language ecosystem. The same host could happily provide downloads
+for a wide range of content, since it will all be referenced via
+cryptographic hash.</p>
+<p>As a simple beginning, we can define a wire protocol (discussed
+below), provide a config value for how to contact the server, and
+run a single, centralized host. Expanding in the future is
+certainly possible.</p>
+<h2>More efficient file content sharing</h2>
+<p>This is totally optional, and I hesitate to even include it in
+this blog post. But I'm going to do so anyway, at the risk of
+encouraging a bunch of bikeshedding on this one section. For the
+record: I'd rather focus the discussion on the rest of this
+document instead of this section, which only represents an
+optimization for disk space and bandwidth usage.</p>
+<p>In the Haskell package ecosystem, and in many others as well,
+the primary mechanism for package storage is the tarball. This has
+a number of downsides, but the most important is that it replicates
+contents. Many versions of a package end up sharing identical
+content for many files. We end up storing and transferring that
+duplicated content unnecessarily.</p>
+<p>Instead, we can have our file store additionally support tree
+storage. I'm unapologetically ripping off Git right now (see prior
+art below for why this isn't just Git). We would end up with some
+kind of a tree manifest that looks something like:</p>
+<pre><code>null terminated file path\NUL
+sha256 of the file contents
+is this executable?
+</code></pre>
+<p>Repeated many times. We could ensure that the same input always
+generates the same output with requirements around the ordering of
+the file paths. And there may be some extra metadata on files in a
+tree that should be stored, such as modification date. However, in
+my experience, these are the only three things you actually want
+for reproducible builds.</p>
+<p>With a system like this in place, downloading a package would
+look something like this:</p>
+<ol>
+<li>Look up the hash of the tree in the snapshot file</li>
+<li>Download the manifest from the server</li>
+<li>Check which file contents we don't have locally already</li>
+<li>Download all of the remaining file contents from the
+server</li>
+</ol>
+<p>This is strictly <em>not necessary</em>, downloading tarballs
+instead will work just fine. But this is a nice optimization we can
+easily grab if desired.</p>
+<h2>Wire protocol</h2>
+<p>I'd recommend that we start off with an HTTPS-based wire
+protocol for this. This isn't because HTTPS is best suited for this
+case, but because it has the best success for traversing various
+firewalls.</p>
+<p>Note that this may be an appropriate usecase for insecure HTTP
+instead of HTTPS, since the hashes themselves provide the security
+we're looking for. On the other hand, using insecure HTTP will
+still break <em>privacy</em>, in that an eavesdropper could
+determine which content you were downloading.</p>
+<p>Anyway, in the future other protocols can be implemented as
+well, such as on raw TCP. Some kind of streaming protocol for
+supporting large files better may make sense. But at its most
+basic, I'm imagining something along the lines of:</p>
+<ul>
+<li><code>GET /file/sha256/#hash</code> returns the file contents
+as a response body</li>
+<li><code>GET /tree/sha256/#hash</code> returns the tree manifest
+as a response body</li>
+<li><code>POST /file/sha256</code> allows you to upload a request
+body consisting of multiple SHA256s. The response body would be the
+file size, in decimal, followed by a colon, followed by the
+contents, followed by a comma. Or, in other words, <a href=
+"https://cr.yp.to/proto/netstrings.txt">netstrings</a>. This
+alternative to the <code>GET</code> request will allow more
+efficient downloading of many files.</li>
+<li><code>POST /tree/sha256</code> would be the same thing but for
+trees</li>
+</ul>
+<h2>Prior art</h2>
+<p>As I've discussed this over the past few weeks with coworkers
+and friends, the most recurring reference I've heard is to <a href=
+"https://ipfs.io/">IPFS</a>. I unfortunately have to admit some
+ignorance on IPFS right now, as I've only been able to briefly
+review it. My biggest concern from that initial review is speed: it
+may not be well optimized enough for a use case involving bulk
+downloading of many files at once. But this certainly requires more
+research. If anyone is familiar with IPFS and is interested in the
+problem described here, please drop a comment.</p>
+<p>But the most blatant prior art is really Git. Anyone familiar
+with Git's blob/tree objects will see what a striking similarity
+the proposal above has. There are some simplifications above due to
+our alternate use case (totally immutable file and package
+storage):</p>
+<ul>
+<li>There are no commits at all</li>
+<li>There's no way to modify files or trees</li>
+<li>As an optimization, instead of trees-of-trees like Git uses
+(which is great for optimizing a mutable tree case), we use one
+deep tree</li>
+<li>Importantly: instead of SHA1, we use the more secure SHA256.
+<ul>
+<li>Side note: I haven't scoped it out fully above, but proper
+implementation of this proposal should ensure the easy ability to
+extend to other hash functions in the future</li>
+</ul>
+</li>
+</ul>
+<p>Additionally, I have some prior experience with using Git for a
+file storage mechanism. In previous versions of Stack, we used a
+Git-based approach for storing cabal files. We've since moved over
+to Hackage Security, the package index mechanism utilized by
+Hackage (which is upstream of the Stackage project). There are some
+downsides with depending on Git for this kind of package index
+storage:</p>
+<ul>
+<li>It can be quite difficult to rely on an external command line
+tool for core functionality like this. Ensuring the tool is
+available, dealing with multiple versions of the tool, and so on
+are annoyances. Having a clear wire protocol and local storage
+mechanism can be much simpler.</li>
+<li>Git is not well set up for downloading a subset of blobs and
+trees, something we explicitly want to support here.</li>
+<li>We've had reports of very slow <code>git clone</code> speeds
+for people in different regions. Unfortunately, we've <em>also</em>
+recently started receiving these same complaints about Hackage
+Security updates. It may simply be that the Hackage package index
+is large enough to cause trouble. However, two aspects of this
+proposal will hopefully improve the situation:
+<ul>
+<li>It's designed from the ground up for efficient transfer of lots
+of small files</li>
+<li>Due to its nature, we can download only the set of metadata
+files necessary for a specific snapshot, not the entire package
+index</li>
+</ul>
+</li>
+</ul>
+<p>The biggest thing that prevented me from writing this blog post
+was how much overlap exists with Git, and a desire to avoid a Not
+Invented Here solution. But the differences with Git are large
+enough that I think a new implementation is, in this case,
+warranted.</p>
+<h2>Rollout</h2>
+<p>This is all just a design right now. And the design will
+hopefully help others in a similar situation. But concretely for
+the Haskell, Stackage and Stack use case, the current rollout plan
+looks something like this:</p>
+<ul>
+<li>Implement the storage solution described above</li>
+<li>Begin mirroring all of Hackage into this storage solution</li>
+<li>Begin including the relevant SHA256s for this storage solution
+in future Stackage snapshots (in addition to all current
+metadata)</li>
+<li>Add support to Stack to use the SHA256 hashes instead of the
+current download mechanisms</li>
+</ul>
+<p>This plan is designed to be implemented in reasonable chunks,
+allow thorough testing of each component on its own, respect
+complete backwards compatibility, and seamlessly upgrade users to a
+more secure experience when complete.</p>
+<p>If anyone's interested in collaborating on this, please reach
+out, there is plenty of work (and a lot of it quite fun stuff!) to
+be done. And for that matter, if anyone outside of the Haskell
+community is interesting in creating an implementation of this,
+having cross language compatibility would be awesome.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Hash%20Based%20Package%20Downloads%20-%20part%202%20of%202 https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;01&#x2F;hash-based-package-downloads-part-2-of-2&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;01&#x2F;hash-based-package-downloads-part-2-of-2&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;01&#x2F;hash-based-package-downloads-part-2-of-2&#x2F;&amp;title=Hash%20Based%20Package%20Downloads%20-%20part%202%20of%202"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;01&#x2F;hash-based-package-downloads-part-2-of-2&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#88fbe9e4edfbc8eef8ebe7e5f8e4edfceda6ebe7e5" targe="_blank"><span class="__cf_email__" data-cfemail="542735383127143224373b3924383120317a373b39">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

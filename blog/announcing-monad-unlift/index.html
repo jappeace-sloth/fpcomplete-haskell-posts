@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Announcing: monad-unlift</title>
+  <meta property="og:title" content="Announcing: monad-unlift">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;04&#x2F;announcing-monad-unlift&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Announcing: monad-unlift</h1>
+      
+      <p id="page-description">By Michael Snoyman, April  8, 2015</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Announcing%3A%20monad-unlift https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;04&#x2F;announcing-monad-unlift&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;04&#x2F;announcing-monad-unlift&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;04&#x2F;announcing-monad-unlift&#x2F;&amp;title=Announcing%3A%20monad-unlift"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;04&#x2F;announcing-monad-unlift&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>I've released the first version of <a href=
+"https://www.stackage.org/package/monad-unlift">monad-unlift</a>.
+From its README:</p>
+<blockquote>
+<p>Typeclasses for providing for unlifting of monad transformers
+and stacks, and concrete implementations of common transformers
+implementing this type classes.</p>
+</blockquote>
+<p>This package is a companion to monad-control, providing
+simplified functions to a common subset of transformers and
+functionality. I've copied in the content of the README below to
+give some examples and explanations.</p>
+<p>I'd like to thank Erik Hesselink and Hiromi Ishii for <a href=
+"https://mail.haskell.org/pipermail/haskell-cafe/2015-March/118863.html">
+providing some brilliant solutions</a> to make this package more
+useful, based on the <a href=
+"https://www.stackage.org/package/constraints">constraints
+package</a>.</p>
+<h2 id="synopsis">Synopsis</h2>
+<pre><span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Concurrent</span><span class="hs-varop">.</span><span class="hs-conid">Async</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Monad</span><span class=
+"hs-varop">.</span><span class="hs-conid">Trans</span><span class=
+"hs-varop">.</span><span class="hs-conid">Unlift</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Monad</span><span class=
+"hs-varop">.</span><span class="hs-conid">Trans</span><span class=
+"hs-varop">.</span><span class="hs-conid">RWS</span><span class=
+"hs-varop">.</span><span class="hs-conid">Ref</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Monad</span><span class=
+"hs-varop">.</span><span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class="hs-conid">Class</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Mutable</span>
+
+<span class=
+"hs-comment">-- Some artbirary data type for the MonadReader</span>
+<span class="hs-keyword">data</span> <span class=
+"hs-conid">SomeEnv</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">SomeEnv</span> <span class="hs-conid">Int</span>
+
+<span class="hs-definition">myFunc</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">RWSRefT</span>
+    <span class=
+"hs-comment">-- The WriterT piece is contained by an IORef</span>
+    <span class="hs-conid">IORef</span>
+    <span class=
+"hs-comment">-- For efficiency, we store the state in a primitive</span>
+    <span class="hs-comment">-- reference for efficiency</span>
+    <span class="hs-layout">(</span><span class=
+"hs-conid">PRef</span> <span class=
+"hs-conid">RealWorld</span><span class="hs-layout">)</span>
+    <span class="hs-conid">SomeEnv</span>   <span class=
+"hs-comment">-- Reader</span>
+    <span class="hs-keyglyph">[</span><span class=
+"hs-conid">String</span><span class=
+"hs-keyglyph">]</span>  <span class="hs-comment">-- Writer</span>
+    <span class="hs-conid">Int</span>       <span class=
+"hs-comment">-- State</span>
+    <span class="hs-conid">IO</span>
+    <span class="hs-layout">(</span><span class=
+"hs-conid">String</span><span class=
+"hs-layout">,</span> <span class=
+"hs-conid">String</span><span class="hs-layout">)</span>
+<span class="hs-definition">myFunc</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class=
+"hs-comment">-- Get the unlift function. Due to weaknesses in ImpredicativeTypes, we</span>
+    <span class=
+"hs-comment">-- need to use a newtype wrapper. You can also use askRunBase.</span>
+    <span class="hs-comment">--</span>
+    <span class=
+"hs-comment">-- If you want to just unwrap one transformer layer, use</span>
+    <span class="hs-comment">-- askUnlift/askRun/Unlift.</span>
+    <span class="hs-conid">UnliftBase</span> <span class=
+"hs-varid">run</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">askUnliftBase</span>
+
+    <span class=
+"hs-comment">-- Note that we can use unlift to turn our transformer actions into IO</span>
+    <span class=
+"hs-comment">-- actions. Unlike the standard RWST, actions from separate threads are</span>
+    <span class=
+"hs-comment">-- both retained due to mutable references.</span>
+    <span class="hs-comment">--</span>
+    <span class=
+"hs-comment">-- In real life: you shouldn't rely on this working, as RWST is not thread</span>
+    <span class=
+"hs-comment">-- safe. This example is provided as a good demonstration of the type level</span>
+    <span class="hs-comment">-- functionality.</span>
+    <span class="hs-varid">liftIO</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">concurrently</span> <span class=
+"hs-layout">(</span><span class="hs-varid">run</span> <span class=
+"hs-varid">foo</span><span class="hs-layout">)</span> <span class=
+"hs-layout">(</span><span class="hs-varid">run</span> <span class=
+"hs-varid">bar</span><span class="hs-layout">)</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">foo</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+        <span class="hs-varid">tell</span> <span class=
+"hs-keyglyph">[</span><span class=
+"hs-str">"starting foo"</span><span class="hs-keyglyph">]</span>
+        <span class="hs-varid">modify</span> <span class=
+"hs-layout">(</span><span class="hs-varop">+</span> <span class=
+"hs-num">1</span><span class="hs-layout">)</span>
+        <span class="hs-varid">tell</span> <span class=
+"hs-keyglyph">[</span><span class=
+"hs-str">"leaving foo"</span><span class="hs-keyglyph">]</span>
+        <span class="hs-varid">return</span> <span class=
+"hs-str">"foo is done"</span>
+    <span class="hs-varid">bar</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+        <span class="hs-varid">tell</span> <span class=
+"hs-keyglyph">[</span><span class=
+"hs-str">"starting bar"</span><span class="hs-keyglyph">]</span>
+        <span class="hs-conid">SomeEnv</span> <span class=
+"hs-varid">e</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">ask</span>
+        <span class="hs-varid">modify</span> <span class=
+"hs-layout">(</span><span class="hs-varop">+</span> <span class=
+"hs-varid">e</span><span class="hs-layout">)</span>
+        <span class="hs-varid">tell</span> <span class=
+"hs-keyglyph">[</span><span class=
+"hs-str">"leaving bar"</span><span class="hs-keyglyph">]</span>
+        <span class="hs-varid">return</span> <span class=
+"hs-str">"bar is done"</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-layout">(</span><span class=
+"hs-layout">(</span><span class="hs-varid">w</span><span class=
+"hs-layout">,</span> <span class="hs-varid">x</span><span class=
+"hs-layout">)</span><span class="hs-layout">,</span> <span class=
+"hs-varid">y</span><span class="hs-layout">,</span> <span class=
+"hs-varid">z</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">runRWSRefT</span> <span class=
+"hs-varid">myFunc</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">SomeEnv</span> <span class="hs-num">5</span><span class=
+"hs-layout">)</span> <span class="hs-num">6</span>
+    <span class="hs-varid">print</span> <span class=
+"hs-varid">w</span> <span class="hs-comment">-- foo is done</span>
+    <span class="hs-varid">print</span> <span class=
+"hs-varid">x</span> <span class="hs-comment">-- bar is done</span>
+    <span class="hs-varid">print</span> <span class=
+"hs-varid">y</span> <span class=
+"hs-comment">-- 12 = 6 + 5 + 1</span>
+    <span class="hs-varid">print</span> <span class=
+"hs-varid">z</span> <span class=
+"hs-comment">-- starting and leaving statements, order ambiguous</span></pre>
+<h2 id="overview">Overview</h2>
+<p>A common pattern is to have some kind of a monad transformer,
+and want to pass an action into a function that requires actions in
+a base monad. That sounds a bit abstract, so let's give a concrete
+example:</p>
+<pre><span class="hs-comment">-- From async</span>
+<span class="hs-definition">concurrently</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">b</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-varid">a</span><span class="hs-layout">,</span> <span class=
+"hs-varid">b</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">func1</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-conid">Foo</span> <span class="hs-conid">IO</span> <span class=
+"hs-conid">String</span>
+<span class="hs-definition">func2</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-conid">Foo</span> <span class="hs-conid">IO</span> <span class=
+"hs-conid">Double</span>
+
+<span class="hs-definition">doBoth</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-conid">Foo</span> <span class="hs-conid">IO</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">String</span><span class="hs-layout">,</span> <span class="hs-conid">Double</span><span class="hs-layout">)</span>
+<span class="hs-definition">doBoth</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">_</span></pre>
+<p>Doing this manually is possible, but a bit tedious:</p>
+<pre><span class="hs-definition">doBoth</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-conid">Foo</span> <span class="hs-conid">IO</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">String</span><span class="hs-layout">,</span> <span class="hs-conid">Double</span><span class="hs-layout">)</span>
+<span class="hs-definition">doBoth</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">foo</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">concurrently</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">runReaderT</span> <span class=
+"hs-varid">func1</span> <span class=
+"hs-varid">foo</span><span class="hs-layout">)</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">runReaderT</span> <span class=
+"hs-varid">func2</span> <span class=
+"hs-varid">foo</span><span class="hs-layout">)</span></pre>
+<p>This also doesn't generalize at all; you'll be stuck writing
+<code>concurrently</code> variants for every monad transformer
+stack. Fortunately, the <code>monad-control</code> package
+generalizes this to a large number of transformer stacks. Let's
+implement our generalized <code>concurrently</code>:</p>
+<pre><span class="hs-definition">concurrentlyG</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadBaseControl</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">m</span>
+              <span class="hs-keyglyph">=&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">b</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-layout">(</span><span class=
+"hs-conid">StM</span> <span class="hs-varid">m</span> <span class=
+"hs-varid">a</span><span class="hs-layout">,</span> <span class=
+"hs-conid">StM</span> <span class="hs-varid">m</span> <span class=
+"hs-varid">b</span><span class="hs-layout">)</span>
+<span class="hs-definition">concurrentlyG</span> <span class=
+"hs-varid">f</span> <span class="hs-varid">g</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">liftBaseWith</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">run</span> <span class="hs-keyglyph">-&gt;</span>
+    <span class="hs-varid">concurrently</span> <span class=
+"hs-layout">(</span><span class="hs-varid">run</span> <span class=
+"hs-varid">f</span><span class="hs-layout">)</span> <span class=
+"hs-layout">(</span><span class="hs-varid">run</span> <span class=
+"hs-varid">g</span><span class="hs-layout">)</span></pre>
+<p>Notice how, in the signature for <code>concurrentlyG</code>, we
+no longer return <code>(a, b)</code>, but <code>(StM m a, StM m
+b)</code>. This is because there may be additional monadic context
+for each thread of execution, and we have no way of merging these
+together in general. Some examples of context are:</p>
+<ul>
+<li>With <code>WriterT</code>, it's the values that you called
+<code>tell</code> on</li>
+<li>With <code>EitherT</code>, the returned value may not exist at
+all</li>
+</ul>
+<p>In addition to this difficulty, many people find the types in
+<code>monad-control</code> difficult to navigate, due to their
+extreme generality (which is in fact the power of that
+package!).</p>
+<p>There is a subset of these transformer stacks that are in fact
+<a href="https://www.stackage.org/package/mmorph">monad
+morphisms</a>. Simply stated, these are transformer stacks that are
+isomorphic to <code>ReaderT</code>. For these monads, there is not
+context in the returned value. Therefore, there's no need to
+combine returned states or deal with possibly missing values.</p>
+<p>This concept is represented by the monad-unlift package, which
+provides a pair of typeclasses for these kinds of transformer
+stacks. Before we dive in, let's see how we solve our
+<code>concurrentlyG</code> problem with it:</p>
+<pre><span class="hs-definition">concurrentlyG</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadBaseUnlift</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">m</span>
+              <span class="hs-keyglyph">=&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">b</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-layout">(</span><span class=
+"hs-varid">a</span><span class="hs-layout">,</span> <span class=
+"hs-varid">b</span><span class="hs-layout">)</span>
+<span class="hs-definition">concurrentlyG</span> <span class=
+"hs-varid">f</span> <span class="hs-varid">g</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-conid">UnliftBase</span> <span class=
+"hs-varid">run</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">askUnliftBase</span>
+    <span class="hs-varid">liftBase</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">concurrently</span> <span class=
+"hs-layout">(</span><span class="hs-varid">run</span> <span class=
+"hs-varid">f</span><span class="hs-layout">)</span> <span class=
+"hs-layout">(</span><span class="hs-varid">run</span> <span class=
+"hs-varid">g</span><span class="hs-layout">)</span></pre>
+<p>Notice how we get <code>(a, b)</code> in the return type as
+desired. There's no need to unwrap values or deal with context.</p>
+<h3 id="monadtransunlift">MonadTransUnlift</h3>
+<p><code>MonadTransUnlift</code> is a class for any monad
+transformer which is isomorphic to <code>ReaderT</code>, in the
+sense that the environment can be captured and applied later. Some
+interesting cases in this space are:</p>
+<ul>
+<li><code>IdentityT</code> and things isomorphic to it; in this
+case, you can think of the environment as being
+<code>()</code></li>
+<li>Transformers which contain a mutable reference in their
+environment. This allows them to behave like stateful transformers
+(e.g., <code>StateT</code> or <code>WriterT</code>), but still obey
+the monad morphism laws. (See below for more details.)</li>
+</ul>
+<p>Due to weaknesses in GHC's ImpredicativeTypes, we have a helper
+datatype to allow for getting polymorphic unlift functions,
+appropriately named <code>Unlift</code>. For many common cases, you
+can get away with using <code>askRun</code> instead, e.g.:</p>
+<pre><span class="hs-definition">bar</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-conid">Foo</span> <span class="hs-conid">IO</span> <span class=
+"hs-conid">()</span>
+
+<span class="hs-definition">baz</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">ReaderT</span> <span class=
+"hs-conid">Foo</span> <span class="hs-conid">IO</span> <span class=
+"hs-conid">()</span>
+<span class="hs-definition">baz</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">run</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">askRun</span>
+    <span class="hs-varid">liftIO</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">void</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">forkIO</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">run</span> <span class=
+"hs-varid">bar</span></pre>
+<p>Using <code>Unlift</code>, this would instead be:</p>
+<pre>    <span class="hs-conid">Unlift</span> <span class=
+"hs-varid">run</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">askUnlift</span>
+    <span class="hs-varid">liftIO</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">void</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">forkIO</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">run</span> <span class=
+"hs-varid">bar</span></pre>
+<p>or equivalently:</p>
+<pre>    <span class="hs-varid">u</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">askUnlift</span>
+    <span class="hs-varid">liftIO</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">void</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">forkIO</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">unlift</span> <span class=
+"hs-varid">u</span> <span class="hs-varid">bar</span></pre>
+<h3 id="monadbaseunlift">MonadBaseUnlift</h3>
+<p><code>MonadBaseUnlift</code> extends this concept to entire
+transformer stacks. This is typically the typeclass that people end
+up using. You can think of these two typeclasses in exactly the
+same way as <code>MonadTrans</code> and <code>MonadIO</code>, or
+more precisely <code>MonadTrans</code> and
+<code>MonadBase</code>.</p>
+<p>For the same ImpredicativeTypes reason, there's a helper type
+<code>UnliftBase</code>. Everything we just discussed should
+transfer directly to <code>MonadBaseUnlift</code>, so learning
+something new isn't necessary. For example, you can rewrite the
+last snippet as:</p>
+<pre>    <span class="hs-varid">u</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">askUnliftBase</span>
+    <span class="hs-varid">liftIO</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">void</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">forkIO</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">unliftBase</span> <span class=
+"hs-varid">u</span> <span class="hs-varid">bar</span></pre>
+<h3 id="reference-transformers">Reference transformers</h3>
+<p>When playing transformer stack games with a transformer like
+<code>StateT</code>, it's common to accidentally discard state
+modifications. Additionally, in the case of runtime exceptions,
+it's usually impossible to retain the state. (Similar statements
+apply to <code>WriterT</code> and <code>RWST</code>, both in strict
+and lazy variants.)</p>
+<p>Another approach is to use a <code>ReaderT</code> and hold onto
+a mutable reference. This is problematic since there's no built in
+support for operations like <code>get</code>, <code>put</code>, or
+<code>tell</code>. What we want is to have a
+<code>MonadState</code> and/or <code>MonadWriter</code>
+instance.</p>
+<p>To address this case, this package includes variants of those
+transformers that use mutable references. These reference are
+generic using the <a href=
+"https://www.stackage.org/package/mutable-containers">mutable-containers</a>
+package, which allows you to have highly efficient references like
+<code>PRef</code> instead of always using boxed references like
+<code>IORef</code>.</p>
+<p>Note that, for generality, the reference transformers take type
+parameters indicating which mutable reference type to use. Some
+examples you may use are:</p>
+<ul>
+<li><code>IORef</code> for boxed references in <code>IO</code></li>
+<li><code>STRef s</code> for boxed references in
+<code>ST</code></li>
+<li><code>PRef RealWorld</code> for an unboxed reference in
+<code>IO</code></li>
+</ul>
+<p>See the synopsis for a complete example.</p>
+<h3 id="conduit">conduit</h3>
+<p>The <code>transPipe</code> function in conduit has caused
+confusion in the past due to its requirement of provided functions
+to obey monad morphism laws. This package makes a good companion to
+conduit to simplify that function's usage.</p>
+<h3 id="other-notable-instances">Other notable instances</h3>
+<p>Both the <code>HandlerT</code> transformer from yesod-core and
+<code>LoggingT</code>/<code>NoLoggingT</code> are valid monad
+morphisms. <code>HandlerT</code> is in fact my first example of
+using the "enviornment holding a mutable reference" technique to
+overcome exceptions destroying state.</p>
+<pre><span class=
+"hs-comment">{-# LANGUAGE FlexibleContexts  #-}</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-comment">{-# LANGUAGE TemplateHaskell   #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Concurrent</span><span class="hs-varop">.</span><span class="hs-conid">Async</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Monad</span><span class=
+"hs-varop">.</span><span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class="hs-conid">Class</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Monad</span><span class=
+"hs-varop">.</span><span class="hs-conid">Logger</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Monad</span><span class=
+"hs-varop">.</span><span class="hs-conid">Trans</span><span class=
+"hs-varop">.</span><span class="hs-conid">Unlift</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">runStdoutLoggingT</span> <span class=
+"hs-varid">foo</span>
+
+<span class="hs-definition">foo</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-conid">MonadLogger</span> <span class="hs-varid">m</span><span class="hs-layout">,</span> <span class="hs-conid">MonadBaseUnlift</span> <span class="hs-conid">IO</span> <span class="hs-varid">m</span><span class="hs-layout">,</span> <span class="hs-conid">MonadIO</span> <span class="hs-varid">m</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-varid">m</span> <span class="hs-conid">()</span>
+<span class="hs-definition">foo</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">run</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">askRunBase</span>
+    <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">liftIO</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">async</span> <span class="hs-varop">$</span> <span class="hs-varid">run</span> <span class="hs-varop">$</span> <span class="hs-varop">$</span><span class="hs-varid">logDebug</span> <span class="hs-str">"Hello World!"</span>
+    <span class="hs-varid">liftIO</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">wait</span> <span class=
+"hs-varid">a</span></pre>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Announcing%3A%20monad-unlift https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;04&#x2F;announcing-monad-unlift&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;04&#x2F;announcing-monad-unlift&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;04&#x2F;announcing-monad-unlift&#x2F;&amp;title=Announcing%3A%20monad-unlift"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;04&#x2F;announcing-monad-unlift&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#1f6c7e737a6c5f796f7c70726f737a6b7a317c7072" targe="_blank"><span class="__cf_email__" data-cfemail="582b39343d2b183e283b373528343d2c3d763b3735">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

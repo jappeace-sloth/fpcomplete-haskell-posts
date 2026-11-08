@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Green Threads are like Garbage Collection</title>
+  <meta property="og:title" content="Green Threads are like Garbage Collection">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Learn what Green Threads are and why are they important in programming languages like Haskell, Go and Erlang. They can do more than simplify concurrent code.">
+  <meta property="og:description" content="Learn what Green Threads are and why are they important in programming languages like Haskell, Go and Erlang. They can do more than simplify concurrent code.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;01&#x2F;green-threads-are-like-garbage-collection&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Green Threads are like Garbage Collection</h1>
+      
+      <p id="page-description">By Michael Snoyman, January  6, 2017</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Green%20Threads%20are%20like%20Garbage%20Collection https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;01&#x2F;green-threads-are-like-garbage-collection&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;01&#x2F;green-threads-are-like-garbage-collection&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;01&#x2F;green-threads-are-like-garbage-collection&#x2F;&amp;title=Green%20Threads%20are%20like%20Garbage%20Collection"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;01&#x2F;green-threads-are-like-garbage-collection&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>Many common programming languages today eschew manual memory
+management in preference to garbage collection. While the former
+certainly has its place in certain use cases, I believe the
+majority of application development today occurs in garbage
+collected languages, and for good reason. Garbage collection moves
+responsibility for many memory issues from the developer into the
+language's runtime, mostly removing the possibility of entire
+classes of bugs while reducing cognitive overhead. In other words,
+it separates out a concern. That's not to say that garbage
+collection is perfect or appropriate in all cases, but in many
+common cases it greatly simplifies code.</p>
+<p>Languages like Haskell, Erlang, and Go provide a similar
+separation-of-concern in the form of <b>green threads</b>. Instead
+of requiring the developer to manually deal with asynchronous (or
+non-blocking) I/O calls, the runtime system takes responsibility
+for this. Like garbage collection, it's not appropriate for all use
+cases, but for many common cases it's a great fit and reduces code
+complexity. This post will discuss what green threads are, the
+problems they solve, some cases where they aren't the best fit, and
+how to get started with green thread based concurrency easily.</p>
+<p>If you want to jump to that last point, you can <a href=
+"https://haskell-lang.org/get-started">download the Stack build
+tool</a> and start with <a href=
+"https://haskell-lang.org/library/async">the async library
+tutorial</a>.</p>
+<h2 id="blocking-and-non-blocking-io">Blocking and non-blocking
+I/O</h2>
+<p>Suppose you're writing a web server. A naive approach would be
+to write something like the following psuedo-code:</p>
+<pre><code>function webServer(port) {
+  var listenSocket = bindSocket(port);
+  while(true) {
+    var socket = accept(listenSocket);
+    forkThread(handleConnection(socket));
+  }
+}
+
+function handleConnection(socket) {
+  while(true) {
+    var bytes = read(socket);
+    var request = parseRequest(bytes);
+    var response = getResponse(request);
+    write(socket, renderResponse(response));
+  }
+}</code></pre>
+<p>The <code>read</code> and <code>write</code> calls appear to
+perform <i>blocking I/O</i>, which means that the entire system
+thread running them will be blocked on the kernel until data is
+available. Depending on what our <code>forkThread</code> call did,
+this could mean one of two things:</p>
+<ul>
+<li>If <code>forkThread</code> forks a new system thread, then
+performing blocking I/O isn't a problem: that thread has nothing to
+do until <code>read</code> and <code>write</code> complete.
+However, forking a new system thread for each connection is
+expensive, and does not scale well to hundreds of thousands of
+concurrent requests.</li>
+<li>If <code>forkThread</code> forks a new thread within your
+runtime (sometimes called a <a href=
+"https://en.wikipedia.org/wiki/Fiber_%28computer_science%29"><i>fiber</i></a>),
+then multiple fibers will all be running on a single system thread,
+and each time you make a blocking I/O call, the entire thread will
+be blocked, preventing any progress on other connections. You've
+essentially reduced your application to handling one connection at
+a time.</li>
+</ul>
+<p>Neither of these approaches is very attractive for writing
+robust concurrent applications (though the former is certainly
+better than the latter). Another approach is to use non-blocking
+I/O. In this case, instead of making a call to <code>read</code> or
+<code>write</code> which blocks until data is available, you make a
+call and provide a <i>callback function</i> or <i>continuation</i>
+to handle what to do with the result data. Let's see what our web
+server above will look like:</p>
+<pre><code>function webServer(port) {
+  var listenSocket = bindSocket(port);
+  listenLoop(listenSocket);
+}
+
+function listenLoop(listenSocket) {
+  acceptAsync(listenSocket, function(socket) {
+    handleConnection(socket);
+    listenLoop(listenSocket);
+  });
+}
+
+function handleConnection(socket) {
+  readAsync(socket, function(bytes) {
+    var request = parseRequest(bytes);
+    var response = getResponse(request);
+    writeAsync(socket, renderResponse(response), function() {
+      handleConnection(socket);
+    });
+  });
+}</code></pre>
+<p>Let's note some differences:</p>
+<ul>
+<li>We're no longer performing any forking. All actions are
+occuring in one single thread, removing the possibility of overhead
+from spawning a system thread (or even a fiber).</li>
+<li>Instead of capturing the output of <code>read</code> in a
+variable <code>bytes</code>, we provide <code>readAsync</code> a
+callback function, and that callback function is provided the
+<code>bytes</code> value when available. We sometimes call these
+callbacks <i>continuations</i>, since they tell us how to continue
+processing from where you left off.</li>
+<li>The loops are gone. Instead, our callbacks recursively call
+functions to create the necessary infinite looping, while allowing
+for proper asynchronous behavior.</li>
+</ul>
+<p>This approach solves the problems listed above with blocking
+I/O: no performance overhead of spawning threads or fibers, and
+multiple requests can be processed concurrently without being
+blocked by each other's I/O calls.</p>
+<h2 id="the-downsides-of-non-blocking-io">The downsides of
+non-blocking I/O</h2>
+<p>Unfortunately, this new style does not get away scot-free.</p>
+<ul>
+<li>Subjectively, the callback-style of coding is not as elegant as
+the blocking style. There are workarounds for this with techniques
+like promises.</li>
+<li>Error/exception handling isn't as straight-forward in the
+callback setup as with the blocking code. It's certainly a solvable
+problem, but often involves techniques like passing in an extra
+callback function for the error case. Many languages out there
+today use runtime exceptions, and they don't translate too well to
+callbacks.</li>
+<li>Our code is limited to running on one CPU core, at least in the
+simplest case. You can work around this with techniques like
+prefork, but it's not automatically handled by the callback
+approach. If our goal is to maximize requests per second, using
+every available CPU core for processing is definitely desired.</li>
+<li>It's still possible for handling of multiple requests to cause
+blockage for each other. For example, if our
+<code>parseRequest</code> or <code>renderResponse</code> functions
+perform any blocking I/O, or use a significant amount of CPU time,
+other requests will need to wait until that processing finishes
+before they can resume their processing.</li>
+</ul>
+<p>For those interested, we had a <a href=
+"/blog/2016/12/concurrency-and-node">previous blog post on
+Concurrency and Node</a> which delved more deeply into these
+points.</p>
+<h2 id="making-non-blocking-a-runtime-system-concern">Making
+non-blocking a runtime system concern</h2>
+<p>Let's deliver on our promise from the introduction: turning
+non-blocking I/O into a runtime system concern. The theory behind
+this is:</p>
+<ul>
+<li>Blocking I/O calls are conceptually easier to think about and
+work with</li>
+<li>While spawning lightweight threads/fibers does entail some
+overhead, it's lightweight enough to be generally acceptable</li>
+<li>If we can limit the amount of CPU time spent in running each
+fiber, we won't need to worry about high-CPU processing blocking
+other requests</li>
+<li>The runtime system can handle the scheduling of lightweight
+threads onto separate CPU cores (via separate system threads),
+which will result in the ability to saturate the entire CPU without
+techniques like prefork</li>
+</ul>
+<p>That may sound like a lot to deliver on, but green threads are
+up to the challenge. They are very similar to the fibers that we
+described above, with one major difference: <b>seemingly blocking
+I/O calls actually use non-blocking I/O under the surface</b>.
+Let's see how this would work with our web server example from
+above (copied here for convenience):</p>
+<pre><code>function webServer(port) {
+  var listenSocket = bindSocket(port);
+  while(true) {
+    var socket = accept(listenSocket);
+    forkThread(handleConnection(socket));
+  }
+}
+
+function handleConnection(socket) {
+  while(true) {
+    var bytes = read(socket);
+    var request = parseRequest(bytes);
+    var response = getResponse(request);
+    write(socket, renderResponse(response));
+  }
+}</code></pre>
+<p>Starting from after the <code>bindSocket</code> call:</p>
+<ol>
+<li>Our main green thread calls <code>accept</code>. The runtime
+system essentially rewrites this to an <code>acceptAsync</code>
+call like our callback version, puts the main green thread to
+sleep, and has the runtime system's event loop schedule a wakeup
+when new data is available on the <code>listenSocket</code>.</li>
+<li>When a new connection is available, the runtime system wakes up
+the main green thread with the new <code>socket</code> value filled
+in. Our thread then forks a new green thread (let's call it worker
+1) running the <code>handleConnection</code> call.</li>
+<li>Inside worker 1, our <code>read</code> call is similarly
+rewritten to <code>readAsync</code> with a callback, and the
+runtime system puts worker 1 to sleep and schedules a wakeup when
+data is available on <code>socket</code>.</li>
+<li>The runtime system then goes back to the list of green threads
+that have work to do and finds the main thread. The main thread
+continues from the <code>forkThread</code> call, and iterates on
+the <code>while</code> loop. It arrives back at the
+<code>accept</code> call and, like before, the runtime system puts
+the main thread to sleep and schedules a wakeup when there's a
+connection available on <code>listenSocket</code>.</li>
+<li>Importantly, at this point, the entire application is able to
+simply wait for some data. We're waiting for the operating system
+to tell us that either <code>listenSocket</code> or
+<code>socket</code> have some data available. When the operating
+system tells us (via a system call like <code>epoll</code> or
+<code>select</code>) that data is available, the runtime system can
+wake the relevant thread up, and do some more work until the next
+I/O call that puts it to sleep.</li>
+<li>Since the runtime system is handling the scheduling of threads,
+it is free to determine that a thread has been active for too long
+and pause execution in favor of a different thread, solving the
+long CPU processing problem mentioned above. (This is also the
+<a href=
+"https://en.wikipedia.org/wiki/Computer_multitasking#Cooperative_multitasking">
+difference between cooperative and preemptive
+multithreading</a>.)</li>
+<li>Instead of needing a separate error handling mechanism for
+callbacks, the runtime system can reuse existing exception throwing
+mechanisms from the language. For example, if an error occurs
+during the <code>read</code> call, the runtime system can throw an
+exception from that point in the code.</li>
+</ol>
+<p>I'd argue that this green thread approach - for the most part -
+gives us the best of both worlds: the high level, easy to read and
+write, robust code that comes from using threads, with the high
+performance of the non-blocking callback code.</p>
+<h2 id="downsides-of-green-threads">Downsides of green threads</h2>
+<p>Like garbage collection, there are downsides to green threads as
+well. While not a comprehensive list, here are some such downsides
+I'm aware of:</p>
+<ul>
+<li>By passing control of scheduling to the runtime system, we lose
+control of when exactly a <i>context switch</i> will occur, which
+can result in performance degradation. (Note that this only applies
+in relation to the async approach; the other thread-based
+approaches also have the context switch issue.) In my experience,
+this is rarely a problem, though certain performance-sensitive code
+bases may be affected by this. In a distributed computation project
+at FP Complete, for example, we ultimately <a href=
+"https://github.com/fpco/simple-poll">went the route of creating
+our own event loop</a>.</li>
+<li>As mentioned, spawning a green thread is cheap, but not free.
+An event loop can bypass this overhead. Again, with most green
+thread systems, the overhead is small enough so as not to be
+prohibitive, but if the highest performance possible is your goal,
+green threads may ultimately be your bottleneck.</li>
+</ul>
+<p>As you can see, like garbage collection, the main downside is
+that for specific performance cases, green threads may be an
+impediment. But also like garbage collection, there is a wide array
+of cases where the gains in code simplicity and lower bug rates
+more than pay for the slight performance overhead.</p>
+<h2 id="experiment-with-green-threads">Experiment with green
+threads</h2>
+<p>Let's go ahead and get started with a short example right now.
+The only tools you'll need are <a href=
+"https://haskell-lang.org/get-started">the Stack build tool</a> and
+a text editor. If you're on a Mac or Linux system, you can get
+Stack by running <code>curl -sSL https://get.haskellstack.org/ |
+sh</code>. On Windows, you probably want the <a href=
+"https://www.stackage.org/stack/windows-x86_64-installer">64-bit
+installer</a>.</p>
+<p>Once you have Stack installed, save the following code into a
+file called <code>echo.hs</code>:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --resolver lts-7.14 --install-ghc runghc --package conduit-extra</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Conduit</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Conduit</span><span class=
+"hs-varop">.</span><span class="hs-conid">Network</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span><span class=
+"hs-varop">.</span><span class="hs-conid">Char8</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">B8</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">putStrLn</span> <span class=
+"hs-str">"OK, I'm running!"</span>
+
+    <span class=
+"hs-comment">-- This automatically binds a new listening socket and forks a new</span>
+    <span class=
+"hs-comment">-- green thread for each incoming connection.</span>
+    <span class="hs-varid">runTCPServer</span> <span class=
+"hs-varid">settings</span> <span class="hs-varid">app</span>
+  <span class="hs-keyword">where</span>
+    <span class=
+"hs-comment">-- Listen on all interfaces on port 4500</span>
+    <span class="hs-varid">settings</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">serverSettings</span> <span class=
+"hs-num">4500</span> <span class="hs-str">"*"</span>
+
+<span class=
+"hs-comment">-- Create a simple pipeline connecting the input from the network</span>
+<span class=
+"hs-comment">-- (appSource) to our echo program to the output to the network</span>
+<span class="hs-comment">-- (appSink).</span>
+<span class="hs-definition">app</span> <span class=
+"hs-varid">appData</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">runConduit</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">appSource</span> <span class=
+"hs-varid">appData</span> <span class=
+"hs-varop">.|</span> <span class=
+"hs-varid">echo</span> <span class="hs-varop">.|</span> <span class="hs-varid">appSink</span> <span class="hs-varid">appData</span><span class="hs-layout">)</span>
+
+<span class=
+"hs-comment">-- awaitForever keeps running the inner function as long as new data</span>
+<span class="hs-comment">-- is available from the client</span>
+<span class="hs-definition">echo</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">awaitForever</span> <span class=
+"hs-layout">(</span><span class="hs-keyglyph">\</span><span class=
+"hs-varid">bytes</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+    <span class=
+"hs-comment">-- Echo back the raw message we received</span>
+    <span class="hs-varid">yield</span> <span class=
+"hs-varid">bytes</span>
+    <span class=
+"hs-comment">-- And now send back the Fibonacci value at the length of the</span>
+    <span class=
+"hs-comment">-- input. We need to use B8.pack to convert our String into a</span>
+    <span class=
+"hs-comment">-- binary format we can send over the network.</span>
+    <span class="hs-varid">yield</span> <span class=
+"hs-layout">(</span><span class="hs-conid">B8</span><span class=
+"hs-varop">.</span><span class="hs-varid">pack</span> <span class=
+"hs-layout">(</span><span class="hs-varid">show</span> <span class=
+"hs-layout">(</span><span class="hs-varid">fib</span> <span class=
+"hs-layout">(</span><span class="hs-conid">B8</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">length</span> <span class="hs-varid">bytes</span><span class="hs-layout">)</span><span class="hs-layout">)</span> <span class="hs-varop">++</span> <span class="hs-str">"\n"</span><span class="hs-layout">)</span><span class="hs-layout">)</span><span class="hs-layout">)</span>
+
+<span class=
+"hs-comment">-- Written badly for high CPU usage!</span>
+<span class="hs-definition">fib</span> <span class=
+"hs-num">0</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-num">1</span>
+<span class="hs-definition">fib</span> <span class=
+"hs-num">1</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-num">1</span>
+<span class="hs-definition">fib</span> <span class=
+"hs-varid">n</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">fib</span> <span class="hs-layout">(</span><span class=
+"hs-varid">n</span> <span class="hs-comment">-</span> <span class=
+"hs-num">1</span><span class="hs-layout">)</span> <span class=
+"hs-varop">+</span> <span class="hs-varid">fib</span> <span class=
+"hs-layout">(</span><span class="hs-varid">n</span> <span class=
+"hs-comment">-</span> <span class="hs-num">2</span><span class=
+"hs-layout">)</span></pre>
+<p>Now you can run this program with <code>stack echo.hs</code>.
+The first run will take a bit of time as it downloads a compiler
+and a number of libraries. This will only happen on the first run;
+subsequent runs will reuse the previously downloaded and installed
+tools and libraries. Once you've got this running, you can connect
+to it to play with:</p>
+<pre><code>$ telnet localhost 4500</code></pre>
+<p>Go ahead and play with it with some short lines, and confirm
+that it responds. For example, here's a sample session:</p>
+<pre><code>$ telnet localhost 4500
+Trying 127.0.0.1...
+Connected to localhost.
+Escape character is '^]'.
+Hello world!
+Hello world!
+610
+Bye!
+Bye!
+13</code></pre>
+<p>Now to prove our claims of the system remaining responsive in
+the presence of high CPU: try entering a long string, which will
+require a lot of CPU time to calculate the Fibonacci value,
+e.g.:</p>
+<pre>
+<code>This is a fairly long string which will take a bit of time unless you have a supercomputer.
+This is a fairly long string which will take a bit of time unless you have a supercomputer.</code></pre>
+<p>As you might expect, further interactions on this connection
+will have no effect as it is computing its response. But go ahead
+and open up a new telnet session in a different terminal. You
+should be able to continue interacting with the echo server and get
+results, thanks to the scheduling behavior of the runtime system.
+Notice how we get this behavior without any explicit work on our
+part to break up the expensive CPU operation into smaller bits!</p>
+<p><b>EDIT</b> As <a href="https://lobste.rs/c/1fx0i3">pointed out
+on lobste.rs</a>, the above will not expand to multiple cores,
+since GHC's interpreter mode will only use a single core. In order
+to see this take advantage of additional CPU cores for additional
+requests, first compile the executable with:</p>
+<pre>
+<code>stack ghc --resolver lts-7.14 --install-ghc --package conduit-extra -- --make -threaded echo.hs</code></pre>
+<p>And then run it with:</p>
+<pre><code>./echo +RTS -N4</code></pre>
+<p>The <code>-N4</code> tells the GHC runtime to use 4 cores.</p>
+<h2 id="learn-more">Learn more</h2>
+<p>There are great libraries in Haskell to take advantage of green
+threads for easy and beautiful concurrency. My all time favorite is
+<a href="https://haskell-lang.org/library/async">the async
+package</a>. Paired with powerful abstractions like <a href=
+"https://haskell-lang.org/library/stm">Software Transactional
+Memory</a>, you can quickly whip up high-performance, concurrent
+network services while avoiding common pitfalls like deadlocks and
+race conditions.</p>
+<p>If you or your team are interested in learning more about how
+functional programming and Haskell, check out our <a href=
+"/training">training options</a> and our <a href=
+"/haskell-syllabus">Haskell syllabus</a>. If you'd like to learn
+about how FP Complete can help you with your server applications
+needs, contact us about our <a href=
+"/consulting">consulting</a>.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Green%20Threads%20are%20like%20Garbage%20Collection https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;01&#x2F;green-threads-are-like-garbage-collection&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;01&#x2F;green-threads-are-like-garbage-collection&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;01&#x2F;green-threads-are-like-garbage-collection&#x2F;&amp;title=Green%20Threads%20are%20like%20Garbage%20Collection"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;01&#x2F;green-threads-are-like-garbage-collection&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#a7d4c6cbc2d4e7c1d7c4c8cad7cbc2d3c289c4c8ca" targe="_blank"><span class="__cf_email__" data-cfemail="5221333e3721123422313d3f223e3726377c313d3f">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

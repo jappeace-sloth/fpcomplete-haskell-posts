@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>containers: Maps, Sets, and more</title>
+  <meta property="og:title" content="containers: Maps, Sets, and more">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;library&#x2F;containers&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+  
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+<section class="hero grid-bg">
+  <div class="container">
+    <h1>containers: Maps, Sets, and more
+    </h1></div>
+</section>
+
+
+
+  
+<div class="container py-3">
+  <p>In order to solve almost any problem, that requires manipulation of data, the
+very first question should be: What is the most suitable data structure that we
+can use for the problem at hand?</p>
+<h2 id="preface">Preface</h2>
+<p>Haskell is a pure functional language, thus, by it's nature, most of the
+available containers are immutable and, without a doubt, the most common one is
+a list <code>[a]</code>. Certainly, it is not efficiency that made it so popular, but
+rather its simplicity, consequently, it is also the first data structure, that
+you get introduced to while learning Haskell. Although, lists are perfectly
+suitable for some problems, more often than not, we need something that is
+tailored to how we are trying to use our data.</p>
+<p>Here are some situations
+that <a href="https://www.stackage.org/lts/package/containers">containers</a> package can
+be of help. It provides efficient implementation of some of the most commonly
+used containers used in programming:</p>
+<ul>
+<li><code>Data.Set</code> - you care about uniqueness and possibly the order of elements.</li>
+<li><code>Data.Map</code> - you need a mapping from unique keys to values and operations you
+perform can take advantage of ordering of keys.</li>
+<li><code>Data.IntSet</code> and <code>Data.IntMap</code> - just as above, but when elements and keys
+respectively are <code>Int</code>s.</li>
+<li><code>Data.Sequence</code> - can be of use when a linear structure is required for a
+finite number of elements with fast access from both of its sides and a fast
+concatenation with other sequences.</li>
+<li><code>Data.Tree</code> and <code>Data.Graph</code> - for describing more complicated relations of
+elements.</li>
+</ul>
+<h2 id="map">Map</h2>
+<p><code>Map</code> is one of the most interesting and commonly used abstractions from the
+package, so most of the examples will be based on it. Moreover, interface
+provided for <code>Map</code>, <code>IntMap</code>, <code>Set</code> and <code>IntSet</code> is very similar, so
+analogous examples can be easily derived for all of the above.</p>
+<h3 id="setup-a-problem">Setup a problem.</h3>
+<p>One of the common mappings in real life, that we encounter, is a person's
+identification number, that maps a unique number to an actual human
+being. Social Security Number (SSN) is what normally used for that purpose in the
+USA and despite that it is not totally unique, for demonstration purpose, we can
+assume it actually is. Although it is a 9 digit number and using <code>IntMap</code> would
+be more efficient, it does have some structure to it and we will take advantage
+of it, so we will use a custom data type <code>SSN</code> as a key.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Map </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">Map
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Set </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">Set
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.List </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">List
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Monoid
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Text.Printf
+</span><span>
+</span><span style="color:#93a1a1;">-- | Social Security Number. Commonly used as a unique identification number of a
+</span><span style="color:#93a1a1;">-- person.
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">SSN </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">SSN
+</span><span>  { ssnPrefix </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int
+</span><span>  , ssnInfix </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int
+</span><span>  , ssnSuffix </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int
+</span><span>  } </span><span style="color:#859900;">deriving</span><span> (</span><span style="color:#268bd2;">Eq</span><span>, </span><span style="color:#268bd2;">Ord</span><span>)
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Show SSN </span><span style="color:#859900;">where
+</span><span>  show (</span><span style="color:#cb4b16;">SSN</span><span> p i s) </span><span style="color:#859900;">=</span><span> printf </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">%03d-%02d-%04d</span><span style="color:#839496;">&quot;</span><span> p i s
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Gender </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Male </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Female </span><span style="color:#859900;">deriving</span><span> (</span><span style="color:#268bd2;">Eq</span><span>, </span><span style="color:#268bd2;">Show</span><span>)
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Person </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Person
+</span><span>  { firstName </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">String
+</span><span>  , lastName </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">String
+</span><span>  , gender </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Gender
+</span><span>  } </span><span style="color:#859900;">deriving</span><span> (</span><span style="color:#268bd2;">Eq</span><span>)
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Show Person </span><span style="color:#859900;">where
+</span><span>  show (</span><span style="color:#cb4b16;">Person</span><span> fName lName g) </span><span style="color:#859900;">=</span><span> fName </span><span style="color:#859900;">++ </span><span style="color:#839496;">&#39; &#39;</span><span style="color:#859900;">:</span><span>lName </span><span style="color:#859900;">++ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;"> (</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show g </span><span style="color:#859900;">++ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">)</span><span style="color:#839496;">&quot;
+</span><span>  
+</span><span style="color:#859900;">type </span><span style="color:#cb4b16;">Employees </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Map SSN Person
+</span></code></pre>
+<p>I would like to stress how important <code>Eq</code> and <code>Ord</code> instances of a data type
+used as a key actually are. Because they are essential for underlying representation
+of a <code>Map</code>, providing incomplete or incorrect instances for these classes will
+lead to some strange behavior of your data mappings, therefore, either make sure
+you know what you are doing when creating custom instances, or use derived
+instances, as they are always safe.</p>
+<p>Because Social Security Numbers have a specific structure we would like to
+enforce it by providing a constructor function that performs certain validations.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">mkSSN </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">SSN
+</span><span>mkSSN p i s
+</span><span>  </span><span style="color:#859900;">|</span><span> p </span><span style="color:#859900;">&lt;= </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">||</span><span> p </span><span style="color:#859900;">== </span><span style="color:#6c71c4;">666 </span><span style="color:#859900;">||</span><span> p </span><span style="color:#859900;">&gt;= </span><span style="color:#6c71c4;">900 </span><span style="color:#859900;">=</span><span> error </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Invalid SSN prefix: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show p
+</span><span>  </span><span style="color:#859900;">|</span><span> i </span><span style="color:#859900;">&lt;= </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">||</span><span> i </span><span style="color:#859900;">&gt; </span><span style="color:#6c71c4;">99 </span><span style="color:#859900;">=</span><span> error </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Invalid SSN infix: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show i
+</span><span>  </span><span style="color:#859900;">|</span><span> s </span><span style="color:#859900;">&lt;= </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">||</span><span> s </span><span style="color:#859900;">&gt; </span><span style="color:#6c71c4;">9999 </span><span style="color:#859900;">=</span><span> error </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Invalid SSN suffix: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show s
+</span><span>  </span><span style="color:#859900;">|</span><span> otherwise </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">SSN</span><span> p i s
+</span></code></pre>
+<h3 id="converting-maps">Converting maps</h3>
+<p>Let's go ahead and create our mapping of employees using <code>Map.fromList</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">employees </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Employees
+</span><span>employees </span><span style="color:#859900;">=
+</span><span>  </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>fromList
+</span><span>    [ (mkSSN </span><span style="color:#6c71c4;">525 21 5423</span><span>, </span><span style="color:#cb4b16;">Person </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">John</span><span style="color:#839496;">&quot; &quot;</span><span style="color:#2aa198;">Doe</span><span style="color:#839496;">&quot; </span><span style="color:#cb4b16;">Male</span><span>)
+</span><span>    , (mkSSN </span><span style="color:#6c71c4;">521 01 8756</span><span>, </span><span style="color:#cb4b16;">Person </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Mary</span><span style="color:#839496;">&quot; &quot;</span><span style="color:#2aa198;">Jones</span><span style="color:#839496;">&quot; </span><span style="color:#cb4b16;">Female</span><span>)
+</span><span>    , (mkSSN </span><span style="color:#6c71c4;">585 11 1234</span><span>, </span><span style="color:#cb4b16;">Person </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">William</span><span style="color:#839496;">&quot; &quot;</span><span style="color:#2aa198;">Smith</span><span style="color:#839496;">&quot; </span><span style="color:#cb4b16;">Male</span><span>)
+</span><span>    , (mkSSN </span><span style="color:#6c71c4;">525 15 5673</span><span>, </span><span style="color:#cb4b16;">Person </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Maria</span><span style="color:#839496;">&quot; &quot;</span><span style="color:#2aa198;">Gonzalez</span><span style="color:#839496;">&quot; </span><span style="color:#cb4b16;">Female</span><span>)
+</span><span>    , (mkSSN </span><span style="color:#6c71c4;">524 34 1234</span><span>, </span><span style="color:#cb4b16;">Person </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Bob</span><span style="color:#839496;">&quot; &quot;</span><span style="color:#2aa198;">Jones</span><span style="color:#839496;">&quot; </span><span style="color:#cb4b16;">Male</span><span>)
+</span><span>    , (mkSSN </span><span style="color:#6c71c4;">522 43 9862</span><span>, </span><span style="color:#cb4b16;">Person </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">John</span><span style="color:#839496;">&quot; &quot;</span><span style="color:#2aa198;">Doe</span><span style="color:#839496;">&quot; </span><span style="color:#cb4b16;">Male</span><span>)
+</span><span>    , (mkSSN </span><span style="color:#6c71c4;">527 75 1035</span><span>, </span><span style="color:#cb4b16;">Person </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Julia</span><span style="color:#839496;">&quot; &quot;</span><span style="color:#2aa198;">Bloom</span><span style="color:#839496;">&quot; </span><span style="color:#cb4b16;">Female</span><span>)
+</span><span>    ]
+</span></code></pre>
+<p>As you can see above, there is no particular order to our data as we defined it,
+which results in creation of a <code>Map</code> in <em>O(n*log n)</em> time complexity, but, if we
+were sure ahead of time, that our list was sorted and unique with respect to the
+first element of a tuple, it would be more efficient to use <code>Map.fromAscList</code>,
+which would run in <em>O(n)</em> complexity instead.</p>
+<h3 id="operate-on-data">Operate on data.</h3>
+<p>Now that we have our program properly set up, most of available functions will
+correspond directly to functions that we might try to use on our data,
+e.g.:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">lookupEmployee </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">SSN </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Employees </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Maybe Person
+</span><span>lookupEmployee </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>lookup
+</span></code></pre>
+<p>which does exactly what is expected of it:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>λ</span><span style="color:#859900;">&gt;</span><span> lookupEmployee (mkSSN </span><span style="color:#6c71c4;">524 34 1234</span><span>) employees
+</span><span style="color:#cb4b16;">Just Bob Jones</span><span> (</span><span style="color:#cb4b16;">Male</span><span>)
+</span><span>λ</span><span style="color:#859900;">&gt;</span><span> lookupEmployee (mkSSN </span><span style="color:#6c71c4;">555 12 3456</span><span>) employees
+</span><span style="color:#cb4b16;">Nothing
+</span></code></pre>
+<p>In order to refrain from redefining functions which trivially correspond to existing
+ones, let's go through some of them:</p>
+<ul>
+<li>Checking presence of an employee by the social security number:</li>
+</ul>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>λ</span><span style="color:#859900;">&gt;</span><span> mkSSN </span><span style="color:#6c71c4;">585 11 1234</span><span> `</span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>member` employees
+</span><span style="color:#cb4b16;">True
+</span><span>λ</span><span style="color:#859900;">&gt;</span><span> mkSSN </span><span style="color:#6c71c4;">621 24 8736</span><span> `</span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>member` employees
+</span><span style="color:#cb4b16;">False
+</span></code></pre>
+<ul>
+<li>Looking up an employee with a default name:</li>
+</ul>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>λ</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>findWithDefault (</span><span style="color:#cb4b16;">Person </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Bill</span><span style="color:#839496;">&quot; &quot;</span><span style="color:#2aa198;">Smith</span><span style="color:#839496;">&quot; </span><span style="color:#cb4b16;">Male</span><span>) (mkSSN </span><span style="color:#6c71c4;">585 11 1234</span><span>) employees
+</span><span style="color:#cb4b16;">William Smith</span><span> (</span><span style="color:#cb4b16;">Male</span><span>)
+</span><span>λ</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>findWithDefault (</span><span style="color:#cb4b16;">Person </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Anthony</span><span style="color:#839496;">&quot; &quot;</span><span style="color:#2aa198;">Richardson</span><span style="color:#839496;">&quot; </span><span style="color:#cb4b16;">Male</span><span>) (mkSSN </span><span style="color:#6c71c4;">621 24 8736</span><span>) employees
+</span><span style="color:#cb4b16;">Anthony Richardson</span><span> (</span><span style="color:#cb4b16;">Male</span><span>)
+</span></code></pre>
+<ul>
+<li>Getting total number of employees.</li>
+</ul>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>λ</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>size employees
+</span><span style="color:#6c71c4;">7
+</span></code></pre>
+<ul>
+<li>Deleting an employee:</li>
+</ul>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>λ</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>size </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>delete (mkSSN </span><span style="color:#6c71c4;">585 11 1234</span><span>) employees
+</span><span style="color:#6c71c4;">6
+</span><span>λ</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>size </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>delete (mkSSN </span><span style="color:#6c71c4;">621 24 8736</span><span>) employees
+</span><span style="color:#6c71c4;">7
+</span></code></pre>
+<ul>
+<li>Adding an employee:</li>
+</ul>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>λ</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>size </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>insert (mkSSN </span><span style="color:#6c71c4;">621 24 8736</span><span>) (</span><span style="color:#cb4b16;">Person </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Anthony</span><span style="color:#839496;">&quot; &quot;</span><span style="color:#2aa198;">Richardson</span><span style="color:#839496;">&quot; </span><span style="color:#cb4b16;">Male</span><span>) employees
+</span><span style="color:#6c71c4;">8
+</span></code></pre>
+<h3 id="folding">Folding</h3>
+<p>It would be useful to present our <code>Employees</code> in a user friendly format, so
+let's define a <code>showMap</code> function by converting our <code>Map</code> to a printable string:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">showMap </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">Show k</span><span>, </span><span style="color:#268bd2;">Show v</span><span>) </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Map</span><span>.</span><span style="color:#268bd2;">Map k v </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">String
+</span><span>showMap </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">List</span><span style="color:#859900;">.</span><span>intercalate </span><span style="color:#839496;">&quot;</span><span style="color:#dc322f;">\n</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">.</span><span> map show </span><span style="color:#859900;">. </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>toList
+</span></code></pre>
+<p>Let's give it a try:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>λ</span><span style="color:#859900;">&gt;</span><span> putStrLn </span><span style="color:#859900;">$</span><span> showMap employees
+</span><span>(</span><span style="color:#6c71c4;">521</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">01</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">8756</span><span>,</span><span style="color:#cb4b16;">Mary Jones</span><span> (</span><span style="color:#cb4b16;">Female</span><span>))
+</span><span>(</span><span style="color:#6c71c4;">522</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">43</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">9862</span><span>,</span><span style="color:#cb4b16;">John Doe</span><span> (</span><span style="color:#cb4b16;">Male</span><span>))
+</span><span>(</span><span style="color:#6c71c4;">524</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">34</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1234</span><span>,</span><span style="color:#cb4b16;">Bob Jones</span><span> (</span><span style="color:#cb4b16;">Male</span><span>))
+</span><span>(</span><span style="color:#6c71c4;">525</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">15</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">5673</span><span>,</span><span style="color:#cb4b16;">Maria Gonzalez</span><span> (</span><span style="color:#cb4b16;">Female</span><span>))
+</span><span>(</span><span style="color:#6c71c4;">525</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">21</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">5423</span><span>,</span><span style="color:#cb4b16;">John Doe</span><span> (</span><span style="color:#cb4b16;">Male</span><span>))
+</span><span>(</span><span style="color:#6c71c4;">527</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">75</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1035</span><span>,</span><span style="color:#cb4b16;">Julia Bloom</span><span> (</span><span style="color:#cb4b16;">Female</span><span>))
+</span><span>(</span><span style="color:#6c71c4;">585</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">11</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1234</span><span>,</span><span style="color:#cb4b16;">William Smith</span><span> (</span><span style="color:#cb4b16;">Male</span><span>))
+</span></code></pre>
+<p>As you can see, all employees are sorted by their SSN, so conversion to a list is
+done in ascending order, but it is worth noting, that if there is a desire to
+guarantee this behavior, <code>Map.toAscList</code> should be used instead, or
+<code>Map.toDescList</code> to get it in a reverse order.</p>
+<p>Conversion is nice an simple, but how about using folding in a way that is
+native to a <code>Map</code>? While we are at it, we should probably improve formatting as
+well.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">showEmployee </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">SSN</span><span>, </span><span style="color:#268bd2;">Person</span><span>) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">String
+</span><span>showEmployee (social, person) </span><span style="color:#859900;">=
+</span><span>  concat [show social, </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">: </span><span style="color:#839496;">&quot;</span><span>, show person]
+</span><span>
+</span><span style="color:#b58900;">showEmployees </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Employees </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">String
+</span><span>showEmployees es
+</span><span>  </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>null es </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;&quot;
+</span><span>  </span><span style="color:#859900;">|</span><span> otherwise </span><span style="color:#859900;">=</span><span> showE ssn0 person0 </span><span style="color:#859900;">++ </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>foldrWithKey prepender </span><span style="color:#839496;">&quot;&quot;</span><span> rest
+</span><span>  </span><span style="color:#859900;">where
+</span><span>    showE </span><span style="color:#859900;">=</span><span> curry showEmployee
+</span><span>    ((ssn0, person0), rest) </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>deleteFindMin es
+</span><span>    prepender key person acc </span><span style="color:#859900;">= </span><span style="color:#839496;">&#39;</span><span style="color:#dc322f;">\n</span><span style="color:#839496;">&#39; </span><span style="color:#859900;">:</span><span> showE key person </span><span style="color:#859900;">++</span><span> acc
+</span><span>
+</span><span style="color:#b58900;">printEmployees </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Employees </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>printEmployees </span><span style="color:#859900;">=</span><span> putStrLn </span><span style="color:#859900;">.</span><span> showEmployees
+</span></code></pre>
+<p>Now that looks slightly better:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>λ</span><span style="color:#859900;">&gt;</span><span> printEmployees employees
+</span><span style="color:#6c71c4;">521</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">01</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">8756</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">Mary Jones</span><span> (</span><span style="color:#cb4b16;">Female</span><span>)
+</span><span style="color:#6c71c4;">522</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">43</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">9862</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">John Doe</span><span> (</span><span style="color:#cb4b16;">Male</span><span>)
+</span><span style="color:#6c71c4;">524</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">34</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1234</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">Bob Jones</span><span> (</span><span style="color:#cb4b16;">Male</span><span>)
+</span><span style="color:#6c71c4;">525</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">15</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">5673</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">Maria Gonzalez</span><span> (</span><span style="color:#cb4b16;">Female</span><span>)
+</span><span style="color:#6c71c4;">525</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">21</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">5423</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">John Doe</span><span> (</span><span style="color:#cb4b16;">Male</span><span>)
+</span><span style="color:#6c71c4;">527</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">75</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1035</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">Julia Bloom</span><span> (</span><span style="color:#cb4b16;">Female</span><span>)
+</span><span style="color:#6c71c4;">585</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">11</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1234</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">William Smith</span><span> (</span><span style="color:#cb4b16;">Male</span><span>)
+</span></code></pre>
+<p><strong>Exercise</strong>: Using the fact that List is an instance of <code>Monoid</code> and implement
+<code>showEmployees</code> with the help of <code>Map.foldMapWithKey</code>.</p>
+<p><strong>Exercise</strong>: Implement <code>showEmployeesReversed</code> using <code>Map.foldlWithKey</code>
+(<em>hint</em>: use <code>Map.deleteFindMax</code>).</p>
+<h3 id="mapping">Mapping</h3>
+<p>There is a collection of mapping functions available, which range from a simple
+<code>Map.map</code> to a more complex <code>Map.mapAccumRWithKey</code>.</p>
+<p>Because <code>Map</code> is an instance of <code>Functor</code> we can use <code>fmap</code> for mapping a
+function over it's values, but for this example we will use it's native equivalent
+<code>Map.map</code> to  retain only last names of employees and <code>Map.elems</code> to retrieve a list of
+new elements:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>λ</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>elems </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>map lastName employees
+</span><span>[</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Jones</span><span style="color:#839496;">&quot;</span><span>,</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Doe</span><span style="color:#839496;">&quot;</span><span>,</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Jones</span><span style="color:#839496;">&quot;</span><span>,</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Gonzalez</span><span style="color:#839496;">&quot;</span><span>,</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Doe</span><span style="color:#839496;">&quot;</span><span>,</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Bloom</span><span style="color:#839496;">&quot;</span><span>,</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Smith</span><span style="color:#839496;">&quot;</span><span>]
+</span></code></pre>
+<p>If for some reason, we would like to map a function over keys, we can use
+<code>Map.mapKeys</code> for this purpose, for instance getting a list of all SSN prefixes:</p>
+<pre data-lang="haskell:" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell: "><code class="language-haskell:" data-lang="haskell:"><span>λ&gt; Map.keys $ Map.mapKeys (show . ssnPrefix) employees
+</span><span>[&quot;521&quot;,&quot;522&quot;,&quot;524&quot;,&quot;525&quot;,&quot;527&quot;,&quot;585&quot;]
+</span></code></pre>
+<p>We need to pay some extra attention to usage of <code>Map.mapKeys</code>, because whenever
+a function that is being mapped over is not 1-to-1, it is possible that some
+values will be lost. Although, sometimes discarding some elements maybe desired
+or simply irrelevant, here is an example of how we can mistakenly lose an
+employee if we assume that last four numbers of a social are unique:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>λ</span><span style="color:#859900;">&gt;</span><span> putStrLn </span><span style="color:#859900;">$</span><span> showMap </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>mapKeys ssnSuffix employees
+</span><span>(</span><span style="color:#6c71c4;">1035</span><span>,</span><span style="color:#cb4b16;">Julia Bloom</span><span>)
+</span><span>(</span><span style="color:#6c71c4;">1234</span><span>,</span><span style="color:#cb4b16;">William Smith</span><span>)
+</span><span>(</span><span style="color:#6c71c4;">5423</span><span>,</span><span style="color:#cb4b16;">John Doe</span><span>)
+</span><span>(</span><span style="color:#6c71c4;">5673</span><span>,</span><span style="color:#cb4b16;">Maria Gonzalez</span><span>)
+</span><span>(</span><span style="color:#6c71c4;">8756</span><span>,</span><span style="color:#cb4b16;">Mary Jones</span><span>)
+</span><span>(</span><span style="color:#6c71c4;">9862</span><span>,</span><span style="color:#cb4b16;">John Doe</span><span>)
+</span></code></pre>
+<p>If we are sure that our function is not only 1-to-1, but it is also monotonic
+(i.e. it doesn't change the order of the resulting keys) we could use a more
+efficient mapping function <code>Map.mapKeysMonotonic</code>. Say a <code>show</code> function on
+<code>SSN</code> would be safe to use, since ordering would be preserved. One of the
+simplest examples of a non-monotonic function would be <code>negate</code> and a
+strictly-monotonic one: <code>succ</code>.</p>
+<h2 id="filtering">Filtering</h2>
+<p>Let's start with a couple of simple examples:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>λ</span><span style="color:#859900;">&gt;</span><span> printEmployees (</span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>filter ((</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Jones</span><span style="color:#839496;">&quot;</span><span style="color:#859900;">==</span><span>) </span><span style="color:#859900;">.</span><span> lastName) employees)
+</span><span style="color:#6c71c4;">521</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">01</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">8756</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">Mary Jones</span><span> (</span><span style="color:#cb4b16;">Female</span><span>)
+</span><span style="color:#6c71c4;">524</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">34</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1234</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">Bob Jones</span><span> (</span><span style="color:#cb4b16;">Male</span><span>)
+</span></code></pre>
+<p>Partitioning by gender:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>λ</span><span style="color:#859900;">&gt; let</span><span> (men, women) </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>partition ((</span><span style="color:#cb4b16;">Male</span><span style="color:#859900;">==</span><span>) </span><span style="color:#859900;">.</span><span> gender) employees
+</span><span>λ</span><span style="color:#859900;">&gt;</span><span> printEmployees men
+</span><span style="color:#6c71c4;">522</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">43</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">9862</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">John Doe</span><span> (</span><span style="color:#cb4b16;">Male</span><span>)
+</span><span style="color:#6c71c4;">524</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">34</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1234</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">Bob Jones</span><span> (</span><span style="color:#cb4b16;">Male</span><span>)
+</span><span style="color:#6c71c4;">525</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">21</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">5423</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">John Doe</span><span> (</span><span style="color:#cb4b16;">Male</span><span>)
+</span><span style="color:#6c71c4;">585</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">11</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1234</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">William Smith</span><span> (</span><span style="color:#cb4b16;">Male</span><span>)
+</span><span>λ</span><span style="color:#859900;">&gt;</span><span> printEmployees women
+</span><span style="color:#6c71c4;">521</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">01</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">8756</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">Mary Jones</span><span> (</span><span style="color:#cb4b16;">Female</span><span>)
+</span><span style="color:#6c71c4;">525</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">15</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">5673</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">Maria Gonzalez</span><span> (</span><span style="color:#cb4b16;">Female</span><span>)
+</span><span style="color:#6c71c4;">527</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">75</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1035</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">Julia Bloom</span><span> (</span><span style="color:#cb4b16;">Female</span><span>)
+</span></code></pre>
+<p><a href="https://www.ssa.gov/employer/stateweb.htm">Prior to June 25th, 2011</a>, Social
+Security prefixes, were restricted to states where they were issued in. Let's
+assume this is still the case and use this information to figure out which
+states our employees received their Social Security Cards in.</p>
+<p>First, we need to define a function, that retrieves employees within a
+prefix range, so a naïve approach would be to use <code>Map.filterWithKey</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">withinPrefixRangeNaive </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Employees </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Employees
+</span><span>withinPrefixRangeNaive prefixLow prefixHigh </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>filterWithKey ssnInRange </span><span style="color:#859900;">where
+</span><span>  ssnInRange (</span><span style="color:#cb4b16;">SSN</span><span> prefix _ _) _ </span><span style="color:#859900;">=</span><span> prefix </span><span style="color:#859900;">&gt;=</span><span> prefixLow &amp;&amp; prefix </span><span style="color:#859900;">&lt;=</span><span> prefixHigh
+</span></code></pre>
+<p>which runs in <em>O(n)</em>, but we can do better than that, simply by taking
+advantage of ordering of keys:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">withinPrefixRange </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Employees </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Employees
+</span><span>withinPrefixRange prefixLow prefixHigh </span><span style="color:#859900;">=
+</span><span>  fst </span><span style="color:#859900;">. </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>split (</span><span style="color:#cb4b16;">SSN</span><span> (prefixHigh </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1</span><span>) </span><span style="color:#6c71c4;">0 0</span><span>) </span><span style="color:#859900;">.</span><span> snd </span><span style="color:#859900;">. </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>split (</span><span style="color:#cb4b16;">SSN</span><span> prefixLow </span><span style="color:#6c71c4;">0 0</span><span>)
+</span><span>
+</span><span style="color:#b58900;">employeesFromColorado </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Employees </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Employees
+</span><span>employeesFromColorado </span><span style="color:#859900;">=</span><span> withinPrefixRange </span><span style="color:#6c71c4;">521 524
+</span></code></pre>
+<p>Naturally, this function will give us all employees that got their Social
+Security Card in Colorado:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>λ</span><span style="color:#859900;">&gt;</span><span> printEmployees </span><span style="color:#859900;">$</span><span> employeesFromColorado employees
+</span><span style="color:#6c71c4;">521</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">01</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">8756</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">Mary Jones
+</span><span style="color:#6c71c4;">522</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">43</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">9862</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">John Doe
+</span><span style="color:#6c71c4;">524</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">34</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1234</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">Bob Jones
+</span></code></pre>
+<p>That worked well for Colorado state, but some states have noncontiguous groups
+of area numbers, which means we need to join together results from a couple of
+ranges:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">employeesFromNewMexico </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Employees </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Employees
+</span><span>employeesFromNewMexico es </span><span style="color:#859900;">=
+</span><span>  withinPrefixRange </span><span style="color:#6c71c4;">525 525</span><span> es `</span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>union` withinPrefixRange </span><span style="color:#6c71c4;">585 585</span><span> es
+</span></code></pre>
+<h2 id="sets-and-maps">Sets and Maps</h2>
+<p>Until previous example, we've looked at functions that deal only with a single
+<code>Map</code>, but most of the familiar functions from set theory are also made
+available to us, so we can easily operate on more than one <code>Map</code>/<code>Set</code>. In order
+to provide some meaningful examples let's define geographic regions of the USA
+and their SSN prefix ranges:</p>
+<h3 id="creation">Creation</h3>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">data </span><span style="color:#cb4b16;">State </span><span style="color:#859900;">=
+</span><span>  </span><span style="color:#cb4b16;">Arizona </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">California </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Colorado </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">NewMexico </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Nevada </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Oklahoma </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Texas </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Utah </span><span style="color:#859900;">| ...
+</span><span>  </span><span style="color:#859900;">deriving</span><span> (</span><span style="color:#268bd2;">Show</span><span>, </span><span style="color:#268bd2;">Eq</span><span>, </span><span style="color:#268bd2;">Ord</span><span>, </span><span style="color:#268bd2;">Enum</span><span>)
+</span><span>
+</span><span style="color:#b58900;">statePrefixRangeMap </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Map</span><span>.</span><span style="color:#268bd2;">Map State</span><span> [(</span><span style="color:#268bd2;">Int</span><span>, </span><span style="color:#268bd2;">Int</span><span>)]
+</span><span>statePrefixRangeMap </span><span style="color:#859900;">=
+</span><span>  </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>fromList
+</span><span>    [ (</span><span style="color:#cb4b16;">Arizona</span><span>, [(</span><span style="color:#6c71c4;">526</span><span>, </span><span style="color:#6c71c4;">527</span><span>)])
+</span><span>    , (</span><span style="color:#cb4b16;">California</span><span>, [(</span><span style="color:#6c71c4;">545</span><span>, </span><span style="color:#6c71c4;">573</span><span>)])
+</span><span>    , (</span><span style="color:#cb4b16;">Colorado</span><span>, [(</span><span style="color:#6c71c4;">521</span><span>, </span><span style="color:#6c71c4;">524</span><span>)])
+</span><span>    , (</span><span style="color:#cb4b16;">NewMexico</span><span>, [(</span><span style="color:#6c71c4;">525</span><span>, </span><span style="color:#6c71c4;">525</span><span>), (</span><span style="color:#6c71c4;">585</span><span>, </span><span style="color:#6c71c4;">585</span><span>)])
+</span><span>    , (</span><span style="color:#cb4b16;">Nevada</span><span>, [(</span><span style="color:#6c71c4;">530</span><span>, </span><span style="color:#6c71c4;">530</span><span>), (</span><span style="color:#6c71c4;">680</span><span>, </span><span style="color:#6c71c4;">680</span><span>)])
+</span><span>    , (</span><span style="color:#cb4b16;">Oklahoma</span><span>, [(</span><span style="color:#6c71c4;">440</span><span>, </span><span style="color:#6c71c4;">448</span><span>)])
+</span><span>    , (</span><span style="color:#cb4b16;">Texas</span><span>, [(</span><span style="color:#6c71c4;">449</span><span>, </span><span style="color:#6c71c4;">467</span><span>)])
+</span><span>    , (</span><span style="color:#cb4b16;">Utah</span><span>, [(</span><span style="color:#6c71c4;">528</span><span>, </span><span style="color:#6c71c4;">529</span><span>)])
+</span><span>      </span><span style="color:#859900;">...
+</span><span>    ]
+</span><span>
+</span><span style="color:#b58900;">allStates </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Set</span><span>.</span><span style="color:#268bd2;">Set State
+</span><span>allStates </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>fromDistinctAscList [toEnum </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">..</span><span>]
+</span></code></pre>
+<p>For compactness, only states that are considered the South West are included,
+complete source code can be found as
+a <a href="https://gist.github.com/lehins/8003b8e7cd2e56d4da1c2d75c43f4135">gist</a>.</p>
+<p>Note, that because we are using <code>toEnum</code> and <code>enumFrom</code> - (<code>..</code>), we are guaranteed
+that all States will be unique and in a proper ascending order, thus we are safe
+to use <code>Set.fromDistinctAscList</code> instead of a less efficient <code>Set.fromList</code> or even
+<code>Set.fromAscList</code>.</p>
+<h3 id="binary-operations">Binary operations</h3>
+<p>Exclude employees from New Mexico:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>λ</span><span style="color:#859900;">&gt;</span><span> printEmployees (employees </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.\\</span><span> employeesFromNewMexico employees)
+</span><span style="color:#6c71c4;">521</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">01</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">8756</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">Mary Jones
+</span><span style="color:#6c71c4;">522</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">43</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">9862</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">John Doe
+</span><span style="color:#6c71c4;">524</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">34</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1234</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">Bob Jones
+</span><span style="color:#6c71c4;">527</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">75</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1035</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">Julia Bloom
+</span></code></pre>
+<p>Some common manipulations on <code>Set</code>s:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>λ</span><span style="color:#859900;">&gt; let</span><span> fourCorners </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>fromList [</span><span style="color:#cb4b16;">Arizona</span><span>, </span><span style="color:#cb4b16;">NewMexico</span><span>, </span><span style="color:#cb4b16;">Colorado</span><span>, </span><span style="color:#cb4b16;">Utah</span><span>]
+</span><span>λ</span><span style="color:#859900;">&gt; let</span><span> borderStates </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>fromList [</span><span style="color:#cb4b16;">California</span><span>, </span><span style="color:#cb4b16;">Arizona</span><span>, </span><span style="color:#cb4b16;">NewMexico</span><span>, </span><span style="color:#cb4b16;">Texas</span><span>]
+</span><span>λ</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>union fourCorners borderStates
+</span><span>fromList [</span><span style="color:#cb4b16;">Arizona</span><span>,</span><span style="color:#cb4b16;">California</span><span>,</span><span style="color:#cb4b16;">Colorado</span><span>,</span><span style="color:#cb4b16;">NewMexico</span><span>,</span><span style="color:#cb4b16;">Texas</span><span>,</span><span style="color:#cb4b16;">Utah</span><span>]
+</span><span>λ</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>intersection fourCorners borderStates
+</span><span>fromList [</span><span style="color:#cb4b16;">Arizona</span><span>,</span><span style="color:#cb4b16;">NewMexico</span><span>]
+</span><span>λ</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>difference fourCorners borderStates
+</span><span>fromList [</span><span style="color:#cb4b16;">Colorado</span><span>,</span><span style="color:#cb4b16;">Utah</span><span>]
+</span><span>λ</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>difference borderStates fourCorners
+</span><span>fromList [</span><span style="color:#cb4b16;">California</span><span>,</span><span style="color:#cb4b16;">Texas</span><span>]
+</span><span>λ</span><span style="color:#859900;">&gt; let</span><span> symmetricDifference a b </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>union a b </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.\\ </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>intersection a b
+</span><span>λ</span><span style="color:#859900;">&gt;</span><span> symmetricDifference fourCorners borderStates
+</span><span>fromList [</span><span style="color:#cb4b16;">California</span><span>,</span><span style="color:#cb4b16;">Colorado</span><span>,</span><span style="color:#cb4b16;">Texas</span><span>,</span><span style="color:#cb4b16;">Utah</span><span>]
+</span></code></pre>
+<h3 id="conversion">Conversion</h3>
+<p>Map a State to a set of SSN prefixes that correspond to it:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">statePrefixMap </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Map</span><span>.</span><span style="color:#268bd2;">Map State</span><span> (</span><span style="color:#268bd2;">Set</span><span>.</span><span style="color:#268bd2;">Set Int</span><span>)
+</span><span>statePrefixMap </span><span style="color:#859900;">=
+</span><span>  </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>fromSet (</span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>fromList </span><span style="color:#859900;">.</span><span> concatMap (uncurry enumFromTo) </span><span style="color:#859900;">.</span><span> (statePrefixRangeMap </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.!</span><span>)) allStates
+</span></code></pre>
+<p>Inverse of what we have above: Map from prefix to <code>State</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">prefixStateMap </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Map</span><span>.</span><span style="color:#268bd2;">Map Int State
+</span><span>prefixStateMap </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>foldlWithKey addPrefixes </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>empty statePrefixMap </span><span style="color:#859900;">where
+</span><span>  addPrefixes spm state </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>union spm </span><span style="color:#859900;">. </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>fromSet (const state)
+</span></code></pre>
+<h3 id="transformation">Transformation</h3>
+<p>Using above Map we can list all employees we have per state:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#93a1a1;">-- | Transform `Map` to another `Map`
+</span><span style="color:#b58900;">statePersonsMap </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Employees </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Map</span><span>.</span><span style="color:#268bd2;">Map State</span><span> [</span><span style="color:#268bd2;">Person</span><span>]
+</span><span>statePersonsMap </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>foldlWithKey updateState </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>empty
+</span><span>  </span><span style="color:#859900;">where</span><span> updateState sm ssn p </span><span style="color:#859900;">=
+</span><span>          </span><span style="color:#859900;">case </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>lookup (ssnPrefix ssn) prefixStateMap </span><span style="color:#859900;">of
+</span><span>            </span><span style="color:#cb4b16;">Nothing    </span><span style="color:#859900;">-&gt;</span><span> sm
+</span><span>            </span><span style="color:#cb4b16;">Just</span><span> state </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>alter (consPerson p) state sm
+</span><span>        consPerson p </span><span style="color:#cb4b16;">Nothing </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Just</span><span> [p]
+</span><span>        consPerson p (</span><span style="color:#cb4b16;">Just</span><span> ps) </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Just</span><span> (p</span><span style="color:#859900;">:</span><span>ps)
+</span></code></pre>
+<p>And create a <code>Set</code> of all Social Security Numbers of our employees per State:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#93a1a1;">-- Transform `Map` to `Set` to `Map`
+</span><span style="color:#b58900;">stateSocialsMap </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Employees </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Map</span><span>.</span><span style="color:#268bd2;">Map State</span><span> (</span><span style="color:#268bd2;">Set</span><span>.</span><span style="color:#268bd2;">Set SSN</span><span>)
+</span><span>stateSocialsMap </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>foldl updateState </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>empty </span><span style="color:#859900;">. </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>keysSet
+</span><span>  </span><span style="color:#859900;">where</span><span> updateState sm ssn </span><span style="color:#859900;">=
+</span><span>          </span><span style="color:#859900;">case </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>lookup (ssnPrefix ssn) prefixStateMap </span><span style="color:#859900;">of
+</span><span>            </span><span style="color:#cb4b16;">Nothing    </span><span style="color:#859900;">-&gt;</span><span> sm
+</span><span>            </span><span style="color:#cb4b16;">Just</span><span> state </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>alter (addSSN ssn) state sm
+</span><span>        addSSN ssn </span><span style="color:#cb4b16;">Nothing </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Just </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>singleton ssn
+</span><span>        addSSN ssn (</span><span style="color:#cb4b16;">Just</span><span> ssnSet) </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Just </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>insert ssn ssnSet
+</span></code></pre>
+<p>Here is a trial run on our <code>employees</code> data base:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>λ</span><span style="color:#859900;">&gt;</span><span> putStrLn </span><span style="color:#859900;">$</span><span> showMap </span><span style="color:#859900;">$</span><span> statePersonsMap employees
+</span><span>(</span><span style="color:#cb4b16;">Arizona</span><span>,[</span><span style="color:#cb4b16;">Julia Bloom</span><span> (</span><span style="color:#cb4b16;">Female</span><span>)])
+</span><span>(</span><span style="color:#cb4b16;">Colorado</span><span>,[</span><span style="color:#cb4b16;">Mary Jones</span><span> (</span><span style="color:#cb4b16;">Female</span><span>),</span><span style="color:#cb4b16;">John Doe</span><span> (</span><span style="color:#cb4b16;">Male</span><span>),</span><span style="color:#cb4b16;">Bob Jones</span><span> (</span><span style="color:#cb4b16;">Male</span><span>)])
+</span><span>(</span><span style="color:#cb4b16;">NewMexico</span><span>,[</span><span style="color:#cb4b16;">Maria Gonzalez</span><span> (</span><span style="color:#cb4b16;">Female</span><span>),</span><span style="color:#cb4b16;">John Doe</span><span> (</span><span style="color:#cb4b16;">Male</span><span>),</span><span style="color:#cb4b16;">William Smith</span><span> (</span><span style="color:#cb4b16;">Male</span><span>)])
+</span><span>λ</span><span style="color:#859900;">&gt;</span><span> putStrLn </span><span style="color:#859900;">$</span><span> showMap </span><span style="color:#859900;">$</span><span> stateSocialsMap employees
+</span><span>(</span><span style="color:#cb4b16;">Arizona</span><span>,fromList [</span><span style="color:#6c71c4;">527</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">75</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1035</span><span>])
+</span><span>(</span><span style="color:#cb4b16;">Colorado</span><span>,fromList [</span><span style="color:#6c71c4;">521</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">01</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">8756</span><span>,</span><span style="color:#6c71c4;">522</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">43</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">9862</span><span>,</span><span style="color:#6c71c4;">524</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">34</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1234</span><span>])
+</span><span>(</span><span style="color:#cb4b16;">NewMexico</span><span>,fromList [</span><span style="color:#6c71c4;">525</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">15</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">5673</span><span>,</span><span style="color:#6c71c4;">525</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">21</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">5423</span><span>,</span><span style="color:#6c71c4;">585</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">11</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1234</span><span>])
+</span></code></pre>
+<p><strong>Alternative approach</strong></p>
+<p>Although desired result is achieved, we can do better in terms of performance,
+since above implementation does not take advantage of the ordering of Social
+Security Numbers that is made available to us by <code>Map</code> interface.</p>
+<p>First, we want to generalize our <code>employeesFrom*</code> functions and then use it to
+partition our <code>Employees</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">employeesFrom </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">State </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Employees </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Employees
+</span><span>employeesFrom state es </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>unions </span><span style="color:#859900;">$</span><span> map fromRange (statePrefixRangeMap </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.!</span><span> state)
+</span><span>  </span><span style="color:#859900;">where</span><span> fromRange (low, high) </span><span style="color:#859900;">=</span><span> withinPrefixRange low high es
+</span><span>
+</span><span style="color:#b58900;">allStateEmployeesMap </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Employees </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Map</span><span>.</span><span style="color:#268bd2;">Map State Employees
+</span><span>allStateEmployeesMap es </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>fromSet (</span><span style="color:#859900;">`employeesFrom`</span><span> es) allStates
+</span></code></pre>
+<p>Calling <code>allStateEmployeesMap</code> will produce undesired empty Maps of <code>Employees</code>
+for some States, but there is a reason behind it, it will help us demonstrate
+similarities between <code>Map.filter</code> and <code>Map.mapMaybe</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">statePersonsMap&#39; </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Employees </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Map</span><span>.</span><span style="color:#268bd2;">Map State</span><span> [</span><span style="color:#268bd2;">Person</span><span>]
+</span><span>statePersonsMap&#39; </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>map </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>elems </span><span style="color:#859900;">. </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>filter (not </span><span style="color:#859900;">. </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>null) </span><span style="color:#859900;">.</span><span> allStateEmployeesMap
+</span><span>
+</span><span style="color:#b58900;">stateSocialsMap&#39; </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Employees </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Map</span><span>.</span><span style="color:#268bd2;">Map State</span><span> (</span><span style="color:#268bd2;">Set</span><span>.</span><span style="color:#268bd2;">Set SSN</span><span>)
+</span><span>stateSocialsMap&#39; </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>mapMaybe nonEmptyElems </span><span style="color:#859900;">.</span><span> allStateEmployeesMap
+</span><span>  </span><span style="color:#859900;">where</span><span> nonEmptyElems sem </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>null sem </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Nothing
+</span><span>                          </span><span style="color:#859900;">|</span><span> otherwise </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Just </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>keysSet sem
+</span></code></pre>
+<h3 id="subset-and-submap">Subset and Submap.</h3>
+<p>Here are two equivalent approaches of how we would check if we are missing a
+<code>State</code> from our <code>Map</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>λ</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>isProperSubsetOf (</span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>keysSet </span><span style="color:#859900;">$</span><span> allStateEmployeesMap employees) allStates
+</span><span style="color:#cb4b16;">False
+</span><span>λ</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>isProperSubsetOf (</span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>keysSet </span><span style="color:#859900;">$</span><span> statePersonsMap employees) allStates
+</span><span style="color:#cb4b16;">True
+</span><span>λ</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>isProperSubmapOfBy (const </span><span style="color:#859900;">.</span><span> const </span><span style="color:#cb4b16;">True</span><span>) (allStateEmployeesMap employees) statePrefixMap
+</span><span style="color:#cb4b16;">False
+</span><span>λ</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>isProperSubmapOfBy (const </span><span style="color:#859900;">.</span><span> const </span><span style="color:#cb4b16;">True</span><span>) (statePersonsMap employees) statePrefixMap
+</span><span style="color:#cb4b16;">True
+</span></code></pre>
+<h2 id="conclusion">Conclusion</h2>
+<p>In this tutorial we looked at very useful <code>Map</code> and <code>Set</code> containers, but there
+are plenty of other packages that provide implementations of all sorts of data
+structures that might be a better match for your needs. In particular, if keys and
+elements for <code>Map</code> and <code>Set</code> respectively are hashable and their ordering is of
+no importance, it is recommended to use <code>HashMap</code> and <code>HashSet</code>
+from
+<a href="https://www.stackage.org/lts/package/unordered-containers">unordered-containers</a> instead.
+That package provides very similar interface to one from <a href="https://www.stackage.org/lts/package/containers">containers</a> library, but it has
+<a href="https://tech.fpcomplete.com/blog/2016/05/weigh-package/#containers-vs-unordered-containers">much smaller memory impact</a> and
+better performance.</p>
+<p>Here is a list of some packages and corresponding tutorials, that can help you choose and
+get started with an appropriate data structure for your problem:</p>
+<ul>
+<li><a href="https://www.stackage.org/lts/package/vector">vector</a>: <a href="https://tech.fpcomplete.com/haskell/library/vector/">Efficient Packed-Memory Data Representations - vector library</a></li>
+<li><a href="https://www.stackage.org/lts/package/bytestring">bytestring</a> and <a href="https://www.stackage.org/lts/package/text">text</a>: <a href="https://tech.fpcomplete.com/haskell/tutorial/string-types/">String Types</a></li>
+</ul>
+<h2 id="strict-vs-lazy-values">Strict vs lazy values</h2>
+<p>Summary: unless you really know what you're doing, always import the
+<code>.Strict</code> modules.</p>
+<p>Maps are always strict in their keys, meaning that forcing a map
+always forcing all of the keys. That's because it's necessary to
+analyze the keys themselves to put them into the hash table or binary
+tree appropriately. However, it's not necessary to be strict in the
+values. The default modules (<code>Data.Map</code> and <code>Data.IntMap</code>) are
+<em>lazy</em>. Use the <code>.Strict</code> modules unless you have strong reason to do
+otherwise.</p>
+<h2 id="mutability">Mutability</h2>
+<p>Unlike other languages, Maps are immutable. This means you can safely
+pass them to other threads and functions, you never worry about data
+races, etc. The functions that &quot;mutate&quot; actually return brand new map
+values. If you need mutation across threads, you need to use a mutable
+variable like <code>IORef</code> or <code>TVar</code> (which we haven't covered yet).</p>
+<p>Downside of immutability: Maps do have a performance overhead. There's
+a mutable hashtables library, but it's not nearly as well used as
+containers and unordered-containers.</p>
+<h2 id="exercises">Exercises</h2>
+<p>Calculate the frequency of each byte available on standard
+input. Example usage:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ echo hello world | ./Main.hs
+</span><span>(10,1)
+</span><span>(32,1)
+</span><span>(100,1)
+</span><span>(101,1)
+</span><span>(104,1)
+</span><span>(108,3)
+</span><span>(111,2)
+</span><span>(114,1)
+</span><span>(119,1)
+</span></code></pre>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.ByteString.Lazy </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">BL
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Map.Strict </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">Map
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  lbs </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">BL</span><span style="color:#859900;">.</span><span>getContents
+</span><span>  </span><span style="color:#859900;">let</span><span> add m w </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>insertWith </span><span style="color:#b58900;">(+)</span><span> w </span><span style="color:#6c71c4;">1</span><span> m
+</span><span>  mapM_ print </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>toList </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">BL</span><span style="color:#859900;">.</span><span>foldl&#39; add </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>empty lbs
+</span></code></pre>
+<p>Implement a <code>MultiMap</code> based on <code>Map</code> and <code>Set</code> with the following
+signature and provides instances for <code>Show</code>, <code>Eq</code>, <code>Foldable</code>,
+<code>Semigroup</code>, and <code>Monoid</code>.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">MultiMap</span><span> k v
+</span><span style="color:#b58900;">insert </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">Ord k</span><span>, </span><span style="color:#268bd2;">Ord v</span><span>) </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">k </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">v </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">MultiMap k v </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">MultiMap k v
+</span><span style="color:#b58900;">delete </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">Ord k</span><span>, </span><span style="color:#268bd2;">Ord v</span><span>) </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">k </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">v </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">MultiMap k v </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">MultiMap k v
+</span><span style="color:#b58900;">deleteAll </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Ord k </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">k </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">MultiMap k v </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">MultiMap k v
+</span><span style="color:#b58900;">lookup </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Ord k </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">k </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">MultiMap k v </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Set v
+</span><span style="color:#b58900;">member </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">Ord k</span><span>, </span><span style="color:#268bd2;">Ord v</span><span>) </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">k </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">v </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">MultiMap k v </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Bool
+</span></code></pre>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> DeriveFoldable #-}
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Map.Strict </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">Map
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Map.Strict </span><span>(</span><span style="color:#268bd2;">Map</span><span>)
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Set </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">Set
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Set </span><span>(</span><span style="color:#268bd2;">Set</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Semigroup
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Maybe </span><span>(</span><span style="color:#b58900;">fromMaybe</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Test.Hspec
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Prelude </span><span style="color:#cb4b16;">hiding </span><span>(</span><span style="color:#b58900;">lookup</span><span>)
+</span><span>
+</span><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">MultiMap</span><span> k v </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">MultiMap
+</span><span>  { toMap </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Map</span><span> k (</span><span style="color:#cb4b16;">Set</span><span> v)
+</span><span>  }
+</span><span>  </span><span style="color:#859900;">deriving</span><span> (</span><span style="color:#268bd2;">Show</span><span>, </span><span style="color:#268bd2;">Eq</span><span>, </span><span style="color:#268bd2;">Foldable</span><span>)
+</span><span>
+</span><span style="color:#859900;">instance</span><span> (</span><span style="color:#268bd2;">Ord k</span><span>, </span><span style="color:#268bd2;">Ord v</span><span>) </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Semigroup</span><span> (</span><span style="color:#268bd2;">MultiMap k v</span><span>) </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#cb4b16;">MultiMap</span><span> l </span><span style="color:#859900;">&lt;&gt; </span><span style="color:#cb4b16;">MultiMap</span><span> r </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">MultiMap </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>unionWith </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>union l r
+</span><span>
+</span><span style="color:#859900;">instance</span><span> (</span><span style="color:#268bd2;">Ord k</span><span>, </span><span style="color:#268bd2;">Ord v</span><span>) </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Monoid</span><span> (</span><span style="color:#268bd2;">MultiMap k v</span><span>) </span><span style="color:#859900;">where
+</span><span>  mempty </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">MultiMap</span><span> mempty
+</span><span>  mappend </span><span style="color:#859900;">= </span><span style="color:#b58900;">(&lt;&gt;)
+</span><span>
+</span><span style="color:#b58900;">insert </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">Ord k</span><span>, </span><span style="color:#268bd2;">Ord v</span><span>) </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">k </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">v </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">MultiMap k v </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">MultiMap k v
+</span><span>insert k v (</span><span style="color:#cb4b16;">MultiMap</span><span> m) </span><span style="color:#859900;">=
+</span><span>  </span><span style="color:#cb4b16;">MultiMap </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>insertWith </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>union k (</span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>singleton v) m
+</span><span>
+</span><span style="color:#b58900;">delete </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">Ord k</span><span>, </span><span style="color:#268bd2;">Ord v</span><span>) </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">k </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">v </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">MultiMap k v </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">MultiMap k v
+</span><span>delete k v (</span><span style="color:#cb4b16;">MultiMap</span><span> m) </span><span style="color:#859900;">=
+</span><span>  </span><span style="color:#cb4b16;">MultiMap </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>update fixSet k m
+</span><span>  </span><span style="color:#859900;">where
+</span><span>    fixSet set0
+</span><span>      </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>null set1 </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Nothing
+</span><span>      </span><span style="color:#859900;">|</span><span> otherwise </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Just</span><span> set1
+</span><span>      </span><span style="color:#859900;">where
+</span><span>        set1 </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>delete v set0
+</span><span>
+</span><span style="color:#b58900;">deleteAll </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Ord k </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">k </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">MultiMap k v </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">MultiMap k v
+</span><span>deleteAll k (</span><span style="color:#cb4b16;">MultiMap</span><span> m) </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">MultiMap </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>delete k m
+</span><span>
+</span><span style="color:#b58900;">lookup </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Ord k </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">k </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">MultiMap k v </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Set v
+</span><span>lookup k (</span><span style="color:#cb4b16;">MultiMap</span><span> m) </span><span style="color:#859900;">=</span><span> fromMaybe </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>empty </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>lookup k m
+</span><span>
+</span><span style="color:#b58900;">member </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">Ord k</span><span>, </span><span style="color:#268bd2;">Ord v</span><span>) </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">k </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">v </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">MultiMap k v </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Bool
+</span><span>member k v (</span><span style="color:#cb4b16;">MultiMap</span><span> m) </span><span style="color:#859900;">=</span><span> maybe </span><span style="color:#cb4b16;">False</span><span> (v `</span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>member`) </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>lookup k m
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> hspec </span><span style="color:#859900;">$ do
+</span><span>  it </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">member on empty fails</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">$</span><span> member </span><span style="color:#b58900;">() ()</span><span> mempty </span><span style="color:#859900;">`shouldBe` </span><span style="color:#cb4b16;">False
+</span><span>  it </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">insert/member</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">$</span><span> member </span><span style="color:#b58900;">() ()</span><span> (insert </span><span style="color:#b58900;">() ()</span><span> mempty) </span><span style="color:#859900;">`shouldBe` </span><span style="color:#cb4b16;">True
+</span><span>  it </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">insert/lookup</span><span style="color:#839496;">&quot;
+</span><span>    </span><span style="color:#859900;">$</span><span> lookup </span><span style="color:#b58900;">()</span><span> (insert </span><span style="color:#b58900;">() ()</span><span> mempty) </span><span style="color:#859900;">`shouldBe` </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>singleton </span><span style="color:#b58900;">()
+</span><span>  it </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">deleteAll</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">$</span><span> deleteAll </span><span style="color:#b58900;">()</span><span> (insert </span><span style="color:#b58900;">() ()</span><span> mempty) </span><span style="color:#859900;">`shouldBe`</span><span> mempty
+</span><span>  it </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">delete</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">$</span><span> delete </span><span style="color:#b58900;">() ()</span><span> (insert </span><span style="color:#b58900;">() ()</span><span> mempty) </span><span style="color:#859900;">`shouldBe`</span><span> mempty
+</span><span>  it </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">&lt;&gt;</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">$
+</span><span>    lookup </span><span style="color:#b58900;">()</span><span> (insert </span><span style="color:#b58900;">() </span><span style="color:#cb4b16;">False</span><span> mempty </span><span style="color:#859900;">&lt;&gt;</span><span> insert </span><span style="color:#b58900;">() </span><span style="color:#cb4b16;">True</span><span> mempty) </span><span style="color:#859900;">`shouldBe`
+</span><span>    </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>fromList [</span><span style="color:#cb4b16;">False</span><span>, </span><span style="color:#cb4b16;">True</span><span>]
+</span></code></pre>
+<h2 id="more-exercises">More exercises!</h2>
+<h3 id="exercise-1">Exercise 1</h3>
+<p>Implement the <code>printScore</code> function:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Map.Strict </span><span>(</span><span style="color:#268bd2;">Map</span><span>)
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Map.Strict </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">Map
+</span><span>
+</span><span style="color:#b58900;">printScore </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Map String Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>printScore </span><span style="color:#859900;">=</span><span> _
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=
+</span><span>    mapM_ (printScore scores) [</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Bob</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">David</span><span style="color:#839496;">&quot;</span><span>]
+</span><span>  </span><span style="color:#859900;">where
+</span><span>    </span><span style="color:#b58900;">scores </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Map String Int
+</span><span>    scores </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>fromList
+</span><span>      [ (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">95</span><span>)
+</span><span>      , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Bob</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">90</span><span>)
+</span><span>      , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Charlies</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">85</span><span>)
+</span><span>      ]
+</span></code></pre>
+<h3 id="exercise-2">Exercise 2</h3>
+<p>We're going to write a program to figure out how much money people
+have after a number of transactions. Fill in the implementation of
+<code>addMoney</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.HashMap.Strict </span><span>(</span><span style="color:#268bd2;">HashMap</span><span>)
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.HashMap.Strict </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">HashMap
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.State
+</span><span>
+</span><span style="color:#b58900;">addMoney </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">String</span><span>, </span><span style="color:#268bd2;">Int</span><span>) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">State</span><span> (</span><span style="color:#268bd2;">HashMap String Int</span><span>) </span><span style="color:#859900;">()
+</span><span>addMoney </span><span style="color:#859900;">=</span><span> _
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=
+</span><span>    print </span><span style="color:#859900;">$</span><span> execState (mapM_ addMoney transactions) </span><span style="color:#cb4b16;">HashMap</span><span style="color:#859900;">.</span><span>empty
+</span><span>  </span><span style="color:#859900;">where
+</span><span>    </span><span style="color:#b58900;">transactions </span><span style="color:#859900;">::</span><span> [(</span><span style="color:#268bd2;">String</span><span>, </span><span style="color:#268bd2;">Int</span><span>)]
+</span><span>    transactions </span><span style="color:#859900;">=
+</span><span>      [ (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">5</span><span>)
+</span><span>      , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Bob</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">12</span><span>)
+</span><span>      , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">20</span><span>)
+</span><span>      , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Charles</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">3</span><span>)
+</span><span>      , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Bob</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#859900;">-</span><span style="color:#6c71c4;">7</span><span>)
+</span><span>      ]
+</span></code></pre>
+<p>The result should be:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>fromList [(&quot;Bob&quot;,5),(&quot;Alice&quot;,25),(&quot;Charles&quot;,3)]
+</span></code></pre>
+<h3 id="exercise-3">Exercise 3</h3>
+<p>The final output from the previous program is kind of ugly. Instead, I want it to say:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>Alice: 25
+</span><span>Bob: 5
+</span><span>Charles: 3
+</span></code></pre>
+<p>Modify the program above to get that result.</p>
+<p>BONUS: If you really want to experience real-world Haskell code, go
+for better performance and use this module:
+https://www.stackage.org/haddock/lts-12.21/bytestring-0.10.8.1/Data-ByteString-Builder.html.</p>
+<h3 id="exercise-4">Exercise 4</h3>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.HashMap.Strict </span><span>(</span><span style="color:#268bd2;">HashMap</span><span>)
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.HashMap.Strict </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">HashMap
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.List </span><span>(</span><span style="color:#b58900;">sort</span><span>)
+</span><span>
+</span><span style="color:#859900;">type </span><span style="color:#cb4b16;">Name </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">String
+</span><span style="color:#859900;">type </span><span style="color:#cb4b16;">StudentId </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Int
+</span><span style="color:#859900;">type </span><span style="color:#cb4b16;">Score </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Double
+</span><span>
+</span><span style="color:#b58900;">students </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HashMap Name StudentId
+</span><span>students </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">HashMap</span><span style="color:#859900;">.</span><span>fromList
+</span><span>  [ (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">1</span><span>)
+</span><span>  , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Bob</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">2</span><span>)
+</span><span>  , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Charlie</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">3</span><span>)
+</span><span>  ]
+</span><span>
+</span><span style="color:#b58900;">scores </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HashMap Name Score
+</span><span>scores </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">HashMap</span><span style="color:#859900;">.</span><span>singleton </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Bob</span><span style="color:#839496;">&quot; </span><span style="color:#6c71c4;">90.4
+</span><span>
+</span><span style="color:#b58900;">noTestScore </span><span style="color:#859900;">::</span><span> [</span><span style="color:#268bd2;">Name</span><span>]
+</span><span>noTestScore </span><span style="color:#859900;">=</span><span> _
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">The following students have not taken the test</span><span style="color:#839496;">&quot;
+</span><span>  mapM_ putStrLn </span><span style="color:#859900;">$</span><span> sort noTestScore
+</span></code></pre>
+<p>Implement <code>noTestScore</code> such that the output is:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>The following students have not taken the test
+</span><span>Alice
+</span><span>Charlie
+</span></code></pre>
+<p>NOTE: hard-coding <code>[&quot;Alice&quot;, &quot;Charlie&quot;]</code> is cheating! :)</p>
+<h3 id="exercise-5">Exercise 5</h3>
+<p>I want to drop the bottom 20% of test scores. Fill in the helper function.</p>
+<p><strong>NOTE</strong> I'm switching this exercise from lts-12.21 to lts-12.21. There's
+a new helper library function available that makes this much more
+straightforward to implement. Browse the docs at:</p>
+<p>https://www.stackage.org/haddock/lts-12.21/containers-0.5.10.2/Data-Set.html</p>
+<p>You'll also want to use the <code>div</code> function, which does integration
+division.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Set </span><span>(</span><span style="color:#268bd2;">Set</span><span>)
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Set </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">Set
+</span><span>
+</span><span style="color:#b58900;">scores </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Set Int
+</span><span>scores </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>fromList [</span><span style="color:#6c71c4;">1</span><span style="color:#859900;">..</span><span style="color:#6c71c4;">10</span><span>]
+</span><span>
+</span><span style="color:#b58900;">dropBottom20Percent </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Ord a </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Set a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Set a
+</span><span>dropBottom20Percent </span><span style="color:#859900;">=</span><span> _
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> print </span><span style="color:#859900;">$</span><span> dropBottom20Percent scores
+</span></code></pre>
+<p>CHALLENGE: Do it for a <code>HashSet</code> instead. Why is this different?</p>
+<h2 id="exercise-solutions">Exercise solutions</h2>
+<h3 id="exercise-1-1">Exercise 1</h3>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Map.Strict </span><span>(</span><span style="color:#268bd2;">Map</span><span>)
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Map.Strict </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">Map
+</span><span>
+</span><span style="color:#b58900;">printScore </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Map String Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>printScore scores name </span><span style="color:#859900;">=
+</span><span>  </span><span style="color:#859900;">case </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>lookup name scores </span><span style="color:#859900;">of
+</span><span>    </span><span style="color:#cb4b16;">Just</span><span> score </span><span style="color:#859900;">-&gt;</span><span> putStrLn </span><span style="color:#859900;">$</span><span> concat
+</span><span>      [ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Score for </span><span style="color:#839496;">&quot;
+</span><span>      , name
+</span><span>      , </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">: </span><span style="color:#839496;">&quot;
+</span><span>      , show score
+</span><span>      ]
+</span><span>    </span><span style="color:#cb4b16;">Nothing </span><span style="color:#859900;">-&gt;</span><span> putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">No score for </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> name
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=
+</span><span>    mapM_ (printScore scores) [</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Bob</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">David</span><span style="color:#839496;">&quot;</span><span>]
+</span><span>  </span><span style="color:#859900;">where
+</span><span>    </span><span style="color:#b58900;">scores </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Map String Int
+</span><span>    scores </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>fromList
+</span><span>      [ (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">95</span><span>)
+</span><span>      , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Bob</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">90</span><span>)
+</span><span>      , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Charlies</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">85</span><span>)
+</span><span>      ]
+</span></code></pre>
+<h3 id="exercise-2-1">Exercise 2</h3>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.HashMap.Strict </span><span>(</span><span style="color:#268bd2;">HashMap</span><span>)
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.HashMap.Strict </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">HashMap
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.State
+</span><span>
+</span><span style="color:#b58900;">addMoney </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">String</span><span>, </span><span style="color:#268bd2;">Int</span><span>) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">State</span><span> (</span><span style="color:#268bd2;">HashMap String Int</span><span>) </span><span style="color:#859900;">()
+</span><span>addMoney (name, amt) </span><span style="color:#859900;">=</span><span> modify </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">HashMap</span><span style="color:#859900;">.</span><span>insertWith </span><span style="color:#b58900;">(+)</span><span> name amt
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=
+</span><span>    print </span><span style="color:#859900;">$</span><span> execState (mapM_ addMoney transactions) </span><span style="color:#cb4b16;">HashMap</span><span style="color:#859900;">.</span><span>empty
+</span><span>  </span><span style="color:#859900;">where
+</span><span>    </span><span style="color:#b58900;">transactions </span><span style="color:#859900;">::</span><span> [(</span><span style="color:#268bd2;">String</span><span>, </span><span style="color:#268bd2;">Int</span><span>)]
+</span><span>    transactions </span><span style="color:#859900;">=
+</span><span>      [ (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">5</span><span>)
+</span><span>      , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Bob</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">12</span><span>)
+</span><span>      , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">20</span><span>)
+</span><span>      , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Charles</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">3</span><span>)
+</span><span>      , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Bob</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#859900;">-</span><span style="color:#6c71c4;">7</span><span>)
+</span><span>      ]
+</span></code></pre>
+<h3 id="exercise-3-1">Exercise 3</h3>
+<p>The first thing to note is that the easiest way to sort the people is
+to switch from a <code>HashMap</code> to a <code>Map</code>. A simple find-replace on the
+file will work for this.</p>
+<p>There are a few different solutions here. Perhaps the most obvious looks like this:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Foldable </span><span>(</span><span style="color:#b58900;">for_</span><span>)
+</span><span>
+</span><span>for_ (</span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>toList </span><span style="color:#859900;">$</span><span> execState (mapM_ addMoney transactions) </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>empty)
+</span><span>  </span><span style="color:#859900;">$ \</span><span>(name, total) </span><span style="color:#859900;">-&gt;</span><span> putStrLn </span><span style="color:#859900;">$</span><span> name </span><span style="color:#859900;">++ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show total
+</span></code></pre>
+<p>However, this is arguably <em>bad</em>: we're doing more inside <code>IO</code> than
+really necessary. Instead, we should stick to pure code as much as
+possible, and instead build up a <code>String</code> value:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>    putStr </span><span style="color:#859900;">$</span><span> mapToString </span><span style="color:#859900;">$</span><span> execState (mapM_ addMoney transactions) </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>empty
+</span><span>  </span><span style="color:#859900;">where
+</span><span>    </span><span style="color:#b58900;">transactions </span><span style="color:#859900;">::</span><span> [(</span><span style="color:#268bd2;">String</span><span>, </span><span style="color:#268bd2;">Int</span><span>)]
+</span><span>    transactions </span><span style="color:#859900;">= ...
+</span><span>
+</span><span>    </span><span style="color:#b58900;">pairToString </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">String</span><span>, </span><span style="color:#268bd2;">Int</span><span>) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">String
+</span><span>    pairToString (name, total) </span><span style="color:#859900;">=</span><span> name </span><span style="color:#859900;">++ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show total
+</span><span>
+</span><span>    </span><span style="color:#b58900;">pairsToString </span><span style="color:#859900;">::</span><span> [(</span><span style="color:#268bd2;">String</span><span>, </span><span style="color:#268bd2;">Int</span><span>)] </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">String
+</span><span>    pairsToString </span><span style="color:#859900;">=</span><span> unlines </span><span style="color:#859900;">.</span><span> map pairToString
+</span><span>
+</span><span>    </span><span style="color:#b58900;">mapToString </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Map String Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">String
+</span><span>    mapToString </span><span style="color:#859900;">=</span><span> pairsToString </span><span style="color:#859900;">. </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>toList
+</span></code></pre>
+<p>This reduces the surface area of code that can do dangerous things,
+and makes it easier to test our pure functions. One downside of this
+is that string concatenation isn't particularly efficient. Using a
+bytestring builder approach is even better.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">Control.Monad.State
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">Data.ByteString.Builder </span><span>(</span><span style="color:#268bd2;">Builder</span><span>, </span><span style="color:#b58900;">hPutBuilder</span><span>, </span><span style="color:#b58900;">intDec</span><span>)
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">Data.Map.Strict         </span><span>(</span><span style="color:#268bd2;">Map</span><span>)
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Map.Strict         </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">Map
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">Data.Monoid             </span><span>(</span><span style="color:#b58900;">(&lt;&gt;)</span><span>)
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">Data.Text               </span><span>(</span><span style="color:#268bd2;">Text</span><span>)
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">Data.Text.Encoding      </span><span>(</span><span style="color:#b58900;">encodeUtf8Builder</span><span>)
+</span><span style="color:#cb4b16;">import           </span><span style="color:#859900;">System.IO               </span><span>(</span><span style="color:#b58900;">stdout</span><span>)
+</span><span>
+</span><span style="color:#b58900;">addMoney </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">Text</span><span>, </span><span style="color:#268bd2;">Int</span><span>) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">State</span><span> (</span><span style="color:#268bd2;">Map Text Int</span><span>) </span><span style="color:#859900;">()
+</span><span>addMoney (name, amt) </span><span style="color:#859900;">=</span><span> modify </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>insertWith </span><span style="color:#b58900;">(+)</span><span> name amt
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=
+</span><span>    hPutBuilder stdout </span><span style="color:#859900;">$
+</span><span>    mapToBuilder </span><span style="color:#859900;">$</span><span> execState (mapM_ addMoney transactions) </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>empty
+</span><span>  </span><span style="color:#859900;">where
+</span><span>    </span><span style="color:#b58900;">transactions </span><span style="color:#859900;">::</span><span> [(</span><span style="color:#268bd2;">Text</span><span>, </span><span style="color:#268bd2;">Int</span><span>)]
+</span><span>    transactions </span><span style="color:#859900;">=
+</span><span>      [ (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">5</span><span>)
+</span><span>      , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Bob</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">12</span><span>)
+</span><span>      , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">20</span><span>)
+</span><span>      , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Charles</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">3</span><span>)
+</span><span>      , (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Bob</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#859900;">-</span><span style="color:#6c71c4;">7</span><span>)
+</span><span>      ]
+</span><span>
+</span><span>    </span><span style="color:#b58900;">pairToBuilder </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">Text</span><span>, </span><span style="color:#268bd2;">Int</span><span>) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Builder
+</span><span>    pairToBuilder (name, total) </span><span style="color:#859900;">=
+</span><span>      encodeUtf8Builder name </span><span style="color:#859900;">&lt;&gt; </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;</span><span> intDec total </span><span style="color:#859900;">&lt;&gt; </span><span style="color:#839496;">&quot;</span><span style="color:#dc322f;">\n</span><span style="color:#839496;">&quot;
+</span><span>
+</span><span>    </span><span style="color:#b58900;">pairsToBuilder </span><span style="color:#859900;">::</span><span> [(</span><span style="color:#268bd2;">Text</span><span>, </span><span style="color:#268bd2;">Int</span><span>)] </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Builder
+</span><span>    pairsToBuilder </span><span style="color:#859900;">=</span><span> foldMap pairToBuilder
+</span><span>
+</span><span>    </span><span style="color:#b58900;">mapToBuilder </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Map Text Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Builder
+</span><span>    mapToBuilder </span><span style="color:#859900;">=</span><span> pairsToBuilder </span><span style="color:#859900;">. </span><span style="color:#cb4b16;">Map</span><span style="color:#859900;">.</span><span>toList
+</span></code></pre>
+<p>This is more involved than the way most people would write this
+solution, but provides great performance. Note that it assumes your
+output will be UTF8 encoded.</p>
+<h3 id="exercise-4-1">Exercise 4</h3>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">noTestScore </span><span style="color:#859900;">::</span><span> [</span><span style="color:#268bd2;">Name</span><span>]
+</span><span>noTestScore </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">HashMap</span><span style="color:#859900;">.</span><span>keys </span><span style="color:#859900;">$</span><span> students `</span><span style="color:#cb4b16;">HashMap</span><span style="color:#859900;">.</span><span>difference` scores
+</span></code></pre>
+<p>Also: we can bypass the <code>sort</code> if we move over to a <code>Map</code> instead.</p>
+<h3 id="exercise-5-1">Exercise 5</h3>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">dropBottom20Percent </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Ord a </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Set a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Set a
+</span><span>dropBottom20Percent s </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>drop (</span><span style="color:#cb4b16;">Set</span><span style="color:#859900;">.</span><span>size s </span><span style="color:#859900;">`div` </span><span style="color:#6c71c4;">5</span><span>) s
+</span></code></pre>
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#f380929f9680b39583909c9e839f968796dd909c9e" targe="_blank"><span class="__cf_email__" data-cfemail="740715181107341204171b1904181100115a171b19">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

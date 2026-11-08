@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Applied Haskell 101</title>
+  <meta property="og:title" content="Applied Haskell 101">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;tutorial&#x2F;applied-haskell-101&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+  
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+<section class="hero grid-bg">
+  <div class="container">
+    <h1>Applied Haskell 101
+    </h1></div>
+</section>
+
+
+
+  
+<div class="container py-3">
+  <p><a href="https://www.snoyman.com/reveal/why-applied-haskell">Mini intro slide deck</a></p>
+<p>This page is the beginning of the Applied Haskell course. For more
+information, see <a href="https://tech.fpcomplete.com/haskell/syllabus/">the syllabus</a>. The goal here is to
+provide some basic information on:</p>
+<ul>
+<li>What &quot;Applied Haskell&quot; means</li>
+<li>The tools you'll be using</li>
+<li>How to get more help</li>
+</ul>
+<h2 id="what-is-applied-haskell">What is Applied Haskell?</h2>
+<p>Applied Haskell is a course developed over the years by the FP
+Complete team. It focuses on bridging the gap between Haskell basics
+to the ability to write production-grade Haskell applications. In our
+experience, there are a few important pieces necessary to make this
+happen:</p>
+<ul>
+<li>Understand the tooling</li>
+<li>Knowledge of the basic libraries</li>
+<li>Understand how best to structure an application</li>
+<li>Understand how to get more help and information</li>
+</ul>
+<p>This course will <em>not</em> teach you every detail of every library. But
+hopefully by the end you'll be able to find any library you need, read
+its documentation, and use it.</p>
+<h2 id="about-haskell">About Haskell</h2>
+<p>Haskell is in many ways a revolutionary language. It was innovative
+when it first came on the scene decades ago, and remains innovative
+today. Haskell continues to add cutting-edge features, especially at
+the type level, to an industrial-strength language.</p>
+<p>We don't care about that here. In Applied Haskell, we're going to
+treat Haskell as a &quot;getting things done&quot; language. To borrow phrase,
+we're going to be &quot;brutally pragmatic.&quot; Haskell delivers a huge amount
+of value with a subset of its features. We're going to focus on those
+features and the tools and libraries necessary to take advantage of
+them. We'll also be covering Haskell idioms and patterns so you can
+pick up common code more quickly, and discuss some runtime system
+idiosyncrasies.</p>
+<p>You should know the basics of Haskell to follow along properly. You do
+not need to know advanced language theory, category theory, or any
+other surprising topics.</p>
+<h2 id="tooling">Tooling</h2>
+<p>This course will assume that you'll be using the <a href="https://haskellstack.org">Stack build
+tool</a>. Working with other tooling like
+<a href="https://www.haskell.org/cabal/">Cabal</a> or
+<a href="https://github.com/haskell-nix">Nix</a> will work as well, but may
+require more fiddling. For following this course, it's recommended to
+use Stack to avoid wasting time.</p>
+<h3 id="stack">Stack</h3>
+<p>Stack is a build tool for Haskell. It can also install your compiler
+toolchain (and does so by default). It focuses on reproducible build
+plans. As mentioned, there are other tools, but we'll be using
+Stack. It comes first in this list as it's the first one you should
+install, by following the <a href="https://tech.fpcomplete.com/haskell/get-started/">get started instructions</a>.</p>
+<p>If you already have Stack on your machine, you can usually upgrade to
+the latest version by running <code>stack upgrade</code>. Now that you have
+Stack, we can move on to...</p>
+<h3 id="ghc">GHC</h3>
+<p>GHC is the de facto standard Haskell compiler. You can install a
+compiler version by running a command line:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ stack setup ghc-8.4.4
+</span></code></pre>
+<p>Typically you won't have to do this explicitly. When Stack notices
+you're missing a GHC version, it will install it for you.</p>
+<p>GHC can both compile code and run it interpreted, as well as provide
+you with an interactive REPL. You can do those directly with,
+respectively, the <code>ghc</code>, <code>runghc</code>, and <code>ghci</code> executables. Stack does
+not place these executables on the user PATH, so if you'd like to run
+them, you'll typically use <code>stack ghc</code>, <code>stack runghc</code>, and <code>stack ghci</code>.</p>
+<p>If you'd like more information on interacting in these three ways,
+check out:</p>
+<ul>
+<li><a href="https://tech.fpcomplete.com/haskell/tutorial/stack-build/">How to Build</a></li>
+<li><a href="https://tech.fpcomplete.com/haskell/tutorial/stack-script/">How to Script</a></li>
+<li><a href="https://tech.fpcomplete.com/haskell/tutorial/stack-play/">How to Play</a></li>
+</ul>
+<p>The lessons in this course mostly stick to using the script approach.</p>
+<h3 id="cabal-build-system">Cabal build system</h3>
+<p>Apologies in advance, the terminology is about to get a bit complicated.</p>
+<p>Stack is built on top of the Cabal build system. When you install a
+package with Stack (e.g., by running <code>stack build conduit</code>), you're
+installing a Cabal package. Cabal refers to a few different things:</p>
+<ul>
+<li>A file format for <code>.cabal</code> files, which provide metadata on a
+package</li>
+<li>A design of a build system</li>
+<li>A library for performing these builds, called <code>Cabal</code></li>
+<li>A command line executable. The executable is called <code>cabal</code>, and the
+package it comes from is called <code>cabal-install</code>.</li>
+</ul>
+<p>When using Stack, you'll use the <code>stack</code> executable instead of the
+<code>cabal</code>/<code>cabal-install</code> executable. Other than that, you're using the
+same Cabal components. Both tools (and Nix, for that matter) can
+install the same packages, so there's high overlap.</p>
+<p>The one final complication is that there's another file format called
+hpack. This file format is YAML based (with files called
+<code>package.yaml</code>), and is used to generate <code>.cabal</code> files. Stack
+supports these out of the box, and many Stack projects will provide
+<code>package.yaml</code> files, and have auto-generated <code>.cabal</code> files.</p>
+<p>More information on all of this at:</p>
+<ul>
+<li><a href="https://docs.haskellstack.org/en/stable/stack_yaml_vs_cabal_package_file/">stack.yaml vs cabal package files</a></li>
+</ul>
+<p>Note that these are more advanced issues which you probably won't run
+into immediately. It's good to know where more information is when you
+do hit a roadblock.</p>
+<h3 id="stackage">Stackage</h3>
+<p>There are thousands of Haskell packages available online on
+<a href="https://hackage.haskell.org/">Hackage</a>, the central open source
+package repository. In order to make it easier to find a working build
+plan, and provide consistent behavior for multiple users, the
+<a href="https://www.stackage.org/">Stackage project</a> provides curated
+snapshots of packages which are tested to work together. There are
+two different sets of Stackage snapshots:</p>
+<ul>
+<li>Long Term Support (LTS) Haskell comes out with snapshots about once
+per week. They are named lts-x.y (e.g.,
+<a href="https://www.stackage.org/lts-12.21">lts-12.21</a>). Within a major
+version number, we mostly include non-breaking changes to
+packages. This makes it relatively easy to upgrade to more recent
+LTS minor versions.</li>
+<li>Stackage Nightly builds are daily and provide no compatibility
+guarantees. They are named nightly-YYYY-MM-DD (e.g.,
+<a href="https://www.stackage.org/nightly-2019-03-10/">nightly-2019-03-10</a>).</li>
+</ul>
+<p>stackage.org provides a few resources. Some notable ones:</p>
+<ul>
+<li>You can perform a Hoogle search, which allows you to search an
+entire snapshot for names and types. For example, you can <a href="https://www.stackage.org/lts/hoogle?q=map">search
+for <code>map</code></a>.</li>
+<li>You can browse API documentation for a specific package, e.g. <a href="https://www.stackage.org/package/conduit">the
+docs for conduit</a>.</li>
+</ul>
+<p>Note that Hackage also provides API documentation. I recommend using
+Stackage's in general for two reasons:</p>
+<ol>
+<li>When you use Stackage's docs, you're getting docs for a specific
+Stackage snapshot. This means that any links to dependencies is the
+same dependency used in that snapshot.</li>
+<li>Sometimes the doc builder can have trouble building docs on
+Hackage, such as due to not finding a working build plan. With few
+exceptions, if a package is in a Stackage snapshot, it means that a
+working build plan was found.</li>
+</ol>
+<h3 id="hlint">hlint</h3>
+<p>The <code>hlint</code> tool is a great linter. It not only provides ways to
+improve your code, but in the process can teach you about better ways
+of writing code you weren't aware of. Install <code>hlint</code> with:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ stack install --resolver lts hlint
+</span></code></pre>
+<p>To see an example of <code>hlint</code>'s power, save the following to <code>Main.hs</code>
+and then run <code>hlint Main.hs</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  mapM putStrLn [</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">World</span><span style="color:#839496;">&quot;</span><span>]
+</span><span>  pure </span><span style="color:#b58900;">()
+</span></code></pre>
+<h3 id="code-formatting">Code formatting</h3>
+<p>Unfortunately in the Haskell world, code formatting isn't quite at the
+level of rigour as, say, Go. There are different coding styles that
+are commonly used, and (at least to my knowledge at time of writing)
+none of the tools can be guaranteed to perfectly format every valid
+Haskell program. Two commonly used tools are:</p>
+<ul>
+<li><a href="https://www.stackage.org/package/stylish-haskell">stylish-haskell</a>,
+which cleans up things like import statements</li>
+<li><a href="https://www.stackage.org/package/hindent">hindent</a>, which does a
+more traditional code formatting.</li>
+</ul>
+<h3 id="editor-integration-ides">Editor integration/IDEs</h3>
+<p>There are lots of different pieces of integration for lots of editors,
+with various IDE support. This is a topic that's often in flux,
+depending on which tools have upgraded to the most recent release of
+GHC. For learning, I recommend: stick to simple syntax
+highlighting. If you find integrations that work well for you, great!
+The unfortunate reality is that what works for one person doesn't
+reliably work for others.</p>
+<p>One tool which I will mention is
+<a href="https://www.stackage.org/package/ghcid">ghcid</a>. It is fully usable
+from the command line (in fact, that's its intended use case), and
+provides fast auto-rebuild support using the GHC
+interpreter. Basically:</p>
+<ol>
+<li>Run <code>stack install --resolver lts ghcid</code></li>
+<li>Go into a directory with a Stack project</li>
+<li>Run <code>ghcid</code></li>
+<li>Fix all the bugs that appear on your screen</li>
+<li>...</li>
+<li>Profit!</li>
+</ol>
+<h3 id="web-resources">Web resources</h3>
+<p>There are many resources available for Haskell across the web. In
+addition to some of the links above:</p>
+<ul>
+<li><a href="https://tech.fpcomplete.com/haskell/learn/">The learn page on this site</a></li>
+<li><a href="https://tech.fpcomplete.com/haskell/community/">The community page on this site</a></li>
+<li><a href="https://www.haskell.org/">haskell.org</a></li>
+<li><a href="https://www.yesodweb.com/">The Yesod Web Framework</a></li>
+<li><a href="https://www.schoolofhaskell.com">School of Haskell</a></li>
+</ul>
+<h2 id="nomenclature">Nomenclature</h2>
+<p>Before diving into the rest of this course, a quick recap of some
+nomenclature to be familiar with:</p>
+<h3 id="data-types">Data types</h3>
+<ul>
+<li>Type synonyms: <code>type String = [Char]</code></li>
+<li>Newtypes: <code>newtype Age = Age Int</code> or <code>newtype Age = Age { unAge :: Int }</code></li>
+<li>Data declaration
+<ul>
+<li>Product type: <code>data Person = Person Name Age</code></li>
+<li>Product w/record: <code>data Person = Person { personName :: Name, personAge :: Age }</code></li>
+<li>Enum: <code>data Fruit = Apple | Banana | Pear</code></li>
+<li>Mix them (proper sums): <code>data Age = UnknownAge | KnownAge Int</code></li>
+</ul>
+</li>
+</ul>
+<p>Terms:</p>
+<ul>
+<li><code>Fruit</code> is a <em>type constructor</em></li>
+<li><code>Fruit</code> is also a <em>type</em></li>
+<li><code>Apple</code>, <code>Banana</code>, and <code>Pear</code> are <em>data constructors</em></li>
+<li><code>Person</code> is both a type and data constructor
+<ul>
+<li>They live in separate namespaces, that's fine</li>
+</ul>
+</li>
+</ul>
+<p>Type variables:</p>
+<ul>
+<li><code>data Maybe a = Nothing | Just a</code></li>
+<li><code>a</code> is a type variable</li>
+<li><code>Maybe</code> is a type constructor</li>
+<li>However, <code>Maybe</code> is <em>not</em> a type!</li>
+<li><code>Maybe</code> has kind <code>Type -&gt; Type</code>, aka <code>* -&gt; *</code></li>
+<li><code>Maybe Int</code> is a type</li>
+</ul>
+<p>More on data types in next section.</p>
+<h3 id="partial-total-functions">Partial/total functions</h3>
+<p><strong>Bottom value</strong>: when evaluated, throws a runtime exception or loops
+infinitely</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>bottom1 </span><span style="color:#859900;">=</span><span> error </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">I&#39;m bottom!</span><span style="color:#839496;">&quot;
+</span><span>bottom2 </span><span style="color:#859900;">=</span><span> undefined
+</span><span>bottom3 </span><span style="color:#859900;">=</span><span> _ </span><span style="color:#93a1a1;">-- probably fails at compile time
+</span><span>bottom4 </span><span style="color:#859900;">= let</span><span> x </span><span style="color:#859900;">=</span><span> x </span><span style="color:#859900;">in</span><span> x </span><span style="color:#93a1a1;">-- infinite loop, runtime may detect it
+</span></code></pre>
+<p><strong>Total function</strong> produces a non-bottom output for all non-bottom
+input.</p>
+<p><strong>Partial function</strong> may produce a bottom output for some non-bottom
+input.</p>
+<p>Partiality can sneak in:</p>
+<ul>
+<li>Partial pattern matches</li>
+<li>Lambdas on sum types</li>
+<li>Infinite loops</li>
+<li>Turn on <code>-Wall</code>!</li>
+</ul>
+<h3 id="language-extensions">Language extensions</h3>
+<p>50% of all production Haskell code is language extension and import
+lines</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> DeriveFunctor #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> GADTs #-}
+</span></code></pre>
+<p>Added at the top of your file. Basic structure:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#93a1a1;">-- Above two lines for scripts, we&#39;ll cover that below
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#93a1a1;">-- {-# LANGUAGE ... #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">OPTIONS_GHC</span><span style="color:#b58900;"> -Wall #-} </span><span style="color:#93a1a1;">-- better in package.yaml file, below
+</span><span style="color:#859900;">module Main </span><span>(</span><span style="color:#b58900;">main</span><span>) </span><span style="color:#859900;">where
+</span><span>
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad </span><span>(</span><span style="color:#b58900;">when</span><span>)
+</span><span style="color:#93a1a1;">-- import ...
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Finally, some actual code!</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>See: https://github.com/commercialhaskell/rio#language-extensions</p>
+<h2 id="syntactic-sugar-everywhere">Syntactic sugar everywhere</h2>
+<p>Function calls:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>foo x y </span><span style="color:#859900;">= ...
+</span><span>foo </span><span style="color:#859900;">= \</span><span>x y </span><span style="color:#859900;">-&gt; ...
+</span><span>foo </span><span style="color:#859900;">= \</span><span>x </span><span style="color:#859900;">-&gt; \</span><span>y </span><span style="color:#859900;">-&gt; ...
+</span></code></pre>
+<p>All the same, allow for partial function application (not the same as
+partial functions!).</p>
+<p>Pattern matching:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>fromMaybe def </span><span style="color:#cb4b16;">Nothing </span><span style="color:#859900;">=</span><span> def
+</span><span>fromMaybe _def (</span><span style="color:#cb4b16;">Just</span><span> x) </span><span style="color:#859900;">=</span><span> x
+</span><span>
+</span><span>fromMaybe def mx </span><span style="color:#859900;">=
+</span><span>  </span><span style="color:#859900;">case</span><span> mx </span><span style="color:#859900;">of
+</span><span>    </span><span style="color:#cb4b16;">Nothing </span><span style="color:#859900;">-&gt;</span><span> def
+</span><span>    </span><span style="color:#cb4b16;">Just</span><span> x </span><span style="color:#859900;">-&gt;</span><span> x
+</span><span>
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> LambdaCase #-}
+</span><span>fromMaybe def </span><span style="color:#859900;">= \case
+</span><span>  </span><span style="color:#cb4b16;">Nothing </span><span style="color:#859900;">-&gt;</span><span> def
+</span><span>  </span><span style="color:#cb4b16;">Just</span><span> x </span><span style="color:#859900;">-&gt;</span><span> x
+</span></code></pre>
+<p>Also:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">if</span><span> x </span><span style="color:#859900;">then</span><span> y </span><span style="color:#859900;">else</span><span> z
+</span><span>
+</span><span style="color:#859900;">case</span><span> x </span><span style="color:#859900;">of
+</span><span>  </span><span style="color:#cb4b16;">True </span><span style="color:#859900;">-&gt;</span><span> y
+</span><span>  </span><span style="color:#cb4b16;">False </span><span style="color:#859900;">-&gt;</span><span> z
+</span></code></pre>
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#f182909d9482b19781929e9c819d948594df929e9c" targe="_blank"><span class="__cf_email__" data-cfemail="98ebf9f4fdebd8fee8fbf7f5e8f4fdecfdb6fbf7f5">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

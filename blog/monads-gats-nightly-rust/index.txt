@@ -1,0 +1,765 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Monads and GATs in nightly Rust
+
+By Michael Snoyman, December 7, 2020
+
+Share this     
+
+This blog post was entirely inspired by reading the GATs on Nightly! Reddit post by /u/C5H5N5O. I
+just decided to take things a little bit too far, and thought a blog post on it would be fun. I
+want to be clear from the start: I'm introducing some advanced concepts in this post that rely on
+unstable features in Rust. I'm not advocating their usage at all. I'm just exploring what may and
+may not be possible with GATs.
+
+Rust shares many similarities with Haskell at the type system level. Both have types, generic
+types, associated types, and traits/type classes (which are basically equivalent). However, Haskell
+has one important additional feature that is lacking in Rust: Higher Kinded Types (HKTs). This
+isn't an accidental limitation in Rust, or some gap that should be filled in. It's an intentional
+design decision, at least as far as I know. But as a result, some things until now can't really be
+implemented in Rust.
+
+Take, for instance, a Functor in Haskell. For all of its scary sounding name, almost all developers
+today are familiar with the concept of a Functor. A Functor provides a general purpose interface
+for "map a function over this structure." Many different structures in Rust can provide such
+mapping functionality, including Option, Result, Iterator, and Future.
+
+However, it hasn't been possible to write a general purpose Functor trait that can be implemented
+by multiple types. Instead, individual types can implement them as methods on that type. For
+example, we can write our own custom MyOption and MyResult enums and provide map methods:
+
+#[derive(Debug, PartialEq)]
+enum MyOption<A> {
+    Some(A),
+    None,
+}
+
+impl<A> MyOption<A> {
+    fn map<F: FnOnce(A) -> B, B>(self, f: F) -> MyOption<B> {
+        match self {
+            MyOption::Some(a) => MyOption::Some(f(a)),
+            MyOption::None => MyOption::None,
+        }
+    }
+}
+
+#[test]
+fn test_option_map() {
+    assert_eq!(MyOption::Some(5).map(|x| x + 1), MyOption::Some(6));
+    assert_eq!(MyOption::None.map(|x: i32| x + 1), MyOption::None);
+}
+
+#[derive(Debug, PartialEq)]
+enum MyResult<A, E> {
+    Ok(A),
+    Err(E),
+}
+
+impl<A, E> MyResult<A, E> {
+    fn map<F: FnOnce(A) -> B, B>(self, f: F) -> MyResult<B, E> {
+        match self {
+            MyResult::Ok(a) => MyResult::Ok(f(a)),
+            MyResult::Err(e) => MyResult::Err(e),
+        }
+    }
+}
+
+#[test]
+fn test_result_map() {
+    assert_eq!(MyResult::Ok(5).map(|x| x + 1), MyResult::Ok::<i32, ()>(6));
+    assert_eq!(MyResult::Err("hello").map(|x: i32| x + 1), MyResult::Err("hello"));
+}
+
+However, it hasn't been possible without GATs to define map as a trait method. Let's see why.
+Here's a naive approach to a "monomorphic functor" trait, and an implementation for Option:
+
+/// Monomorphic functor trait
+trait MonoFunctor {
+    type Unwrapped; // value "contained inside"
+    fn map<F>(self, f: F) -> Self
+    where
+        F: FnMut(Self::Unwrapped) -> Self::Unwrapped;
+}
+
+impl<A> MonoFunctor for Option<A> {
+    type Unwrapped = A;
+    fn map<F: FnMut(A) -> A>(self, mut f: F) -> Option<A> {
+        match self {
+            Some(a) => Some(f(a)),
+            None => None,
+        }
+    }
+}
+
+In our trait definition, we define an associated type Unwrapped, for the value that lives "inside"
+the MonoFunctor. In the case of Option<A>, that would be A. And herein lies the problem. We're
+hard-coding the Unwrapped to just one type, A. Usually with a map function, we want to change the
+type to B. But we have no way in current, stable Rust to say "I want a type that's associated with
+this MonoFunctor, but also a little bit different in what lives inside of it."
+
+That's where Generic Associated Types come in.
+
+Polymorphic Functor
+
+In order to get a polymorphic functor, we need to be able to say "here's how my type would look if
+I wrapped up a different type inside of it." For example, with Option, we'd like to say "hey, I've
+got Option<A>, and it contains an A type, but if it contained a B type instead, it would be Option
+<B>." To do this, we're going to use the generic associated type Wrapped<B>:
+
+trait Functor {
+    type Unwrapped;
+    type Wrapped<B>: Functor;
+
+    fn map<F, B>(self, f: F) -> Self::Wrapped<B>
+    where
+        F: FnMut(Self::Unwrapped) -> B;
+}
+
+So what we're saying is:
+
+  • Each functor has an associated type Unwrapped, which is the thing it contains
+  • When we know a functor, we can also figure out another, associated type Wrapped<B> which is
+    "like Self, but has a different wrapped up value underneath"
+  • Like before, map is a method that takes two parameters: self and a function
+  • The function parameter will map from the current underlying Unwrapped value to some new type B
+  • And the output of map will be a Wrapped<B>
+
+That's a bit abstract. Let's see what this looks like for the Option type:
+
+impl<A> Functor for Option<A> {
+    type Unwrapped = A;
+    type Wrapped<B> = Option<B>;
+
+    fn map<F: FnMut(A) -> B, B>(self, mut f: F) -> Option<B> {
+        match self {
+            Some(x) => Some(f(x)),
+            None => None,
+        }
+    }
+}
+
+#[test]
+fn test_option_map() {
+    assert_eq!(Some(5).map(|x| x + 1), Some(6));
+    assert_eq!(None.map(|x: i32| x + 1), None);
+}
+
+And if you play with all of the type gymnastics, you'll see that this ends up being identical to
+the map method we special-cased for MyOption above (sans a difference between FnOnce and FnMut).
+Cool!
+
+Side note: HKTs
+
+In Haskell, none of this generic associated type business is needed. In fact, Haskell Functors
+don't use any associated types. The typeclass for Functor in Haskell far predates the presence of
+associated types in the language. For comparison, let's see what that looks like, renaming a bit to
+match up with Rust:
+
+class Functor f where
+    map :: (a -> b) -> f a -> f b
+instance Functor Option where
+    map f option =
+        case option of
+            Some x -> Some (f x)
+            None -> None
+
+Or, to translate it into Rust-like syntax:
+
+trait HktFunctor {
+    fn map<A, B, F: FnMut(A) -> B>(self: Self<A>, f: F) -> Self<B>;
+
+impl HktFunctor for Option {
+    fn map<A, B, F: FnMut(A) -> B>(self: Option<A>, f: F) -> Option<B> {
+        match self {
+            Some(a) => Some(f(a)),
+            None => None,
+        }
+    }
+}
+
+But this isn't valid Rust! That's because we're trying to provide type parameters to Self. But in
+Rust, Option isn't a type. Option must be applied to a single type parameter before it becomes a
+type. Option<i32> is a type. Option on its own is not.
+
+By contrast, in Haskell, Maybe Int is a type of kind Type. Maybe is a type constructor, of kind
+Type -> Type. But you can treat Maybe has a type of its own for purposes of creating type classes
+and instance. Functor in Haskell works on the kind Type -> Type. This is what we mean by "higher
+kinded types": we can have types whose kind is higher than just Type.
+
+GATs in Rust are a workaround for this lack of HKTs for the examples below. But as we'll ultimately
+see, they are more brittle and more verbose. That's not to say that GATs are a Bad Thing, far from
+it. It is to say that trying to write Haskell in Rust is probably not a good idea.
+
+OK, now that we've thoroughly established that what we're about to do isn't a great idea... let's
+do it!
+
+Pointed
+
+There's a controversial typeclass in Haskell called Pointed. It's controversial because it
+introduces a typeclass without any laws associated with it, which is often not very liked. But
+since I already told you this is all a bad idea, let's implement Pointed.
+
+The idea of Pointed is simple: wrap up a value into a Functor-like thing. So in the case of Option,
+it would be like wrapping it with Some. In a Result, it's using Ok. And for a Vec, it would be a
+single-element vector. Unlike Functor, this will be a static method, since we don't have an
+existing Pointed value to change. Let's see it in action:
+
+trait Pointed: Functor {
+    fn wrap<T>(t: T) -> Self::Wrapped<T>;
+}
+
+impl<A> Pointed for Option<A> {
+    fn wrap<T>(t: T) -> Option<T> {
+        Some(t)
+    }
+}
+
+What's particularly interesting about this is that we don't use the A type parameter in the Option
+implementation at all.
+
+There's one more thing worth noting. The result of calling wrap is a Self::Wrapped<T> value. What
+exactly do we know about Self::Wrapped<T>? Well, from the Functor trait definition, we know exactly
+one thing: that Wrapped<T> must be a Functor. Interestingly, we have lost the knowledge here that
+Self::Wrapped<T> is also a Pointed. That's going to be a recurring theme for the next few traits.
+
+But let me reiterate this a different way. When we're working with a general Functor trait
+implementation, we don't know anything at all about the Wrapped associated type except that it
+implements Functor itself. Logically, we know that for a Option<A> implementation, we'd like
+Wrapped to be a Option<B> kind of thing. But the GAT implementation does not enforce it. (By
+contrast, the HKT approach in Haskell does enforce this.) Nothing prevents us from writing a
+horrifically non-sensible implementation such as:
+
+impl<A> Functor for MyOption<A> {
+    type Unwrapped = A;
+    type Wrapped<B> = Result<B, String>; // wut?
+
+    fn map<F: FnMut(A) -> B, B>(self, mut f: F) -> Result<B, String> {
+        match self {
+            MyOption::Some(a) => Ok(f(a)),
+            MyOption::None => Err("Well this is weird, isn't it?".to_owned()),
+        }
+    }
+}
+
+
+You may be thinking, "So what, no one would write something like that. And it's their own fault if
+they do." That's not the point here. The point is that the compiler can't know that there's a
+connection between Self and Wrapped<B>. And since it can't know that, there are some things we
+can't get to type check. I'll show you one of those at the end.
+
+Applicative
+
+When I give Haskell training, and I get to the Functor/Applicative/Monad section, most people are
+nervous about Monads. In my experience, the really confusing part is really Applicative. Once you
+understand that, Monad is relatively speaking easy.
+
+The Applicative typeclass in Haskell has two methods. pure is equivalent to the wrap that I put
+into Pointed, so we can ignore it. The other method is <*>, known as "apply," or "splat", or "the
+tie fighter." I originally implemented Applicative with a method called apply that matches that
+operator, but found that it was better to go a different route.
+
+Instead, there's an alternate way to define an Applicative typeclass, based on a different function
+called liftA2 (or, in Rust, lift_a2). Here's the idea. Suppose I have two functions:
+
+fn birth_year() -> Option<i32> { ... }
+fn current_year() -> Option<i32> { ... }
+
+I may not know the current year or the birth year, in which case I'll return None. But if I get a
+Some return for both of these function calls, then I can calculate the age. In normal Rust code,
+this may look like:
+
+fn age() -> Option<i32> {
+    let birth_year = birth_year()?;
+    let current_year = current_year()?;
+    Some(current_year - birth_year)
+}
+
+But that's leveraging ? and early return. A primary purpose of Applicative is to address the same
+problem. So let's rewrite this without any early return, and instead use some pattern matching:
+
+fn age() -> Option<i32> {
+    match (birth_year(), current_year()) {
+        (Some(birth_year), Some(current_year)) => Some(current_year - birth_year),
+        _ => None,
+    }
+}
+
+This certainly works, but it's verbose. It also doesn't generalize to other cases, like a Result.
+And what about a really sophisticated case, like "I have a Future that will return the birth year,
+a Future that will return the current year, and I want to produce a Future that finds the
+difference." With async/await syntax, it's easy enough to do. But we can also do it with
+Applicative, using our lift_a2 method.
+
+The point of lift_a2 is: I've got two values wrapped up, perhaps both in an Option. I'd like to use
+a function to combine them together. Let's see what that looks like in Rust:
+
+trait Applicative: Pointed {
+    fn lift_a2<F, B, C>(self, b: Self::Wrapped<B>, f: F) -> Self::Wrapped<C>
+    where
+        F: FnMut(Self::Unwrapped, B) -> C;
+}
+
+impl<A> Applicative for Option<A> {
+    fn lift_a2<F, B, C>(self, b: Self::Wrapped<B>, mut f: F) -> Self::Wrapped<C>
+    where
+        F: FnMut(Self::Unwrapped, B) -> C
+    {
+        let a = self?;
+        let b = b?;
+        Some(f(a, b))
+    }
+}
+
+With this definition in place, we can now rewrite age as:
+
+fn age() -> Option<i32> {
+    current_year().lift_a2(birth_year(), |cy, by| cy - by)
+}
+
+Whether this is an improvement or not probably depends heavily on how much Haskell you've written
+in your life. Again, I'm not advocating changing Rust here, but it's certainly interesting.
+
+We could also do the same kind of thing with Result:
+
+fn birth_year() -> Result<i32, String> {
+    Err("No birth year".to_string())
+}
+
+fn current_year() -> Result<i32, String> {
+    Err("No current year".to_string())
+}
+
+fn age() -> Result<i32, String> {
+    current_year().lift_a2(birth_year(), |cy, by| cy - by)
+}
+
+Which may beg the question: which of the two Err values do we take? Well, that depends on our
+implementation of Applicative, but typically we would prefer choosing the first:
+
+impl<A, E> Applicative for Result<A, E> {
+    fn lift_a2<F, B, C>(self, b: Self::Wrapped<B>, mut f: F) -> Self::Wrapped<C>
+    where
+        F: FnMut(Self::Unwrapped, B) -> C
+    {
+        match (self, b) {
+            (Ok(a), Ok(b)) => Ok(f(a, b)),
+            (Err(e), _) => Err(e),
+            (_, Err(e)) => Err(e),
+        }
+    }
+}
+
+But what if we wanted both? Here's a case where Applicative gives us power that ? doesn't.
+
+Validation
+
+The Validation type from Haskell represents the idea "I'm going to try lots of things, some of them
+may fail, and I want to collect together all of the error results." A typically example of this
+would be web form parsing. If a user enters an invalid email address, invalid phone number, and
+forgets to click the "I agree" box, you'd want to generate all three error messages. You don't want
+to generate just one.
+
+To start off our Validation implementation, we need to introduce one more Haskell-y typeclass, this
+time for representing the concept of "combining together multiple values." We could just hard-code
+Vec in here, but where's the fun in that? Instead, let's introduce the strangely-named Semigroup
+trait. This doesn't even require any special GAT code:
+
+trait Semigroup {
+    fn append(self, rhs: Self) -> Self;
+}
+
+impl Semigroup for String {
+    fn append(mut self, rhs: Self) -> Self {
+        self += &rhs;
+        self
+    }
+}
+
+impl<T> Semigroup for Vec<T> {
+    fn append(mut self, mut rhs: Self) -> Self {
+        Vec::append(&mut self, &mut rhs);
+        self
+    }
+}
+
+impl Semigroup for () {
+    fn append(self, (): ()) -> () {}
+}
+
+With that in place, we can now define a new enum called Validation:
+
+#[derive(PartialEq, Debug)]
+enum Validation<A, E> {
+    Ok(A),
+    Err(E),
+}
+
+The Functor and Pointed implementations are boring, let's skip straight to the meat with the
+Applicative implementation:
+
+impl<A, E: Semigroup> Applicative for Validation<A, E> {
+    fn lift_a2<F, B, C>(self, b: Self::Wrapped<B>, mut f: F) -> Self::Wrapped<C>
+    where
+        F: FnMut(Self::Unwrapped, B) -> C
+    {
+        match (self, b) {
+            (Validation::Ok(a), Validation::Ok(b)) => Validation::Ok(f(a, b)),
+            (Validation::Err(e), Validation::Ok(_)) => Validation::Err(e),
+            (Validation::Ok(_), Validation::Err(e)) => Validation::Err(e),
+            (Validation::Err(e1), Validation::Err(e2)) => Validation::Err(e1.append(e2)),
+        }
+    }
+}
+
+Here, we're saying that the error type parameter must implement Semigroup. If both values are Ok,
+we apply the f function to them and wrap up the result in Ok. If only one of the values is Err, we
+return that error. But if both of them are error, we leverage the append method of Semigroup to
+combine them together. This is something you can't get with ?-style error handling.
+
+Monad
+
+At last, the dreaded monad rears its head! But in reality, at least for Rustaceans, monad isn't
+much of a surprise. You're already used to it: it's the and_then method. Almost any chain of
+statements that end with ? in Rust can be reimagined as monadic binds. In my opinion, the main
+reason monad has the allure of the unknowable was a series of particularly bad tutorials that
+cemented this idea in people's minds.
+
+Anyway, since we're just trying to match the existing method signature of and_then on Option, I'm
+not going to spend much time motivating "why monad." Instead, let's just look at the definition of
+the trait:
+
+trait Monad : Applicative {
+    fn bind<B, F>(self, f: F) -> Self::Wrapped<B>
+    where
+        F: FnMut(Self::Unwrapped) -> Self::Wrapped<B>;
+}
+
+impl<A> Monad for Option<A> {
+    fn bind<B, F>(self, f: F) -> Option<B>
+    where
+        F: FnMut(A) -> Option<B>,
+    {
+        self.and_then(f)
+    }
+}
+
+And just like that, we've got monadic Rust. Time to ride off into the sunset.
+
+But wait, there's more!
+
+Monad transformers
+
+[transforme]
+
+I'm overall not a huge fan of monad transformers. I think they are drastically overused in Haskell,
+and lead to huge amounts of complication. I instead advocate the ReaderT design pattern. But again,
+this post is definitely not about best practices.
+
+Typically, each monad instance provides some kind of additional functionality. Option means "it
+might not produce a value." Result means "it might fail with an error." If we provided it, Future
+means "it won't produce a value immediately, but it will eventually." And as a final example, the
+Reader monad means "I have read-only access to some environmental data."
+
+But what if we want to have two pieces of functionality? There's no obvious way to combine a Reader
+and a Result. In Rust, we do combine together Result and Future via async functions and ?, but that
+had to have carefully designed language support. Instead, the Haskell approach to this problem
+would be: just provide do notation (syntactic sugar for monads), and then layer up your monad
+transformers to add together all of the functionality.
+
+I've considered writing a blog post on this philosophical difference for a while. (If people are
+interested in such a post, please let me know.) But for now, let's simply explore what it looks
+like to provide a monad transformer in Rust. We'll implement it for the most boring of all monad
+transformers, IdentityT. This is the transformer that doesn't do anything at all. (And if you're
+wondering "why have it," consider why Rust has 1-tuples. Sometimes, you need something that fits a
+certain shape to make some generic code work nicely.)
+
+Since IdentityT doesn't do anything, it's comforting to see that its type reflects that perfectly:
+
+struct IdentityT<M>(M);
+
+I'm calling the type parameter M, because it's going to itself be an implementation of Monad.
+That's the idea here: every monad transformer sits on top of a "base monad."
+
+Next, let's look at a Functor implementation. The idea is to unwrap the IdentityT layer, leverage
+the underlying map method, and then rewrap IdentityT.
+
+impl<M: Functor> Functor for IdentityT<M> {
+    type Unwrapped = M::Unwrapped;
+    type Wrapped<A> = IdentityT<M::Wrapped<A>>;
+
+    fn map<F, B>(self, f: F) -> Self::Wrapped<B>
+    where
+        F: FnMut(M::Unwrapped) -> B
+    {
+        IdentityT(self.0.map(f))
+    }
+}
+
+For our associated types, we leverage the associated types of M. Inside map, we use self.0 to get
+the underlying M, and wrap the result of the map method call with IdentityT. Cool!
+
+The Pointed, Applicative, and Monad implementations follow similar patterns, so I'll drop all of
+those in too:
+
+impl<M: Pointed> Pointed for IdentityT<M> {
+    fn wrap<T>(t: T) -> IdentityT<M::Wrapped<T>> {
+        IdentityT(M::wrap(t))
+    }
+}
+
+impl<M: Applicative> Applicative for IdentityT<M> {
+    fn lift_a2<F, B, C>(self, b: Self::Wrapped<B>, f: F) -> Self::Wrapped<C>
+    where
+        F: FnMut(Self::Unwrapped, B) -> C
+    {
+        IdentityT(self.0.lift_a2(b.0, f))
+    }
+}
+
+impl<M: Monad> Monad for IdentityT<M> {
+    fn bind<B, F>(self, mut f: F) -> Self::Wrapped<B>
+    where
+        F: FnMut(Self::Unwrapped) -> Self::Wrapped<B>
+    {
+        IdentityT(self.0.bind(|x| f(x).0))
+    }
+}
+
+And finally, we'll define one new trait: MonadTrans. MonadTrans captures the idea of "layering up"
+a base monad into the transformed monad. In Haskell, you'll often see code like lift (readFile
+"foo.txt"), where readFile works in the base monad, and we're sitting in a layer on top of that.
+
+trait MonadTrans {
+    type Base: Monad;
+
+    fn lift(base: Self::Base) -> Self;
+}
+
+impl<M: Monad> MonadTrans for IdentityT<M> {
+    type Base = M;
+
+    fn lift(base: M) -> Self {
+        IdentityT(base)
+    }
+}
+
+So is this useful? Not terribly on its own. We could arguably create an ecosystem of ReaderT,
+WriterT, ContT, ConduitT, and more, and start building up sophisticated systems. But I'm strongly
+of the opinion that we don't need that stuff in Rust, at least not yet. I'm happy to go this far in
+my implementation to explore the wonders of GATs, but let's not go crazy and try to make something
+useful just because we can.
+
+join
+
+Alright, now the fun begins. We've seen GATs in practice. And it seems like Rust is keeping pace
+with Haskell pretty well. That's about to end.
+
+There's another method that goes along with Monads in Haskell, called join. It's equivalent in
+power to the bind method we've already seen, but works differently. join "flattens" two layers of
+monads in Haskell. And a side note: there's already a method called flatten in Rust that does just
+this for Option and Result.
+
+The catch with join: the monads have to be the same. In other words, join (Just (Just 5)) == Just
+5, but join (Just (Right 6)) is a type error, since Just is a Maybe data constructor, and Right is
+an Either data constructor.
+
+Now we're in a bit of a quandary. In Haskell, where we have higher kinded types, it's easy to say
+"Maybe must be the same as Maybe":
+
+join :: Monad m => m (m a) -> m a
+join m = bind m (\x -> x)
+
+But I couldn't figure out a way to express the same idea with GATs in Rust and get the syntax
+accepted by the compiler. This is the closest I came:
+
+fn join<MOuter, MInner, A>(outer: MOuter) -> MOuter::Wrapped<A>
+where
+    MOuter: Monad<Unwrapped = MInner>,
+    MInner: Monad<Unwrapped = A, Wrapped = MOuter::Wrapped<A>>,
+{
+    outer.bind(|inner| inner)
+}
+
+#[test]
+fn test_join() {
+    assert_eq!(join(Some(Some(true))), Some(true));
+}
+
+Unfortunately, this broke the compiler:
+
+error: internal compiler error: compiler\rustc_middle\src\ty\subst.rs:529:17: type parameter `B/#1` (B/1) out of range when substituting, substs=[MInner]
+
+thread 'rustc' panicked at 'Box<Any>', /rustc/b7ebc6b0c1ba3c27ebb17c0b496ece778ef11e18\compiler\rustc_errors\src\lib.rs:904:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+note: the compiler unexpectedly panicked. this is a bug.
+
+note: we would appreciate a bug report: https://github.com/rust-lang/rust/issues/new?labels=C-bug%2C+I-ICE%2C+T-compiler&template=ice.md
+
+note: rustc 1.50.0-nightly (b7ebc6b0c 2020-11-30) running on x86_64-pc-windows-msvc
+
+note: compiler flags: -C embed-bitcode=no -C debuginfo=2 -C incremental --crate-type bin
+
+note: some of the compiler flags provided by cargo are hidden
+
+I think it's fair to say I was pushing the compiler to the limit here. In any event, I opened up a
+GitHub issue for this.
+
+mapM/traverse
+
+Already, we were stymied by join. How about another popular functional idiom: traverse. As I
+previously mentioned, traverse is incredibly popular in Scala, and pretty common in Haskell. It
+functions very much like a map, except the result of each step through the map is wrapped in some
+Applicative, and the Applicative values are combined into an overall data structure.
+
+Sound confusing? Fair enough. As a simpler example: if you have a Vec<A> value, and a function from
+A to Option<B>, traverse can put these together into an Option<Vec<B>>. Or using the Validation
+type we had above, you could combine Vec<A> and Fn(A) -> Validation<B, Vec<MyErr>> into a
+Validation<Vec<B>, Vec<MyErr>>, returning either all of the successfully generated B values, or all
+of the errors that occurred along the way.
+
+Anyway, I ended up with this as a starting type signature for our function:
+
+fn traverse<F, M, A, B, I>(iter: I, f: F) -> M::Wrapped<Vec<B>>
+
+Then we have the following trait bounds:
+
+  • I: IntoIterator<Item = A>: I is an iterator of A values. To simplify, you can think of it as
+    Vec<A>.j
+  • M: Applicative<Unwrapped = B>: M is some implementation of Applicative which unwraps to a B. In
+    our example: this would be Validation<B, Vec<MyErr>>.
+  • F: FnMut(A) -> M: F is a function that takes the A values from the iterator and produces M
+    values.
+  • M::Wrapped<Vec<B>>: Applicative<Unwrapped = Vec<B>>: wrapping up the result Vec<B> in M's
+    wrapping produces a value which is also an Applicative
+
+This last bullet shows one of the pain points I mentioned above. Since we don't really know from
+the Wrapped associated type itself much at all, we only get the Functor bound "for free". We need
+to explicitly say that it's also Applicative, and that unwrapping it again will get you back a Vec
+<B>.
+
+In any event, I wasn't clever enough to figure out a way to make all of this compile. This was the
+final version of the code I came up with:
+
+fn traverse<F, M, A, B, I>(iter: I, f: F) -> M::Wrapped<Vec<B>>
+where
+    F: FnMut(A) -> M,
+    M: Applicative<Unwrapped = B>,
+    I: IntoIterator<Item = A>,
+    M::Wrapped<Vec<B>>: Applicative<Unwrapped = Vec<B>>,
+{
+    let mut iter = iter.into_iter().map(f);
+
+    let mut result: M::Wrapped<Vec<B>> = match iter.next() {
+        Some(b) => b.map(|x| vec![x]),
+        None => return M::wrap(Vec::new()),
+    };
+
+    for m in iter {
+        result = result.lift_a2(m, |vec, b| {
+            vec.push(b);
+            vec
+        });
+    }
+
+    result
+}
+
+But this fails with the error messages:
+
+error[E0308]: mismatched types
+   --> src\main.rs:448:33
+    |
+433 | fn traverse<F, M, A, B, I>(iter: I, f: F) -> M::Wrapped<Vec<B>>
+    |                - this type parameter
+...
+448 |         result = result.lift_a2(m, |vec, b| {
+    |                                 ^ expected associated type, found type parameter `M`
+    |
+    = note: expected associated type `<<M as Functor>::Wrapped<Vec<B>> as Functor>::Wrapped<_>`
+                found type parameter `M`
+    = note: you might be missing a type parameter or trait bound
+
+error[E0308]: mismatched types
+   --> src\main.rs:448:18
+    |
+433 |   fn traverse<F, M, A, B, I>(iter: I, f: F) -> M::Wrapped<Vec<B>>
+    |                  - this type parameter
+...
+448 |           result = result.lift_a2(m, |vec, b| {
+    |  __________________^
+449 | |             vec.push(b);
+450 | |             vec
+451 | |         });
+    | |__________^ expected type parameter `M`, found associated type
+    |
+    = note: expected associated type `<M as Functor>::Wrapped<Vec<B>>`
+               found associated type `<<M as Functor>::Wrapped<Vec<B>> as Functor>::Wrapped<Vec<B>>`
+help: consider further restricting this bound
+    |
+436 |     M: Applicative<Unwrapped = B> + Functor<Wrapped = M>,
+    |                                   ^^^^^^^^^^^^^^^^^^^^^^
+
+Maybe this is a limitation in GATs. Maybe I'm just not clever enough to figure it out. But I
+thought this was a good point to call it quits. If anyone knows a trick to make this work, let me
+know!
+
+Should we have HKTs in Rust?
+
+This was a fun adventure. GATs look like a nice extension to the trait system in Rust. I look
+forward to the feature stabilizing and landing. And it's certainly fun to play with all of this.
+
+But Rust is not Haskell. The ergonomics of GATs, in my opinion, will never compete with higher
+kinded types on Haskell's home turf. And I'm not at all convinced that it should. Rust is a
+wonderful language as is. I'm happy to write Rust style in a Rust codebase, and save my Haskell
+coding for my Haskell codebases.
+
+I hope others enjoyed this adventure as much as I have. A really ugly version of my code is
+available as a Gist. You'll need to use a recent nightly Rust build, but otherwise it has no
+dependencies.
+
+If you liked this post, you may be interested in some other Haskell/Rust hybrid posts:
+
+  • Iterators and Streams in Rust and Haskell
+  • Streaming UTF-8 in Haskell and Rust
+  • Is Rust functional?
+  • Async Exceptions in Haskell, and Rust
+
+FP Complete offers training, consulting, and review services in both Haskell and Rust. Want to hear
+more? Contact us to speak with one of our engineers about how we can help.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

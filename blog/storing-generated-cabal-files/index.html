@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Storing generated cabal files</title>
+  <meta property="og:title" content="Storing generated cabal files">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="A discussion of some trade-offs in Stack and Pantry&#x27;s design and user recommendations">
+  <meta property="og:description" content="A discussion of some trade-offs in Stack and Pantry&#x27;s design and user recommendations">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;storing-generated-cabal-files&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Storing generated cabal files</h1>
+      
+      <p id="page-description">By Michael Snoyman, March  4, 2020</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Storing%20generated%20cabal%20files https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;storing-generated-cabal-files&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;storing-generated-cabal-files&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;storing-generated-cabal-files&#x2F;&amp;title=Storing%20generated%20cabal%20files"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;storing-generated-cabal-files&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  <p>tl;dr: I'm moving towards recommending that hpack-using projects store their generated cabal files in their repos, and modifying Stack and Pantry to more strongly recommend this practice. This is a reversal of previous recommendations. <a href="https://github.com/commercialhaskell/stack/issues/5210">Vote and comment on this proposal</a>.</p>
+<h2 id="backstory">Backstory</h2>
+<p>Stack 2.0 switched over to using the Pantry library to manage dependencies. Pantry does a number of things, but at its core it focuses heavily on reproducibility. The idea is that, with a fully qualified package specification, you should always get the same source code. As an example, <code>https://example.com/foo.tar.gz</code> would not be a fully qualified package specification, because the content in that tarball could silently change without being detected. Instead, with Pantry, you would specify something like:</p>
+<pre data-lang="yaml" style="background-color:#fdf6e3;color:#657b83;" class="language-yaml "><code class="language-yaml" data-lang="yaml"><span style="color:#268bd2;">size</span><span>: </span><span style="color:#6c71c4;">9526
+</span><span style="color:#268bd2;">url</span><span>: </span><span style="color:#2aa198;">https://github.com/snoyberg/filelock/archive/97e83ecc133cd60a99df8e1fa5a3c2739ad007dc.tar.gz
+</span><span style="color:#268bd2;">cabal-file</span><span>:
+</span><span>  </span><span style="color:#268bd2;">size</span><span>: </span><span style="color:#6c71c4;">1571
+</span><span>  </span><span style="color:#268bd2;">sha256</span><span>: </span><span style="color:#2aa198;">d97c2ee2b4f0c72b35cbaf04ad37cda2e9e6a2eb1e162b5c6ab084acb94f4634
+</span><span style="color:#268bd2;">name</span><span>: </span><span style="color:#2aa198;">filelock
+</span><span style="color:#268bd2;">version</span><span>: </span><span style="color:#6c71c4;">0.1.1.2
+</span><span style="color:#268bd2;">sha256</span><span>: </span><span style="color:#2aa198;">78332e0d964cb2f24fdbb6b07c2a6a84a029c4fe540a0435993c85ad58eab051
+</span><span style="color:#268bd2;">pantry-tree</span><span>:
+</span><span>  </span><span style="color:#268bd2;">size</span><span>: </span><span style="color:#6c71c4;">584
+</span><span>  </span><span style="color:#268bd2;">sha256</span><span>: </span><span style="color:#2aa198;">19914e8fb09ffe2116cebb8b9d19ab51452594940f1e3770e01357b874c65767
+</span></code></pre>
+<p>Of course, writing these out by hand is tedious and annoying, so Stack uses Pantry to generate these values for you and put them in a lock file.</p>
+<p>Separately: Stack has long supported the ability to include hpack's <code>package.yaml</code> files in your source code, and to automate the generation of a <code>.cabal</code> file. There are two quirks we need to pay attention to with hpack:</p>
+<ul>
+<li>The cabal files it generates change from one version to the next. Some of those changes may be semantically meaningful. At the very least, each new version will stamp a different hpack version in the comments of the cabal file.</li>
+<li>hpack generation is a highly I/O-focused activity, looking at all of the files in a package. Furthermore, as <a href="https://github.com/commercialhaskell/stack/issues/4906">I was recently reminded</a> it can refer to files outside of the specific package you're trying to build but inside the same Git repository or tarball.</li>
+</ul>
+<p>Finally, Stack and Pantry make a stark distinction between two different kinds of packages. <em>Immutable</em> packages are things which we can assume never change. These would be one of the following:</p>
+<ul>
+<li>A package on Hackage, specified by a name, version number, and information on the Hackage revision</li>
+<li>A tarball or ZIP file given by a file path or URL. While these absolutely <em>can</em> change over time, Pantry makes an explicit recommendation that only immutable packages should be used. And the hashes and file size stored in the lock file provide protection against changes.</li>
+<li>A Git or Mercurial repository, specified by a commit.</li>
+</ul>
+<p>On the other hand, mutable packages are packages stored as files on the file system. These are the packages that you are working on in your local project. Reproducibility is far less important here. We allow Stack to regularly check the timestamps and hashes of all of these files and determine when things need to be rebuilt.</p>
+<h2 id="the-conflict">The conflict</h2>
+<p>There's been a debate for a while around how to manage your packages with Stack and hpack. The question is simple: do you store the generated <code>cabal</code> files in the repo? There are solid arguments in both directions:</p>
+<ul>
+<li>You shouldn't store the file, because generated files should in general not be stored in repositories. This can lead to unnecessary diffs, and when people are using different hpack versions, &quot;commit battles&quot; of the file jumping back and forth between different generated content.</li>
+<li>You should store the file, since for maximum reproducibility we want to ensure that we have identical cabal files as input to the build. Also, for people using build tools without built in support for hpack, it's more convenient to have a cabal file present.</li>
+</ul>
+<p>I've had this discussion off and on over the years with many different people, and before Stack 2 had personally settled on the first approach: not storing the cabal files. Then I started working on Pantry.</p>
+<h2 id="early-pantry">Early Pantry</h2>
+<p>Earlier in the development of Pantry, I made a decision to focus on reproducibility. I quickly ran into a problem with hpack: I needed to be able to tell the package name and version of a package easily, but the only code path I had for that was parsing the cabal file. In order to support hpack files for this, I would need to write the entire package contents to the filesystem, run hpack on the resulting directory, and then parse the generated file.</p>
+<p>(I probably could have whipped up something hacky around parsing the hpack YAML file directly, but that felt like a can of worms.)</p>
+<p>Performing these steps each time Stack or Pantry needed to know a package name/version would have been prohibitively expensive, so I dismissed the option. I also considered caching the generated cabal file, but since the generated file contents would change version by version, I didn't follow that path, since it would violate reproducibility.</p>
+<h2 id="current-pantry">Current Pantry</h2>
+<p>An early beta tester of Stack 2.0 complained about this change. While hpack worked perfectly for mutable, local packages, it no longer worked for immutable packages. If you had a Git repository with a package, that repo didn't include the generated cabal file, <em>and</em> you wanted to use that repo as an extra-dep, things would fail. This didn't fail with Stack 1, so this was viewed (correctly) as a regression in functionality.</p>
+<p>However, Stack 2 was aiming for caching and reproducibility goals that Stack 1 hadn't achieved. If anyone remembers, Stack 1 had a bad tendency to reclone Git repos far more often than you would think it should need to. Pantry's caching ultimately solved that problem, and did so by relying on reproducibility.</p>
+<p>My initial recommendation was to require changing all Git repos used as extra-deps to include the generated cabal files. However, after further discussion with beta testers, we ended up changing Pantry instead. We added the ability to cache the generated cabal files (keyed on the version of hpack used). I was uneasy about this, but ultimately it seemed to work fine, and let us keep the functionality we wanted. So we shipped this in Pantry, in Stack 2, and continued recommending people not include generated cabal files.</p>
+<h2 id="the-problems-arise">The problems arise</h2>
+<p>Unfortunately, things were far from rosey. There are now at least three problems I'm aware of with this situation:</p>
+<ul>
+<li>Continuing from before: people using build tools without hpack support are still out of luck with these repos.</li>
+<li>As raised in <a href="https://github.com/commercialhaskell/stack/issues/4906">issue #4906</a>, due to how Pantry handles subdirectories in megarepos, cabal file generation will fail for extra-deps in some cases.</li>
+<li>Lock files have regularly become corrupted by changing generated cabal files. If you use a new version of Stack using a different version of hpack, it will generate a different cabal file, which will change the hashes associated with a package in the lock file. This can cause a lot of frustration between teams, and undermines the whole purpose of lock files in the first place.</li>
+</ul>
+<p>There are probably solutions to the second and third problem. But there's definitely no solution to the first short of including the cabal files again.</p>
+<h2 id="changes">Changes</h2>
+<p>Based on all of this, I'm recommending that we make the following changes:</p>
+<ul>
+<li>Starting immediately: update docs and Stack templates to recommend checking in generated cabal files. This would involve a few minor doc improvements, and removing <code>*.cabal</code> from a few <code>.gitignore</code> files.</li>
+<li>For the next releases of Pantry and Stack, add a warning any time an immutable package does not include a <code>.cabal</code> file. Reference potentially this blog post, and warn that lock files may be broken by doing this.</li>
+<li>Personally: I'll start including the generated cabal files in my repos. Since I have a bunch of them, I'll appreciate people sending PRs to modify my .gitignore files and adding the generated files, as you discover them.</li>
+</ul>
+<p>For those who are truly set against including generated cabal files, all is not lost. For those cases, my recommendation would be pretty simple: keep the generated file out of your repository, and then generate a source tarball with <code>stack sdist</code> to be used as an extra-dep. This will essentially mirror the <code>stack upload</code> step you would follow to upload a package to Hackage.</p>
+<h2 id="next-steps">Next steps</h2>
+<p>The changes necessary to make this a reality are small, and I'm happy to make the changes myself. I'm opening up a short discussion period for this topic, probably around a week, depending on how the discussion goes. If you have an opinion, please jump over to <a href="https://github.com/commercialhaskell/stack/issues/5210">issue #5210</a> and either leave an emoji reaction or a comment.</p>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Storing%20generated%20cabal%20files https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;storing-generated-cabal-files&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;storing-generated-cabal-files&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;storing-generated-cabal-files&#x2F;&amp;title=Storing%20generated%20cabal%20files"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;storing-generated-cabal-files&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#285b49444d5b684e584b474558444d5c4d064b4745" targe="_blank"><span class="__cf_email__" data-cfemail="87f4e6ebe2f4c7e1f7e4e8eaf7ebe2f3e2a9e4e8ea">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Pantry, part 1: The Package Index</title>
+  <meta property="og:title" content="Pantry, part 1: The Package Index">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Part 1 in a series of posts on introducing content addressable storage for packages in Stack and Stackage.">
+  <meta property="og:description" content="Part 1 in a series of posts on introducing content addressable storage for packages in Stack and Stackage.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;pantry-part-1-package-index&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Pantry, part 1: The Package Index</h1>
+      
+      <p id="page-description">By Michael Snoyman, July 19, 2018</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Pantry%2C%20part%201%3A%20The%20Package%20Index https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;pantry-part-1-package-index&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;pantry-part-1-package-index&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;pantry-part-1-package-index&#x2F;&amp;title=Pantry%2C%20part%201%3A%20The%20Package%20Index"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;pantry-part-1-package-index&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>Back in January, I published a <a href=
+"/blog/2018/01/hash-based-package-downloads-part-1-of-2">two</a>
+<a href=
+"/blog/2018/01/hash-based-package-downloads-part-2-of-2">part</a>
+blog post on hash-based package downloads. Some project needs at FP
+Complete have pushed this to the forefront recently, and as a
+result I've gotten started on implementing these ideas. I'm hoping
+to publish regular blog posts on the topic as I continue
+implementation.</p>
+<p>There are a few major goals in the refactoring I'm working
+on:</p>
+<ul>
+<li>Increased security and reproducibility of build plans</li>
+<li>More shared code across tooling (especially Stackage and
+Stack)</li>
+<li>Performance improvements (especially in Stack)</li>
+<li>More flexibility for the Stackage team</li>
+</ul>
+<p>Today's post won't hit on all of these points, as I'm only going
+to discuss the first bit of rewrite I've completed: package index
+management. This work is occurring on the pantry branch of Stack, though you
+should be well aware that that branch is currently totally unusable
+outside of the <code>stack update</code> command.</p>
+<h2>What's a package index?</h2>
+<p>A package index is a term that comes from the Cabal and Hackage
+worlds. Hackage itself provides a package index, and
+<code>cabal-install</code> and Stack both download this index to
+discover packages. The index itself is a tarball (the
+<code>01-index.tar</code> file) containing a single cabal file for
+each revision of a package/version combination. It also contains
+some other metadata files, like JSON files providing cryptographic
+hash information on package tarballs. The <code>01-index.tar</code>
+file is intended to be downloaded by <a href=
+"https://github.com/haskell/hackage-security" rel="noopener"
+target="_blank">hackage-security</a>, which provides both security
+(signature checking and other protections) and resumable
+downloads.</p>
+<h2>The need for an index</h2>
+<p>In its common use case, Stack discovers available packages via a
+snapshot configuration (e.g., <code>lts-12.0</code>), which tells
+it the name, version, and Hackage revision of any package
+available. As a result, it may seem like Stack doesn't really need
+the package index. However, it's still necessary for a few
+things:</p>
+<ul>
+<li>It's the only location for downloading the revised cabal files
+from Hackage</li>
+<li>When displaying error messages, we sometimes want to provide
+helpful information on the latest versions available on
+Hackage</li>
+<li>When using the solver from <code>cabal-install</code>, we must
+have an index available so that the solver can discover new
+packages</li>
+</ul>
+<p>Stack will automatically download the index today when needed
+(e.g., a snapshot refers to a revision not yet downloaded locally),
+and can be told to explicitly download a new index via <code>stack
+update</code>. Because it is highly inefficient to traverse the
+tarball each time a lookup needs to occur, Stack will also create a
+cache file mapping package name/version/revision to the offset
+inside the tarball that it is located.</p>
+<h2>Configurable indices</h2>
+<p>Stack—like <code>cabal-install</code>—allows alternative package
+indices to be specified. One use case for this is the “corporate
+firewall” situation (though it applies to other cases too). Some
+companies have restrictive firewalls in place which block outgoing
+connections. Or, alternatively, bandwidth may be throttled, and a
+local mirror would be preferable. Either way, configuring an
+alternative location to download the Hackage package index from is
+case 1. To get ahead of myself a bit: there's no problem with this
+use case, and Stack will continue to support configurable mirror
+location.</p>
+<p>The second case is for providing access to packages which are
+not on Hackage. I've <a href=
+"https://www.stackage.org/package/yackage" rel="noopener" target=
+"_blank">used this approach in the past</a> myself. It was one of
+the original ways you could configure <code>cabal-install</code> to
+use Stackage. With such an alternative index in place,
+<code>foo-1.2.3</code> could mean something different on your
+machine than on mine. (Epic foreshadowment right there.)</p>
+<h2>Problems with the index</h2>
+<p>Let's start with the easy one: building up the offset indexing
+is slow and memory hungry today. I've tried optimizing this in the
+past, but this is really a pessimal case for Haskell's memory
+management: lots of binary blobs getting inserted into a
+<code>HashMap</code>. Chris Done recently reported to me that this
+can take over 1GB of memory, discovered due to a build failure on a
+VPS with swap space disabled.</p>
+<p>But there's a more fundamental problem with indices. I <a href=
+"https://github.com/commercialhaskell/stack/issues/4137" rel=
+"noopener" target="_blank">raised an issue</a> two weeks back about
+a long time concern I've had with package indices. Remember that
+epic foreshadowment above? Allowing alternative, non-Hackage
+package indices means that <code>foo-1.2.3</code> is now ambiguous.
+And worse yet, because package index configuration can live in a
+user-wide configuration file, looking at your project's
+<code>stack.yaml</code> may not reveal this at all.</p>
+<p>This kind of trade-off made sense in the past. However, we've
+got two things in Stack pushing against such behavior:</p>
+<ul>
+<li>Stack's main goal is to provide reproducible build plans.
+Encouraging a situation where the build plan will be altered this
+way is an anti-pattern.</li>
+<li>Stack has built in support for specifying package locations not
+on Hackage, via archives (HTTPS links to tarballs/zip files), repos
+(Git and Mercurial), and local file paths. There is no compelling
+reason for using the package index hack.</li>
+</ul>
+<p>Since we'll allow overriding the package index location for
+mirroring, there's obviously no way to <em>stop</em> a user from
+providing a location that doesn't mirror Hackage itself. However,
+we can discourage this by allowing just one package index location
+instead of the current cascading fallback. We can also drop support
+for legacy pre-hackage-security <code>00-index.tar</code> indices,
+which do not provide security guarantees or access to revision
+information.</p>
+<p>The second change we can make is to be much more thorough about
+referencing packages via cryptographic hashes instead of by
+name/version information. This is already necessary for proper
+reproducibility in a world of Hackage revisions. Part of the
+ongoing Pantry work will be to automate the process of rewriting
+configuration files to use cryptographic hashes, which currently is
+a pain.</p>
+<p>Alright, so that's change one: <strong>you only get one package
+index in Stack</strong>, and it should be a Hackage mirror.</p>
+<h2>SQLite for the win</h2>
+<p>The overarching Pantry plans involve referencing many different
+kinds of files via their cryptographic hashes. We'll be able to
+query them over the network securely, and cache them locally. For
+that local cache, we're going to use SQLite, which is a great
+choice for <a href="https://www.sqlite.org/fasterthanfs.html" rel=
+"noopener" target="_blank">lots of small files</a>.</p>
+<p>The <code>pantry</code> branch of Stack no longer creates that
+cache with tarball offsets. Instead, when it downloads a new
+<code>01-index.tar</code> file from Hackage, it populates an SQLite
+database with the raw file contents, as well as a table which is
+essentially <code>Map (PackageName, Version, RevisionNumber)
+HashOfCabalFile</code>.</p>
+<p>As I was <a href=
+"https://twitter.com/snoyberg/status/1018846501076897792" rel=
+"noopener" target="_blank">bragging about a bit on Twitter</a>,
+this completely solves the high memory usage for cache creation I
+mentioned above. Now, updating all ~111,000 cabal files from
+Hackage takes less than 4mb of resident memory.</p>
+<p>At first, it seemed like due to inability to detect Hackage
+rebases (where the <code>01-index.tar</code> gets updated), we'd
+need to totally recalcuate the cache each time <code>stack
+update</code> runs. This is the slow behavior we already have
+today. Fortunately, thanks to some insight from Oleg Grenrus, this
+turns out to <a href=
+"https://github.com/commercialhaskell/stack/commit/33ef253544ed8fa4a995240ff0d99e9c49f74074"
+rel="noopener" target="_blank">not be necessary</a>, and we can
+instead track hashes of the tarball. See <a href=
+"https://github.com/haskell/hackage-server/issues/779" rel=
+"noopener" target="_blank">Hackage issue #779</a> for the full
+discussion, as well as potentially alternative implementations like
+parsing the <code>x-revision</code> info.</p>
+<p>There is a downside to this approach, namely we will end up
+storing all of the cabal files twice. Fortunately, the SQLite
+storage format with proper table normalization turns out to be
+pretty good, resulting in about 0.5GB of storage (around the same
+as the <code>01-index.tar</code> file itself). However, when we get
+to Pantry's network layer in later posts, we'll see that in many
+common cases, we won't need to download the full index at all,
+saving both bandwidth and disk space. For now, we're treating disk
+space as a cheap commodity, which is basically in line with how all
+of Haskell tooling behaves.</p>
+<p>Besides the advantages above, some other nice outcomes of this
+are:</p>
+<ul>
+<li>No need for loading up a large binary offset cache each time
+Stack runs. We can instead use SQLite's intelligent indexing
+capabilities.</li>
+<li>To go along with the above: we're not relying on any
+Haskell-specific binary serialization, which can get changed
+through versions of Stack. This means less time wasted
+recalculating that cache. This likely affects Stack developers more
+than anyone else.</li>
+<li>This provides the potential for a unified interface for looking
+up cabal files for packages coming from any location. I haven't
+implemented this yet, but it's coming down the pipeline for a
+future blog post.</li>
+</ul>
+<h2>What's next?</h2>
+<p>Now that we're caching the contents of the cabal files
+themselves in the SQLite database, the next thing will be caching
+the contents of the tarballs as well. This raises some interesting
+design questions regarding whether we cache the full original
+tarballs as they are, or normalize to a more compact format to
+allow for more data sharing. After weighing the options, we're
+going to go with the latter. I've already implemented a
+proof-of-concept for this which works quite well. Now I need to
+integrate that with the Stack code base.</p>
+<p>If you're interested in the work going on here and would like to
+discuss, come hit me up on <a href=
+"https://gitter.im/commercialhaskell/stack" rel="noopener" target=
+"_blank">Stack's Gitter channel</a>.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Pantry%2C%20part%201%3A%20The%20Package%20Index https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;pantry-part-1-package-index&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;pantry-part-1-package-index&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;pantry-part-1-package-index&#x2F;&amp;title=Pantry%2C%20part%201%3A%20The%20Package%20Index"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;pantry-part-1-package-index&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#1162707d7462517761727e7c617d7465743f727e7c" targe="_blank"><span class="__cf_email__" data-cfemail="a4d7c5c8c1d7e4c2d4c7cbc9d4c8c1d0c18ac7cbc9">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

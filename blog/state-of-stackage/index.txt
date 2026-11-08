@@ -1,0 +1,150 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+The State of Stackage
+
+By Michael Snoyman, September 30, 2013
+
+Share this     
+
+Almost a full year ago, I made the first commit into the Stackage repository, and the announcement
+blog post describes the project’s motivations. Since then, as part of our work at FP Complete,
+there’s been a lot of activity on this project. The community contributions have been amazing as
+well, with a huge number of package authors signing up to contribute and maintain their packages on
+Stackage. I want to recap where the project is right now, in terms of the package set, its own
+codebase, and how FP Complete is working with Stackage.
+
+The package set
+
+To date, users have contributed roughly 200 separate packages to the Stackage package collection.
+When you include all of the deep dependencies of these packages, we are currently building about
+480 total packages in a full Stackage build, or roughly 9% of all Hackage packages.
+
+This is great news for anyone using Stackage directly to build a package database, as they gain
+direct access to a huge number of the most popular Haskell packages, without worries of
+compatibility. (We’ll touch on that a bit more in the FP Complete section.) But the work we’re
+doing with Stackage has probably already directly benefitted all Haskell users, even those who have
+never touched Stackage.
+
+As part of regular Stackage maintenance, I maintain a total of three separate daily Stackage
+builds, one using the most recent Haskell Platform, one using the previous release, and one using
+vanilla GHC 7.4 (no Haskell Platform constraints). Every day, these jobs run, try to compile all of
+these packages, and run the full set of test suites. The process has found a large number of simple
+compilation issues, overly restrictive cabal version bounds, and a number of actual bugs. In my
+opinion, Stackage is living up to its goal of helping maintainers raise the quality of their code.
+
+At this point, I’ve certainly lost track of how many patches either myself or one of my coworkers
+at FP Complete have sent based on Stackage build results. In the cases where we haven’t been able
+to put a patch together, maintainers have been incredibly responsive, and I’d really like to thank
+everyone in the community who has participated.
+
+So on this note, there’s only one thing I’d like to ask from people: get involved! If you’ve
+written some code that you’re actively maintaining, get it in Stackage. You’ll be widening the
+potential audience of users for your code by getting your package into FP Haskell Center, and
+you’ll get some helpful feedback from the automated builds so that users can more reliably build
+your code.
+
+The codebase
+
+The Stackage codebase itself has become pretty stable. The initial goal was simply to try building
+a bunch of packages at the same time. At this point, it handles a lot more than that:
+
+  • Performs an audit of uploaders to Hackage, to ensure no one accidentally (or purposefully)
+    hijacks another user’s package. I’ve been running these audits approximately twice a week for
+    the past few months, and as usual have gotten great responses from the community. (Once Hackage
+    2 goes live, this process will be obsoleted, but for now it’s providing a valuable service.)
+  • The ability to add local patches to packages from Hackage. This has been very useful in quickly
+    modifying cabal version constraints.
+  • Ability to snapshot builds, which will capture all packages and their versions to be built.
+    When combined with the previous point, this allows us to create stable package sets which can
+    include bug fixes.
+  • Fully sandboxed builds, optional Haskell Platform constraints, and helpful output to determine
+    the cause of conflicts in version numbers.
+  • And for my own sanity: the ability to take advantage of cabal-install’s parallel build option
+    to build all 480 packages in a (semi-)reasonable amount of time. It usually takes about 1.5
+    hours to do a full build on my desktop.
+
+But we’re not finished yet! Security is a big concern for both FP Complete and Galois, and we’ve
+been talking about ways to leverage Stackage to improve the security situation of Hackage. Some
+concrete steps we’re hoping to take in the near future are:
+
+  • Package signing, to ensure authorship.
+  • Facilitate code reviews.
+  • Set up a web of trust for code.
+
+Since this blog post is about the state of Stackage, and not its future, I don’t want to belabor
+these points too much. But expect to hear more about them in the future. In the meanwhile, if
+you’re interested in taking part in this process, please be in touch with me, or even better, write
+to the Stackage mailing list.
+
+FP Complete
+
+FP Complete is the company behind Stackage. So what are we getting out of this? Firstly, everything
+I’ve listed above. FP Complete is obviously very invested in the Haskell community, and benefits
+greatly from all of the wonderful work being done by that community. So anything we can do to help
+facilitate that continued progress is a boon to our progress as well. Getting a higher quality set
+of packages on Hackage and lowering the barrier to entry by reducing installation problems is
+something we’re very interested in.
+
+More directly, many people know that we use Stackage to build the set of packages we provide on FP
+Haskell Center itself. When you write a School of Haskell tutorial, you have access to all 480
+packages in our package database. When you start a new project in FP Haskell Center, you can
+immediately import any module in that package database, without concerns of diamond dependencies.
+
+By running Stackage as such an open project, and having our system built on top of Stackage, we’ve
+created a natural way for users to get additional libraries onto our system. Instead of having a
+centralized body controlling which packages can make it onto our servers, we can open things up to
+a much more user-driven approach. This takes us out of the role of gate-keepers (or, said another
+way, bottlenecks) and instead lets us simply be enablers.
+
+The Hackage uploader vetting has been invaluable as well. We take security very seriously, as do
+our users, and we need some way to ensure that when you start using package X, it hasn’t been
+replaced by a nefarious user. Of course, package signing will give us even more guarantees about
+this.
+
+FP Complete is promoting two sets of packages currently: bleeding edge (called unstable), and the
+stable 13.09 package set. This latter set is based on a snapshot taken just before our first
+release at the beginning of this month. Using Stackage’s snapshotting and patching abilities, we
+are able to provide users with stable APIs from vetted packages, while fixing any bugs or security
+holes found in those packages on behalf of our users. And for those of you looking to be more
+experimental, our unstable environment can be updated much more regularly.
+
+Stackage is fulfilling the role I’d hoped it would, both for the community in general, and at FP
+Complete. We’re going to be broadening its intended feature set over the next few months to include
+more security features, and hope to provide yet another benefit to the Haskell community. This is
+an exciting project to be a part of, and I hope even more of you will take part in it.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

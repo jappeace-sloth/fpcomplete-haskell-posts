@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Pantry, part 2: Trees and keys</title>
+  <meta property="og:title" content="Pantry, part 2: Trees and keys">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Part 2 in a blog series on Pantry for content addressable package storage in Haskell. In this edition, we&#x27;ll motivate and describe a new format for representing package contents.">
+  <meta property="og:description" content="Part 2 in a blog series on Pantry for content addressable package storage in Haskell. In this edition, we&#x27;ll motivate and describe a new format for representing package contents.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;pantry-part-2-trees-keys&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Pantry, part 2: Trees and keys</h1>
+      
+      <p id="page-description">By Michael Snoyman, July 23, 2018</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Pantry%2C%20part%202%3A%20Trees%20and%20keys https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;pantry-part-2-trees-keys&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;pantry-part-2-trees-keys&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;pantry-part-2-trees-keys&#x2F;&amp;title=Pantry%2C%20part%202%3A%20Trees%20and%20keys"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;pantry-part-2-trees-keys&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>This is part two of a series of blog posts on Pantry, a new
+storage and download system for Haskell packages. You can see
+<a href="/blog/2018/07/pantry-part-1-package-index">part 1</a>.</p>
+<p>In March of last year, there was <a href=
+"https://github.com/haskell/hackage-server/issues/573#issuecomment-283299524">
+a bug on Hackage</a> that went something like this:</p>
+<ul>
+<li>Author uploads a package tarball, let’s call it
+<code>foo-1.2.3.tar.gz</code>, at 5:00am.</li>
+<li>Both the CDN in front of Hackage, and at least one Hackage
+mirror, grab that tarball, with SHA256 of
+<code>deadbeef1234</code>.</li>
+<li>Hackage moves servers, and in the process loses information on
+<code>foo-1.2.3.tar.gz</code>.</li>
+<li>Author notices that the package is missing, and reuploads
+<code>foo-1.2.3.tar.gz</code>, at 6:00am.</li>
+<li>Because the reupload involves creating a new tarball, the
+modification timestamp in the tarball for each file is different,
+resulting in a new SHA256 of <code>deadbeef5678</code>.</li>
+<li>Hackage, the CDN, and the mirror no longer agree on the
+checksum for the package tarball.</li>
+</ul>
+<p>The problem was resolved (see linked issue), but this made me
+wonder: is there any reason why checksums should depend on
+inconsequential artifacts of the tar format, like modification
+times, file order, user IDs, etc?</p>
+<p>Alright, <strong>second question</strong>. Let’s take the
+<code>yaml</code> package as an example. It’s got a bunch of
+modules, each about (let’s just say) 5kb in size, and a fairly
+sizeable C source file, let’s say 100kb in size. When I’m working
+on this in Git, I don’t need to store that 100kb of data on each
+commit. Instead, Git refers to this immutable data via its SHA1.
+However, each release of <code>yaml</code> to Hackage involves
+including all 100kb of that C file, and all of the Haskell source
+modules, in full size, with zero data deduplication. Doesn’t that
+seem highly inefficient?</p>
+<p>And finally, <strong>third question</strong>. For many tools
+(including Stack, Stackage, and things like OSS-license
+inspectors), we need to be able to download and parse the cabal
+file for the package before downloading the entire package
+contents. When dealing with packages from Hackage, that’s easy,
+since we already have the full package index on our system,
+containing all cabal files. But let’s say we’ve got a package at
+some arbitrary URL or in a Git repository. The only way to get the
+cabal file is to download the entire package contents. Can we more
+efficiently grab just the cabal file?</p>
+<p>Alright, enough questions. Time for some answers!</p>
+<h2>What’s in a package?</h2>
+<p>Right now, in almost all cases, a package is provided by a
+tarball, created via the <code>cabal sdist</code>/<code>stack
+sdist</code> command. As mentioned, these tarballs contain lots of
+extra information irrelevant to actually building the package. If
+we pare things down, it appears that we have relatively simple
+requirements for a package specification:</p>
+<ul>
+<li>A mapping from filename to file contents, and whether that file
+is executable or not</li>
+<li>Some normalization of the filename
+<ul>
+<li>No directory components like <code>//</code>, <code>/./</code>,
+or <code>/../</code></li>
+<li>All directory separators are forward slashes for cross-OS
+compatibility (no Windows-style backslashes)</li>
+<li>No null characters</li>
+<li>Arguably: no “weird” characters like newlines, ASCII control
+characters, etc, though there’s not a strong reason for this
+requirement</li>
+</ul>
+</li>
+<li>File contents are represented by the SHA256 of their
+contents</li>
+<li>Keep track of the size of the file contents to avoid overflow
+attacks from a server when downloading file contents (more on that
+later)</li>
+<li>No need to track directories; they are created implicitly by
+the presence of files inside of them.</li>
+<li>No support for other “special” files like symlinks, device
+files, etc.</li>
+<li>Remove the wrapper directory often placed in tarballs. That
+wrapper directory is useful for avoiding <a href=
+"http://www.linfo.org/tarbomb.html">tarbombs</a>, but actually
+contains redundant information with the package name and version.
+In other words: don’t store <code>foo-1.2.3/foo.cabal</code>, store
+<code>foo.cabal</code>.</li>
+<li>When storing the list of files: sort alphabetically for
+consistency.</li>
+</ul>
+<p>Those familiar with it may see a strong overlap with Git’s
+definition of a tree. That’s not by accident, though there are some
+differences (left as an exercise to the reader).</p>
+<p>It turns out that you can convert most tarballs on Hackage into
+a representation like the above, with a few exceptions (mentioned
+below). And with this representation, you get some really nice
+benefits:</p>
+<ul>
+<li>The file contents are stored separately, meaning:
+<ul>
+<li>Unchanged file contents can be shared between versions of a
+package (dedupe).</li>
+<li>You can download the overview of the package with much less
+bandwidth usage than downloading the entire package, allowing us to
+discover the cabal file more cheaply.</li>
+</ul>
+</li>
+<li>Given the same set of source files, such as a commit in a Git
+repository, you’ll always get an identical tree, since no ephemeral
+information (like modification times) is included.</li>
+<li>There are less OS-specific constructs to deal with, like
+creating symlinks. (Executable status is still somewhat
+OS-specific, but that seems unavoidable.)</li>
+<li>It’s arguably a bit easier to find things like the
+<code>.cabal</code> file for this representation versus a tarball.
+You’re essentially looking for the only file that matches the rule
+<code>\fp -&gt; not ('/' `elem` fp) &amp;& ".cabal" `isSuffixOf`
+fp</code>.</li>
+</ul>
+<p>Those are some pretty nice features for a package
+representation!</p>
+<h2>Converting existing Hackage tarballs</h2>
+<p>This representation does, however, come with some downsides,
+which as far as I can tell always relate to dealing with existing
+tarballs:</p>
+<ul>
+<li>The logic for constructing them from a tarball isn’t dead
+simple. You need to have a few special rules to:
+<ul>
+<li>Follow symlinks to determine which file contents they point
+to</li>
+<li>Strip off the containing directory</li>
+</ul>
+</li>
+<li>Some tarballs are not amenable to a transformation, e.g.:
+<ul>
+<li>They contain broken symlinks, or symlinks to files outside of
+the tarball</li>
+<li>They contain unsupported filetypes</li>
+</ul>
+</li>
+</ul>
+<p>Whether these are dealbreakers or not is a good question. As you
+probably guessed, this tree structure is what Pantry is using for
+its primary package representation, and it will convert the other
+package source types into this representation. With repositories
+and archives, it seems OK to simply reject input which is not
+compliant with these requirements.</p>
+<p>The question comes down to Hackage. Should Pantry keep to its
+strict representation of packages as the trees mentioned above, and
+refuse to work with some packages on Hackage? Or should it put into
+place a fallback to work directly with the original tarball when it
+has one of the issues mentioned above?</p>
+<p>From my initial testing, it seems like the vast majority of
+packages will work with this strict tree definition, so I’m tempted
+to stick to the strict definition. My major concerns are:</p>
+<ol>
+<li>Breaking existing build plans that are relying on incompatible
+tarballs</li>
+<li>The potential for encouraging some behavior where Hackage will
+have non-Stack-compatible packages by introducing this limitation
+in compatibility.</li>
+</ol>
+<p>Fortunately, extending Pantry to support more than one tree
+definition is entirely possible, and <a href=
+"https://github.com/commercialhaskell/stack/blob/55ac92b94d11cea4ba8709596eb0e6cb65a117ec/subs/pantry/src/Pantry/Types.hs#L366-L368">
+I’ve already stubbed out such support</a>.</p>
+<p>Alright, from this point, let’s assume we’re going to just have
+one tree representation, and all packages, no matter their source,
+can be converted into it. Onward!</p>
+<h2>Tree keys</h2>
+<p>The tree type above is amenable to a simple binary
+serialization. So let’s assume we <a href=
+"https://github.com/commercialhaskell/stack/blob/55ac92b94d11cea4ba8709596eb0e6cb65a117ec/subs/pantry/src/Pantry/Types.hs#L371-L383">
+have a function</a>:</p>
+<pre><code class="language-haskell">data Tree = ...
+
+renderTree :: Tree -&gt; ByteString
+</code></pre>
+<p>We can now treat this tree representation like any other file,
+and store it in our Pantry database as yet another blob! This means
+that when, ultimately, we introduce our network layer, we’ll be
+able to use the same distributed caching logic for trees. But more
+importantly, it means we can do this:</p>
+<pre><code class=
+"language-haskell">data BlobKey = BlobKey !SHA256 !FileSize
+getBlobKey :: ByteString -&gt; BlobKey
+
+newtype TreeKey = TreeKey BlobKey
+getTreeKey :: Tree -&gt; TreeKey
+getTreeKey = TreeKey . getBlobKey . renderTree
+</code></pre>
+<p>And, finally, we can begin to specify packages to Stack and
+other tools with something like the following:</p>
+<pre><code class="language-haskell">extra-deps:
+- name: foo
+  version: 1.2.3
+  pantry-tree:
+    key: deadbeef9012
+    size: 9001
+  archive: https://example.com/packages/foo-1.2.3.tar.gz
+  sha256: abcdef
+  size: 18000
+</code></pre>
+<p>By specifying the Pantry hash information here, we get two nice
+features:</p>
+<ul>
+<li>The ability to reuse the network mirroring/caching and local
+storage, instead of downloading and converting the original
+tarball</li>
+<li>A cryptogrphic guarantee that the tarball has not changed since
+we specified our <code>stack.yaml</code> file</li>
+</ul>
+<p>An astute reader may ask why we need the SHA256 of the tarball
+itself, or the <code>name</code> and <code>version</code> fields.
+The former is still useful for detecting early if a tarball has
+changed, and potentially in the future for finding mirrors of the
+original tarball. The reason for embedding the redundant
+<code>name</code> and <code>version</code> information will be the
+topic of the next post in this series.</p>
+<h2>Overflow attacks, and tracking file size</h2>
+<p>One final note: why do we need to include the file size
+information? The cryptographic hashes are sufficient to ensure
+we’re getting the right contents! One motivation would be
+<em>paranoia</em>. As many people know, SHA1 has been (to some
+extent) <a href="https://shattered.io/">broken</a>. However, even
+with this breakage, it’s still not easily possible to create a SHA1
+collision where the two inputs are the same length. Added file size
+into the mix reduces the impact of a future attack on our hash
+function of choice.</p>
+<p>However, there’s a more direct threat to address. Assume that
+one of our Pantry mirrors is compromised. When you connect to it
+(using the network protocol we haven’t discussed yet) and say “give
+me the contents that have SHA256 abcdef1234”, it begins to send you
+an endless stream of random data. What do you do? Until the stream
+has ended, you have no way of knowing if the server is sending the
+real data. As a client, you have a few options:</p>
+<ul>
+<li>Start spooling to disk, and hope you don’t run out of disk
+space</li>
+<li>Introduce some arbitrary file size limit, and hope the user
+never wanted a file larger than that limit</li>
+</ul>
+<p>Specifying the file size in addition to the hash is a much more
+elegant solution. The client knows exactly how much data to
+consume, and the worst a nefarious server can do is waste the
+client’s time downloading that much data, after which the client
+will know that the server is either malfunctioning or nefarious and
+stop trusting it.</p>
+<h2>Next time</h2>
+<p>Next time on our Pantry tour, we’re going to investigate how
+packages are specified in Stack today, the problems with that
+specification, why users will hate a good solution, and how to fix
+that problem too. Stay tuned!</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Pantry%2C%20part%202%3A%20Trees%20and%20keys https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;pantry-part-2-trees-keys&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;pantry-part-2-trees-keys&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;pantry-part-2-trees-keys&#x2F;&amp;title=Pantry%2C%20part%202%3A%20Trees%20and%20keys"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;07&#x2F;pantry-part-2-trees-keys&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#483b29242d3b082e382b272538242d3c2d662b2725" targe="_blank"><span class="__cf_email__" data-cfemail="4e3d2f222b3d0e283e2d21233e222b3a2b602d2123">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

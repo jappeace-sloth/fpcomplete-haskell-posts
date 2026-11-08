@@ -1,0 +1,270 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+IDE and Stackage
+
+By Michael Snoyman, July 16, 2013
+
+Share this     
+
+As most of you know by now, at FP Complete we’ve just launched the beta of the FP Haskell Center,
+our integrated development and deployment environment. We’ve been letting people onto the system
+over the past few weeks. For those of you waiting for your beta invitation, you can get a more
+immediate idea of what we’re offering by viewing the screencast. But in this blog post, I want to
+talk about some of the work that’s going on behind the scenes, what it means for our users, and how
+it will benefit the greater Haskell community.
+
+Not interested in my analysis of the problems, and just want to hear how we’ll solve them? Feel
+free to skip ahead.
+
+Current issues
+
+The set of functionality that we’ve included in our product has not been randomly thrown together.
+Gregg has spent a lot of time talking with people with existing Haskell setups to ascertain the
+major pain points, and we’ve tailored our offering to solve as many of those problems as possible.
+
+You’ve already seen a few of our solutions: an integrated development environment paired with an
+application deployment server, an interactive learning system, and a higher emphasis on
+user-friendly documentation and code samples. I’d like to talk right now about a different set of
+issues we’re trying to solve, a set that probably isn’t so obvious at first glance.
+
+Dependency conflicts (“Cabal hell”)
+
+Almost anyone who has been using Haskell for any length of time has run into some kind of library
+dependency conflict. These situations often get labeled as “Cabal hell,” but to be fair the issue
+is rarely related to Cabal itself. Managing dependencies between many different libraries is a
+difficult task. This isn’t Haskell specific; these problems exist in other languages as well.
+
+Nonetheless, getting a set of packages built and coexisting that can all be used simultaneously can
+be a daunting task, and is something we want to provide a solution to.
+
+Libraries are fast-moving targets
+
+One of the great strengths of the Haskell community is the tendency to solve problems the right
+way. If a problem is found with an existing approach, the default response tends to be to fix the
+library, even if it means a breaking change. This leads to fast iteration and high quality
+libraries. The downside is it can be a pain to stay on top of the latest version of all libraries.
+(And related to the previous point, it can be difficult to get all downstream dependencies to
+update to the newest version of an upstream package.)
+
+The solution for end users could be to just stick with old versions of libraries. That, however,
+brings us to our next point.
+
+Lack of bugfixes for older releases
+
+Virtually every package on Hackage is volunteer maintained. It is difficult enough to maintain a
+single version of your library. Maintaining older versions as well can be overwhelming. But that’s
+exactly what people need: stable versions of libraries which still receive backported bugfixes.
+This is commonplace in many parts of the software world, both open and closed source. We simply
+haven’t gotten to that point in the Haskell world yet.
+
+Non-trivial to get started
+
+Assuming you could solve all the other problems listed, getting set up to start coding can be
+non-trivial. You need to install your tool chain correctly, which presents a number of questions:
+
+ 1. Do you use your distribution’s copy of GHC, or install your own copy?
+ 2. Do you use the Haskell Platform, or just cabal install all your dependencies?
+ 3. Should you use plain cabal, cabal-dev, or hsenv?
+
+And you’ll almost certainly need to perform some task for which you don’t know which library is the
+right library. How do you determine which one to use? How do you know that it will be compatible
+with the rest of your library set?
+
+Our vision for customers
+
+We’ve thought long and hard about how to make Haskell an easier language to get up-and-running
+with, and have started putting together a vision for our customers. Let me share this vision, and
+then nail down the concrete steps we’ll take to get to that point.
+
+Stable libraries
+
+Since the launch of the School of Haskell, we’ve provided a large and growing set of libraries on
+our servers. This library set is going to be available for all of our IDE users as well. The
+important thing to note is that at no point did you have to manually install any packages. System
+libraries are available, dependencies installed, and conflicting versions resolved.
+
+The final component which is missing is stability. Currently, our libraries update on a regular
+basis. We will be taking snapshots of this library set and providing them as options to our users.
+We will only include bug fixes into these libraries as necessary. This will provide users with the
+ability to start developing software and not worry that they’ll have to rewrite their code to stay
+up-to-date with security and bug fixes.
+
+Bleeding edge for those who want it
+
+While we will recommend these stable libraries for most users, we will continue to offer our
+bleeding-edge library set as well. This will allow users to try out the newest versions of
+libraries. This will also allow our system to remain as inclusive as possible. Anyone who wants to
+get a new library into our system just needs to send a pull request, and at our next bleeding-edge
+build, the library will be available. And any packages that make it into our bleeding edge will
+also be snapshotted at our next stable library build.
+
+Note that there are a few reasons why a library may not be included on our system even after a pull
+request. The most obvious is if the package doesn’t build. But more subtle issues are licensing
+concerns, security flaws, or naming conflicts with existing code. These situations are rare,
+however, and can usually be worked around easily.
+
+Recommendations/tutorials (for those who need it)
+
+While we try to provide as many packages as possible in our environments, we’re also aware that
+this much choice can be overwhelming. Therefore, we will be selecting some libraries to be our
+recommended solutions to some problem domains. The purpose here is not to tell seasoned Haskellers
+how to write their code. Instead, we want new users to have a simple path to follow from “I have a
+problem” to “I have a solution.”
+
+In addition to the recommended library list, we will be providing two other advantages to sticking
+with our recommended libraries: a higher level of customer support (including bug fixing), and more
+training material on using these libraries.
+
+How we get there
+
+You know the problems we want to solve, and you know how we want the solutions to look. The
+question remaining is how to implement them.
+
+Stackage
+
+The most publicly-visible work we’ve done towards solving the problems listed has been the Stackage
+project. Stackage is a project aiming to make it possible to build stable, vetted sets of packages.
+You can read more about the project and its goals in the Stackage release announcement.
+
+For a while I’ve wanted to share more details about how we’re using Stackage and how I see it
+fitting into the existing ecosystem, but I’ve waited until things of settled down and the answer
+could be reliable. Fortunately we’re at that point now.
+
+Stackage is really two things in one:
+
+ 1. A set of tools for building and testing a set of libraries.
+ 2. A community driven ecosystem for creating a list of libraries that should be installable
+    together, and the communication infrastructure for letting package authors know when there’s a
+    problem.
+
+We use Stackage internally to build all of our package databases. Stackage itself, however, is
+not such a database. Said another way, Stackage is not a competitor to something like Debian’s
+Haskell packages; instead, Stackage is a tool that could be used to build the Debian package set.
+Stackage is also not a competitor to the Haskell Platform; the HP is a set of vetted and reviewed
+packages. Stackage is a community process that allows any package to be included, and only cares
+about the coexistence.
+
+Just as a member of the Haskell community and a package maintainer, I think Stackage has been a big
+success. There are currently over 400 packages built by Stackage. Numerous bugs and
+incompatibilities have been reported back to upstream maintainers, giving maintainers more prompt
+and reliable feedback, and improving the quality of packages across the board for Haskellers. If
+Stackage did nothing more than it does today, I think it would have earned its keep.
+
+But I do hope to see it continue improving. I’ve discussed having Stackage used as part of the
+distribution maintainer toolset in the past, and while those conversations have stalled, I hope
+they resume. I also hope the community gets more involved. At the time of writing, there are 5292
+packages available on Hackage. I’d like to see more of them included in Stackage, so if you
+maintain any Hackage packages that aren’t on Stackage, I encourage you to submit them.
+
+Working with upstream
+
+My work on Stackage has put me in a position to interact quite regularly with upstream package
+maintainers. I want to clarify exactly how we’ll be interacting with the community.
+
+Monitor security problems
+
+We take security very seriously, and are constantly taking measures to improve the security of our
+toolset. One problematic area is the fact that Hackage allows anyone to upload any package, without
+any warnings. While this will be solved by Hackage 2, we are currently vulnerable.
+
+For the past month, I’ve started monitoring the package upload logs, and signaling alerts when a
+new uploader uploads a package for the first time. For example, if Alice uploads the package
+alice-package, and Bob uploads a new version a few days later, I’ll get a warning and contact
+Alice. (And internally, we won’t build any new library sets until the problem has been resolved.)
+
+I think this kind of review is vital to keeping the Haskell ecosystem safe. So if you get an email
+from me about this, you’ll know why.
+
+Report bugs
+
+We automatically run test suites each time we perform a Stackage build, which has uncovered a
+number of regressions in upstream packages. We file these reports upstream as soon as possible, and
+(due to the wonderful nature of the Haskell community) bugs tend to be fixed very quickly.
+
+As our user base grows, we anticipate more bug reports coming from our users. We’re looking forward
+to working with upstream providers to get these bugs triaged and fixed. And as part of our stable
+library plans, we have infrastructure in place to maintain patchsets against older versions of
+packages, to simplify the task of backporting fixes.
+
+Notify of outdated dependencies
+
+The most common interaction we have with the community has been to notify of outdated dependencies.
+Since Stackage has started, the number of emails I send about this topic has decreased drastically.
+I’m sure there are many factors at play here, but I see this as a sign that the Haskell ecosystem
+is beginning to stabilize. Previously, it was to be expected that breaking releases would happen on
+a regular basis. In the past six months, I’ve seen this happen very infrequently for any of the
+most heavily used packages.
+
+Identify possible library improvements
+
+As we get user feedback about libraries, we hope to share this information with the rest of the
+community. Some sample feedback we expect to be sharing is:
+
+ 1. Tasks that could be made easier in a library with some convenience functions.
+ 2. Places where documentation (especially tutorials) are lacking.
+ 3. Functionality which simply isn’t covered by existing packages.
+
+Internal work at FP Complete
+
+Our main goal at FP Complete will be to continue building and polishing our end user tools. It’s my
+sincere belief that by providing these resources, we can drastically boost Haskell’s adoption,
+which will have a profound effect on the Haskell community.
+
+In addition, we intend to take part in community efforts. Our main focus has been on the
+documentation front. The School of Haskell was entirely about improving the documentation
+infrastructure for the community. Our recent announcement of tutorial and code sample contests is
+designed to get high quality tutorials produced as quickly as possible.
+
+For the most part, we have not felt the need to participate very much in the production of
+libraries. The open source community has done a fantastic job at creating a large, high-quality
+library ecosystem. However, as we build up libraries for our own purposes, or identify gaps in the
+existing library ecosystem, we intend to get involved: in the former case, releasing our code to
+the community, and in the latter, either working with community members to produce a suitable
+library, or providing one ourselves.
+
+Unified product vision
+
+I hope the above discussion gives a good idea of how we’re hoping to work with the community to
+make everyone’s lives better. I just want to close with a summarized view of what our upcoming
+product (the FP Haskell Center) will be providing to users.
+
+ 1. IDE: fully loaded with the tools you need
+ 2. Libraries: no need to configure or build, just start coding
+ 3. Tutorials tie in for easy learning on the job
+ 4. Develop and deploy from the cloud
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>QuickCheck and Magic of Testing</title>
+  <meta property="og:title" content="QuickCheck and Magic of Testing">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Discover the power of random testing in Haskell with QuickCheck. Learn how to use function properties and software specification to write bug-free software.">
+  <meta property="og:description" content="Discover the power of random testing in Haskell with QuickCheck. Learn how to use function properties and software specification to write bug-free software.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;01&#x2F;quickcheck&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>QuickCheck and Magic of Testing</h1>
+      
+      <p id="page-description">By Alexey Kuleshevich, January 24, 2017</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=QuickCheck%20and%20Magic%20of%20Testing https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;01&#x2F;quickcheck&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;01&#x2F;quickcheck&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;01&#x2F;quickcheck&#x2F;&amp;title=QuickCheck%20and%20Magic%20of%20Testing"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;01&#x2F;quickcheck&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>Haskell is an amazing language. With its extremely powerful type
+system and a pure functional paradigm it prevents programmers from
+introducing many kinds of bugs, that are notorious in other
+languages. Despite those powers, code is still written by humans,
+and bugs are inevitable, so writing quality test suites is just as
+important as writing an application itself.</p>
+<p>Over the course of history buggy software has cost industry
+billions of dollars in damage and even lost human lives, so I
+cannot stress enough, how essential testing is for any project.</p>
+<p>One of the ways to test software is through writing unit tests,
+but since it is not feasible to test all possible inputs
+exhaustively for most functions, we usually check some corner cases
+and occasionally test with other arbitrary values. Systematic
+generation of random input, that is biased towards corner cases,
+could be very helpful in that scenario, and that's where <a href=
+"https://www.stackage.org/package/QuickCheck">QuickCheck</a> comes
+into play. This state of the art property testing library was
+originally invented in Haskell, and, because it turned out to be so
+powerful, it was later ported to other languages. However, the real
+power of random testing is unleashed when combined with purity of
+Haskell.</p>
+<h2 id="properties">Properties</h2>
+<p>Let's start by looking at this exemplar properties of a
+<code>reverse</code> function:</p>
+<pre><span class="hs-definition">reverse</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">reverse</span> <span class=
+"hs-varid">xs</span><span class="hs-layout">)</span> <span class=
+"hs-varop">==</span> <span class="hs-varid">xs</span>
+
+<span class="hs-definition">reverse</span> <span class=
+"hs-layout">(</span><span class="hs-varid">xs</span> <span class=
+"hs-varop">++</span> <span class="hs-varid">ys</span><span class=
+"hs-layout">)</span> <span class="hs-varop">==</span> <span class=
+"hs-varid">reverse</span> <span class=
+"hs-varid">ys</span> <span class="hs-varop">++</span> <span class=
+"hs-varid">reverse</span> <span class="hs-varid">xs</span></pre>
+<p>We know, that they will hold for all finite lists with total
+values. Naturally, there are ways to prove them manually and there
+are even tools for Haskell, such as LiquidHaskell, that can help
+you automate proving some properties. Formal proof of correctness
+of a program is not always possible: some properties are either too
+hard or impossible to prove. Regardless of ability to prove a
+property of a function, we at least need to check that it works
+correctly on some finite set of inputs.</p>
+<pre><span class="hs-keyword">import</span> <span class=
+"hs-conid">Test</span><span class="hs-varop">.</span><span class=
+"hs-conid">QuickCheck</span>
+
+<span class="hs-definition">prop_RevRev</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Eq</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-keyglyph">[</span><span class="hs-varid">a</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Bool</span>
+<span class="hs-definition">prop_RevRev</span> <span class=
+"hs-varid">xs</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">reverse</span> <span class="hs-layout">(</span><span class="hs-varid">reverse</span> <span class="hs-varid">xs</span><span class="hs-layout">)</span> <span class="hs-varop">==</span> <span class="hs-varid">xs</span>
+
+<span class="hs-definition">prop_RevApp</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-keyglyph">[</span><span class="hs-conid">Int</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-keyglyph">[</span><span class="hs-conid">Int</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Bool</span>
+<span class="hs-definition">prop_RevApp</span> <span class=
+"hs-varid">xs</span> <span class="hs-varid">ys</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">reverse</span> <span class=
+"hs-layout">(</span><span class="hs-varid">xs</span> <span class=
+"hs-varop">++</span> <span class="hs-varid">ys</span><span class=
+"hs-layout">)</span> <span class="hs-varop">==</span> <span class=
+"hs-varid">reverse</span> <span class=
+"hs-varid">ys</span> <span class="hs-varop">++</span> <span class=
+"hs-varid">reverse</span> <span class="hs-varid">xs</span></pre>
+<p>We can load those properties into GHCi and run
+<code>quickCheck</code> on them. Here is a quick way on how to do
+it from a terminal, and a detailed guide on <a href=
+"https://haskell-lang.org/get-started">how to get started</a> with
+<code>stack</code>.</p>
+<pre><code class=
+"bash">$ stack --resolver lts-7.16 ghci --package QuickCheck
+Configuring GHCi with the following packages: 
+GHCi, version 8.0.1: https://www.haskell.org/ghc/  :? for help
+Loaded GHCi configuration from /tmp/ghci3260/ghci-script
+Prelude&gt; :load examples.hs 
+[1 of 1] Compiling Main             ( examples.hs, interpreted )
+Ok, modules loaded: Main.
+*Main&gt; quickCheck prop_RevRev
++++ OK, passed 100 tests.
+*Main&gt; quickCheck prop_RevApp
++++ OK, passed 100 tests.
+*Main&gt; </code></pre>
+<p>What just happened? QuickCheck called <code>prop_RevRev</code>
+and <code>prop_RevApp</code> 100 times each, with random lists as
+arguments and declared those tests as passing, because all calls
+resulted in <code>True</code>. Far beyond what a common unit test
+could have done.</p>
+<p>Worth noting, that in reality, not only
+<code>prop_RevRev</code>, but both of those properties are
+polymorphic and <code>quickCheck</code> will be happy to work with
+such functions, even if type signatures were inferred, and it will
+run just fine in GHCi. On the other hand, while writing a test
+suite, we have to restrict the type signature for every property to
+concrete type, such as <code>[Int]</code> or <code>Char</code>,
+otherwise type checker will get confused. For example, this program
+will not compile:</p>
+<pre><span class="hs-keyword">import</span> <span class=
+"hs-conid">Test</span><span class="hs-varop">.</span><span class=
+"hs-conid">QuickCheck</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">quickCheck</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">const</span> <span class="hs-conid">True</span><span class="hs-layout">)</span></pre>
+<p>For the sake of example let's write couple more self-explanatory
+properties:</p>
+<pre><span class=
+"hs-definition">prop_PrefixSuffix</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-keyglyph">[</span><span class="hs-conid">Int</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Bool</span>
+<span class="hs-definition">prop_PrefixSuffix</span> <span class=
+"hs-varid">xs</span> <span class="hs-varid">n</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">isPrefixOf</span> <span class=
+"hs-varid">prefix</span> <span class=
+"hs-varid">xs</span> <span class="hs-varop">&amp;&</span>
+                         <span class=
+"hs-varid">isSuffixOf</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">reverse</span> <span class=
+"hs-varid">prefix</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-varid">reverse</span> <span class=
+"hs-varid">xs</span><span class="hs-layout">)</span>
+  <span class="hs-keyword">where</span> <span class=
+"hs-varid">prefix</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">take</span> <span class="hs-varid">n</span> <span class=
+"hs-varid">xs</span>
+
+<span class="hs-definition">prop_Sqrt</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Double</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Bool</span>
+<span class="hs-definition">prop_Sqrt</span> <span class=
+"hs-varid">x</span>
+  <span class="hs-keyglyph">|</span> <span class=
+"hs-varid">x</span> <span class="hs-varop">&lt;</span> <span class=
+"hs-num">0</span>            <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">isNaN</span> <span class="hs-varid">sqrtX</span>
+  <span class="hs-keyglyph">|</span> <span class=
+"hs-varid">x</span> <span class="hs-varop">==</span> <span class=
+"hs-num">0</span> <span class="hs-varop">||</span> <span class=
+"hs-varid">x</span> <span class="hs-varop">==</span> <span class=
+"hs-num">1</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">sqrtX</span> <span class=
+"hs-varop">==</span> <span class="hs-varid">x</span>
+  <span class="hs-keyglyph">|</span> <span class=
+"hs-varid">x</span> <span class="hs-varop">&lt;</span> <span class=
+"hs-num">1</span>            <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">sqrtX</span> <span class=
+"hs-varop">&gt;</span> <span class="hs-varid">x</span>
+  <span class="hs-keyglyph">|</span> <span class=
+"hs-varid">x</span> <span class="hs-varop">&gt;</span> <span class=
+"hs-num">1</span>            <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">sqrtX</span> <span class=
+"hs-varop">&gt;</span> <span class="hs-num">0</span> <span class=
+"hs-varop">&amp;&</span> <span class=
+"hs-varid">sqrtX</span> <span class=
+"hs-varop">&lt;</span> <span class="hs-varid">x</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">sqrtX</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">sqrt</span> <span class="hs-varid">x</span></pre>
+<p>Now, this is great, but how did we just pass various functions
+with different number of arguments of different types to
+<code>quickCheck</code>, and how did it know what to do with them?
+Let's look at it's type signature:</p>
+<pre><span class="hs-definition">λ</span><span class=
+"hs-varop">&gt;</span> <span class="hs-conop">:</span><span class=
+"hs-varid">t</span> <span class="hs-varid">quickCheck</span>
+<span class="hs-definition">quickCheck</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Testable</span> <span class=
+"hs-varid">prop</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-varid">prop</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span></pre>
+<h2 id="testable">Testable</h2>
+<p>So, it seems, that QuickCheck can test anything that is
+<code>Testable</code>:</p>
+<pre><span class="hs-definition">λ</span><span class=
+"hs-varop">&gt;</span> <span class="hs-conop">:</span><span class=
+"hs-varid">i</span> <span class="hs-conid">Testable</span>
+<span class="hs-keyword">class</span> <span class=
+"hs-conid">Testable</span> <span class=
+"hs-varid">prop</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">property</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-varid">prop</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Property</span>
+  <span class="hs-varid">exhaustive</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-varid">prop</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Bool</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-keyglyph">[</span><span class=
+"hs-keyword">safe</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-conid">Testable</span> <span class="hs-conid">Property</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-keyglyph">[</span><span class=
+"hs-keyword">safe</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-conid">Testable</span> <span class=
+"hs-varid">prop</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">Testable</span> <span class=
+"hs-layout">(</span><span class="hs-conid">Gen</span> <span class=
+"hs-varid">prop</span><span class="hs-layout">)</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-keyglyph">[</span><span class=
+"hs-keyword">safe</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-conid">Testable</span> <span class="hs-conid">Discard</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-keyglyph">[</span><span class=
+"hs-keyword">safe</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-conid">Testable</span> <span class="hs-conid">Bool</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-keyglyph">[</span><span class=
+"hs-keyword">safe</span><span class=
+"hs-keyglyph">]</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Arbitrary</span> <span class=
+"hs-varid">a</span><span class="hs-layout">,</span> <span class=
+"hs-conid">Show</span> <span class="hs-varid">a</span><span class=
+"hs-layout">,</span> <span class=
+"hs-conid">Testable</span> <span class=
+"hs-varid">prop</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">Testable</span> <span class=
+"hs-layout">(</span><span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">prop</span><span class="hs-layout">)</span></pre>
+<p>The last instance is for a function <code>(a -&gt; prop)</code>,
+that returns a <code>prop</code>, which, in turn, must also be an
+instance of <code>Testable</code>. This magic trick of a recursive
+constraint for an instance definition allows
+<code>quickCheck</code> to test a function with any number of
+arguments, as long as each one of them is an instance of
+<code>Arbitrary</code> and <code>Show</code>. So here is a check
+list of requirements for writing a testable property:</p>
+<ul>
+<li>Zero or more arguments, which have an instance of
+<code>Arbitrary</code>, that is used for generating random input.
+More on that later.</li>
+<li>Arguments must also be an instance of <code>Show</code>, so if
+a test fails, offending value can be displayed back to a
+programmer.</li>
+<li>
+<p>Return value is either:</p>
+<ul>
+<li><code>True</code>/<code>False</code> - to indicate pass/fail of
+a test case.</li>
+<li><code>Discard</code> - to skip the test case (eg. precondition
+fails).</li>
+<li><code>Result</code> - to customize pass/fail/discard test
+result behavior, collect extra information about the test outcome,
+provide callbacks and other advanced features.</li>
+<li><code>Property</code> for a much finer control of test logic.
+Such properties can be used as combinators to construct more
+complex test cases.</li>
+<li><code>Prop</code> used to implement <code>Property</code></li>
+</ul>
+</li>
+<li>Start with <code>prop_</code> or <code>prop</code>, followed by
+the usual <code>camelCase</code>, but that is just a convention,
+not a requirement.</li>
+<li>Has no side effects. Also not a requirement, but strongly
+suggested, since referential transparency is lost with
+<code>IO</code> and test results can be inconsistent between runs.
+At the same time there are capabilities for testing Monadic code,
+which we will not go into here.</li>
+</ul>
+<h2 id="preconditions">Preconditions</h2>
+<p>Here is another very simple property of lists <code>xs !! n ==
+head (drop n xs)</code>, so let's define it as is:</p>
+<pre><span class="hs-definition">prop_Index_v1</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-keyglyph">[</span><span class=
+"hs-conid">Integer</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Bool</span>
+<span class="hs-definition">prop_Index_v1</span> <span class=
+"hs-varid">xs</span> <span class="hs-varid">n</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">xs</span> <span class="hs-varop">!!</span> <span class=
+"hs-varid">n</span> <span class="hs-varop">==</span> <span class=
+"hs-varid">head</span> <span class="hs-layout">(</span><span class=
+"hs-varid">drop</span> <span class="hs-varid">n</span> <span class=
+"hs-varid">xs</span><span class="hs-layout">)</span></pre>
+<p>Naturally, you can see a problem with that function, it cannot
+accept just any random <code>Int</code> to be used for indexing,
+and <code>quickCheck</code> quickly finds that problem for us and
+prints out violating input along with an error:</p>
+<pre><span class="hs-definition">λ</span><span class=
+"hs-varop">&gt;</span> <span class=
+"hs-varid">quickCheck</span> <span class=
+"hs-varid">prop_Index_v1</span>
+<span class="hs-varop">***</span> <span class=
+"hs-conid">Failed</span><span class=
+"hs-varop">!</span> <span class="hs-conid">Exception</span><span class="hs-conop">:</span> <span class="hs-chr">'</span><span class="hs-conid">Prelude</span><span class="hs-varop">.!!:</span> <span class="hs-varid">index</span> <span class="hs-varid">too</span> <span class="hs-varid">large'</span> <span class="hs-layout">(</span><span class="hs-varid">after</span> <span class="hs-num">1</span> <span class="hs-varid">test</span><span class="hs-layout">)</span><span class="hs-conop">:</span> 
+<span class="hs-conid">[]</span>
+<span class="hs-num">0</span></pre>
+<p>Interestingly, if you try to run this example on any computer,
+there is a very good chance that it will give exactly the same
+output, so, it seems that input to properties is not completely
+random. In fact, thanks to the function <code>sized</code>, the
+first input to our property will always be an empty list and an
+integer <code>0</code>, which tend to be really good corner cases
+to test for. In our case, though, <code>!!</code> and
+<code>head</code> are undefined for empty lists and negative
+numbers. We could add some guards, but there are facilities
+provided for such common cases:</p>
+<pre><span class="hs-definition">prop_Index_v2</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-conid">NonEmptyList</span> <span class="hs-conid">Integer</span><span class="hs-layout">)</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">NonNegative</span> <span class="hs-conid">Int</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Bool</span>
+<span class="hs-definition">prop_Index_v2</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">NonEmpty</span> <span class=
+"hs-varid">xs</span><span class="hs-layout">)</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">NonNegative</span> <span class=
+"hs-varid">n</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">xs</span> <span class="hs-varop">!!</span> <span class=
+"hs-varid">n</span> <span class="hs-varop">==</span> <span class=
+"hs-varid">head</span> <span class="hs-layout">(</span><span class=
+"hs-varid">drop</span> <span class="hs-varid">n</span> <span class=
+"hs-varid">xs</span><span class="hs-layout">)</span></pre>
+<p>This version is still not quite right, since we do have another
+precondition <code>n &lt; length xs</code>. However, it would be a
+bit complicated to describe this relation through the type system,
+so we will specify this precondition at a runtime using implication
+operator (⇒). Note, that return type has changed too:</p>
+<pre><span class="hs-definition">prop_Index_v3</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-conid">NonEmptyList</span> <span class="hs-conid">Integer</span><span class="hs-layout">)</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">NonNegative</span> <span class="hs-conid">Int</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Property</span>
+<span class="hs-definition">prop_Index_v3</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">NonEmpty</span> <span class=
+"hs-varid">xs</span><span class="hs-layout">)</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">NonNegative</span> <span class=
+"hs-varid">n</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">n</span> <span class=
+"hs-varop">&lt;</span> <span class=
+"hs-varid">length</span> <span class=
+"hs-varid">xs</span> <span class=
+"hs-varop">==&gt;</span> <span class=
+"hs-varid">xs</span> <span class="hs-varop">!!</span> <span class=
+"hs-varid">n</span> <span class="hs-varop">==</span> <span class=
+"hs-varid">head</span> <span class="hs-layout">(</span><span class=
+"hs-varid">drop</span> <span class="hs-varid">n</span> <span class=
+"hs-varid">xs</span><span class="hs-layout">)</span></pre>
+<p>Test cases with values, that do not satisfy the precondition,
+will simply get discarded, but not to worry, it will still generate
+the 100 tests. In fact it will generate up to a 1000 before giving
+up. An alternate way to achieve similar effect would be to generate
+a valid index within a property itself:</p>
+<pre><span class="hs-definition">prop_Index_v4</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-conid">NonEmptyList</span> <span class="hs-conid">Integer</span><span class="hs-layout">)</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Property</span>
+<span class="hs-definition">prop_Index_v4</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">NonEmpty</span> <span class=
+"hs-varid">xs</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">forAll</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">choose</span> <span class=
+"hs-layout">(</span><span class="hs-num">0</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">length</span> <span class=
+"hs-varid">xs</span><span class="hs-comment">-</span><span class=
+"hs-num">1</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span> <span class="hs-varop">$</span> <span class=
+"hs-keyglyph">\</span><span class="hs-varid">n</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">xs</span> <span class="hs-varop">!!</span> <span class=
+"hs-varid">n</span> <span class="hs-varop">==</span> <span class=
+"hs-varid">head</span> <span class="hs-layout">(</span><span class=
+"hs-varid">drop</span> <span class="hs-varid">n</span> <span class=
+"hs-varid">xs</span><span class="hs-layout">)</span></pre>
+<pre><span class="hs-definition">λ</span><span class=
+"hs-varop">&gt;</span> <span class=
+"hs-varid">quickCheck</span> <span class=
+"hs-varid">prop_Index_v3</span> <span class=
+"hs-varop">&gt;&gt;</span> <span class=
+"hs-varid">quickCheck</span> <span class=
+"hs-varid">prop_Index_v4</span>
+<span class="hs-varop">+++</span> <span class=
+"hs-conid">OK</span><span class="hs-layout">,</span> <span class=
+"hs-varid">passed</span> <span class=
+"hs-num">100</span> <span class="hs-varid">tests</span><span class=
+"hs-varop">.</span>
+<span class="hs-varop">+++</span> <span class=
+"hs-conid">OK</span><span class="hs-layout">,</span> <span class=
+"hs-varid">passed</span> <span class=
+"hs-num">100</span> <span class="hs-varid">tests</span><span class=
+"hs-varop">.</span></pre>
+<p>Just in case, let's quickly dissect this for all (∀) business.
+It takes a random value generator, which <code>choose</code>
+happens to produce, a property that operates on it's values and
+returns a property, i.e. applies values from a specific generator
+to the supplied property.</p>
+<pre><span class="hs-definition">λ</span><span class=
+"hs-varop">&gt;</span> <span class="hs-conop">:</span><span class=
+"hs-varid">t</span> <span class="hs-varid">forAll</span>
+<span class="hs-definition">forAll</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-conid">Show</span> <span class=
+"hs-varid">a</span><span class="hs-layout">,</span> <span class=
+"hs-conid">Testable</span> <span class=
+"hs-varid">prop</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">Gen</span> <span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">prop</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Property</span>
+<span class="hs-definition">λ</span><span class=
+"hs-varop">&gt;</span> <span class=
+"hs-varid">sample'</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">choose</span> <span class=
+"hs-layout">(</span><span class="hs-num">0</span><span class=
+"hs-layout">,</span> <span class="hs-num">3</span><span class=
+"hs-layout">)</span>
+<span class="hs-keyglyph">[</span><span class=
+"hs-num">0</span><span class="hs-layout">,</span><span class=
+"hs-num">2</span><span class="hs-layout">,</span><span class=
+"hs-num">2</span><span class="hs-layout">,</span><span class=
+"hs-num">3</span><span class="hs-layout">,</span><span class=
+"hs-num">3</span><span class="hs-layout">,</span><span class=
+"hs-num">3</span><span class="hs-layout">,</span><span class=
+"hs-num">0</span><span class="hs-layout">,</span><span class=
+"hs-num">1</span><span class="hs-layout">,</span><span class=
+"hs-num">0</span><span class="hs-layout">,</span><span class=
+"hs-num">1</span><span class="hs-layout">,</span><span class=
+"hs-num">3</span><span class="hs-keyglyph">]</span></pre>
+<p>There is a very subtle difference between the last two versions,
+namely <code>_v3</code> will discard tests that do not satisfy a
+precondition, while <code>_v4</code> will always generate a value
+for <code>n</code> that is safe for passing to index function. This
+is not important for this example, which is good, but that is not
+always the case. Whenever precondition is too strict, QuickCheck
+might give up early while looking for valid values for a test, but
+more importantly, it can give a false sence of validity, since most
+of the values that it will find could be trivial ones.</p>
+<h2 id="pitfalls">Pitfalls</h2>
+<p>For this section we will use prime numbers in our examples, but
+rather than reinventing the wheel and writing functions for prime
+numbers ourselves we will use <a href=
+"https://www.stackage.org/package/primes">primes</a> package. Just
+for fun, let's write a property for <code>primeFactors</code>,
+which is based on Fundamental Theorem of Arithmetic:</p>
+<pre><span class=
+"hs-definition">prop_PrimeFactors</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-conid">Positive</span> <span class="hs-conid">Int</span><span class="hs-layout">)</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Bool</span>
+<span class="hs-definition">prop_PrimeFactors</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Positive</span> <span class=
+"hs-varid">n</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">isPrime</span> <span class=
+"hs-varid">n</span> <span class="hs-varop">||</span> <span class=
+"hs-varid">all</span> <span class=
+"hs-varid">isPrime</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">primeFactors</span> <span class=
+"hs-varid">n</span><span class="hs-layout">)</span></pre>
+<p>That was incredibly easy and is almost a direct translation of a
+theorem itself. Let's consider a fact that every prime number
+larger than 2 is odd, thus we can easily derive a property that sum
+of any two prime numbers greater than 2 is even. Here is a naive
+way to test that property:</p>
+<pre><span class=
+"hs-definition">prop_PrimeSum_v1</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Property</span>
+<span class="hs-definition">prop_PrimeSum_v1</span> <span class=
+"hs-varid">p</span> <span class="hs-varid">q</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">p</span> <span class=
+"hs-varop">&gt;</span> <span class="hs-num">2</span> <span class=
+"hs-varop">&amp;&</span> <span class=
+"hs-varid">q</span> <span class="hs-varop">&gt;</span> <span class=
+"hs-num">2</span> <span class="hs-varop">&amp;&</span> <span class=
+"hs-varid">isPrime</span> <span class=
+"hs-varid">p</span> <span class=
+"hs-varop">&amp;&</span> <span class=
+"hs-varid">isPrime</span> <span class=
+"hs-varid">q</span> <span class=
+"hs-varop">==&gt;</span> <span class=
+"hs-varid">even</span> <span class="hs-layout">(</span><span class=
+"hs-varid">p</span> <span class="hs-varop">+</span> <span class=
+"hs-varid">q</span><span class="hs-layout">)</span></pre>
+<p>As you can imagine it is not too often that a random number will
+be prime, this certainly will affect the quality of this test:</p>
+<pre><span class="hs-definition">λ</span><span class=
+"hs-varop">&gt;</span> <span class=
+"hs-varid">quickCheck</span> <span class=
+"hs-varid">prop_PrimeSum_v1</span>
+<span class="hs-varop">***</span> <span class=
+"hs-conid">Gave</span> <span class="hs-varid">up</span><span class=
+"hs-varop">!</span> <span class=
+"hs-conid">Passed</span> <span class=
+"hs-varid">only</span> <span class="hs-num">26</span> <span class=
+"hs-varid">tests</span><span class="hs-varop">.</span></pre>
+<p>It only found 26 satisfiable tests out of a 1000 generated,
+that's bad. There is even more to it, in order to convince
+ourselves, that we are testing functions with data that resembles
+what we expect in real life, we should always try to inspect the
+values being generated for a property. An easy way to do that is to
+classify them by some shared traits:</p>
+<pre><span class=
+"hs-definition">prop_PrimeSum_v1'</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Property</span>
+<span class="hs-definition">prop_PrimeSum_v1'</span> <span class=
+"hs-varid">p</span> <span class="hs-varid">q</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">p</span> <span class=
+"hs-varop">&gt;</span> <span class="hs-num">2</span> <span class=
+"hs-varop">&amp;&</span> <span class=
+"hs-varid">q</span> <span class="hs-varop">&gt;</span> <span class=
+"hs-num">2</span> <span class="hs-varop">&amp;&</span> <span class=
+"hs-varid">isPrime</span> <span class=
+"hs-varid">p</span> <span class=
+"hs-varop">&amp;&</span> <span class=
+"hs-varid">isPrime</span> <span class=
+"hs-varid">q</span> <span class="hs-varop">==&gt;</span>
+  <span class="hs-varid">classify</span> <span class=
+"hs-layout">(</span><span class="hs-varid">p</span> <span class=
+"hs-varop">&lt;</span> <span class="hs-num">20</span> <span class=
+"hs-varop">&amp;&</span> <span class=
+"hs-varid">q</span> <span class="hs-varop">&lt;</span> <span class=
+"hs-num">20</span><span class="hs-layout">)</span> <span class=
+"hs-str">"trivial"</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">even</span> <span class=
+"hs-layout">(</span><span class="hs-varid">p</span> <span class=
+"hs-varop">+</span> <span class="hs-varid">q</span><span class=
+"hs-layout">)</span></pre>
+<pre><span class="hs-definition">λ</span><span class=
+"hs-varop">&gt;</span> <span class=
+"hs-varid">quickCheck</span> <span class=
+"hs-varid">prop_PrimeSum_v1'</span>
+<span class="hs-varop">***</span> <span class=
+"hs-conid">Gave</span> <span class="hs-varid">up</span><span class=
+"hs-varop">!</span> <span class=
+"hs-conid">Passed</span> <span class=
+"hs-varid">only</span> <span class="hs-num">29</span> <span class=
+"hs-varid">tests</span> <span class=
+"hs-layout">(</span><span class="hs-num">96</span><span class=
+"hs-varop">%</span> <span class=
+"hs-varid">trivial</span><span class=
+"hs-layout">)</span><span class="hs-varop">.</span>
+<span class="hs-definition">λ</span><span class=
+"hs-varop">&gt;</span> <span class=
+"hs-varid">quickCheckWith</span> <span class=
+"hs-varid">stdArgs</span> <span class=
+"hs-layout">{</span> <span class=
+"hs-varid">maxSuccess</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-num">500</span> <span class=
+"hs-layout">}</span> <span class=
+"hs-varid">prop_PrimeSum_v1'</span>
+<span class="hs-varop">***</span> <span class=
+"hs-conid">Gave</span> <span class="hs-varid">up</span><span class=
+"hs-varop">!</span> <span class=
+"hs-conid">Passed</span> <span class=
+"hs-varid">only</span> <span class="hs-num">94</span> <span class=
+"hs-varid">tests</span> <span class=
+"hs-layout">(</span><span class="hs-num">44</span><span class=
+"hs-varop">%</span> <span class=
+"hs-varid">trivial</span><span class=
+"hs-layout">)</span><span class="hs-varop">.</span></pre>
+<p>Almost all values this property was tested on are in fact
+trivial ones. Increasing number of tests was not much of a help,
+because, by default, values generated for integers are pretty
+small. We could try to fix that with appropriate types, but this
+time we will also generate a histogram of unique pairs of
+discovered prime numbers:</p>
+<pre><span class=
+"hs-definition">prop_PrimeSum_v2</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-conid">Positive</span> <span class="hs-layout">(</span><span class="hs-conid">Large</span> <span class="hs-conid">Int</span><span class="hs-layout">)</span><span class="hs-layout">)</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-layout">(</span><span class="hs-conid">Positive</span> <span class="hs-layout">(</span><span class="hs-conid">Large</span> <span class="hs-conid">Int</span><span class="hs-layout">)</span><span class="hs-layout">)</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Property</span>
+<span class="hs-definition">prop_PrimeSum_v2</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Positive</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Large</span> <span class="hs-varid">p</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Positive</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Large</span> <span class="hs-varid">q</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">p</span> <span class=
+"hs-varop">&gt;</span> <span class="hs-num">2</span> <span class=
+"hs-varop">&amp;&</span> <span class=
+"hs-varid">q</span> <span class="hs-varop">&gt;</span> <span class=
+"hs-num">2</span> <span class="hs-varop">&amp;&</span> <span class=
+"hs-varid">isPrime</span> <span class=
+"hs-varid">p</span> <span class=
+"hs-varop">&amp;&</span> <span class=
+"hs-varid">isPrime</span> <span class=
+"hs-varid">q</span> <span class="hs-varop">==&gt;</span>
+  <span class="hs-varid">collect</span> <span class=
+"hs-layout">(</span><span class="hs-keyword">if</span> <span class=
+"hs-varid">p</span> <span class="hs-varop">&lt;</span> <span class=
+"hs-varid">q</span> <span class=
+"hs-keyword">then</span> <span class=
+"hs-layout">(</span><span class="hs-varid">p</span><span class=
+"hs-layout">,</span> <span class="hs-varid">q</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyword">else</span> <span class=
+"hs-layout">(</span><span class="hs-varid">q</span><span class=
+"hs-layout">,</span> <span class="hs-varid">p</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">even</span> <span class=
+"hs-layout">(</span><span class="hs-varid">p</span> <span class=
+"hs-varop">+</span> <span class="hs-varid">q</span><span class=
+"hs-layout">)</span></pre>
+<pre><span class="hs-definition">λ</span><span class=
+"hs-varop">&gt;</span> <span class=
+"hs-varid">quickCheck</span> <span class=
+"hs-varid">prop_PrimeSum_v2</span>
+<span class="hs-varop">***</span> <span class=
+"hs-conid">Gave</span> <span class="hs-varid">up</span><span class=
+"hs-varop">!</span> <span class=
+"hs-conid">Passed</span> <span class=
+"hs-varid">only</span> <span class="hs-num">24</span> <span class=
+"hs-varid">tests</span><span class="hs-conop">:</span>
+<span class="hs-num">16</span><span class=
+"hs-varop">%</span> <span class="hs-layout">(</span><span class=
+"hs-num">3</span><span class="hs-layout">,</span><span class=
+"hs-num">3</span><span class="hs-layout">)</span>
+ <span class="hs-num">8</span><span class=
+"hs-varop">%</span> <span class="hs-layout">(</span><span class=
+"hs-num">11</span><span class="hs-layout">,</span><span class=
+"hs-num">41</span><span class="hs-layout">)</span>
+ <span class="hs-num">4</span><span class=
+"hs-varop">%</span> <span class="hs-layout">(</span><span class=
+"hs-num">9413</span><span class="hs-layout">,</span><span class=
+"hs-num">24019</span><span class="hs-layout">)</span>
+ <span class="hs-num">4</span><span class=
+"hs-varop">%</span> <span class="hs-layout">(</span><span class=
+"hs-num">93479</span><span class="hs-layout">,</span><span class=
+"hs-num">129917</span><span class="hs-layout">)</span>
+ <span class="hs-varop">...</span></pre>
+<p>This is better, there are less trivial values, but still, number
+of tests is far from satisfactory. It is also extremely inefficient
+to look for prime values that way, and, for any really large value
+passed to the property, it will take forever to check its
+primality. Much better approach would be to choose from a list of
+prime values, which we have readily available for us:</p>
+<pre><span class=
+"hs-definition">prop_PrimeSum_v3</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">Property</span>
+<span class="hs-definition">prop_PrimeSum_v3</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">forAll</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">choose</span> <span class=
+"hs-layout">(</span><span class="hs-num">1</span><span class=
+"hs-layout">,</span> <span class="hs-num">1000</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span> <span class=
+"hs-varid">i</span> <span class="hs-keyglyph">-&gt;</span>
+    <span class="hs-varid">forAll</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">choose</span> <span class=
+"hs-layout">(</span><span class="hs-num">1</span><span class=
+"hs-layout">,</span> <span class="hs-num">1000</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span> <span class=
+"hs-varid">j</span> <span class="hs-keyglyph">-&gt;</span>
+      <span class="hs-keyword">let</span> <span class=
+"hs-layout">(</span><span class="hs-varid">p</span><span class=
+"hs-layout">,</span> <span class="hs-varid">q</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-layout">(</span><span class=
+"hs-varid">primes</span> <span class=
+"hs-varop">!!</span> <span class="hs-varid">i</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">primes</span> <span class=
+"hs-varop">!!</span> <span class="hs-varid">j</span><span class=
+"hs-layout">)</span> <span class="hs-keyword">in</span>
+      <span class="hs-varid">collect</span> <span class=
+"hs-layout">(</span><span class="hs-keyword">if</span> <span class=
+"hs-varid">p</span> <span class="hs-varop">&lt;</span> <span class=
+"hs-varid">q</span> <span class=
+"hs-keyword">then</span> <span class=
+"hs-layout">(</span><span class="hs-varid">p</span><span class=
+"hs-layout">,</span> <span class="hs-varid">q</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyword">else</span> <span class=
+"hs-layout">(</span><span class="hs-varid">q</span><span class=
+"hs-layout">,</span> <span class="hs-varid">p</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">even</span> <span class=
+"hs-layout">(</span><span class="hs-varid">p</span> <span class=
+"hs-varop">+</span> <span class="hs-varid">q</span><span class=
+"hs-layout">)</span></pre>
+<pre><span class="hs-definition">λ</span><span class=
+"hs-varop">&gt;</span> <span class=
+"hs-varid">quickCheck</span> <span class=
+"hs-varid">prop_PrimeSum_v3</span>
+<span class="hs-varop">+++</span> <span class=
+"hs-conid">OK</span><span class="hs-layout">,</span> <span class=
+"hs-varid">passed</span> <span class=
+"hs-num">100</span> <span class="hs-varid">tests</span><span class=
+"hs-conop">:</span>
+ <span class="hs-num">1</span><span class=
+"hs-varop">%</span> <span class="hs-layout">(</span><span class=
+"hs-num">983</span><span class="hs-layout">,</span><span class=
+"hs-num">6473</span><span class="hs-layout">)</span>
+ <span class="hs-num">1</span><span class=
+"hs-varop">%</span> <span class="hs-layout">(</span><span class=
+"hs-num">953</span><span class="hs-layout">,</span><span class=
+"hs-num">5059</span><span class="hs-layout">)</span>
+ <span class="hs-num">1</span><span class=
+"hs-varop">%</span> <span class="hs-layout">(</span><span class=
+"hs-num">911</span><span class="hs-layout">,</span><span class=
+"hs-num">5471</span><span class="hs-layout">)</span>
+ <span class="hs-varop">...</span></pre>
+<h2 id="arbitrary">Arbitrary</h2>
+<p>There could be a scenario where we needed prime values for many
+tests, then it would be a burden to generate them this way for each
+property. In such cases solution is always to write an instance for
+<code>Arbitrary</code>:</p>
+<pre><span class="hs-keyword">newtype</span> <span class=
+"hs-conid">Prime</span> <span class=
+"hs-varid">a</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">Prime</span> <span class=
+"hs-varid">a</span> <span class="hs-keyword">deriving</span> <span class="hs-conid">Show</span>
+
+<span class="hs-keyword">instance</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Integral</span> <span class=
+"hs-varid">a</span><span class="hs-layout">,</span> <span class=
+"hs-conid">Arbitrary</span> <span class=
+"hs-varid">a</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">Arbitrary</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Prime</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">arbitrary</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">x</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">frequency</span> <span class=
+"hs-keyglyph">[</span> <span class="hs-layout">(</span><span class=
+"hs-num">10</span><span class="hs-layout">,</span> <span class=
+"hs-varid">choose</span> <span class=
+"hs-layout">(</span><span class="hs-num">0</span><span class=
+"hs-layout">,</span> <span class="hs-num">1000</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+                   <span class="hs-layout">,</span> <span class=
+"hs-layout">(</span><span class="hs-num">5</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">choose</span> <span class=
+"hs-layout">(</span><span class="hs-num">1001</span><span class=
+"hs-layout">,</span> <span class="hs-num">10000</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+                   <span class="hs-layout">,</span> <span class=
+"hs-layout">(</span><span class="hs-num">1</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">choose</span> <span class=
+"hs-layout">(</span><span class="hs-num">10001</span><span class=
+"hs-layout">,</span> <span class="hs-num">50000</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+                   <span class="hs-keyglyph">]</span>
+    <span class="hs-varid">return</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-conid">Prime</span> <span class="hs-layout">(</span><span class="hs-varid">primes</span> <span class="hs-varop">!!</span> <span class="hs-varid">x</span><span class="hs-layout">)</span></pre>
+<p>Calculating large prime numbers is pretty expensive, so we could
+simply use something like <code>choose (0, 1000)</code>, similarly
+to how it was done in <code>prop_PrimeSum_v3</code>, but there is
+no reason why we should exclude generating large prime numbers
+completely, instead, we can reduce their chance by describing a
+custom distribution with <code>frequency</code> function.</p>
+<p>Now writing <code>prop_PrimeSum</code> is a piece of cake:</p>
+<pre><span class=
+"hs-definition">prop_PrimeSum_v4</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Prime</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Prime</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Property</span>
+<span class="hs-definition">prop_PrimeSum_v4</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Prime</span> <span class="hs-varid">p</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Prime</span> <span class="hs-varid">q</span><span class=
+"hs-layout">)</span> <span class="hs-keyglyph">=</span>
+  <span class="hs-varid">p</span> <span class=
+"hs-varop">&gt;</span> <span class="hs-num">2</span> <span class=
+"hs-varop">&amp;&</span> <span class=
+"hs-varid">q</span> <span class="hs-varop">&gt;</span> <span class=
+"hs-num">2</span> <span class="hs-varop">==&gt;</span> <span class=
+"hs-varid">classify</span> <span class=
+"hs-layout">(</span><span class="hs-varid">p</span> <span class=
+"hs-varop">&lt;</span> <span class=
+"hs-num">1000</span> <span class="hs-varop">||</span> <span class=
+"hs-varid">q</span> <span class="hs-varop">&lt;</span> <span class=
+"hs-num">1000</span><span class="hs-layout">)</span> <span class=
+"hs-str">"has small prime"</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">even</span> <span class=
+"hs-layout">(</span><span class="hs-varid">p</span> <span class=
+"hs-varop">+</span> <span class="hs-varid">q</span><span class=
+"hs-layout">)</span></pre>
+<pre><span class="hs-definition">λ</span><span class=
+"hs-varop">&gt;</span> <span class=
+"hs-varid">quickCheck</span> <span class=
+"hs-varid">prop_PrimeSum_v4</span>
+<span class="hs-varop">+++</span> <span class=
+"hs-conid">OK</span><span class="hs-layout">,</span> <span class=
+"hs-varid">passed</span> <span class=
+"hs-num">100</span> <span class=
+"hs-varid">tests</span> <span class="hs-layout">(</span><span class="hs-num">21</span><span class="hs-varop">%</span> <span class="hs-varid">has</span> <span class="hs-varid">small</span> <span class="hs-varid">prime</span><span class="hs-layout">)</span><span class="hs-varop">.</span></pre>
+<h2 id="coarbitrary">CoArbitrary</h2>
+<p>There are quite a few instances of <code>Arbitrary</code>, many
+common data types from <code>base</code> are, but the most peculiar
+one is a function:</p>
+<pre><span class="hs-definition">λ</span><span class=
+"hs-varop">&gt;</span> <span class="hs-conop">:</span><span class=
+"hs-varid">i</span> <span class="hs-conid">Arbitrary</span>
+<span class="hs-keyword">class</span> <span class=
+"hs-conid">Arbitrary</span> <span class=
+"hs-varid">a</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">arbitrary</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Gen</span> <span class="hs-varid">a</span>
+  <span class="hs-varid">shrink</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-varid">a</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-keyglyph">[</span><span class="hs-varid">a</span><span class="hs-keyglyph">]</span>
+<span class="hs-varop">...</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-keyglyph">[</span><span class=
+"hs-keyword">safe</span><span class=
+"hs-keyglyph">]</span> <span class="hs-layout">(</span><span class=
+"hs-conid">CoArbitrary</span> <span class=
+"hs-varid">a</span><span class="hs-layout">,</span> <span class=
+"hs-conid">Arbitrary</span> <span class=
+"hs-varid">b</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">Arbitrary</span> <span class=
+"hs-layout">(</span><span class="hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">b</span><span class="hs-layout">)</span>
+<span class="hs-varop">...</span></pre>
+<p>That's right, QuickCheck can even generate functions for us! One
+of restrictions is that an argument to the function is an instance
+of <code>CoArbitrary</code>, which also has instance for a
+function, consequently functions of any arity can be generated.
+Another caveat is that we need an instance of <code>Show</code> for
+functions, which is not a standard practice in Haskell, and
+wrapping a function in a <code>newtype</code> would be more
+appropriate. For clarity we will opt out from this suggestion and
+instead demonstrate this cool feature in action. One huge benefit
+is that it allows us to easily write properties for higher order
+functions:</p>
+<pre><span class="hs-keyword">instance</span> <span class=
+"hs-conid">Show</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Char</span><span class="hs-layout">)</span> <span class=
+"hs-keyword">where</span>
+  <span class="hs-varid">show</span> <span class=
+"hs-keyword">_</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-str">"Function: (Int -&gt; Char)"</span>
+
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">Show</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Char</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Maybe</span> <span class=
+"hs-conid">Double</span><span class=
+"hs-layout">)</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">show</span> <span class=
+"hs-keyword">_</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-str">"Function: (Char -&gt; Maybe Double)"</span>
+
+<span class="hs-definition">prop_MapMap</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-layout">(</span><span class="hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Char</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-conid">Char</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Maybe</span> <span class=
+"hs-conid">Double</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-keyglyph">[</span><span class="hs-conid">Int</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Bool</span>
+<span class="hs-definition">prop_MapMap</span> <span class=
+"hs-varid">f</span> <span class="hs-varid">g</span> <span class=
+"hs-varid">xs</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">map</span> <span class="hs-varid">g</span> <span class="hs-layout">(</span><span class="hs-varid">map</span> <span class="hs-varid">f</span> <span class="hs-varid">xs</span><span class="hs-layout">)</span> <span class="hs-varop">==</span> <span class="hs-varid">map</span> <span class="hs-layout">(</span><span class="hs-varid">g</span> <span class="hs-varop">.</span> <span class="hs-varid">f</span><span class="hs-layout">)</span> <span class="hs-varid">xs</span></pre>
+<h2 id="hspec">HSpec</h2>
+<p>One of the first concerns, that programmers usually raise when
+coming from other languages to Haskell, is that there are
+situations when unit tests are invaluable, but QuickCheck does not
+provide an easy way to do that. Bear in mind, QuickCheck's random
+testing is not a limitation, but rather is a priceless feature of
+testing paradigm in Haskell. Regular style unit tests and other QA
+functionality (code coverage, continuous integration, etc.) can be
+done just as easily as they are done in any other modern language
+using specialized libraries. In fact, those libraries play
+beautifully together and complement each other in many ways.</p>
+<p>Here is an example of how we can use <a href=
+"https://www.stackage.org/package/hspec">hspec</a> to create a test
+suite containing all properties we have discussed so far, plus few
+extra unit tests for completeness of the picture.</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --resolver lts-7.16 runghc --package QuickCheck --package hspec --package primes</span>
+<span class="hs-keyword">module</span> <span class=
+"hs-conid">Main</span> <span class="hs-keyword">where</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Test</span><span class="hs-varop">.</span><span class=
+"hs-conid">Hspec</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Test</span><span class="hs-varop">.</span><span class=
+"hs-conid">QuickCheck</span>
+
+<span class="hs-varop">...</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">hspec</span> <span class=
+"hs-varop">$</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">describe</span> <span class=
+"hs-str">"Reverse Properties"</span> <span class=
+"hs-varop">$</span>
+    <span class="hs-keyword">do</span> <span class=
+"hs-varid">it</span> <span class=
+"hs-str">"prop_RevRev"</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">property</span> <span class=
+"hs-varid">prop_RevRev</span>
+       <span class="hs-varid">it</span> <span class=
+"hs-str">"prop_RevApp"</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">property</span> <span class=
+"hs-varid">prop_RevApp</span>
+       <span class="hs-varid">it</span> <span class=
+"hs-str">"prop_PrefixSuffix"</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">property</span> <span class=
+"hs-varid">prop_PrefixSuffix</span>
+  <span class="hs-varid">describe</span> <span class=
+"hs-str">"Number Properties"</span> <span class="hs-varop">$</span>
+    <span class="hs-keyword">do</span> <span class=
+"hs-varid">it</span> <span class=
+"hs-str">"prop_Sqrt"</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">property</span> <span class="hs-varid">prop_Sqrt</span>
+  <span class="hs-varid">describe</span> <span class=
+"hs-str">"Index Properties"</span> <span class="hs-varop">$</span>
+    <span class="hs-keyword">do</span> <span class=
+"hs-varid">it</span> <span class=
+"hs-str">"prop_Index_v3"</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">property</span> <span class=
+"hs-varid">prop_Index_v3</span>
+       <span class="hs-varid">it</span> <span class=
+"hs-str">"prop_Index_v4"</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">property</span> <span class=
+"hs-varid">prop_Index_v4</span>
+       <span class="hs-varid">it</span> <span class=
+"hs-str">"unit_negativeIndex"</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">shouldThrow</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">return</span> <span class=
+"hs-varop">$!</span> <span class="hs-layout">(</span><span class=
+"hs-keyglyph">[</span><span class="hs-num">1</span><span class=
+"hs-layout">,</span><span class="hs-num">2</span><span class=
+"hs-layout">,</span><span class="hs-num">3</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-varop">!!</span> <span class="hs-layout">(</span><span class=
+"hs-comment">-</span><span class="hs-num">1</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span> <span class="hs-varid">anyException</span>
+       <span class="hs-varid">it</span> <span class=
+"hs-str">"unit_emptyIndex"</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">shouldThrow</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">return</span> <span class=
+"hs-varop">$!</span> <span class="hs-layout">(</span><span class=
+"hs-conid">[]</span> <span class="hs-varop">!!</span> <span class=
+"hs-num">0</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span> <span class="hs-varid">anyException</span>
+       <span class="hs-varid">it</span> <span class=
+"hs-str">"unit_properIndex"</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">shouldBe</span> <span class=
+"hs-layout">(</span><span class="hs-layout">(</span><span class=
+"hs-keyglyph">[</span><span class="hs-num">1</span><span class=
+"hs-layout">,</span><span class="hs-num">2</span><span class=
+"hs-layout">,</span><span class="hs-num">3</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-varop">!!</span> <span class="hs-num">1</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span> <span class=
+"hs-num">2</span>
+  <span class="hs-varid">describe</span> <span class=
+"hs-str">"Prime Numbers"</span> <span class="hs-varop">$</span>
+    <span class="hs-keyword">do</span> <span class=
+"hs-varid">it</span> <span class=
+"hs-str">"prop_PrimeFactors"</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">property</span> <span class=
+"hs-varid">prop_PrimeFactors</span>
+       <span class="hs-varid">it</span> <span class=
+"hs-str">"prop_PrimeSum_v3"</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">property</span> <span class=
+"hs-varid">prop_PrimeSum_v3</span>
+       <span class="hs-varid">it</span> <span class=
+"hs-str">"prop_PrimeSum_v4"</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">property</span> <span class=
+"hs-varid">prop_PrimeSum_v4</span>
+  <span class="hs-varid">describe</span> <span class=
+"hs-str">"High Order"</span> <span class="hs-varop">$</span>
+    <span class="hs-keyword">do</span> <span class=
+"hs-varid">it</span> <span class=
+"hs-str">"prop_MapMap"</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">property</span> <span class=
+"hs-varid">prop_MapMap</span></pre>
+<h2 id="conclusion">Conclusion</h2>
+<p>Random testing can be mistakenly regarded as an inferior way of
+software testing, but many studies have certainly shown that it is
+not the case. To quote D. Hamlet:</p>
+<blockquote>
+<p>By taking 20% more points in a random test, any advantage a
+partition test might have had is wiped out.</p>
+</blockquote>
+<p>It is very easy to start using QuickCheck to test properties of
+pure functions. There is also a very similar toolbox included in
+the library for testing monadic functions, thus allowing for a
+straightforward way of testing properties of functions that do
+mutations, depend on state, run concurrently and even perform I/O.
+Most importantly, this library provides yet another technique for
+making Haskell programs even safer.</p>
+<p>Writing tests doesn't have to be a chore, it can be fun. We
+certainly find it fun at FPComplete and will be happy to provide
+<a href="/training">training</a>, <a href=
+"/consulting">consulting</a> or <a href="/haskell">development</a>
+work.</p>
+<h2 id="further-reading">Further reading</h2>
+<ul>
+<li><a href=
+"https://www.schoolofhaskell.com/user/pbv/an-introduction-to-quickcheck-testing">
+An introduction to QuickCheck testing</a></li>
+<li><a href="https://dl.acm.org/citation.cfm?id=351266">QuickCheck:
+A Lightweight Tool for Random Testing of Haskell Programs</a></li>
+<li><a href="https://dl.acm.org/citation.cfm?id=636527">Testing
+monadic code with QuickCheck</a></li>
+<li><a href="https://dl.acm.org/citation.cfm?id=2976017">QuickFuzz:
+an automatic random fuzzer for common file formats</a></li>
+</ul>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=QuickCheck%20and%20Magic%20of%20Testing https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;01&#x2F;quickcheck&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;01&#x2F;quickcheck&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;01&#x2F;quickcheck&#x2F;&amp;title=QuickCheck%20and%20Magic%20of%20Testing"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;01&#x2F;quickcheck&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#9fecfef3faecdff9effcf0f2eff3faebfab1fcf0f2" targe="_blank"><span class="__cf_email__" data-cfemail="6310020f0610230513000c0e130f0617064d000c0e">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

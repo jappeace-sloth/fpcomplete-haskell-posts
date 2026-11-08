@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Working with data in Haskell</title>
+  <meta property="og:title" content="Working with data in Haskell">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;data-haskell&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Working with data in Haskell</h1>
+      
+      <p id="page-description">By Chris Done, September 14, 2016</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Working%20with%20data%20in%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;data-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;data-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;data-haskell&#x2F;&amp;title=Working%20with%20data%20in%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;data-haskell&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <h1 id="working-with-data-in-haskell">Working with data in
+Haskell</h1>
+<p>In data mining or general exploration, it's common to need to
+easily access data efficiently and without ceremony. Typically, a
+programming language will be designed for this case specifically,
+like R, or a library will be written for it, like Python with the
+pandas library.</p>
+<p>Implementing this in Haskell, we improve upon this area with all
+the benefits that come with using Haskell over Python or R, such
+as:</p>
+<ul>
+<li>Safety - garbage collected memory, no need for pointers.</li>
+<li>Performance - it's fast: If you write new algorithms in
+Haskell, they don't to be added to the language (like R) or written
+in C (like Python).</li>
+<li>Concurrency - make use of concurrent algorithms trivially, and
+take advantage of your other CPU cores.</li>
+<li>Maintainability - static types ensure safety at the time you
+write the program, and when you come back later to change them,
+it's harder to break them.</li>
+</ul>
+<p>Let's look at an example of doing this in Haskell, and compare
+with how this is done in Python's pandas. The steps are:</p>
+<ol>
+<li>Download a zip file containing a CSV file.</li>
+<li>Unzip the file.</li>
+<li>Read through the CSV file.</li>
+<li>Do some manipulation of the data from the file.</li>
+</ol>
+<p>In Haskell we have all the libraries needed (streaming HTTP, CSV
+parsing, etc.) to achieve this goal, so specifically for this post
+I've made a wrapper package that brings them together like pandas
+does. We have some goals:</p>
+<ul>
+<li><b>Convenience</b> We don't want to have to write more code
+than necessary while exploring data.</li>
+<li><b>Constant memory</b> Be able to process the file in constant
+memory space. If I have a 1GB file I don't want to have to load all
+1GB into memory in one go.</li>
+<li><b>Type-safe</b> I would like that once parsed from CSV, I have
+a statically-typed data structure with proper types (integers,
+dates, text, etc.).</li>
+</ul>
+<h2 id="python-example">Python example</h2>
+<p>This example code was taken from <a href=
+"https://tomaugspurger.github.io/modern-1-intro">Modern Pandas</a>.
+In Python we request the web URL in chunks, which we then write to
+a file. Next, we unzip the file, and then the data is available as
+<code>df</code>, with column names downcased.</p>
+<pre><code class="python">import zipfile
+import requests
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+r = requests.get('https://chrisdone.com/ontime.csv.zip', stream=True)
+with open("flights.csv", 'wb') as f:
+    for chunk in r.iter_content(chunk_size=1024):
+        if chunk:
+            f.write(chunk)
+
+zf = zipfile.ZipFile("flights.csv.zip")
+filename = zf.filelist[0].filename
+fp = zf.extract(filename)
+df = pd.read_csv(fp, parse_dates="FL_DATE").rename(columns=str.lower)</code></pre>
+<p>Finally, we can look at the 5 rows starting at row 10, for the
+columns <code>fl_date</code> and <code>tail_num</code>, like
+this:</p>
+<pre><code class=
+"python">df.ix[10:14, ['fl_date', 'tail_num']]</code></pre>
+<p>=&gt;</p>
+<pre><code>    fl_date     tail_num
+10  2014-01-01  N002AA
+11  2014-01-01  N3FXAA
+12  2014-01-01  N906EV
+13  2014-01-01  N903EV
+14  2014-01-01  N903EV</code></pre>
+<h2 id="python:-good-and-bad">Python: good and bad</h2>
+<p>Good parts of the Python code:</p>
+<ul>
+<li>Extracting from the Zip file was fairly easy.</li>
+<li>We were able to specify for some fields to parse them as a
+different data type (<code>parse_dates</code>).</li>
+<li>Referencing a range of the data was easy.</li>
+</ul>
+<p>Bad parts of the Python code:</p>
+<ul>
+<li>Reading the HTTP request was very verbose. We manually streamed
+the chunks to disk, which seems pointless.</li>
+<li>It's not statically typed. Even though we parsed
+<code>fl_date</code> and <code>tail_num</code>, we can't be certain
+down the line if they still exist, or are of the right type.</li>
+<li>We loaded the whole 100MB CSV into memory.</li>
+</ul>
+<p>Let's compare with the solution I prepared in Haskell. While
+reading, you can also clone the repository that I put together:</p>
+<pre>
+<code>$ git clone <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f2959b86b2959b869a8790dc919d9f">[email&#160;protected]</a>:chrisdone/labels.git --recursive</code></pre>
+<p>The wrapper library created for this post is under
+labels-explore, and all the code samples are under <a href=
+"https://github.com/chrisdone/labels/blob/master/labels-explore/app/Main.hs">
+labels-explore/app/Main.hs</a>.</p>
+<h2 id="haskell-example">Haskell example</h2>
+<p>I prepared the module <code>Labels.Explore</code> which provides
+us with some data manipulation functionality: web requests,
+unzipping, CSV parsing, etc.</p>
+<pre><span class=
+"hs-comment">{-# LANGUAGE TypeApplications, OverloadedStrings, OverloadedLabels,
+    TypeOperators, DataKinds, FlexibleContexts #-}</span>
+
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Labels</span><span class="hs-varop">.</span><span class=
+"hs-conid">Explore</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">runResourceT</span> <span class=
+"hs-varop">$</span>
+  <span class="hs-varid">httpSource</span> <span class=
+"hs-str">"https://chrisdone.com/ontime.csv.zip"</span> <span class=
+"hs-varid">responseBody</span> <span class="hs-varop">.|</span>
+  <span class="hs-varid">zipEntryConduit</span> <span class=
+"hs-str">"ontime.csv"</span> <span class="hs-varop">.|</span>
+  <span class="hs-varid">fromCsvConduit</span>
+    <span class="hs-keyglyph">@</span><span class=
+"hs-layout">(</span><span class=
+"hs-str">"fl_date"</span> <span class=
+"hs-conop">:=</span> <span class="hs-conid">Day</span><span class=
+"hs-layout">,</span> <span class=
+"hs-str">"tail_num"</span> <span class=
+"hs-conop">:=</span> <span class=
+"hs-conid">String</span><span class="hs-layout">)</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">set</span> <span class="hs-cpp">#</span><span class=
+"hs-varid">downcase</span> <span class=
+"hs-conid">True</span> <span class=
+"hs-varid">csv</span><span class="hs-layout">)</span> <span class=
+"hs-varop">.|</span>
+  <span class="hs-varid">dropConduit</span> <span class=
+"hs-num">10</span> <span class="hs-varop">.|</span>
+  <span class="hs-varid">takeConduit</span> <span class=
+"hs-num">5</span> <span class="hs-varop">.&gt;</span>
+  <span class="hs-varid">tableSink</span></pre>
+<p>Output:</p>
+<pre><span class="hs-definition">fl_date</span>     <span class=
+"hs-varid">tail_num</span>
+<span class="hs-num">2014</span><span class=
+"hs-comment">-</span><span class="hs-num">01</span><span class=
+"hs-comment">-</span><span class="hs-num">01</span>  <span class=
+"hs-conid">N002AA</span>
+<span class="hs-num">2014</span><span class=
+"hs-comment">-</span><span class="hs-num">01</span><span class=
+"hs-comment">-</span><span class="hs-num">01</span>  <span class=
+"hs-conid">N3FXAA</span>
+<span class="hs-num">2014</span><span class=
+"hs-comment">-</span><span class="hs-num">01</span><span class=
+"hs-comment">-</span><span class="hs-num">01</span>  <span class=
+"hs-conid">N906EV</span>
+<span class="hs-num">2014</span><span class=
+"hs-comment">-</span><span class="hs-num">01</span><span class=
+"hs-comment">-</span><span class="hs-num">01</span>  <span class=
+"hs-conid">N903EV</span>
+<span class="hs-num">2014</span><span class=
+"hs-comment">-</span><span class="hs-num">01</span><span class=
+"hs-comment">-</span><span class="hs-num">01</span>  <span class=
+"hs-conid">N903EV</span></pre>
+<p>Breaking this down, the <code>src .| c .| c .&gt; sink</code>
+can be read like a UNIX pipe <code>src | c | c &gt;
+sink</code>.</p>
+<p>The steps are:</p>
+<ul>
+<li>Make a web request for the zip file and yield a stream of
+bytes.</li>
+<li>Unzip that stream of bytes and yield a stream of bytes of the
+CSV.</li>
+<li>Parse from CSV into records of type <code>("fl_date" := Day,
+"tail_num" := String)</code>.</li>
+<li>Specify the <code>downcase</code> option so we can deal with
+lower-case names.</li>
+<li>Drop the first 10 results.</li>
+<li>Take 5 of the remaining results.</li>
+<li>Print the table out.</li>
+</ul>
+<p>In this library the naming convention for parts of the pipline
+is:</p>
+<ul>
+<li><i>foo</i>Source -- something which is at the beginning of the
+pipeline, a source of streaming input.</li>
+<li><i>foo</i>Conduit -- something which connects two parts of the
+pipeline together and perhaps does some transformations (such as
+parsing the Zip, CSV or other things).</li>
+<li><i>foo</i>Sink -- something into which all streaming input is
+poured, and produces a final result.</li>
+</ul>
+<h2 id="haskell:-good-parts">Haskell: good parts</h2>
+<p>What's good about the Haskell version:</p>
+<ul>
+<li>Reading the HTTP request was trivial.</li>
+<li>It's statically typed. If I try to multiply the
+<code>fl_date</code> as a number, for example, or mistakenly write
+<code>fl_daet</code>, I'll get a compile error before ever running
+the program.</li>
+<li>It achieves it all in a streaming fashion, with constant memory
+usage.</li>
+</ul>
+<p>How is it statically typed? Here:</p>
+<pre><span class="hs-definition">fromCsvConduit</span>
+    <span class="hs-keyglyph">@</span><span class=
+"hs-layout">(</span><span class=
+"hs-str">"fl_date"</span> <span class=
+"hs-conop">:=</span> <span class="hs-conid">Day</span><span class=
+"hs-layout">,</span> <span class=
+"hs-str">"tail_num"</span> <span class=
+"hs-conop">:=</span> <span class=
+"hs-conid">String</span><span class="hs-layout">)</span>
+    <span class="hs-varid">csv</span></pre>
+<p>We've statically told <code>fromCsvConduit</code> the exact type
+of record to construct: a record of two fields <code>fl_date</code>
+and <code>tail_num</code> with types <code>Day</code> and
+<code>String</code>. Below, we'll look at accessing those fields in
+an algorithm and demonstrate the safety aspect of this.</p>
+<h2 id="swapping-out-pipeline-parts">Swapping out pipeline
+parts</h2>
+<p>We can also easily switch to reading from file. Let's write that
+URL to disk, uncompressed:</p>
+<pre><span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">runResourceT</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">httpSource</span> <span class=
+"hs-str">"https://chrisdone.com/ontime.csv.zip"</span> <span class=
+"hs-varid">responseBody</span> <span class="hs-varop">.|</span>
+     <span class="hs-varid">zipEntryConduit</span> <span class=
+"hs-str">"ontime.csv"</span> <span class="hs-varop">.&gt;</span>
+     <span class="hs-varid">fileSink</span> <span class=
+"hs-str">"ontime.csv"</span><span class="hs-layout">)</span></pre>
+<p>Now our reading becomes:</p>
+<pre><span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">runResourceT</span> <span class=
+"hs-varop">$</span>
+  <span class="hs-varid">fileSource</span> <span class=
+"hs-str">"ontime.csv"</span> <span class="hs-varop">.|</span>
+  <span class="hs-varid">fromCsvConduit</span>
+    <span class="hs-keyglyph">@</span><span class=
+"hs-layout">(</span><span class=
+"hs-str">"fl_date"</span> <span class=
+"hs-conop">:=</span> <span class="hs-conid">Day</span><span class=
+"hs-layout">,</span> <span class=
+"hs-str">"tail_num"</span> <span class=
+"hs-conop">:=</span> <span class=
+"hs-conid">String</span><span class="hs-layout">)</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">set</span> <span class="hs-cpp">#</span><span class=
+"hs-varid">downcase</span> <span class=
+"hs-conid">True</span> <span class=
+"hs-varid">csv</span><span class="hs-layout">)</span> <span class=
+"hs-varop">.|</span>
+  <span class="hs-varid">dropConduit</span> <span class=
+"hs-num">10</span> <span class="hs-varop">.|</span>
+  <span class="hs-varid">takeConduit</span> <span class=
+"hs-num">5</span> <span class="hs-varop">.&gt;</span>
+  <span class="hs-varid">tableSink</span></pre>
+<h2 id="data-crunching">Data crunching</h2>
+<p>It's easy to perform more detailed calculations. For example, to
+display the number of total flights, and the total distance that
+would be travelled, we can write:</p>
+<pre><span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">runResourceT</span> <span class=
+"hs-varop">$</span>
+  <span class="hs-varid">fileSource</span> <span class=
+"hs-str">"ontime.csv"</span> <span class="hs-varop">.|</span>
+  <span class="hs-varid">fromCsvConduit</span> <span class=
+"hs-keyglyph">@</span><span class="hs-layout">(</span><span class=
+"hs-str">"distance"</span> <span class=
+"hs-conop">:=</span> <span class=
+"hs-conid">Double</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-varid">set</span> <span class="hs-cpp">#</span><span class=
+"hs-varid">downcase</span> <span class=
+"hs-conid">True</span> <span class=
+"hs-varid">csv</span><span class="hs-layout">)</span> <span class=
+"hs-varop">.|</span>
+  <span class="hs-varid">sinkConduit</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">foldSink</span>
+       <span class="hs-layout">(</span><span class=
+"hs-keyglyph">\</span><span class=
+"hs-varid">table</span> <span class=
+"hs-varid">row</span> <span class="hs-keyglyph">-&gt;</span>
+          <span class="hs-varid">modify</span> <span class=
+"hs-cpp">#</span><span class="hs-varid">flights</span> <span class=
+"hs-layout">(</span><span class="hs-varop">+</span> <span class=
+"hs-num">1</span><span class="hs-layout">)</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">modify</span> <span class="hs-cpp">#</span><span class=
+"hs-varid">distance</span> <span class=
+"hs-layout">(</span><span class="hs-varop">+</span> <span class=
+"hs-varid">get</span> <span class="hs-cpp">#</span><span class=
+"hs-varid">distance</span> <span class=
+"hs-varid">row</span><span class="hs-layout">)</span> <span class=
+"hs-varid">table</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span>
+       <span class="hs-layout">(</span><span class=
+"hs-cpp">#</span><span class="hs-varid">flights</span> <span class=
+"hs-conop">:=</span> <span class="hs-layout">(</span><span class=
+"hs-num">0</span> <span class="hs-keyglyph">::</span> <span class=
+"hs-conid">Int</span><span class="hs-layout">)</span><span class=
+"hs-layout">,</span> <span class="hs-cpp">#</span><span class=
+"hs-varid">distance</span> <span class=
+"hs-conop">:=</span> <span class="hs-num">0</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span> <span class=
+"hs-varop">.&gt;</span>
+  <span class="hs-varid">tableSink</span></pre>
+<p>The output is:</p>
+<pre><span class="hs-definition">flights</span>  <span class=
+"hs-varid">distance</span>
+<span class="hs-num">471949</span>   <span class=
+"hs-num">372072490.0</span></pre>
+<p>Above we made our own sink which consumes all the rows, and then
+yielded the result of that downstream to the table sink, so that we
+get the nice table display at the end.</p>
+<h2 id="type-correctness">Type correctness</h2>
+<p>Returning to our safety point, imagine above we made some
+mistakes.</p>
+<p>First mistake, I wrote <code>modify #flights</code> twice by
+accident:</p>
+<pre><code class=
+"diff">-          modify #flights (+ 1) (modify #distance (+ get #distance row) table))
++          modify #flights (+ 1) (modify #flights (+ get #distance row) table))</code></pre>
+<p>Before running the program, the following message would be
+raised by the Haskell type checker:</p>
+<pre><code>• Couldn't match type ‘Int’ with ‘Double’
+  arising from a functional dependency between:
+  constraint ‘Has "flights" Double ("flights" := Int, "distance" := value0)’
+  arising from a use of ‘modify’</code></pre>
+<p>See below for where this information comes from in the code:</p>
+<pre><span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">runResourceT</span> <span class=
+"hs-varop">$</span>
+  <span class="hs-varid">fileSource</span> <span class=
+"hs-str">"ontime.csv"</span> <span class="hs-varop">.|</span>
+  <span class="hs-comment">--</span>
+  <span class=
+"hs-comment">--              The distance field is actually a double</span>
+  <span class="hs-comment">--                             ↓</span>
+  <span class="hs-comment">--</span>
+  <span class="hs-varid">fromCsvConduit</span> <span class=
+"hs-keyglyph">@</span><span class="hs-layout">(</span><span class=
+"hs-str">"distance"</span> <span class=
+"hs-conop">:=</span> <span class=
+"hs-conid">Double</span><span class=
+"hs-layout">)</span> <span class="hs-layout">(</span><span class=
+"hs-varid">set</span> <span class="hs-cpp">#</span><span class=
+"hs-varid">downcase</span> <span class=
+"hs-conid">True</span> <span class=
+"hs-varid">csv</span><span class="hs-layout">)</span> <span class=
+"hs-varop">.|</span>
+  <span class="hs-varid">sinkConduit</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">foldSink</span>
+       <span class="hs-layout">(</span><span class=
+"hs-keyglyph">\</span><span class=
+"hs-varid">table</span> <span class=
+"hs-varid">row</span> <span class="hs-keyglyph">-&gt;</span>
+          <span class="hs-varid">modify</span> <span class=
+"hs-cpp">#</span><span class="hs-varid">flights</span> <span class=
+"hs-layout">(</span><span class="hs-varop">+</span> <span class=
+"hs-num">1</span><span class="hs-layout">)</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">modify</span> <span class="hs-cpp">#</span><span class=
+"hs-varid">flights</span> <span class=
+"hs-layout">(</span><span class="hs-varop">+</span> <span class=
+"hs-varid">get</span> <span class="hs-cpp">#</span><span class=
+"hs-varid">distance</span> <span class=
+"hs-varid">row</span><span class="hs-layout">)</span> <span class=
+"hs-varid">table</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span>
+  <span class="hs-comment">--</span>
+  <span class=
+"hs-comment">-- But we're trying to modify `#flights`, which is an `Int`.</span>
+  <span class="hs-comment">--                      ↓</span>
+  <span class="hs-comment">--</span>
+       <span class="hs-layout">(</span><span class=
+"hs-cpp">#</span><span class="hs-varid">flights</span> <span class=
+"hs-conop">:=</span> <span class="hs-layout">(</span><span class=
+"hs-num">0</span> <span class="hs-keyglyph">::</span> <span class=
+"hs-conid">Int</span><span class="hs-layout">)</span><span class=
+"hs-layout">,</span> <span class="hs-cpp">#</span><span class=
+"hs-varid">distance</span> <span class=
+"hs-conop">:=</span> <span class="hs-num">0</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span> <span class=
+"hs-varop">.&gt;</span>
+  <span class="hs-varid">tableSink</span></pre>
+<p>Likewise, if we misspelled <code>#distance</code> as
+<code>#distant</code>, in our algorithm:</p>
+<pre><code class=
+"diff">-          modify #flights (+ 1) (modify #distance (+ get #distance row) table))
++          modify #flights (+ 1) (modify #distance (+ get #distant row) table))</code></pre>
+<p>We would get this error message:</p>
+<pre>
+<code>No instance for (Has "distant" value0 ("distance" := Double))
+arising from a use of ‘get’</code></pre>
+<p>Summarizing:</p>
+<ul>
+<li>The correct values being parsed from the CSV.</li>
+<li>Fields must exist if we're accessing them.</li>
+<li>We can't mismatch types.</li>
+</ul>
+<p>All this adds up to more maintainable software, and yet we
+didn't have to state any more than necessary!</p>
+<h2 id="grouping">Grouping</h2>
+<p>If instead we'd like to group by a field, in pandas it's like
+this:</p>
+<pre><code class=
+"python">first = df.groupby('airline_id')[['fl_date', 'unique_carrier']].first()
+first.head()</code></pre>
+<p>We simply update the code with the type, putting the additional
+fields we want to parse:</p>
+<pre><span class="hs-definition">csv</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Csv</span> <span class="hs-layout">(</span><span class=
+"hs-str">"fl_date"</span> <span class=
+"hs-conop">:=</span> <span class="hs-conid">Day</span><span class=
+"hs-layout">,</span> <span class=
+"hs-str">"tail_num"</span> <span class=
+"hs-conop">:=</span> <span class="hs-conid">String</span>
+           <span class="hs-layout">,</span><span class=
+"hs-str">"airline_id"</span> <span class=
+"hs-conop">:=</span> <span class="hs-conid">Int</span><span class=
+"hs-layout">,</span> <span class=
+"hs-str">"unique_carrier"</span> <span class=
+"hs-conop">:=</span> <span class=
+"hs-conid">String</span><span class="hs-layout">)</span></pre>
+<p>And then our pipeline instead becomes:</p>
+<pre><span class="hs-definition">fromCsvConduit</span>
+  <span class="hs-keyglyph">@</span><span class=
+"hs-layout">(</span><span class=
+"hs-str">"fl_date"</span> <span class=
+"hs-conop">:=</span> <span class="hs-conid">Day</span><span class=
+"hs-layout">,</span> <span class=
+"hs-str">"tail_num"</span> <span class=
+"hs-conop">:=</span> <span class=
+"hs-conid">String</span><span class="hs-layout">,</span>
+    <span class="hs-str">"airline_id"</span> <span class=
+"hs-conop">:=</span> <span class="hs-conid">Int</span><span class=
+"hs-layout">,</span> <span class=
+"hs-str">"unique_carrier"</span> <span class=
+"hs-conop">:=</span> <span class=
+"hs-conid">String</span><span class="hs-layout">)</span>
+  <span class="hs-layout">(</span><span class=
+"hs-varid">set</span> <span class="hs-cpp">#</span><span class=
+"hs-varid">downcase</span> <span class=
+"hs-conid">True</span> <span class=
+"hs-varid">csv</span><span class="hs-layout">)</span> <span class=
+"hs-varop">.|</span>
+<span class="hs-definition">groupConduit</span> <span class=
+"hs-cpp">#</span><span class=
+"hs-varid">airline_id</span> <span class="hs-varop">.|</span>
+<span class="hs-definition">explodeConduit</span> <span class=
+"hs-varop">.|</span>
+<span class="hs-definition">projectConduit</span> <span class=
+"hs-keyglyph">@</span><span class="hs-layout">(</span><span class=
+"hs-str">"fl_date"</span> <span class=
+"hs-conop">:=</span> <span class="hs-keyword">_</span><span class=
+"hs-layout">,</span> <span class=
+"hs-str">"unique_carrier"</span> <span class=
+"hs-conop">:=</span> <span class="hs-keyword">_</span><span class=
+"hs-layout">)</span> <span class="hs-varop">.|</span>
+<span class="hs-definition">takeConduit</span> <span class=
+"hs-num">5</span> <span class="hs-varop">.&gt;</span>
+<span class="hs-definition">tableSink</span></pre>
+<ul>
+<li>We added the two new fields to be parsed.</li>
+<li>We grouped by the <code>#airline_id</code> field into a stream
+of lists of rows. That groups the stream <code>[x,y,z,a,b,c]</code>
+into e.g. <code>[[x,y],[z,a],[b,c]]</code>.</li>
+<li>We explode those groups <code>[[x,y],[z,a],[b,c],...]</code>
+into a stream of each group's parts:
+<code>[x,y,z,a,b,c,...]</code>.</li>
+<li>We <i>projected</i> a new record type just for the table
+display to include <code>fl_date</code> and
+<code>unique_carrier</code>. The types are to be left as-is, so we
+use <code>_</code> to mean "you know what I mean". This is like
+<code>SELECT fl_date, unique_carrier</code> in SQL.</li>
+</ul>
+<p>Output:</p>
+<pre><span class=
+"hs-definition">unique_carrier</span>  <span class="hs-varid">fl_date</span>
+<span class="hs-conid">AA</span>              <span class=
+"hs-num">2014</span><span class="hs-comment">-</span><span class=
+"hs-num">01</span><span class="hs-comment">-</span><span class=
+"hs-num">01</span>
+<span class="hs-conid">AA</span>              <span class=
+"hs-num">2014</span><span class="hs-comment">-</span><span class=
+"hs-num">01</span><span class="hs-comment">-</span><span class=
+"hs-num">01</span>
+<span class="hs-conid">EV</span>              <span class=
+"hs-num">2014</span><span class="hs-comment">-</span><span class=
+"hs-num">01</span><span class="hs-comment">-</span><span class=
+"hs-num">01</span>
+<span class="hs-conid">EV</span>              <span class=
+"hs-num">2014</span><span class="hs-comment">-</span><span class=
+"hs-num">01</span><span class="hs-comment">-</span><span class=
+"hs-num">01</span>
+<span class="hs-conid">EV</span>              <span class=
+"hs-num">2014</span><span class="hs-comment">-</span><span class=
+"hs-num">01</span><span class="hs-comment">-</span><span class=
+"hs-num">01</span></pre>
+<p>The Python blog post states that a further query upon that
+result,</p>
+<pre><code class=
+"python">first.ix[10:15, ['fl_date', 'tail_num']]</code></pre>
+<p>yields an unexpected empty data frame, due to strange indexing
+behaviour of pandas. But ours works out fine, we just drop 10
+elements from the input stream and project <code>tail_num</code>
+instead:</p>
+<pre><span class="hs-definition">dropConduit</span> <span class=
+"hs-num">10</span> <span class="hs-varop">.|</span>
+<span class="hs-definition">projectConduit</span> <span class=
+"hs-keyglyph">@</span><span class="hs-layout">(</span><span class=
+"hs-str">"fl_date"</span> <span class=
+"hs-conop">:=</span> <span class="hs-keyword">_</span><span class=
+"hs-layout">,</span> <span class=
+"hs-str">"tail_num"</span> <span class=
+"hs-conop">:=</span> <span class="hs-keyword">_</span><span class=
+"hs-layout">)</span> <span class="hs-varop">.|</span>
+<span class="hs-definition">takeConduit</span> <span class=
+"hs-num">5</span> <span class="hs-varop">.&gt;</span>
+<span class="hs-definition">tableSink</span></pre>
+<p>And we get</p>
+<pre><span class="hs-definition">fl_date</span>     <span class=
+"hs-varid">tail_num</span>
+<span class="hs-num">2014</span><span class=
+"hs-comment">-</span><span class="hs-num">01</span><span class=
+"hs-comment">-</span><span class="hs-num">01</span>  <span class=
+"hs-conid">N002AA</span>
+<span class="hs-num">2014</span><span class=
+"hs-comment">-</span><span class="hs-num">01</span><span class=
+"hs-comment">-</span><span class="hs-num">01</span>  <span class=
+"hs-conid">N3FXAA</span>
+<span class="hs-num">2014</span><span class=
+"hs-comment">-</span><span class="hs-num">01</span><span class=
+"hs-comment">-</span><span class="hs-num">01</span>  <span class=
+"hs-conid">N906EV</span>
+<span class="hs-num">2014</span><span class=
+"hs-comment">-</span><span class="hs-num">01</span><span class=
+"hs-comment">-</span><span class="hs-num">01</span>  <span class=
+"hs-conid">N903EV</span>
+<span class="hs-num">2014</span><span class=
+"hs-comment">-</span><span class="hs-num">01</span><span class=
+"hs-comment">-</span><span class="hs-num">01</span>  <span class=
+"hs-conid">N903EV</span></pre>
+<h2 id="conclusion">Conclusion</h2>
+<p>In this post we've demonstrated:</p>
+<ol>
+<li>Concisely handling a chain of problems smoothly like a bash
+script.</li>
+<li>Done all the above in constant memory usage.</li>
+<li>Done so with a type-safe parser, specifying our types
+statically, but without having to declare or name any record type
+ahead of time.</li>
+</ol>
+<p>This has been a demonstration, and not a finished product.
+Haskell needs work in this area, and the examples in this post are
+not performant (but could be), but such work would be very
+fruitful.</p>
+<p>Are the advantages of using Haskell something you're interested
+in? If so, <a href="/contact-us">contact us at FP Complete.</a></p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Working%20with%20data%20in%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;data-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;data-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;data-haskell&#x2F;&amp;title=Working%20with%20data%20in%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;data-haskell&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#a8dbc9c4cddbe8ced8cbc7c5d8c4cddccd86cbc7c5" targe="_blank"><span class="__cf_email__" data-cfemail="4a392b262f390a2c3a2925273a262f3e2f64292527">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

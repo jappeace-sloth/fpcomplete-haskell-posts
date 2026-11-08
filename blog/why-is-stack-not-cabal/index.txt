@@ -1,0 +1,211 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Why is stack not cabal?
+
+By Mathieu Boespflug, June 24, 2015
+
+Share this     
+
+This blog post is intended to answer two very frequest questions about stack: how is it different
+from Cabal? And: Why was it developed as a separate project instead of being worked on with Cabal?
+
+Before we delve into the details, let’s first deconstruct the premises of the questions. There are
+really three things that people talk about when they say “Cabal”:
+
+ 1. a package metadata format (.cabal files) and specification for a “common architecture for
+    building applications and tools”, aka Cabal-the-spec,
+ 2. an implementation of the spec as a framework, aka Cabal-the-library,
+ 3. cabal-install, aka Cabal-the-tool, which is a command-line tool that uses Cabal-the-library.
+
+Stack complies with Cabal-the-spec, both in the sense that it groks .cabal files in their entirety
+and behaves in a way that complies with the spec (insofar as that is relevant since the spec hasn’t
+seen any updates in recent years). In fact it was easy for Stack to do, because just like
+Cabal-the-tool, it is implemented using Cabal-the-library. Therefore, a first answer to the
+questions at hand is that stack is Cabal: it is 100% compatible with the existing Cabal file format
+for specifying package metadata, supports exactly the same package build harnesses and is
+implemented on top of the same reference implementation of the spec as cabal-install, which is just
+one tool among others using Cabal-the-library. cabal-install and stack are separate tools that both
+share the same framework. A successful framework at that: Haskell’s ecosystem would not be where it
+is today without Cabal, which way back in 2004, for the first time in the long history of Haskell
+made it possible to easily reuse code across projects by standardizing the way packages are built
+and used by the compiler.
+
+Stack is different in that it is a from-the-ground-up rethink of Cabal-the-tool. So the real
+questions are: why was a new tool necessary, and why now? We’ll tackle these questions step-by-step
+in the remainder of this post:
+
+  • What problem does stack address?
+  • How are stack’s design choices different?
+  • stack within the wider ecosystem
+
+The problem
+
+Stack was started because the Haskell ecosystem has a tooling problem. Like any number of other
+factors, this tooling problem is limiting the growth of the ecosystem and of the community around
+it. Fixing this tooling problem was born out of a systematic effort of growth hacking: identify the
+bottlenecks that hamper growth and remove them one by one.
+
+The fact that Haskell has a tooling problem is not a rumour, nor is it a fringe belief of
+disgruntled developers. In an effort to collect the data necessary to identifying the bottlenecks
+in the growth of the community, FP Complete conducted a wide survey of the entire community on
+behalf of the Commercial Haskell SIG. The results are in and the 1,200+ respondents are
+unequivocal: package management with cabal-install is the single worst aspect of using Haskell.
+Week after week, Reddit and mailing list posts pop up regarding basic package installation problems
+using cabal-install. Clearly there is a problem, no matter whether seasoned users understand their
+tools well, know how to use it exactly right and how to back out gracefully from tricky situations.
+For every battle hardened power user, there are 10 enthusiasts willing to give the language a try,
+if only simple things were simple.
+
+Of a package building and management tool, users expect, out-of-the-box (that means, by default!):
+
+ 1. that the tool facilitates combining sets of packages to build new applications, not fail
+    without pointing to the solution, just because packages advertize conservative bounds on their
+    dependencies;
+ 2. that the tool ensures that success today is success tomorrow: instructions that worked for a
+    tutorial writer should continue to work for all her/his readers, now and in the future;
+ 3. that invoking the tool to install one package doesn’t compromise the success of invoking the
+    tool for installing another package;
+ 4. that much like make, the UI not require the user to remember what previous commands (s)he did
+    or did not run (dependent actions should be run automatically and predictably).
+
+In fact these are the very same desirable properties that Johan Tibell identified in 2012 and which
+the data supports today. If our tooling does not support them, this is a problem.
+
+Stack is an attempt to fix this problem - oddly enough, by building in at its core much of the same
+principles that underlie how power users utilize cabal-install successfully. The key to stack’s
+success is to start from common workflows, choosing the right defaults to support them, and making
+those defaults simple.
+
+The design
+
+One of the fundamental problems that users have with package management systems is that building
+and installing a package today might not work tomorrow. Building and installing on my system might
+not work on your system. Despite typing exactly the same commands. Despite using the exact same
+package metadata. Despite using the exact same version of the source code. The fundamental problem
+is: lack of reproducibility. Stack strives hard to make the results of every single command
+reproducible, because that is the right default. Said another way, stack applies to package
+management the same old recipe that made the success of functional programming: manage complexity
+by making the output of all actions proper functions of their inputs. State explicitly what your
+inputs are. Gain the confidence that the outputs that you see today are the outputs that you see
+tomorrow. Reproducibility is the key to understandability.
+
+In the cabal workflow, running cabal install is necessary to get your dependencies. It's also a
+black box which depends on three pieces of global, mutable, implicit state: the compiler and
+versions of system libraries on your system, the Cabal packages installed in GHC’s package
+database, and the package metadata du jour downloaded from Hackage (via cabal update). Running
+cabal install at different times can lead to wildly different install plans, without giving any
+good reason to the user. The interaction with the installed package set is non-obvious, and
+arbitrary decisions made by the dependency solver can lead to broken package databases. Due to lack
+of isolation between different invocations of cabal install for different projects, calling cabal
+install the first time can affect whether cabal install will work the second time. For this reason,
+power users use the cabal freeze feature to pin down exactly the version of every dependency, so
+that every invocation of cabal install always comes up with the same build plan. Power users also
+build in so-called “sandboxes”, in order to isolate the actions of calling cabal install for
+building the one project from the actions of calling cabal install for building this other project.
+
+In stack, all versions of all dependencies are explicit and determined completely in a stack.yaml
+file. Given the same stack.yaml and OS, stack build should always run the exact same build plan.
+This does wonders for avoiding accidentally breaking the package database, having reproducible
+behavior across your team, and producing reliable and trustworthy build artifacts. It also makes it
+trivial for stack to have a user-friendly UI of just installing dependencies when necessary, since
+future invocations don’t have to guess what the build plan of previous invocations was. The build
+plan is always obvious and manifest. Unlike cabal sandboxes, isolation in stack is complete:
+packages built against different versions of dependencies never interfere, because stack
+transparently installs packages in separate databases (but is smart enough to reuse databases when
+it is always safe to do, hence keeping build times low).
+
+Note that this doesn’t mean users have to painstakingly write out all package versions longhand.
+Stack supports naming package snapshots as shorthand for specifying sets of package versions that
+are known to work well together.
+
+Other key design principles are portability (work consistently and have a consistent UI across all
+platforms), and very short ramp-up phase. It should be easy for a new user with little knowledge of
+Haskell to write “hello world” in Haskell, package it up and publish it with just a few lines of
+configuration or none at all. Learning a new programming language is challenge enough that learning
+a new package specification language is quite unnecessary. These principles are in contrast with
+those of platform specific and extremely general solutions such a Nix.
+
+Modularity (do one thing and do it well), security (don’t trust stuff pulled from Internet unless
+you have a reason to) and UI consistency are also principles fundamental to the design, and a key
+strategies to keeping the bug count low. But more on that another time.
+
+These have informed the following "nice to have" features compared to cabal-install:
+
+  • multi-package project support (build all packages in one go, test all packages in one go…),
+  • depend on experimental and unpublished packages directly, stored in Git repositories, not just
+    Hackage and the local filesystem,
+  • transparently install the correct version of GHC automatically so that you don’t have to (and
+    multiple concurrently installed GHC versions work just fine),
+  • optionally use Docker for bullet-proof isolation of all system resources and deploying full,
+    self-contained Haskell components as microservices.
+
+The technologies underpinning these features include:
+
+  • Git (for package index management),
+  • S3 (for high-reliability package serving),
+  • SSL libraries (for secure HTTP uploads and downloads),
+  • Docker,
+  • many state-of-the-art Haskell libraries.
+
+These technologies have enabled swift development of stack without reinventing the wheel and have
+helped keep the implementation stack simple and accessible. With the benefit of a clean slate to
+start from, we believe stack to be very hackable and easy to contribute to. These are also
+technologies that cabal-install did not have the benefit of being able to use when it was first
+conceived some years ago.
+
+Whither cabal-install, stack and other tools
+
+Stack is but one tool for managing packages on your system and building projects. Stack was
+designed specifically to interoperate with the existing frameworks for package management and
+package building, so that all your existing packages work as-is with stack, but with the added
+benefit of a modern, predictable design. Because stack is just Cabal under the hood, other tools
+such as Halcyon for deployment and Nix are good fits complement stack nicely, or indeed
+cabal-install for those who prefer to work with a UI that they know well. We have already heard
+reports of users combining these tools to good effect. And remember: stack packages are
+cabal-install packages are super-new-fangled-cabal-tool packages. You can write the exact same
+packages in stack or in another tool, using curated package sets if you like, tight version bounds
+à la PVP if you like, none or anything at all. stack likes to make common usage easy but is
+otherwise very much policy agnostic.
+
+Stack is a contributor friendly project, with already 18 contributors to the code in its very short
+existence, several times more bug reporters and documentation writers, and counting! Help make
+stack a better tool that suits your needs by filing bug reports and feature requests, improving the
+documentation and contributing new code. Above all, use stack, tell your friends about it. We hope
+stack will eliminate a documented bottleneck to community growth. And turn Haskell into a more
+productive language accessible to many more users.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

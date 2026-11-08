@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Teaching Haskell with Duet</title>
+  <meta property="og:title" content="Teaching Haskell with Duet">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Teaching Haskell to beginners with Duet">
+  <meta property="og:description" content="Teaching Haskell to beginners with Duet">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;teaching-haskell-with-duet&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Teaching Haskell with Duet</h1>
+      
+      <p id="page-description">By Chris Done, December 30, 2019</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Teaching%20Haskell%20with%20Duet https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;teaching-haskell-with-duet&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;teaching-haskell-with-duet&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;teaching-haskell-with-duet&#x2F;&amp;title=Teaching%20Haskell%20with%20Duet"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;teaching-haskell-with-duet&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  <h1 id="teaching-haskell-with-duet">Teaching Haskell with Duet</h1>
+<p>Teaching Haskell to complete beginners is an enjoyable
+experience. Haskell is foreign; many of its features are alien to
+other programmers. It's purely functional. It's non-strict. Its type
+system is among the more pervasive of other practical languages.</p>
+<h2 id="simple-at-the-core">Simple at the core</h2>
+<p>Haskell's core language is simple, though. It shares this with Lisp.
+<a href="https://mitpress.mit.edu/sites/default/files/sicp/full-text/sicp/book/node10.html">Structured and Interpretation of Computer Programs by MIT</a>
+teaches Lisp beginning with a substitution model for function
+application. This turns out to work well for Haskell too. This is how
+I've been teaching Haskell to beginners at FP Complete for our
+clients.</p>
+<p>For example, in SICP, they use the example:</p>
+<pre data-lang="lisp" style="background-color:#fdf6e3;color:#657b83;" class="language-lisp "><code class="language-lisp" data-lang="lisp"><span>(+ (square </span><span style="color:#6c71c4;">6</span><span>) (square </span><span style="color:#6c71c4;">10</span><span>))
+</span></code></pre>
+<p>which reduces the function <code>square</code> to</p>
+<pre data-lang="lisp" style="background-color:#fdf6e3;color:#657b83;" class="language-lisp "><code class="language-lisp" data-lang="lisp"><span>(+ (* </span><span style="color:#6c71c4;">6 6</span><span>) (* </span><span style="color:#6c71c4;">10 10</span><span>))
+</span></code></pre>
+<p>which reduces by multiplication to:</p>
+<pre data-lang="lisp" style="background-color:#fdf6e3;color:#657b83;" class="language-lisp "><code class="language-lisp" data-lang="lisp"><span>(+ </span><span style="color:#6c71c4;">36 100</span><span>)
+</span></code></pre>
+<p>and finally to</p>
+<pre data-lang="lisp" style="background-color:#fdf6e3;color:#657b83;" class="language-lisp "><code class="language-lisp" data-lang="lisp"><span>136
+</span></code></pre>
+<p>As they note in SICP,</p>
+<blockquote>
+<p>The purpose of the substitution is to help us think about procedure
+application, not to provide a description of how the interpreter
+really works. Typical interpreters do not evaluate procedure
+applications by manipulating the text of a procedure to substitute
+values for the formal parameters.</p>
+</blockquote>
+<p>That this, this is a <em>model</em>, it's not the real thing. In fact, if you
+really eyeball the very first step, you might wonder which <code>(square ..)</code> argument is evaluated first between the two. Scheme doesn't
+specify an argument order; it varies. An implementation may even
+inline the whole thing.</p>
+<p>Rather, if we think about programs in terms of a simple sequence of
+rewrites, we get a lot of bang for our buck in terms of reasoning and
+understanding.</p>
+<h2 id="the-right-language-to-model">The right language to model</h2>
+<p>Motivated by this goal, I started thinking about automating this
+process, so that students could use this model more readily, and see
+the shape of functions and algorithms visually. The solution I came up
+with was a new language that is a subset of Haskell, which I'll cover
+in this post.</p>
+<p>The reason that it's not full Haskell is that Haskell has a lot of
+surface-level syntactic sugar. Evaluating the real language is
+complicated and infeasible. The following contains too many things at
+once to consider:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">quicksort1 </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">Ord a</span><span>) </span><span style="color:#859900;">=&gt;</span><span> [</span><span style="color:#268bd2;">a</span><span>] </span><span style="color:#859900;">-&gt;</span><span> [</span><span style="color:#268bd2;">a</span><span>]
+</span><span>quicksort1 </span><span style="color:#b58900;">[] </span><span style="color:#859900;">= </span><span style="color:#b58900;">[]
+</span><span>quicksort1 (x</span><span style="color:#859900;">:</span><span>xs) </span><span style="color:#859900;">=
+</span><span>  </span><span style="color:#859900;">let</span><span> smallerSorted </span><span style="color:#859900;">=</span><span> quicksort1 [a </span><span style="color:#859900;">|</span><span> a </span><span style="color:#859900;">&lt;-</span><span> xs, a </span><span style="color:#859900;">&lt;=</span><span> x]
+</span><span>      biggerSorted </span><span style="color:#859900;">=</span><span> quicksort1 [a </span><span style="color:#859900;">|</span><span> a </span><span style="color:#859900;">&lt;-</span><span> xs, a </span><span style="color:#859900;">&gt;</span><span> x]
+</span><span>  </span><span style="color:#859900;">in</span><span>  smallerSorted </span><span style="color:#859900;">++</span><span> [x] </span><span style="color:#859900;">++</span><span> biggerSorted
+</span></code></pre>
+<p>Pattern matches at the definition, list syntax, comprehensions,
+lets. There's a lot going on here that makes a newbie's eyes glaze
+over. We have to start simpler. But how simple?</p>
+<p>GHC Haskell has a tiny language called Core to which all Haskell
+programs compile down to. Its AST looks roughly like this:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">data </span><span style="color:#cb4b16;">Expr
+</span><span>  </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App Expr Expr
+</span><span>  </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Var Var
+</span><span>  </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Lam Name Type Expr
+</span><span>  </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Case Expr</span><span> [</span><span style="color:#cb4b16;">Alt</span><span>]
+</span><span>  </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Let Bind Expr
+</span><span>  </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Lit Literal
+</span></code></pre>
+<p>Evaluation of Core is simple. However, Core is also a little <em>too
+low-level</em>, because it puts polymorphic types and type-class
+dictionaries as normal arguments, inlines a lot of things, looks
+underneath boxed types like <code>Int</code> (into <code>I#</code>), and adds some extra
+capabilities normal Haskell doesn't have that are only appropriate for
+a compiler writer to see. The above function compiled to Core starts
+like this:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>quicksort1
+</span><span>  </span><span style="color:#859900;">= \</span><span> (@ a_a1Zd) (</span><span style="color:#859900;">$</span><span>dOrd_a1Zf </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Ord</span><span> a_a1Zd) (ds_d22B </span><span style="color:#859900;">::</span><span> [a_a1Zd]) </span><span style="color:#859900;">-&gt;
+</span><span>      </span><span style="color:#859900;">case</span><span> ds_d22B </span><span style="color:#859900;">of</span><span> {
+</span><span>        </span><span style="color:#b58900;">[] </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">GHC</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Types</span><span style="color:#859900;">.</span><span style="color:#b58900;">[]</span><span> @ a_a1Zd;
+</span><span>        </span><span style="color:#859900;">:</span><span> x_a1sG xs_a1sH </span><span style="color:#859900;">-&gt;
+</span><span>          </span><span style="color:#859900;">++
+</span><span>            @ a_a1Zd
+</span><span>            (quicksort1
+</span><span>               @ a_a1Zd
+</span><span>               </span><span style="color:#859900;">$</span><span>dOrd_a1Zf
+</span><span>               (letrec {
+</span><span>                  ds1_d22C [</span><span style="color:#cb4b16;">Occ</span><span style="color:#859900;">=</span><span style="color:#cb4b16;">LoopBreaker</span><span>] </span><span style="color:#859900;">::</span><span> [a_a1Zd] </span><span style="color:#859900;">-&gt;</span><span> [a_a1Zd]
+</span><span>           </span><span style="color:#859900;">...
+</span></code></pre>
+<p>We have to explain the special list syntax, module qualification,
+polymorphic types, dictionaries, etc. all in one go, besides the
+obvious challenge of the unreadable naming convention. Core is made
+for compilers and compiler writers, not for humans.</p>
+<h2 id="duet">Duet</h2>
+<p>Therefore I took a middle way. Last year I wrote
+<a href="https://github.com/chrisdone/duet">a language called Duet</a>, which is
+a Haskell subset made specifically for teaching at this period of
+learning Haskell. Duet only has these language features: data types,
+type-classes, top-level definitions, lambdas, case expressions, and
+some literals (strings, integrals, rationals). Its main feature is
+steppability; the ability to step through the code. Every step
+produces a valid program.</p>
+<p>Returning to the SICP example with our new tool, here's the same
+program in Duet:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>square </span><span style="color:#859900;">= \</span><span>x </span><span style="color:#859900;">-&gt;</span><span> x * x
+</span><span>main </span><span style="color:#859900;">=</span><span> square </span><span style="color:#6c71c4;">6 </span><span style="color:#859900;">+</span><span> square </span><span style="color:#6c71c4;">10
+</span></code></pre>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>chris@precision</span><span style="color:#859900;">:~/</span><span style="color:#cb4b16;">Work</span><span style="color:#859900;">/</span><span>duet</span><span style="color:#859900;">-</span><span>lang</span><span style="color:#859900;">/</span><span>duet</span><span style="color:#859900;">$</span><span> duet run examples</span><span style="color:#859900;">/</span><span>sicp</span><span style="color:#859900;">.</span><span>hs
+</span><span>(square </span><span style="color:#6c71c4;">6</span><span>) </span><span style="color:#859900;">+</span><span> (square </span><span style="color:#6c71c4;">10</span><span>)
+</span><span>((</span><span style="color:#859900;">\</span><span>x </span><span style="color:#859900;">-&gt;</span><span> x * x) </span><span style="color:#6c71c4;">6</span><span>) </span><span style="color:#859900;">+</span><span> (square </span><span style="color:#6c71c4;">10</span><span>)
+</span><span>(</span><span style="color:#6c71c4;">6</span><span> * </span><span style="color:#6c71c4;">6</span><span>) </span><span style="color:#859900;">+</span><span> (square </span><span style="color:#6c71c4;">10</span><span>)
+</span><span style="color:#6c71c4;">36 </span><span style="color:#859900;">+</span><span> (square </span><span style="color:#6c71c4;">10</span><span>)
+</span><span style="color:#6c71c4;">36 </span><span style="color:#859900;">+</span><span> ((</span><span style="color:#859900;">\</span><span>x </span><span style="color:#859900;">-&gt;</span><span> x * x) </span><span style="color:#6c71c4;">10</span><span>)
+</span><span style="color:#6c71c4;">36 </span><span style="color:#859900;">+</span><span> (</span><span style="color:#6c71c4;">10</span><span> * </span><span style="color:#6c71c4;">10</span><span>)
+</span><span style="color:#6c71c4;">36 </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">100
+</span><span style="color:#6c71c4;">136
+</span></code></pre>
+<p>Here we see a substitution model in action. Each line is a valid
+program! You can take any line from the output and run it from that
+point.</p>
+<p>Unlike Scheme, Duet picks an argument order (left-to-right) for strict
+functions like integer operations.</p>
+<p><strong>Note</strong>: You can follow along at home by creating a file and running
+it using <a href="https://github.com/chrisdone/duet">docker run</a>
+on Linux, OS X or Windows.</p>
+<h2 id="folds">Folds</h2>
+<p>Let's turn our attention to the teaching of folds, which is a classic
+hurdle to get newbies through, as it is a kind of forcing function for
+a variety of topics.</p>
+<p>The right fold is clasically defined like this:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>foldr f z </span><span style="color:#b58900;">[]     </span><span style="color:#859900;">=</span><span> z
+</span><span>foldr f z (x</span><span style="color:#859900;">:</span><span>xs) </span><span style="color:#859900;">=</span><span> f x (foldr f z xs)
+</span></code></pre>
+<p>This is not a valid Duet program, because (1) it uses list syntax
+(lists aren't special), and (2) it uses case analysis at the
+declaration level. If you try substitution stepping these, you quickly
+arrive at an awkward conversation about the difference between the
+seemingly three-argument function <code>foldr</code>, and lambdas, partial
+application, currying, and pattern matching, and whether we're
+defining two functions or one. Here is the same program in Duet:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">data </span><span style="color:#cb4b16;">List</span><span> a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Nil </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Cons</span><span> a (</span><span style="color:#cb4b16;">List</span><span> a)
+</span><span>foldr </span><span style="color:#859900;">= \</span><span>f </span><span style="color:#859900;">-&gt; \</span><span>z </span><span style="color:#859900;">-&gt; \</span><span>l </span><span style="color:#859900;">-&gt;
+</span><span>  </span><span style="color:#859900;">case</span><span> l </span><span style="color:#859900;">of
+</span><span>    </span><span style="color:#cb4b16;">Nil </span><span style="color:#859900;">-&gt;</span><span> z
+</span><span>    </span><span style="color:#cb4b16;">Cons</span><span> x xs </span><span style="color:#859900;">-&gt;</span><span> f x (foldr f z xs)
+</span></code></pre>
+<p>At the end of teaching the substitution model, I cover that <code>\x y z</code>
+is syntactic sugar for <code>\x -&gt; \y -&gt; \z -&gt; ...</code>, but only after the
+intuition has been solidified that all Haskell functions take one
+argument. They may return other functions. So the updated program is:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">data </span><span style="color:#cb4b16;">List</span><span> a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Nil </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Cons</span><span> a (</span><span style="color:#cb4b16;">List</span><span> a)
+</span><span>foldr </span><span style="color:#859900;">= \</span><span>f z l </span><span style="color:#859900;">-&gt;
+</span><span>  </span><span style="color:#859900;">case</span><span> l </span><span style="color:#859900;">of
+</span><span>    </span><span style="color:#cb4b16;">Nil </span><span style="color:#859900;">-&gt;</span><span> z
+</span><span>    </span><span style="color:#cb4b16;">Cons</span><span> x xs </span><span style="color:#859900;">-&gt;</span><span> f x (foldr f z xs)
+</span></code></pre>
+<p>Which is perfectly valid Haskell, and each part of it can be rewritten
+predictably.</p>
+<p>Let's look at comparing <code>foldr</code> with <code>foldl</code>.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">data </span><span style="color:#cb4b16;">List</span><span> a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Nil </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Cons</span><span> a (</span><span style="color:#cb4b16;">List</span><span> a)
+</span><span>foldr </span><span style="color:#859900;">= \</span><span>f z l </span><span style="color:#859900;">-&gt;
+</span><span>  </span><span style="color:#859900;">case</span><span> l </span><span style="color:#859900;">of
+</span><span>    </span><span style="color:#cb4b16;">Nil </span><span style="color:#859900;">-&gt;</span><span> z
+</span><span>    </span><span style="color:#cb4b16;">Cons</span><span> x xs </span><span style="color:#859900;">-&gt;</span><span> f x (foldr f z xs)
+</span><span>foldl </span><span style="color:#859900;">= \</span><span>f z l </span><span style="color:#859900;">-&gt;
+</span><span>  </span><span style="color:#859900;">case</span><span> l </span><span style="color:#859900;">of
+</span><span>    </span><span style="color:#cb4b16;">Nil </span><span style="color:#859900;">-&gt;</span><span> z
+</span><span>    </span><span style="color:#cb4b16;">Cons</span><span> x xs </span><span style="color:#859900;">-&gt;</span><span> foldl f (f z x) xs
+</span><span>list </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">1</span><span> (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">2 </span><span style="color:#cb4b16;">Nil</span><span>)
+</span></code></pre>
+<h2 id="folds-at-a-glance">Folds at a glance</h2>
+<p>For a <em>quick</em> summary, we can use holes like in normal Haskell
+indicated by <code>_</code> or <code>_foo</code>. In Duet, these are ignored by the type
+system and the stepper, letting you run the stepper with holes in
+too. They don't result in an error, so you can build up expressions
+with them inside.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>main_foldr </span><span style="color:#859900;">=</span><span> foldr _f _nil list
+</span><span>main_foldl </span><span style="color:#859900;">=</span><span> foldl _f _nil list
+</span><span>list </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">1</span><span> (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">2</span><span> (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">3</span><span> (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">3 </span><span style="color:#cb4b16;">Nil</span><span>)))
+</span></code></pre>
+<p>(I increased the size of the list for a longer more compelling
+output.)</p>
+<p>We can pass <code>--concise</code> which is a convenience flag to literally
+filter out intermediate steps (cases, lambdas) which helps us see the
+&quot;high-level&quot; recursion. This flag is still under evaluation (no pun
+intended), but is useful here. Full output is worth studying with
+students too, but is too long to fit in this blog post. I will include
+a snippet from a non-concise example below.</p>
+<p>The output looks like this:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">$</span><span> duet run examples</span><span style="color:#859900;">/</span><span>folds</span><span style="color:#859900;">-</span><span>strictness</span><span style="color:#859900;">.</span><span>hs </span><span style="color:#93a1a1;">--main main_foldr --concise
+</span><span>foldr _f _nil list
+</span><span>_f </span><span style="color:#6c71c4;">1</span><span> (foldr _f _nil (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">2</span><span> (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">3</span><span> (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">4 </span><span style="color:#cb4b16;">Nil</span><span>))))
+</span><span>_f </span><span style="color:#6c71c4;">1</span><span> (_f </span><span style="color:#6c71c4;">2</span><span> (foldr _f _nil (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">3</span><span> (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">4 </span><span style="color:#cb4b16;">Nil</span><span>))))
+</span><span>_f </span><span style="color:#6c71c4;">1</span><span> (_f </span><span style="color:#6c71c4;">2</span><span> (_f </span><span style="color:#6c71c4;">3</span><span> (foldr _f _nil (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">4 </span><span style="color:#cb4b16;">Nil</span><span>))))
+</span><span>_f </span><span style="color:#6c71c4;">1</span><span> (_f </span><span style="color:#6c71c4;">2</span><span> (_f </span><span style="color:#6c71c4;">3</span><span> (_f </span><span style="color:#6c71c4;">4</span><span> (foldr _f _nil </span><span style="color:#cb4b16;">Nil</span><span>))))
+</span><span>_f </span><span style="color:#6c71c4;">1</span><span> (_f </span><span style="color:#6c71c4;">2</span><span> (_f </span><span style="color:#6c71c4;">3</span><span> (_f </span><span style="color:#6c71c4;">4</span><span> _nil)))
+</span><span style="color:#859900;">$</span><span> duet run examples</span><span style="color:#859900;">/</span><span>folds</span><span style="color:#859900;">-</span><span>strictness</span><span style="color:#859900;">.</span><span>hs </span><span style="color:#93a1a1;">--main main_foldl --concise
+</span><span>foldl _f _nil list
+</span><span>foldl _f (_f _nil </span><span style="color:#6c71c4;">1</span><span>) (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">2</span><span> (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">3</span><span> (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">4 </span><span style="color:#cb4b16;">Nil</span><span>)))
+</span><span>foldl _f (_f (_f _nil </span><span style="color:#6c71c4;">1</span><span>) </span><span style="color:#6c71c4;">2</span><span>) (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">3</span><span> (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">4 </span><span style="color:#cb4b16;">Nil</span><span>))
+</span><span>foldl _f (_f (_f (_f _nil </span><span style="color:#6c71c4;">1</span><span>) </span><span style="color:#6c71c4;">2</span><span>) </span><span style="color:#6c71c4;">3</span><span>) (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">4 </span><span style="color:#cb4b16;">Nil</span><span>)
+</span><span>foldl _f (_f (_f (_f (_f _nil </span><span style="color:#6c71c4;">1</span><span>) </span><span style="color:#6c71c4;">2</span><span>) </span><span style="color:#6c71c4;">3</span><span>) </span><span style="color:#6c71c4;">4</span><span>) </span><span style="color:#cb4b16;">Nil
+</span><span>_f (_f (_f (_f _nil </span><span style="color:#6c71c4;">1</span><span>) </span><span style="color:#6c71c4;">2</span><span>) </span><span style="color:#6c71c4;">3</span><span>) </span><span style="color:#6c71c4;">4
+</span></code></pre>
+<p>We can immediately see what the &quot;right&quot; part of <code>foldr</code>
+means. Experienced Haskellers can already see the teaching
+opportunities sprouting from the earth at this point. We're using O(n)
+space here, building nested thunks, or using too much stack. Issues
+abound.</p>
+<p>Meanwhile, in <code>foldl</code>, we've shifted accumulation of the nested thunks
+to an argument of <code>foldr</code>, but at the end, we still have a nested
+thunk. Enter strict left fold!</p>
+<p>We also see the argument order come into play: <code>_f</code> is applied to <code>1</code>
+first in <code>foldr</code> (<code>_f 1 (foldr ...)</code>), but last in <code>foldl</code> (<code>_f (_f _nil 1) ...</code>, which is another important part of understanding the
+distinction between the two.</p>
+<h2 id="strict-folds">Strict folds</h2>
+<p>To see the low-level mechanics, and as a precursor to teaching strict
+fold, we ought to use an actual arithmetic operation (because you
+can't strictly evaluate a <code>_</code> hole, by definition, it's missing):</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>main_foldr </span><span style="color:#859900;">=</span><span> foldr (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x </span><span style="color:#859900;">+</span><span> y) </span><span style="color:#6c71c4;">0</span><span> list
+</span><span>main_foldl </span><span style="color:#859900;">=</span><span> foldl (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x </span><span style="color:#859900;">+</span><span> y) </span><span style="color:#6c71c4;">0</span><span> list
+</span></code></pre>
+<p>Both folds eventually yield:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#6c71c4;">1 </span><span style="color:#859900;">+</span><span> (</span><span style="color:#6c71c4;">2 </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">0</span><span>)
+</span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">2
+</span><span style="color:#6c71c4;">3
+</span></code></pre>
+<p>And:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>((</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x </span><span style="color:#859900;">+</span><span> y) </span><span style="color:#6c71c4;">0 1</span><span>) </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">2
+</span><span>((</span><span style="color:#859900;">\</span><span>y </span><span style="color:#859900;">-&gt; </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">+</span><span> y) </span><span style="color:#6c71c4;">1</span><span>) </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">2
+</span><span>(</span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1</span><span>) </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">2
+</span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">2
+</span><span style="color:#6c71c4;">3
+</span></code></pre>
+<p>(Here you can also easily see where the <code>0</code> lies in the tree.)</p>
+<p>Which both have the built up thunk problem mentioned above.</p>
+<p>Duet has bang patterns, so we can define a strict fold like this:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">data </span><span style="color:#cb4b16;">List</span><span> a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Nil </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Cons</span><span> a (</span><span style="color:#cb4b16;">List</span><span> a)
+</span><span>foldr </span><span style="color:#859900;">= \</span><span>f z l </span><span style="color:#859900;">-&gt;
+</span><span>  </span><span style="color:#859900;">case</span><span> l </span><span style="color:#859900;">of
+</span><span>    </span><span style="color:#cb4b16;">Nil </span><span style="color:#859900;">-&gt;</span><span> z
+</span><span>    </span><span style="color:#cb4b16;">Cons</span><span> x xs </span><span style="color:#859900;">-&gt;</span><span> f x (foldr f z xs)
+</span><span>foldl </span><span style="color:#859900;">= \</span><span>f z l </span><span style="color:#859900;">-&gt;
+</span><span>  </span><span style="color:#859900;">case</span><span> l </span><span style="color:#859900;">of
+</span><span>    </span><span style="color:#cb4b16;">Nil </span><span style="color:#859900;">-&gt;</span><span> z
+</span><span>    </span><span style="color:#cb4b16;">Cons</span><span> x xs </span><span style="color:#859900;">-&gt;</span><span> foldl f (f z x) xs
+</span><span>foldl_ </span><span style="color:#859900;">= \</span><span>f z l </span><span style="color:#859900;">-&gt;
+</span><span>  </span><span style="color:#859900;">case</span><span> l </span><span style="color:#859900;">of
+</span><span>    </span><span style="color:#cb4b16;">Nil </span><span style="color:#859900;">-&gt;</span><span> z
+</span><span>    </span><span style="color:#cb4b16;">Cons</span><span> x xs </span><span style="color:#859900;">-&gt;
+</span><span>      </span><span style="color:#859900;">case</span><span> f z x </span><span style="color:#859900;">of
+</span><span>        </span><span style="color:#859900;">!</span><span>z_ </span><span style="color:#859900;">-&gt;</span><span> foldl_ f z_ xs
+</span><span>list </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">1</span><span> (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">2 </span><span style="color:#cb4b16;">Nil</span><span>)
+</span><span>main_foldr </span><span style="color:#859900;">=</span><span> foldr (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x </span><span style="color:#859900;">+</span><span> y) </span><span style="color:#6c71c4;">0</span><span> list
+</span><span>main_foldl </span><span style="color:#859900;">=</span><span> foldl (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x </span><span style="color:#859900;">+</span><span> y) </span><span style="color:#6c71c4;">0</span><span> list
+</span><span>main_foldl_ </span><span style="color:#859900;">=</span><span> foldl_ (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x </span><span style="color:#859900;">+</span><span> y) </span><span style="color:#6c71c4;">0</span><span> list
+</span></code></pre>
+<p>(We don't allow <code>'</code> as part of a variable name, as it's not really
+necessary and is confusing for non-Haskeller beginners. An undercore
+suffices.)</p>
+<p>Now, looking in detail without the <code>--concise</code> arg, just before the
+recursion, we see the force of the addition:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">case </span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">1</span><span> (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">2 </span><span style="color:#cb4b16;">Nil</span><span>) </span><span style="color:#859900;">of
+</span><span>  </span><span style="color:#cb4b16;">Nil </span><span style="color:#859900;">-&gt; </span><span style="color:#6c71c4;">0
+</span><span>  </span><span style="color:#cb4b16;">Cons</span><span> x xs </span><span style="color:#859900;">-&gt;
+</span><span>    </span><span style="color:#859900;">case</span><span> (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x </span><span style="color:#859900;">+</span><span> y) </span><span style="color:#6c71c4;">0</span><span> x </span><span style="color:#859900;">of
+</span><span>      </span><span style="color:#859900;">!</span><span>z_ </span><span style="color:#859900;">-&gt;</span><span> foldl_ (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x </span><span style="color:#859900;">+</span><span> y) z_ xs
+</span><span style="color:#859900;">case</span><span> (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x </span><span style="color:#859900;">+</span><span> y) </span><span style="color:#6c71c4;">0 1 </span><span style="color:#859900;">of
+</span><span>  </span><span style="color:#859900;">!</span><span>z_ </span><span style="color:#859900;">-&gt;</span><span> foldl_ (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x </span><span style="color:#859900;">+</span><span> y) z_ (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">2 </span><span style="color:#cb4b16;">Nil</span><span>)
+</span><span style="color:#859900;">case</span><span> (</span><span style="color:#859900;">\</span><span>y </span><span style="color:#859900;">-&gt; </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">+</span><span> y) </span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">of
+</span><span>  </span><span style="color:#859900;">!</span><span>z_ </span><span style="color:#859900;">-&gt;</span><span> foldl_ (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x </span><span style="color:#859900;">+</span><span> y) z_ (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">2 </span><span style="color:#cb4b16;">Nil</span><span>)
+</span><span style="color:#859900;">case </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">of
+</span><span>  </span><span style="color:#859900;">!</span><span>z_ </span><span style="color:#859900;">-&gt;</span><span> foldl_ (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x </span><span style="color:#859900;">+</span><span> y) z_ (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">2 </span><span style="color:#cb4b16;">Nil</span><span>)
+</span><span style="color:#859900;">case </span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">of
+</span><span>  </span><span style="color:#859900;">!</span><span>z_ </span><span style="color:#859900;">-&gt;</span><span> foldl_ (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x </span><span style="color:#859900;">+</span><span> y) z_ (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">2 </span><span style="color:#cb4b16;">Nil</span><span>)
+</span><span>foldl_ (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x </span><span style="color:#859900;">+</span><span> y) </span><span style="color:#6c71c4;">1</span><span> (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">2 </span><span style="color:#cb4b16;">Nil</span><span>)
+</span></code></pre>
+<p>And finally, taking a glance with <code>--concise</code>, we see:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">$</span><span> duet run examples</span><span style="color:#859900;">/</span><span>folds</span><span style="color:#859900;">-</span><span>strictness</span><span style="color:#859900;">.</span><span>hs </span><span style="color:#93a1a1;">--main main_foldl_ --concise
+</span><span>foldl_ (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x </span><span style="color:#859900;">+</span><span> y) </span><span style="color:#6c71c4;">0</span><span> list
+</span><span>foldl_ (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x </span><span style="color:#859900;">+</span><span> y) </span><span style="color:#6c71c4;">1</span><span> (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">2</span><span> (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">3</span><span> (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">4 </span><span style="color:#cb4b16;">Nil</span><span>)))
+</span><span>foldl_ (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x </span><span style="color:#859900;">+</span><span> y) </span><span style="color:#6c71c4;">3</span><span> (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">3</span><span> (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">4 </span><span style="color:#cb4b16;">Nil</span><span>))
+</span><span>foldl_ (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x </span><span style="color:#859900;">+</span><span> y) </span><span style="color:#6c71c4;">6</span><span> (</span><span style="color:#cb4b16;">Cons </span><span style="color:#6c71c4;">4 </span><span style="color:#cb4b16;">Nil</span><span>)
+</span><span>foldl_ (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x </span><span style="color:#859900;">+</span><span> y) </span><span style="color:#6c71c4;">10 </span><span style="color:#cb4b16;">Nil
+</span><span style="color:#6c71c4;">10
+</span></code></pre>
+<p>Which spells out quite clearly that now we are: (1) doing direct
+recursion, and (2) calculating the accumulator with each recursion
+step (<code>0</code>, <code>1</code>, <code>3</code>, <code>6</code>, <code>10</code>).</p>
+<h2 id="concluding">Concluding</h2>
+<p>This post serves as both knowledge sharing for our team and a public
+post to show the kind of detailed level of training that we're doing
+for our clients.</p>
+<p>If you'd like Haskell training for your company,
+<a href="/cdn-cgi/l/email-protection#c7b4a6aba2b487a1b7a4a8aab7aba2b3a2e9a4a8aa">contact us</a> to arrange a meeting.</p>
+<p>Want to read more about Haskell? Check out <a href="https://tech.fpcomplete.com/blog/">our blog</a> and our <a href="https://tech.fpcomplete.com/haskell/">Haskell
+homepage</a>.</p>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Teaching%20Haskell%20with%20Duet https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;teaching-haskell-with-duet&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;teaching-haskell-with-duet&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;teaching-haskell-with-duet&#x2F;&amp;title=Teaching%20Haskell%20with%20Duet"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;teaching-haskell-with-duet&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#0774666b627447617764686a776b6273622964686a" targe="_blank"><span class="__cf_email__" data-cfemail="afdccec3cadcefc9dfccc0c2dfc3cadbca81ccc0c2">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

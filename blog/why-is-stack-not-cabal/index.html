@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Why is stack not cabal?</title>
+  <meta property="og:title" content="Why is stack not cabal?">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;06&#x2F;why-is-stack-not-cabal&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Why is stack not cabal?</h1>
+      
+      <p id="page-description">By Mathieu Boespflug, June 24, 2015</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Why%20is%20stack%20not%20cabal%3F https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;06&#x2F;why-is-stack-not-cabal&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;06&#x2F;why-is-stack-not-cabal&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;06&#x2F;why-is-stack-not-cabal&#x2F;&amp;title=Why%20is%20stack%20not%20cabal%3F"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;06&#x2F;why-is-stack-not-cabal&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>This blog post is intended to answer two very frequest questions
+about stack: how is it different from Cabal? And: Why was it
+developed as a separate project instead of being worked on with
+Cabal?</p>
+<p>Before we delve into the details, let’s first deconstruct the
+premises of the questions. There are really three things that
+people talk about when they say “Cabal”:</p>
+<ol>
+<li>a package metadata format (<code>.cabal</code> files) and
+<a href=
+"https://www.haskell.org/cabal/proposal/pkg-spec.pdf">specification</a>
+for a “common architecture for building applications and tools”,
+aka Cabal-the-spec,</li>
+<li>an implementation of the spec as a framework, aka
+Cabal-the-library,</li>
+<li><code>cabal-install</code>, aka Cabal-the-tool, which is a
+command-line tool that uses Cabal-the-library.</li>
+</ol>
+<p>Stack complies with Cabal-the-spec, both in the sense that it
+groks <code>.cabal</code> files in their entirety and behaves in a
+way that complies with the spec (insofar as that is relevant since
+the spec hasn’t seen any updates in recent years). In fact it was
+easy for Stack to do, because just like Cabal-the-tool, it is
+implemented using Cabal-the-library. Therefore, a first answer to
+the questions at hand is that stack <i>is</i> Cabal: it is 100%
+compatible with the existing Cabal file format for specifying
+package metadata, supports exactly the same package build harnesses
+and is implemented on top of the same reference implementation of
+the spec as <code>cabal-install</code>, which is just one tool
+among others using Cabal-the-library. <code>cabal-install</code>
+and stack are separate tools that both share the same framework. A
+successful framework at that: Haskell’s ecosystem would not be
+where it is today without Cabal, which way back in 2004, for the
+first time in the long history of Haskell made it possible to
+easily reuse code across projects by standardizing the way packages
+are built and used by the compiler.</p>
+<p>Stack is different in that it is a from-the-ground-up rethink of
+Cabal-the-tool. So the real questions are: why was a new tool
+necessary, and why now? We’ll tackle these questions step-by-step
+in the remainder of this post:</p>
+<ul>
+<li>What problem does stack address?</li>
+<li>How are stack’s design choices different?</li>
+<li>stack within the wider ecosystem</li>
+</ul>
+<h2 id="the-problem">The problem</h2>
+<p>Stack was started because the Haskell ecosystem has a tooling
+problem. Like any number of other factors, this tooling problem is
+limiting the growth of the ecosystem and of the community around
+it. Fixing this tooling problem was born out of a systematic effort
+of growth hacking: identify the bottlenecks that hamper growth and
+remove them one by one.</p>
+<p>The fact that Haskell has a tooling problem is not a rumour, nor
+is it a fringe belief of disgruntled developers. In an effort to
+collect the data necessary to identifying the bottlenecks in the
+growth of the community, FP Complete <a href=
+"/blog/2015/05/thousand-user-haskell-survey">conducted a wide
+survey</a> of the entire community on behalf of the Commercial
+Haskell SIG. The results are in and the 1,200+ respondents are
+unequivocal: package management with <code>cabal-install</code> is
+the single worst aspect of using Haskell. Week after week, Reddit
+and mailing list posts pop up regarding basic package installation
+problems using <code>cabal-install</code>. Clearly there is a
+problem, no matter whether seasoned users understand their tools
+well, know how to use it exactly right and how to back out
+gracefully from tricky situations. For every battle hardened power
+user, there are 10 enthusiasts willing to give the language a try,
+if only simple things were simple.</p>
+<p>Of a package building and management tool, users expect,
+<i>out-of-the-box</i> (that means, <i>by default</i>!):</p>
+<ol>
+<li>that the tool facilitates combining sets of packages to build
+new applications, not fail without pointing to the solution, just
+because packages advertize conservative bounds on their
+dependencies;</li>
+<li>that the tool ensures that success today is success tomorrow:
+instructions that worked for a tutorial writer should continue to
+work for all her/his readers, now and in the future;</li>
+<li>that invoking the tool to install one package doesn’t
+compromise the success of invoking the tool for installing another
+package;</li>
+<li>that much like make, the UI not require the user to remember
+what previous commands (s)he did or did not run (dependent actions
+should be run automatically and predictably).</li>
+</ol>
+<p>In fact these are the very same desirable properties that Johan
+Tibell <a href=
+"http://blog.johantibell.com/2012/03/cabal-of-my-dreams.html">identified
+in 2012</a> and which the data supports today. If our tooling does
+not support them, this is a problem.</p>
+<p>Stack is an attempt to fix this problem - oddly enough, by
+building in at its core much of the same principles that underlie
+how power users utilize <code>cabal-install</code> successfully.
+The key to stack’s success is to start from common workflows,
+choosing the right defaults to support them, and making those
+defaults simple.</p>
+<h2 id="the-design">The design</h2>
+<p>One of the fundamental problems that users have with package
+management systems is that building and installing a package today
+might not work tomorrow. Building and installing on my system might
+not work on your system. Despite typing exactly the same commands.
+Despite using the exact same package metadata. Despite using the
+exact same version of the source code. The fundamental problem is:
+<i>lack of reproducibility</i>. Stack strives hard to make the
+results of every single command reproducible, because that is the
+right default. Said another way, stack applies to package
+management the same old recipe that made the success of functional
+programming: manage complexity by making the output of all actions
+proper functions of their inputs. State explicitly what your inputs
+are. Gain the confidence that the outputs that you see today are
+the outputs that you see tomorrow. Reproducibility is the key to
+understandability.</p>
+<p>In the cabal workflow, running <code>cabal install</code> is
+necessary to get your dependencies. It's also a black box which
+depends on three pieces of global, mutable, implicit state: the
+compiler and versions of system libraries on your system, the Cabal
+packages installed in GHC’s package database, and the package
+metadata du jour downloaded from Hackage (via cabal update).
+Running <code>cabal install</code> at different times can lead to
+wildly different install plans, without giving any good reason to
+the user. The interaction with the installed package set is
+non-obvious, and arbitrary decisions made by the dependency solver
+can lead to broken package databases. Due to lack of isolation
+between different invocations of <code>cabal install</code> for
+different projects, calling <code>cabal install</code> the first
+time can affect whether <code>cabal install</code> will work the
+second time. For this reason, power users use the <code>cabal
+freeze</code> feature to pin down exactly the version of every
+dependency, so that every invocation of <code>cabal install</code>
+always comes up with the same build plan. Power users also build in
+so-called “sandboxes”, in order to isolate the actions of calling
+<code>cabal install</code> for building the one project from the
+actions of calling <code>cabal install</code> for building this
+other project.</p>
+<p>In stack, all versions of all dependencies are explicit and
+determined completely in a <code>stack.yaml</code> file. Given the
+same <code>stack.yaml</code> and OS, stack build should always run
+the exact same build plan. This does wonders for avoiding
+accidentally breaking the package database, having reproducible
+behavior across your team, and producing reliable and trustworthy
+build artifacts. It also makes it trivial for stack to have a
+user-friendly UI of just installing dependencies when necessary,
+since future invocations don’t have to guess what the build plan of
+previous invocations was. The build plan is always obvious and
+manifest. Unlike cabal sandboxes, isolation in stack is complete:
+packages built against different versions of dependencies never
+interfere, because stack transparently installs packages in
+separate databases (but is smart enough to reuse databases when it
+is always safe to do, hence keeping build times low).</p>
+<p>Note that this doesn’t mean users have to painstakingly write
+out all package versions longhand. Stack supports naming package
+snapshots as shorthand for specifying sets of package versions that
+are known to work well together.</p>
+<p>Other key design principles are <i>portability</i> (work
+consistently and have a consistent UI across all platforms), and
+<i>very short ramp-up phase</i>. It should be easy for a new user
+with little knowledge of Haskell to write “hello world” in Haskell,
+package it up and publish it with just a few lines of configuration
+or none at all. Learning a new programming language is challenge
+enough that learning a new package specification language is quite
+unnecessary. These principles are in contrast with those of
+platform specific and extremely general solutions such a <a href=
+"https://nixos.org/nix/">Nix</a>.</p>
+<p><i>Modularity</i> (do one thing and do it well), <i>security</i>
+(don’t trust stuff pulled from Internet unless you have a reason
+to) and UI consistency are also principles fundamental to the
+design, and a key strategies to keeping the bug count low. But more
+on that another time.</p>
+<p>These have informed the following "nice to have" features
+compared to <code>cabal-install</code>:</p>
+<ul>
+<li>multi-package project support (build all packages in one go,
+test all packages in one go…),</li>
+<li>depend on experimental and unpublished packages directly,
+stored in Git repositories, not just Hackage and the local
+filesystem,</li>
+<li>transparently install the correct version of GHC automatically
+so that you don’t have to (and multiple concurrently installed GHC
+versions work just fine),</li>
+<li>optionally use Docker for bullet-proof isolation of all system
+resources and deploying full, self-contained Haskell components as
+microservices.</li>
+</ul>
+<p>The technologies underpinning these features include:</p>
+<ul>
+<li>Git (for package index management),</li>
+<li>S3 (for high-reliability package serving),</li>
+<li>SSL libraries (for secure HTTP uploads and downloads),</li>
+<li>Docker,</li>
+<li>many state-of-the-art Haskell libraries.</li>
+</ul>
+<p>These technologies have enabled swift development of stack
+without reinventing the wheel and have helped keep the
+implementation stack simple and accessible. With the benefit of a
+clean slate to start from, we believe stack to be very hackable and
+easy to contribute to. These are also technologies that
+<code>cabal-install</code> did not have the benefit of being able
+to use when it was first conceived some years ago.</p>
+<h2 id="whither-codecabal-installcode-stack-and-other-tools">
+Whither <code>cabal-install</code>, stack and other tools</h2>
+<p>Stack is but one tool for managing packages on your system and
+building projects. Stack was designed specifically to interoperate
+with the existing frameworks for package management and package
+building, so that all your existing packages work as-is with stack,
+but with the added benefit of a modern, predictable design. Because
+stack is just Cabal under the hood, other tools such as 
+Halcyon for deployment and Nix are good
+fits complement stack nicely, or indeed <code>cabal-install</code>
+for those who prefer to work with a UI that they know well. We have
+already heard reports of users combining these tools to good
+effect. And remember: stack packages are <code>cabal-install</code>
+packages are super-new-fangled-cabal-tool packages. You can write
+the exact same packages in stack or in another tool, using curated
+package sets if you like, tight version bounds à la PVP if you
+like, none or anything at all. stack likes to make common usage
+easy but is otherwise very much policy agnostic.</p>
+<p>Stack is a contributor friendly project, with already 18
+contributors to the code in its very short existence, several times
+more bug reporters and documentation writers, and counting! Help
+make stack a better tool that suits your needs by filing bug
+reports and feature requests, improving the documentation and
+contributing new code. Above all, use stack, tell your friends
+about it. We hope stack will eliminate a documented bottleneck to
+community growth. And turn Haskell into a more productive language
+accessible to many more users.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Why%20is%20stack%20not%20cabal%3F https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;06&#x2F;why-is-stack-not-cabal&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;06&#x2F;why-is-stack-not-cabal&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;06&#x2F;why-is-stack-not-cabal&#x2F;&amp;title=Why%20is%20stack%20not%20cabal%3F"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;06&#x2F;why-is-stack-not-cabal&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#1665777a736556706675797b667a7362733875797b" targe="_blank"><span class="__cf_email__" data-cfemail="4e3d2f222b3d0e283e2d21233e222b3a2b602d2123">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

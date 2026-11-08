@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>When children processes exit - a debugging story</title>
+  <meta property="og:title" content="When children processes exit - a debugging story">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="A debugging story revolving around children processes, pipes shared between them, and signals.">
+  <meta property="og:description" content="A debugging story revolving around children processes, pipes shared between them, and signals.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;when-children-processes-exit-debugging-story&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>When children processes exit - a debugging story</h1>
+      
+      <p id="page-description">By Michael Snoyman, July  1, 2019</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=When%20children%20processes%20exit%20-%20a%20debugging%20story https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;when-children-processes-exit-debugging-story&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;when-children-processes-exit-debugging-story&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;when-children-processes-exit-debugging-story&#x2F;&amp;title=When%20children%20processes%20exit%20-%20a%20debugging%20story"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;when-children-processes-exit-debugging-story&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>This is a story about how some bad API design on my part caused
+some ugly race conditions that were very tricky to break down. I’m
+writing this story as a word of warning to others! The code itself
+was written in Haskell, but the lessons apply to anyone working
+with Unix-style processes.</p>
+<h2>Introducing <code>typed-process</code></h2>
+<p>I maintain both the <code>process</code> library in Haskell,
+which is the standard way of launching child processes, as well as
+the <code>typed-process</code> library, which explores some
+refinements to that API for more user friendliness. The API has two
+main types: <code>ProcessConfig</code> defines settings for
+launching a process (command name, environment variables, etc), and
+<code>Process</code> represents a running child process that can be
+interacted with. With that, we have some basic API usage that looks
+like this:</p>
+<pre><code class=
+"language-haskell">let processConfig = proc "some-executable" ["--flag1", "--flag2"]
+process &lt;- startProcess processConfig
+hPut (getStdin process) "Input to the process"
+output &lt;- hGet (getStdout process)
+helperFunction output
+hPut (getStdin process) "quit" -- tell the process to quit
+exitCode &lt;- waitExitCode process
+logInfo $ "Process exited with code " &lt;&gt; displayShow exitCode
+</code></pre>
+<p>This isn’t quite working code, but it gets the idea across
+pretty nicely.</p>
+<h2>Exception safety</h2>
+<p>There’s a problem with the code above: it’s not exception-safe.
+Let’s say that the <code>helperFunction</code> call fails with a
+runtime exception. The child process will never receive the
+<code>"quit"</code> input, we’ll never wait for the child process
+to end, and ultimately we’ll end up with a process that’s sitting
+around, twiddling its thumbs, unable to ever exit. (You may think
+this is a zombie process, but zombie has a specific and different
+meaning in the Unix world.)</p>
+<p>The Haskell ecosystem, like many others, has a method for
+providing exception safety. We call it the <em>bracket
+pattern</em>. You combine together resource allocation and cleanup
+actions using the helper function <code>bracket</code>, and are
+guaranteed when your block is finished, the cleanup action is
+called, regardless of how the block finishes.</p>
+<p>To make this work, we need a <code>stopProcess</code> function.
+This function is intelligent: if the process has already exited,
+<code>stopProcess</code> doesn’t do anything. However, if the
+process is still running, <code>stopProcess</code> sends it a
+<code>SIGTERM</code> signal, which for most well-behaved programs
+will cause it to exit. (Unix processes can actually handle
+<code>SIGTERM</code> and continue running, but for our cases we’ll
+pretend like it’s a process death sentence.)</p>
+<p>So let’s rewrite the code above with <code>bracket</code>:</p>
+<pre><code class=
+"language-haskell">let processConfig = proc "some-executable" ["--flag1", "--flag2"]
+bracket (startProcess processConfig) stopProcess $ \proccess -&gt; do
+  hPut (getStdin process) "Input to the process"
+  output &lt;- hGet (getStdout process)
+  helperFunction output
+  hPut (getStdin process) "quit" -- tell the process to quit
+  exitCode &lt;- waitExitCode process
+  logInfo ("Process exited with code " &lt;&gt; displayShow exitCode)
+</code></pre>
+<p>And just like that, we have type safety, and avoid runaway
+processes. Neato!</p>
+<p>Let’s walk through the cases above. If <em>any</em> of the
+actions in the block throw a runtime exception,
+<code>bracket</code> will trigger <code>stopProcess</code>,
+resulting in a <code>SIGTERM</code> being sent to the child. If, on
+the other hand, no exception occurs, we know that the child process
+has already exited thanks to the <code>waitExitCode</code> call,
+and therefore <code>stopProcess</code> will be a no-op. That’s
+exactly the behavior we want.</p>
+<p>Following Haskell best practices, we can capture this
+<code>bracket</code> call into a helper function called
+<code>withProcess</code>:</p>
+<pre><code class=
+"language-haskell">withProcess config = bracket (startProcess config) stopProcess
+
+let processConfig = proc "some-executable" ["--flag1", "--flag2"]
+withProcess processConfig $ \proccess -&gt; do
+  hPut (getStdin process) "Input to the process"
+  output &lt;- hGet (getStdout process)
+  helperFunction output
+  hPut (getStdin process) "quit" -- tell the process to quit
+  exitCode &lt;- waitExitCode process
+  logInfo ("Process exited with code " &lt;&gt; displayShow exitCode)
+</code></pre>
+<p>And exception safety has been achieved!</p>
+<p>Finally, one more addition. A common pattern in working with
+child processes is checking that the exit code is a success, and
+throwing an exception if it’s anything else. We have a helper
+function <code>withProcess_</code> that performs that exit code
+checking too. This essentially looks like:</p>
+<pre><code class="language-haskell">withProcess_ config = bracket
+  (startProcess config)
+  (\process -&gt; do
+      stopProcess process
+      checkExitCode process)
+</code></pre>
+<h2>Playing with cat</h2>
+<p>We’re going to perform a cardinal Unix sin: use the
+<code>cat</code> executable when we’re not actually combining
+together two different files. Please forgive me, it’s for a good
+reason.</p>
+<p>Below is a fully runnable Haskell script. You can <a href=
+"https://haskell.fpcomplete.com/get-started">install Stack</a>,
+copy the code into <code>Main.hs</code>, and run <code>stack
+Main.hs</code> to run it. The program does the following:</p>
+<ul>
+<li>Defines a process config where:
+<ul>
+<li>The child’s standard input is a new pipe</li>
+<li>The child’s standard output is a new pipe</li>
+<li>The child command line is <code>cat</code> with no
+arguments</li>
+</ul>
+</li>
+<li>Launch the process using <code>withProcess_</code></li>
+<li>While the process is running, run two Haskell threads
+concurrently:
+<ul>
+<li>Thread 1 will send the string <code>Hello World!\n</code> to
+the child over standard input and then close the pipe</li>
+<li>Thread 2 will capture everything from the child’s standard
+output, until the pipe is closed</li>
+</ul>
+</li>
+<li>Print the output captured from the child to the parent’s
+standard output stream (aka the terminal in the way I’m testing
+it)</li>
+</ul>
+<pre><code class="language-haskell">#!/usr/bin/env stack
+-- stack --resolver lts-13.26 script
+{-# LANGUAGE OverloadedStrings #-}
+import Control.Concurrent.Async (concurrently)
+import qualified Data.ByteString as B
+import System.IO (hClose, stdout)
+import System.Process.Typed
+
+main :: IO ()
+main = do
+  let config = setStdin createPipe
+             $ setStdout createPipe
+             $ proc "cat" []
+  ((), output) &lt;- withProcess_ config $ \process -&gt; concurrently
+    (do B.hPut (getStdin process) "Hello World!\n"
+        hClose (getStdin process))
+    (do B.hGetContents (getStdout process))
+  B.hPut stdout output
+</code></pre>
+<p>When I run this on OS X, I fairly reliably get the expected
+output:</p>
+<pre><code>$ stack Main.hs
+Hello World!
+</code></pre>
+<p>However, when I run this on Linux, I will often get the
+following instead:</p>
+<pre><code>$ stack Main.hs
+Main.hs: Received ExitFailure (-15) when running
+Raw command: cat
+</code></pre>
+<p>Granted, not always, but often enough. So now we have a weird
+exit failure and some non-determinism, in what appears to be a
+really simple program. What gives?!?</p>
+<h2>ExitFailure (-15)</h2>
+<p>The first thing to identify is what this negative exit code is.
+Haskell—like a few other ecosystems—uses a negative exit code to
+indicate that the process exited due to a signal. In this case,
+that means the child process (<code>cat</code>) died with signal
+number 15, which is <code>SIGTERM</code>. That’s certainly
+interesting… where have we seen a <code>SIGTERM</code> come up
+before? Right, in <code>stopProcess</code>.</p>
+<p>But it doesn’t quite make sense that <code>stopProcess</code>
+would send the signal, since it only does so once the standard
+output pipe from the child process has been closed. And we know
+that <code>cat</code> exits at <em>exactly the same time</em> as it
+closes its standard output pipe… right?</p>
+<h2>Race condition!</h2>
+<p>Hopefully my scare italics above helped a bit. No, as it turns
+out, the pipe’s closure and the child’s exit are <em>not</em>
+simultaneous. In fact, our <code>cat</code> process will end up
+doing something like the following:</p>
+<ol>
+<li><code>read</code> from stdin</li>
+<li>If there was more data: <code>write</code> to stdout and return
+to step 1</li>
+<li>If there was no more data, exit loop and continue with step
+4</li>
+<li>Close <code>stdin</code></li>
+<li>Close <code>stdout</code></li>
+<li>Exit with exit code 0 (indicating success)</li>
+</ol>
+<p>The parent process, meanwhile, will repeatedly call
+<code>read</code> on the read end of the child’s
+<code>stdout</code> pipe, and as soon as that <code>read</code>
+indicates end of file (EOF), the block will exit, and
+<code>withProcess_</code> will do two things:</p>
+<ol>
+<li>Call <code>stopProcess</code></li>
+<li>Call <code>checkExitCode</code> to make sure the process exited
+successfully</li>
+</ol>
+<p>There are multiple interleavings of events that can occur. The
+success case looks like this:</p>
+<ol>
+<li>Child closes <code>stdout</code></li>
+<li>Child exits with exit code 0</li>
+<li>Parent receives EOF on <code>read</code></li>
+<li>Parent calls <code>stopProcess</code>, which is a no-op (child
+is already exited)</li>
+<li><code>checkExitCode</code> gets exit code 0 and is happy</li>
+</ol>
+<p>However, it’s also possible with a different process timing to
+get:</p>
+<ol>
+<li>Child closes <code>stdout</code></li>
+<li>Parent receives EOF on <code>read</code></li>
+<li>Parent calls <code>stopProcess</code>, which sends a
+<code>SIGTERM</code> to the child</li>
+<li>Child never has a chance to return exit code 0, it’s already
+dead</li>
+<li><code>checkExitCode</code> sees that the child exited due to a
+<code>SIGTERM</code> and throws an exception</li>
+</ol>
+<p>This may seem like a corner case, but it’s already bitten me
+<em>twice</em>: first <a href=
+"https://github.com/snoyberg/conduit/commit/20fd6e2204e84ecf9c1ce99ed3778210a12545ff">
+in a test suite</a>, and secondly <a href=
+"https://github.com/commercialhaskell/stack/issues/4888">as a major
+annoyance in the new Stack release</a>.</p>
+<h2>Who to blame?</h2>
+<p>Well, as usually, the person to blame is myself.</p>
+<p><img alt="It was me all the time" src=
+"/images/hubspot/d31c42eb4de212038e0ed339db4bd66ae9c30beefc7c1864a4ed9f79a5ff4573.png"></p>
+<p>Usage of the Unix process API can be tricky to get right, but
+it’s clearly documented and well executed. And I’d argue that my
+<em>usage</em> of <code>withProcess_</code> is the right kind of
+abstraction. No, the problem is the <em>implementation</em> of
+<code>withProcess_</code>. Let’s step through it again:</p>
+<ol>
+<li>Launch a process</li>
+<li>Run some block with the process</li>
+<li>However that block exits (normal or exception), call
+<code>stopProcess</code> and then ensure there’s a success exit
+code</li>
+</ol>
+<p>In our first usage above, we called <code>waitExitCode</code> in
+the block, which guaranteed in the success case
+<code>stopProcess</code> would always end up as a no-op. Everything
+was fine. The problem was I made the assumption that
+<code>cat</code>‘s pipes closing was the same as the child process
+exiting. We know that’s not true. However, given that this bug hit
+me twice, it’s fair to say I’ve created an API which encourages
+misuse.</p>
+<p>Instead, here’s what I think is the better implementation for
+<code>withProcess_</code>:</p>
+<ol>
+<li>Launch a process</li>
+<li>Run some block with the process</li>
+<li>If that block throws an exception, terminate the child process
+with <code>stopProcess</code></li>
+<li>If that block succeeds, wait for the process to exit and then
+check that its exit code is a success</li>
+</ol>
+<p>With this tweak to behavior, the code calling <code>cat</code>
+above is safe, and I can sleep better at night.</p>
+<h2>Deprecations</h2>
+<p>Rolling out a new set of behavior which silently (meaning: no
+compile-time change) modifies behavior at runtime is dangerous.
+People using <code>withProcess_</code> may be relying on exactly
+its current behavior. Therefore, instead of replacing the current
+<code>withProcess_</code> behavior, the roll-out strategy is:</p>
+<ol>
+<li>Introduce a new function <code>withProcessTerm_</code>, which
+has the same behavior as <code>withProcess_</code> today</li>
+<li>Introduce a new function <code>withProcessWait_</code>, which
+has the new behavior I just described above</li>
+<li>Deprecate <code>withProcess_</code> with a message indicating
+that the caller should use one of the replacement functions
+instead</li>
+</ol>
+<p>This will encourage users of <code>typed-process</code> to
+analyze their usages of <code>withProcess_</code>, see if they are
+susceptible to the bug described here, and choose the appropriate
+replacement.</p>
+<h2>Further reading</h2>
+<p>If you’re interested in learning more about any of this, here
+are some (hopefully) helpful links:</p>
+<ul>
+<li><a href=
+"https://haskell.fpcomplete.com/library/typed-process">typed-process
+tutorial</a></li>
+<li><a href=
+"https://github.com/commercialhaskell/stack/issues/4888">Stack bug
+report</a></li>
+<li><a href=
+"https://github.com/fpco/typed-process/pull/26">typed-process pull
+request</a></li>
+</ul>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=When%20children%20processes%20exit%20-%20a%20debugging%20story https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;when-children-processes-exit-debugging-story&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;when-children-processes-exit-debugging-story&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;when-children-processes-exit-debugging-story&#x2F;&amp;title=When%20children%20processes%20exit%20-%20a%20debugging%20story"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;when-children-processes-exit-debugging-story&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#97e4f6fbf2e4d7f1e7f4f8fae7fbf2e3f2b9f4f8fa" targe="_blank"><span class="__cf_email__" data-cfemail="483b29242d3b082e382b272538242d3c2d662b2725">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

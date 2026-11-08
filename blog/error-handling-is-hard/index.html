@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Error handling is hard</title>
+  <meta property="og:title" content="Error handling is hard">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Arguments rage over topics like explicit errors vs runtime exceptions, checked vs unchecked, and more. In this post, I want to reframe the discussion a bit. Good error handling is simply hard, and consists of conflicting goals.">
+  <meta property="og:description" content="Arguments rage over topics like explicit errors vs runtime exceptions, checked vs unchecked, and more. In this post, I want to reframe the discussion a bit. Good error handling is simply hard, and consists of conflicting goals.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;error-handling-is-hard&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Error handling is hard</h1>
+      
+      <p id="page-description">By Michael Snoyman, November 30, 2020</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Error%20handling%20is%20hard https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;error-handling-is-hard&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;error-handling-is-hard&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;error-handling-is-hard&#x2F;&amp;title=Error%20handling%20is%20hard"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;error-handling-is-hard&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  <p>This blog post will use mostly Rust and Haskell code snippets to demonstrate its points. But I don't believe the core point is language-specific at all.</p>
+<p>Here's a bit of Rust code to read the contents of <code>input.txt</code> and print it to <code>stdout</code>. What's wrong with it?</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> s = std::fs::read_to_string(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">input.txt</span><span style="color:#839496;">&quot;</span><span>).</span><span style="color:#859900;">unwrap</span><span>();
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, s);
+</span><span>}
+</span></code></pre>
+<p>If you're Rust-fluent, that <code>.unwrap()</code> may stick out to you like a sore thumb. You know it means &quot;convert any error that occurred into a panic.&quot; And panics are a Bad Thing. It's not correct error handling. Instead, something like this is &quot;better&quot;:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#859900;">match </span><span>std::fs::read_to_string(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">input.txt</span><span style="color:#839496;">&quot;</span><span>) {
+</span><span>        </span><span style="color:#859900;">Ok</span><span>(s) </span><span style="color:#859900;">=&gt; println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, s),
+</span><span>        </span><span style="color:#859900;">Err</span><span>(e) </span><span style="color:#859900;">=&gt; eprintln!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Unable to read from input.txt: </span><span style="color:#cb4b16;">{:?}</span><span style="color:#839496;">&quot;</span><span>, e),
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>The presence of <code>enum</code>s in Rust makes it really easy to ensure you properly handle all failure cases fully. The code above will not panic. If an I/O error occurs, such as file not found, permissions denied, or a hardware failure, it will print an error message to <code>stderr</code>. But this <em>still</em> isn't good error handling, for two reasons:</p>
+<ol>
+<li>The exit code of the program doesn't indicate an error occurred. We'd need to use something like <a href="https://doc.rust-lang.org/stable/std/process/fn.abort.html"><code>abort</code></a> to fix that, which isn't too hard. But it's something else to remember.</li>
+<li>This is <em>very</em> verbose! We've got a trivial little program here, and we're obscuring the actual behavior of the program with all of this line noise around matching different <code>enum</code> variants.</li>
+</ol>
+<p>Fortunately, the Rust language is benevolent, and it makes it possible to do things <em>even better</em> than before. The <code>?</code> operator will try to do something, and automatically short-circuit if an error occurs. We now get to avoid those pesky panics without cluttering our code. And we get the proper exit code to boot!</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() -&gt; </span><span style="color:#859900;">Result</span><span>&lt;(), std::io::Error&gt; {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> s = std::fs::read_to_string(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">input.txt</span><span style="color:#839496;">&quot;</span><span>)</span><span style="color:#859900;">?</span><span>;
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, s);
+</span><span>    </span><span style="color:#859900;">Ok</span><span>(())
+</span><span>}
+</span></code></pre>
+<p>All is good in the world, we can stop this post here and go home. The greatest marvel of error handling has arrived!</p>
+<h2 id="look-again">Look again</h2>
+<p>So it turns out I forgot to create my <code>input.txt</code> file. Let's see the beautiful error message generated by my program:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>Error: Os { code: 2, kind: NotFound, message: &quot;The system cannot find the file specified.&quot; }
+</span></code></pre>
+<p>Huh... that's thoroughly unhelpful. In my 5-line program, it's trivial enough to figure out which file doesn't exist. But imagine a 5,000 line program. Or if the code in question is in a dependency. Or if you're a member of the ops team, have never written a line of Rust in your life, don't have access to the codebase, the production server is down at 2am, and you see this error message in your logs.</p>
+<h2 id="runtime-exceptions-to-the-rescue">Runtime exceptions to the rescue?</h2>
+<p>Well, <em>obviously</em> this is just because Rust uses error returns instead of Good Ol' Runtime Exceptions. Obviously something like Haskell solves this problem better, right? Well, sort of. With this program, and no <code>input.txt</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>main </span><span style="color:#859900;">= do
+</span><span>  s </span><span style="color:#859900;">&lt;-</span><span> readFile </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">input.txt</span><span style="color:#839496;">&quot;
+</span><span>  putStrLn s
+</span></code></pre>
+<p>I do in fact get a much nicer error message:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>input.txt: openFile: does not exist (No such file or directory)
+</span></code></pre>
+<p>I didn't even need to include any error handling logic in the code; it's all implicit! But in reality, the clarity of this error message has little to do with exception handling semantics. It has to do with the construction of this specific error message. It contains enough information to help debug this.</p>
+<p>But there are plenty of counterexamples in Haskell. Calling <code>head</code> on an empty list provides a line number these days, but you used to just get an error that &quot;oops, tried to <code>head</code> an empty list, somewhere, in one of your libraries. Good luck!&quot; Some low-level network functionality still gives vague error messages.</p>
+<p>And even the glorious <code>does not exist</code> message above is only marginally useful. And that's because of...</p>
+<h2 id="context">Context!</h2>
+<p>In a trivial 2-line program, the reality is that &quot;file not found&quot; without any additional information is perfectly reasonable. That's because I know <em>exactly</em> the context in which the error occurred. It either occurred on line 1, or line 2. By contrast, in a 500k SLOC codebase, knowing that <code>input.txt</code> doesn't exist is probably not nearly enough to debug things.</p>
+<ul>
+<li>What content is <code>input.txt</code> supposed to have?</li>
+<li>What part of the code was trying to read it?</li>
+<li>What was I going to do with the contents of the file?</li>
+</ul>
+<p>Similarly, knowing that I can't connect to IP address 255.813.20.1 may be sufficient in a small network test. But in a reasonably complicated program, I'd <em>much</em> rather get the context that I'm trying to make an HTTPS request to example.com proxied through a server with IP address 255.813.20.1, which was specified via the <code>HTTP_PROXY</code> environment variable. That last bit of information may shortcircuit days of debugging to point out &quot;doh, I had a typo in my Kubernetes manifest file!&quot;</p>
+<p>Stack traces are often a huge help here. They tell you a lot of useful context. And both Rust and Haskell are particularly weak at providing this context in their error representations. But it's still not a panacea. The ugly reality is that...</p>
+<h2 id="there-s-an-inherent-trade-off">There's an inherent trade-off</h2>
+<p>Like so many other things, error handling ultimately is a trade-off. When we're writing our initial code, <strong>we don't want to think about errors</strong>. We code to the happy path. How productive would you be if you had to derail every line of code with thought processes around the myriad ways your code could fail?</p>
+<p>But then we're debugging a production issue, and <strong>we definitely want to think about errors</strong>. We curse our lazy selves for not handling an error case that <em>obviously</em> could have arisen. &quot;Why did I decide to abort the process when the TCP connection failed? I should have retried! I should have logged the address I tried to connect to!&quot;</p>
+<p>Then we flood our code with log messages, and are frustrated when we can't see the important bits.</p>
+<p>Finding the right balance is an art. And typically it's an art that we don't spend enough time thinking about. There are some well-established tools for this, like runtime-configurable log levels. That's a huge step in the right direction.</p>
+<p>Rust is such a great example of this. Explicit <code>match</code>ing on <code>Result</code> values really forces you to think through all of the different error cases and how to report them correctly. Complex custom <code>enum</code> error types allow you to define all of the different values you'd want reported. But all of this adds huge line noise compared to <code>?</code>. So <code>?</code> wins the day.</p>
+<h2 id="the-method-is-secondary">The method is secondary</h2>
+<p>The Rust community accepts that panics are bad. The Haskell community constantly argues about whether runtime exceptions are a good or bad thing. Java is either loved or hated for checked exceptions. Golang is either lauded or mocked for <code>if err != nil</code>.</p>
+<p>I'm not at all arguing that those discussions are irrelevant. There are significant trade-offs to these various approaches. They affect performance, trackability of errors, and more.</p>
+<p>What I'm arguing here is that we spend a disproportionate time on how we report and recover from errors, and far less on discussing what a good error actually contains.</p>
+<h2 id="my-ideal">My ideal</h2>
+<p>These are evolving thoughts for me. So take them with a grain of salt. And I'm very interested to hear differing opinions.</p>
+<p>I've long held that in Haskell, we should use runtime exceptions. This has been interpreted by many as my <em>advocacy</em> of runtime exceptions. Instead, I would advocate: use the language's native mechanism. I don't pine for exceptions when writing Rust. Quite the opposite in fact. I overall prefer explicit error handling. But it's not worth fighting the battle against runtime exceptions when they are already ubiquitous.</p>
+<p>I think Rust and Haskell are both close to the sweet spot in error handling. There's relatively little verbosity around adding this handling. If you leverage libraries like <a href="https://crates.io/crates/anyhow"><code>anyhow</code></a> in Rust, there's even less.</p>
+<p>My biggest concern with a library like <code>anyhow</code> is how easy it becomes to do the wrong thing. Taking our broken example from above. It's trivial to &quot;upgrade&quot; it to use <code>anyhow</code>:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() -&gt; anyhow::</span><span style="color:#859900;">Result</span><span>&lt;()&gt; {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> s = std::fs::read_to_string(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">input.txt</span><span style="color:#839496;">&quot;</span><span>)</span><span style="color:#859900;">?</span><span>;
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, s);
+</span><span>    </span><span style="color:#859900;">Ok</span><span>(())
+</span><span>}
+</span></code></pre>
+<p>However, this still produces the same useless error message we started with. Instead, we need to be a bit more explicit with a <code>context</code> method call to get a nicer message:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#859900;">use </span><span>anyhow::Context;
+</span><span>
+</span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() -&gt; anyhow::</span><span style="color:#859900;">Result</span><span>&lt;()&gt; {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> s = std::fs::read_to_string(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">input.txt</span><span style="color:#839496;">&quot;</span><span>)
+</span><span>        .</span><span style="color:#859900;">context</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Failed to read input.txt</span><span style="color:#839496;">&quot;</span><span>)</span><span style="color:#859900;">?</span><span>;
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, s);
+</span><span>    </span><span style="color:#859900;">Ok</span><span>(())
+</span><span>}
+</span></code></pre>
+<p>Now we get the much more helpful error message:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>Error: Failed to read input.txt
+</span><span>
+</span><span>Caused by:
+</span><span>    The system cannot find the file specified. (os error 2)
+</span></code></pre>
+<p>This is a good balance of concision and helpfulness. The downside is that lack of <em>enforcement</em>. Nothing forced me to add the <code>.context</code> call. I worry that in a large codebase, or under time pressure, people like me will end up forgetting to add the helpful context.</p>
+<p>Could we design a modified <code>anyhow</code> that <em>forces</em> a <code>context</code> call? Certainly. But:</p>
+<ol>
+<li>It will lose out on the current simple ergonomics.</li>
+<li>No tool can force the &quot;right&quot; level of context, that requires human insight and thought. And those are quantities in short supply, and not usually interested in error messages.</li>
+</ol>
+<h2 id="advice">Advice</h2>
+<p>I don't have an answer here. I would advise people to start by recognizing that good error handling is <em>difficult</em>. We like to think of it as a trivial but tedious task. It isn't. Doing this correctly requires real thought and design. We're too quick to sweep it under the rug as the unimportant parts of our code.</p>
+<p>I'll continue with my general advice of using your language's preferred mechanisms for error handling. In Rust, that means using <code>Result</code> and avoiding panics. In Haskell, it means some mixture of explicit <code>Either</code> return values and runtime exceptions (the exact mixture very much up for debate). In Java, it's mostly checked exceptions, though there's plenty of added unchecked exceptions to gum up the works too.</p>
+<p>But consider spending a bit more time on thinking through not just <em>how</em> to report/raise/throw an error/exception, but what exactly you're reporting/raising/throwing. Think of the poor ops guy drinking his 7th cup of coffee at 4am trying to figure out what part of the codebase needs <code>input.txt</code>, or why in the world the program is trying to connect to an invalid IP address.</p>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Error%20handling%20is%20hard https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;error-handling-is-hard&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;error-handling-is-hard&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;error-handling-is-hard&#x2F;&amp;title=Error%20handling%20is%20hard"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;error-handling-is-hard&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#c7b4a6aba2b487a1b7a4a8aab7aba2b3a2e9a4a8aa" targe="_blank"><span class="__cf_email__" data-cfemail="7003111c1503301600131f1d001c1504155e131f1d">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

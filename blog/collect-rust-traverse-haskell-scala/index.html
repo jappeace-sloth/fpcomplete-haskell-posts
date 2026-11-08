@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Collect in Rust, traverse in Haskell and Scala</title>
+  <meta property="og:title" content="Collect in Rust, traverse in Haskell and Scala">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="In this post, we&#x27;ll analyze the collect method in Rust, powered by the Iterator and FromIterator traits, together with a comparison against the traverse function from Haskell and Scala">
+  <meta property="og:description" content="In this post, we&#x27;ll analyze the collect method in Rust, powered by the Iterator and FromIterator traits, together with a comparison against the traverse function from Haskell and Scala">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;collect-rust-traverse-haskell-scala&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images&#x2F;blog&#x2F;traverse-turtles.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Collect in Rust, traverse in Haskell and Scala</h1>
+      
+      <p id="page-description">By Michael Snoyman, October  6, 2020</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Collect%20in%20Rust%2C%20traverse%20in%20Haskell%20and%20Scala https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;collect-rust-traverse-haskell-scala&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;collect-rust-traverse-haskell-scala&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;collect-rust-traverse-haskell-scala&#x2F;&amp;title=Collect%20in%20Rust%2C%20traverse%20in%20Haskell%20and%20Scala"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;collect-rust-traverse-haskell-scala&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  <p>There's a running joke in the functional programming community. Any Scala program can be written by combining the <code>traverse</code> function the correct number of times. This blog post is dedicated to that joke.</p>
+<p>In Rust, the <code>Iterator</code> trait defines a stream of values of a specific type. Many common types provide an <code>Iterator</code> interface. And the built in <code>for</code> loop construct works directly with the <code>Iterator</code> trait. Using that, we can easily do something like &quot;print all the numbers in a <code>Vec</code>&quot;:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> myvec: </span><span style="color:#859900;">Vec</span><span>&lt;</span><span style="color:#268bd2;">i32</span><span>&gt; = </span><span style="color:#859900;">vec!</span><span>[</span><span style="color:#6c71c4;">1</span><span>, </span><span style="color:#6c71c4;">2</span><span>, </span><span style="color:#6c71c4;">3</span><span>, </span><span style="color:#6c71c4;">4</span><span>, </span><span style="color:#6c71c4;">5</span><span>];
+</span><span>
+</span><span>    </span><span style="color:#859900;">for</span><span> num </span><span style="color:#859900;">in</span><span> myvec {
+</span><span>        </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, num);
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>Let's say we want to do something a bit different: double every value in the <code>Vec</code>. The most idiomatic and performant way to do that in Rust is with mutable references, e.g.:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let </span><span style="color:#586e75;">mut</span><span> myvec: </span><span style="color:#859900;">Vec</span><span>&lt;</span><span style="color:#268bd2;">i32</span><span>&gt; = </span><span style="color:#859900;">vec!</span><span>[</span><span style="color:#6c71c4;">1</span><span>, </span><span style="color:#6c71c4;">2</span><span>, </span><span style="color:#6c71c4;">3</span><span>, </span><span style="color:#6c71c4;">4</span><span>, </span><span style="color:#6c71c4;">5</span><span>];
+</span><span>
+</span><span>    </span><span style="color:#859900;">for</span><span> num </span><span style="color:#859900;">in &amp;</span><span style="color:#586e75;">mut</span><span> myvec {
+</span><span>        *num *= </span><span style="color:#6c71c4;">2</span><span>;
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{:?}</span><span style="color:#839496;">&quot;</span><span>, myvec);
+</span><span>}
+</span></code></pre>
+<p>Since we're dedicating this post to functional programmers, it's worth noting: this looks decidedly not-functional. &quot;Take a collection and apply a function over each value&quot; is well understood in FP circles—and increasingly in non-FP circles—as a <code>map</code>. Or using more category-theoretic nomenclature, it's a <code>Functor</code>. Fortunately, Rust provides a <code>map</code> method for <code>Iterator</code>s. Unfortunately, unlike Scala or Haskell, <code>map</code> doesn't work on data types like <code>Vec</code>. Let's compare, using Haskell:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">list </span><span style="color:#859900;">::</span><span> [</span><span style="color:#268bd2;">Int</span><span>]
+</span><span>list </span><span style="color:#859900;">=</span><span> [</span><span style="color:#6c71c4;">1</span><span>, </span><span style="color:#6c71c4;">2</span><span>, </span><span style="color:#6c71c4;">3</span><span>, </span><span style="color:#6c71c4;">4</span><span>, </span><span style="color:#6c71c4;">5</span><span>]
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#859900;">let</span><span> newList </span><span style="color:#859900;">::</span><span> [</span><span style="color:#cb4b16;">Int</span><span>]
+</span><span>      newList </span><span style="color:#859900;">=</span><span> map (* </span><span style="color:#6c71c4;">2</span><span>) list
+</span><span>  print newList
+</span></code></pre>
+<p>The <code>map</code> function from the <code>Functor</code> typeclass works directly on a list. It produces a new list with the function applied to each value. Let's try to do the most equivalent thing in Rust:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> myvec: </span><span style="color:#859900;">Vec</span><span>&lt;</span><span style="color:#268bd2;">i32</span><span>&gt; = </span><span style="color:#859900;">vec!</span><span>[</span><span style="color:#6c71c4;">1</span><span>, </span><span style="color:#6c71c4;">2</span><span>, </span><span style="color:#6c71c4;">3</span><span>, </span><span style="color:#6c71c4;">4</span><span>, </span><span style="color:#6c71c4;">5</span><span>];
+</span><span>
+</span><span>    </span><span style="color:#268bd2;">let</span><span> new_vec: </span><span style="color:#859900;">Vec</span><span>&lt;</span><span style="color:#268bd2;">i32</span><span>&gt; = myvec.</span><span style="color:#859900;">map</span><span>(|</span><span style="color:#268bd2;">x</span><span>| x * </span><span style="color:#6c71c4;">2</span><span>);
+</span><span>
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{:?}</span><span style="color:#839496;">&quot;</span><span>, new_vec);
+</span><span>}
+</span></code></pre>
+<p>This fails with the error message:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>no method named `map` found for struct `std::vec::Vec&lt;i32&gt;` in the current scope
+</span></code></pre>
+<p>That's because, in Rust, <code>map</code> applies to the <code>Iterator</code> itself, not the underlying data structures. In order to use <code>map</code> on a <code>Vec</code>, we have to:</p>
+<ol>
+<li>Convert the <code>Vec</code> into an <code>Iterator</code></li>
+<li>Perform the <code>map</code> on the <code>Iterator</code></li>
+<li>Convert the <code>Iterator</code> back into a <code>Vec</code></li>
+</ol>
+<p>(1) can be performed using the <code>IntoIterator</code> trait, which provides a method named <code>into_iter</code>. And for (3), we could write our own <code>for</code> loop that fills up a <code>Vec</code>. But the right way is to use the <code>FromIterator</code> trait. And the easiest way to do that is with the <code>collect</code> method on <code>Iterator</code>.</p>
+<h2 id="using-fromiterator-and-collect">Using FromIterator and collect</h2>
+<p>Let's write a program that properly uses <code>map</code>:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> myvec: </span><span style="color:#859900;">Vec</span><span>&lt;</span><span style="color:#268bd2;">i32</span><span>&gt; = </span><span style="color:#859900;">vec!</span><span>[</span><span style="color:#6c71c4;">1</span><span>, </span><span style="color:#6c71c4;">2</span><span>, </span><span style="color:#6c71c4;">3</span><span>, </span><span style="color:#6c71c4;">4</span><span>, </span><span style="color:#6c71c4;">5</span><span>];
+</span><span>
+</span><span>    </span><span style="color:#268bd2;">let</span><span> new_vec: </span><span style="color:#859900;">Vec</span><span>&lt;</span><span style="color:#268bd2;">i32</span><span>&gt; = myvec
+</span><span>        .</span><span style="color:#859900;">into_iter</span><span>()
+</span><span>        .</span><span style="color:#859900;">map</span><span>(|</span><span style="color:#268bd2;">x</span><span>| x * </span><span style="color:#6c71c4;">2</span><span>)
+</span><span>        .</span><span style="color:#859900;">collect</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{:?}</span><span style="color:#839496;">&quot;</span><span>, new_vec);
+</span><span>}
+</span></code></pre>
+<p>Fairly straightforward, and our 3 steps turn into three chained method calls. Unfortunately, in practice, using <code>collect</code> is often not quite as straightforward as this. That's due to type inference. To see what I mean, let's take all of the type annotations out of the program above:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> myvec = </span><span style="color:#859900;">vec!</span><span>[</span><span style="color:#6c71c4;">1</span><span>, </span><span style="color:#6c71c4;">2</span><span>, </span><span style="color:#6c71c4;">3</span><span>, </span><span style="color:#6c71c4;">4</span><span>, </span><span style="color:#6c71c4;">5</span><span>];
+</span><span>
+</span><span>    </span><span style="color:#268bd2;">let</span><span> new_vec = myvec
+</span><span>        .</span><span style="color:#859900;">into_iter</span><span>()
+</span><span>        .</span><span style="color:#859900;">map</span><span>(|</span><span style="color:#268bd2;">x</span><span>| x * </span><span style="color:#6c71c4;">2</span><span>)
+</span><span>        .</span><span style="color:#859900;">collect</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{:?}</span><span style="color:#839496;">&quot;</span><span>, new_vec);
+</span><span>}
+</span></code></pre>
+<p>This gives us the very friendly message:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>error[E0282]: type annotations needed
+</span><span> --&gt; src\main.rs:4:9
+</span><span>  |
+</span><span>4 |     let new_vec = myvec
+</span><span>  |         ^^^^^^^ consider giving `new_vec` a type
+</span></code></pre>
+<p>The issue here is that we don't know which implementation of <code>FromIterator</code> we should be using. This is a problem that didn't exist in the pure FP world with <code>map</code> and <code>Functor</code>. In that world, <code>Functor</code>'s <code>map</code> is always &quot;shape preserving.&quot; When you <code>map</code> over a list in Haskell, the result will always be a list.</p>
+<p>That's not the case with the <code>IntoIterator</code>/<code>FromIterator</code> combination. <code>IntoIterator</code> destroys the original data structure, fully consuming it and producing an <code>Iterator</code>. Similarly, <code>FromIterator</code> produces a brand new data structure out of thin air, without any reference to the original data structure. Therefore, an explicit type annotation saying what the output type should be is necessary. In our program above, we did this by annotating <code>new_vec</code>. Another way is to use &quot;turbofish&quot; to annotate which <code>collect</code> to use:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> myvec = </span><span style="color:#859900;">vec!</span><span>[</span><span style="color:#6c71c4;">1</span><span>, </span><span style="color:#6c71c4;">2</span><span>, </span><span style="color:#6c71c4;">3</span><span>, </span><span style="color:#6c71c4;">4</span><span>, </span><span style="color:#6c71c4;">5</span><span>];
+</span><span>
+</span><span>    </span><span style="color:#268bd2;">let</span><span> new_vec = myvec
+</span><span>        .</span><span style="color:#859900;">into_iter</span><span>()
+</span><span>        .</span><span style="color:#859900;">map</span><span>(|</span><span style="color:#268bd2;">x</span><span>| x * </span><span style="color:#6c71c4;">2</span><span>)
+</span><span>        .collect::&lt;</span><span style="color:#859900;">Vec</span><span>&lt;</span><span style="color:#859900;">_</span><span>&gt;&gt;();
+</span><span>
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{:?}</span><span style="color:#839496;">&quot;</span><span>, new_vec);
+</span><span>}
+</span></code></pre>
+<p>Note that we only needed indicate that we were collecting into a <code>Vec</code>. Rust's normal type inference was able to figure out:</p>
+<ul>
+<li>Which numeric type to use for the values</li>
+<li>That the original <code>myvec</code> should be a <code>Vec</code>, since it was produced by the <code>vec!</code> macro</li>
+</ul>
+<h2 id="side-effects-and-traverse">Side effects and traverse</h2>
+<p>Alright, I want to announce to the world that I'll be doubling these values. It's easy to modify our <code>map</code>-using code in Rust to do this:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> myvec = </span><span style="color:#859900;">vec!</span><span>[</span><span style="color:#6c71c4;">1</span><span>, </span><span style="color:#6c71c4;">2</span><span>, </span><span style="color:#6c71c4;">3</span><span>, </span><span style="color:#6c71c4;">4</span><span>, </span><span style="color:#6c71c4;">5</span><span>];
+</span><span>
+</span><span>    </span><span style="color:#268bd2;">let</span><span> new_vec = myvec
+</span><span>        .</span><span style="color:#859900;">into_iter</span><span>()
+</span><span>        .</span><span style="color:#859900;">map</span><span>(|</span><span style="color:#268bd2;">x</span><span>| {
+</span><span>            </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">About to double </span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, x);
+</span><span>            x * </span><span style="color:#6c71c4;">2
+</span><span>        })
+</span><span>        .collect::&lt;</span><span style="color:#859900;">Vec</span><span>&lt;</span><span style="color:#859900;">_</span><span>&gt;&gt;();
+</span><span>
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{:?}</span><span style="color:#839496;">&quot;</span><span>, new_vec);
+</span><span>}
+</span></code></pre>
+<p>But Haskellers will warn you that this isn't quite so simple. <code>map</code> in Haskell is a pure function, meaning it doesn't allow for any side-effects (like printing to the screen). You can see this in action fairly easily:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">list </span><span style="color:#859900;">::</span><span> [</span><span style="color:#268bd2;">Int</span><span>]
+</span><span>list </span><span style="color:#859900;">=</span><span> [</span><span style="color:#6c71c4;">1</span><span>, </span><span style="color:#6c71c4;">2</span><span>, </span><span style="color:#6c71c4;">3</span><span>, </span><span style="color:#6c71c4;">4</span><span>, </span><span style="color:#6c71c4;">5</span><span>]
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#859900;">let</span><span> newList </span><span style="color:#859900;">::</span><span> [</span><span style="color:#cb4b16;">Int</span><span>]
+</span><span>      newList </span><span style="color:#859900;">=
+</span><span>        map
+</span><span>          (</span><span style="color:#859900;">\</span><span>x </span><span style="color:#859900;">-&gt; do
+</span><span>            putStrLn (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">About to double </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show x)
+</span><span>            pure (x * </span><span style="color:#6c71c4;">2</span><span>))
+</span><span>          list
+</span><span>  print newList
+</span></code></pre>
+<p>This code won't compile, due to the mismatch between an <code>Int</code> (a pure number) and an <code>IO Int</code> (an action with side effects which produces an <code>Int</code>):</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>Couldn&#39;t match type &#39;IO Int&#39; with &#39;Int&#39;
+</span><span>Expected type: [Int]
+</span><span>Actual type: [IO Int]
+</span></code></pre>
+<p>Instead, we need to use <code>map</code>'s more powerful cousin, <code>traverse</code> (a.k.a. <code>mapM</code>, or &quot;monadic map&quot;). <code>traverse</code> allows us to perform a series of actions, and produce a new list with all of their results. This looks like:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">list </span><span style="color:#859900;">::</span><span> [</span><span style="color:#268bd2;">Int</span><span>]
+</span><span>list </span><span style="color:#859900;">=</span><span> [</span><span style="color:#6c71c4;">1</span><span>, </span><span style="color:#6c71c4;">2</span><span>, </span><span style="color:#6c71c4;">3</span><span>, </span><span style="color:#6c71c4;">4</span><span>, </span><span style="color:#6c71c4;">5</span><span>]
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  newList </span><span style="color:#859900;">&lt;-
+</span><span>    traverse
+</span><span>      (</span><span style="color:#859900;">\</span><span>x </span><span style="color:#859900;">-&gt; do
+</span><span>        putStrLn (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">About to double </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show x)
+</span><span>        pure (x * </span><span style="color:#6c71c4;">2</span><span>))
+</span><span>      list
+</span><span>  print newList
+</span></code></pre>
+<p>So why the difference between Haskell and Rust here? That's because Rust is not a pure language. Any function can perform side effects, like printing to the screen. Haskell, on the other hand, doesn't allow this, and therefore we need special helper functions like <code>traverse</code> to account for the potential side effects.</p>
+<p>I won't get into the philosophical differences between the two languages. Suffice it to say that both approaches have merit, and both have advantages and disadvantages. Let's see where the Rust approach &quot;breaks down&quot;, and how <code>FromIterator</code> steps up to the plate.</p>
+<h2 id="handling-failure">Handling failure</h2>
+<p>In the example above with Haskell, we used side effects via the <code>IO</code> type. However, <code>traverse</code> isn't limited to working with <code>IO</code>. It can work with <em>many</em> different types, anything which is considered <code>Applicative</code>. And this covers many different common needs, including error handling. For example, we can change our program to not allow doubling &quot;big&quot; numbers greater than 5:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">list </span><span style="color:#859900;">::</span><span> [</span><span style="color:#268bd2;">Int</span><span>]
+</span><span>list </span><span style="color:#859900;">=</span><span> [</span><span style="color:#6c71c4;">1</span><span>, </span><span style="color:#6c71c4;">2</span><span>, </span><span style="color:#6c71c4;">3</span><span>, </span><span style="color:#6c71c4;">4</span><span>, </span><span style="color:#6c71c4;">5</span><span>, </span><span style="color:#6c71c4;">6</span><span>]
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#859900;">let</span><span> newList </span><span style="color:#859900;">=
+</span><span>        traverse
+</span><span>          (</span><span style="color:#859900;">\</span><span>x </span><span style="color:#859900;">-&gt;
+</span><span>            </span><span style="color:#859900;">if</span><span> x </span><span style="color:#859900;">&gt; </span><span style="color:#6c71c4;">5
+</span><span>              </span><span style="color:#859900;">then </span><span style="color:#cb4b16;">Left </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Not allowed to double big numbers</span><span style="color:#839496;">&quot;
+</span><span>              </span><span style="color:#859900;">else </span><span style="color:#cb4b16;">Right</span><span> (x * </span><span style="color:#6c71c4;">2</span><span>))
+</span><span>          list
+</span><span>  </span><span style="color:#859900;">case</span><span> newList </span><span style="color:#859900;">of
+</span><span>    </span><span style="color:#cb4b16;">Left</span><span> err </span><span style="color:#859900;">-&gt;</span><span> putStrLn err
+</span><span>    </span><span style="color:#cb4b16;">Right</span><span> newList&#39; </span><span style="color:#859900;">-&gt;</span><span> print newList
+</span></code></pre>
+<p><code>Either</code> is a sum type, like an <code>enum</code> in Rust. It's equivalent to <code>Result</code> in Rust, but with different names. Instead of <code>Ok</code> and <code>Err</code>, we have <code>Right</code> (used by convention for success) and <code>Left</code> (used by convention for failure). The <code>Applicative</code> instance for it will stop processing when it encounters the first <code>Left</code>. So our program above will ultimately produce the output <code>Not allowed to double big numbers</code>. You can put as many values after the <code>6</code> in <code>list</code> as you want, and it will produce the same output. In fact, it will never even inspect those numbers.</p>
+<p>Coming back to Rust, let's first simply collect all of our <code>Result</code>s together into a single <code>Vec</code> to make sure the basics work:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> myvec = </span><span style="color:#859900;">vec!</span><span>[</span><span style="color:#6c71c4;">1</span><span>, </span><span style="color:#6c71c4;">2</span><span>, </span><span style="color:#6c71c4;">3</span><span>, </span><span style="color:#6c71c4;">4</span><span>, </span><span style="color:#6c71c4;">5</span><span>, </span><span style="color:#6c71c4;">6</span><span>];
+</span><span>
+</span><span>    </span><span style="color:#268bd2;">let</span><span> new_vec: </span><span style="color:#859900;">Vec</span><span>&lt;</span><span style="color:#859900;">Result</span><span>&lt;</span><span style="color:#268bd2;">i32</span><span>, </span><span style="color:#859900;">&amp;</span><span style="color:#268bd2;">str</span><span>&gt;&gt; = myvec
+</span><span>        .</span><span style="color:#859900;">into_iter</span><span>()
+</span><span>        .</span><span style="color:#859900;">map</span><span>(|</span><span style="color:#268bd2;">x</span><span>| {
+</span><span>            </span><span style="color:#859900;">if</span><span> x &gt; </span><span style="color:#6c71c4;">5 </span><span>{
+</span><span>                </span><span style="color:#859900;">Err</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Not allowed to double big numbers</span><span style="color:#839496;">&quot;</span><span>)
+</span><span>            } </span><span style="color:#859900;">else </span><span>{
+</span><span>                </span><span style="color:#859900;">Ok</span><span>(x * </span><span style="color:#6c71c4;">2</span><span>)
+</span><span>            }
+</span><span>        })
+</span><span>        .</span><span style="color:#859900;">collect</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{:?}</span><span style="color:#839496;">&quot;</span><span>, new_vec);
+</span><span>}
+</span></code></pre>
+<p>That makes sense. We've already seen that <code>.collect()</code> can take all the values in an <code>Iterator</code>'s stream and stick them into a <code>Vec</code>. And the <code>map</code> method is now generating <code>Result&lt;i32, &amp;str&gt;</code> values, so everything lines up.</p>
+<p>But this isn't the behavior we want. We want two changes:</p>
+<ul>
+<li><code>new_vec</code> should result in a <code>Result&lt;Vec&lt;i32&gt;, &amp;str&gt;</code>. In other words, it should result in either a single <code>Err</code> value, or a vector of successful results. Right now, it has a vector of success-or-failure values.</li>
+<li>We should immediately stop processing the original <code>Vec</code> once we see a value that's too big.</li>
+</ul>
+<p>To make it a bit more clear, it's easy enough to implement this with a <code>for</code> loop:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> myvec = </span><span style="color:#859900;">vec!</span><span>[</span><span style="color:#6c71c4;">1</span><span>, </span><span style="color:#6c71c4;">2</span><span>, </span><span style="color:#6c71c4;">3</span><span>, </span><span style="color:#6c71c4;">4</span><span>, </span><span style="color:#6c71c4;">5</span><span>];
+</span><span>
+</span><span>    </span><span style="color:#268bd2;">let </span><span style="color:#586e75;">mut</span><span> new_vec = </span><span style="color:#859900;">Vec</span><span>::new();
+</span><span>
+</span><span>    </span><span style="color:#859900;">for</span><span> x </span><span style="color:#859900;">in</span><span> myvec {
+</span><span>        </span><span style="color:#859900;">if</span><span> x &gt; </span><span style="color:#6c71c4;">5 </span><span>{
+</span><span>            </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Not allowed to double big numbers</span><span style="color:#839496;">&quot;</span><span>);
+</span><span>            </span><span style="color:#859900;">return</span><span>;
+</span><span>        } </span><span style="color:#859900;">else </span><span>{
+</span><span>            new_vec.</span><span style="color:#859900;">push</span><span>(x);
+</span><span>        }
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{:?}</span><span style="color:#839496;">&quot;</span><span>, new_vec);
+</span><span>}
+</span></code></pre>
+<p>But now we've lost out on our <code>map</code> entirely, and we're dropping down to using explicit loops, mutation, and short-circuiting (via <code>return</code>). In other words, this code doesn't feel nearly as elegant to me.</p>
+<p>It turns out that our original code was almost perfect. Let's see a bit of magic, and then explain how it happend. Our previous version of the code used <code>map</code> and resulted in a <code>Vec&lt;Result&lt;i32, &amp;str&gt;&gt;</code>. And we wanted <code>Result&lt;Vec&lt;i32&gt;, &amp;str&gt;</code>. What happens if we simply change the type to what we want?</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> myvec = </span><span style="color:#859900;">vec!</span><span>[</span><span style="color:#6c71c4;">1</span><span>, </span><span style="color:#6c71c4;">2</span><span>, </span><span style="color:#6c71c4;">3</span><span>, </span><span style="color:#6c71c4;">4</span><span>, </span><span style="color:#6c71c4;">5</span><span>, </span><span style="color:#6c71c4;">6</span><span>];
+</span><span>
+</span><span>    </span><span style="color:#268bd2;">let</span><span> new_vec: </span><span style="color:#859900;">Result</span><span>&lt;</span><span style="color:#859900;">Vec</span><span>&lt;</span><span style="color:#268bd2;">i32</span><span>&gt;, </span><span style="color:#859900;">&amp;</span><span style="color:#268bd2;">str</span><span>&gt; = myvec
+</span><span>        .</span><span style="color:#859900;">into_iter</span><span>()
+</span><span>        .</span><span style="color:#859900;">map</span><span>(|</span><span style="color:#268bd2;">x</span><span>| {
+</span><span>            </span><span style="color:#859900;">if</span><span> x &gt; </span><span style="color:#6c71c4;">5 </span><span>{
+</span><span>                </span><span style="color:#859900;">Err</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Not allowed to double big numbers</span><span style="color:#839496;">&quot;</span><span>)
+</span><span>            } </span><span style="color:#859900;">else </span><span>{
+</span><span>                </span><span style="color:#859900;">Ok</span><span>(x * </span><span style="color:#6c71c4;">2</span><span>)
+</span><span>            }
+</span><span>        })
+</span><span>        .</span><span style="color:#859900;">collect</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#859900;">match</span><span> new_vec {
+</span><span>        </span><span style="color:#859900;">Ok</span><span>(new_vec) </span><span style="color:#859900;">=&gt; println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{:?}</span><span style="color:#839496;">&quot;</span><span>, new_vec),
+</span><span>        </span><span style="color:#859900;">Err</span><span>(e) </span><span style="color:#859900;">=&gt; println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, e),
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>Thanks to the power of <code>FromIterator</code>, this simply works! To understand why, let's see some <a href="https://doc.rust-lang.org/stable/std/iter/trait.FromIterator.html#method.from_iter-15">documentation on <code>FromIterator</code></a>:</p>
+<blockquote>
+<p>Takes each element in the <code>Iterator</code>: if it is an <code>Err</code>, no further elements are taken, and the <code>Err</code> is returned. Should no <code>Err</code> occur, a container with the values of each <code>Result</code> is returned.</p>
+</blockquote>
+<p>And suddenly it seems that Rust has implemented <code>traverse</code> all along! This extra flexibility in the <code>FromIterator</code> setup allows us to regain the short-circuiting error-handling behavior that FP people are familiar with in <code>traverse</code>.</p>
+<p>In contrast to <code>traverse</code>, we're still dealing with two different traits (<code>IntoIterator</code> and <code>FromIterator</code>), and there's nothing preventing these from being different types. Therefore, some kind of type annotation is still necessary. On the one hand, that could be seen as a downside of Rust's approach. On the other hand, it allows us to be more flexible in what types we generate, which we'll look at in the next section.</p>
+<p>And finally, it turns out we can use turbofish to rescue us yet again. For example:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> myvec = </span><span style="color:#859900;">vec!</span><span>[</span><span style="color:#6c71c4;">1</span><span>, </span><span style="color:#6c71c4;">2</span><span>, </span><span style="color:#6c71c4;">3</span><span>, </span><span style="color:#6c71c4;">4</span><span>, </span><span style="color:#6c71c4;">5</span><span>, </span><span style="color:#6c71c4;">6</span><span>];
+</span><span>
+</span><span>    </span><span style="color:#268bd2;">let</span><span> new_vec = myvec
+</span><span>        .</span><span style="color:#859900;">into_iter</span><span>()
+</span><span>        .</span><span style="color:#859900;">map</span><span>(|</span><span style="color:#268bd2;">x</span><span>| {
+</span><span>            </span><span style="color:#859900;">if</span><span> x &gt; </span><span style="color:#6c71c4;">5 </span><span>{
+</span><span>                </span><span style="color:#859900;">Err</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Not allowed to double big numbers</span><span style="color:#839496;">&quot;</span><span>)
+</span><span>            } </span><span style="color:#859900;">else </span><span>{
+</span><span>                </span><span style="color:#859900;">Ok</span><span>(x * </span><span style="color:#6c71c4;">2</span><span>)
+</span><span>            }
+</span><span>        })
+</span><span>        .collect::&lt;</span><span style="color:#859900;">Result</span><span>&lt;</span><span style="color:#859900;">Vec</span><span>&lt;</span><span style="color:#859900;">_</span><span>&gt;, </span><span style="color:#859900;">_</span><span>&gt;&gt;();
+</span><span>
+</span><span>    </span><span style="color:#859900;">match</span><span> new_vec {
+</span><span>        </span><span style="color:#859900;">Ok</span><span>(new_vec) </span><span style="color:#859900;">=&gt; println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{:?}</span><span style="color:#839496;">&quot;</span><span>, new_vec),
+</span><span>        </span><span style="color:#859900;">Err</span><span>(e) </span><span style="color:#859900;">=&gt; println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, e),
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<h2 id="different-fromiterator-impls">Different FromIterator impls</h2>
+<p>So far, we've only seen two implementations of <code>FromIterator</code>: <code>Vec</code> and <code>Result</code>. There are many more available. One of my favorite is <code>HashMap</code>, which lets you collect a sequence of key/value pairs into a mapping.</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#859900;">use </span><span>std::collections::HashMap;
+</span><span>
+</span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> people = </span><span style="color:#859900;">vec!</span><span>[
+</span><span>        (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">30</span><span>),
+</span><span>        (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Bob</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">35</span><span>),
+</span><span>        (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Charlies</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">25</span><span>),
+</span><span>    ].</span><span style="color:#859900;">into_iter</span><span>().collect::&lt;HashMap&lt;</span><span style="color:#859900;">_</span><span>, </span><span style="color:#859900;">_</span><span>&gt;&gt;();
+</span><span>
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice is: </span><span style="color:#cb4b16;">{:?}</span><span style="color:#839496;">&quot;</span><span>, people.</span><span style="color:#859900;">get</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;</span><span>));
+</span><span>}
+</span></code></pre>
+<p>And due to how the <code>FromIterator</code> impl for <code>Result</code> works, you can layer these two together to collect a stream of <code>Result</code>s of pairs into a <code>Result&lt;HashMap&lt;_, _&gt;, _&gt;</code>:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#859900;">use </span><span>std::collections::HashMap;
+</span><span>
+</span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> people = </span><span style="color:#859900;">vec!</span><span>[
+</span><span>        </span><span style="color:#859900;">Ok</span><span>((</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">30</span><span>)),
+</span><span>        </span><span style="color:#859900;">Ok</span><span>((</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Bob</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">35</span><span>)),
+</span><span>        </span><span style="color:#859900;">Err</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Uh-oh, this didn&#39;t work!</span><span style="color:#839496;">&quot;</span><span>),
+</span><span>        </span><span style="color:#859900;">Ok</span><span>((</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Charlies</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">25</span><span>)),
+</span><span>    ].</span><span style="color:#859900;">into_iter</span><span>().collect::&lt;</span><span style="color:#859900;">Result</span><span>&lt;HashMap&lt;</span><span style="color:#859900;">_</span><span>, </span><span style="color:#859900;">_</span><span>&gt;, </span><span style="color:#859900;">&amp;</span><span style="color:#268bd2;">str</span><span>&gt;&gt;();
+</span><span>
+</span><span>    </span><span style="color:#859900;">match</span><span> people {
+</span><span>        </span><span style="color:#859900;">Err</span><span>(e) </span><span style="color:#859900;">=&gt; println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Error occurred: </span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, e),
+</span><span>        </span><span style="color:#859900;">Ok</span><span>(people) </span><span style="color:#859900;">=&gt; </span><span>{
+</span><span>            </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice is: </span><span style="color:#cb4b16;">{:?}</span><span style="color:#839496;">&quot;</span><span>, people.</span><span style="color:#859900;">get</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;</span><span>));
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<h2 id="validation">Validation</h2>
+<p>In the Haskell world, we have two different concepts of error collection:</p>
+<ul>
+<li><code>Either</code>, which says &quot;stop on the first error&quot;</li>
+<li><code>Validation</code>, which says &quot;collect all of the errors together&quot;</li>
+</ul>
+<p><code>Validation</code> can be very useful for things like parsing web forms. You don't want to generate just the first failure, but collect all of the failures together for producing a more user-friendly experience. For fun, I decided to implement this in Rust as well:</p>
+<blockquote class="twitter-tweet"><p lang="en" dir="ltr">I&#39;m tempted to write a Validation &quot;Applicative&quot; in Rust with a FromIterator impl to collect multiple Err values. I have no real need for this, but it still seems fun.</p>&mdash; Michael Snoyman (@snoyberg) <a href="https://twitter.com/snoyberg/status/1311639149171159041?ref_src=twsrc%5Etfw">October 1, 2020</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+<p>And as you'll see from the rest of that thread, a lot of the motivation for this blog post came from the Twitter replies.</p>
+<p>The implementation in Rust is fairly straightforward, and pretty easy to understand. I've <a href="https://github.com/snoyberg/validation-rs">made it available on Github</a>. If there's any interest in seeing this as a crate, let me know in the issue tracker.</p>
+<p>To see this in action, let's modify our program above. First, I'll add the dependency to my <code>Cargo.toml</code> file:</p>
+<pre data-lang="toml" style="background-color:#fdf6e3;color:#657b83;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[</span><span style="color:#b58900;">dependencies</span><span>.</span><span style="color:#b58900;">validation</span><span>]
+</span><span style="color:#268bd2;">git </span><span>= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">https://github.com/snoyberg/validation-rs</span><span style="color:#839496;">&quot;
+</span><span style="color:#268bd2;">rev </span><span>= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">0a7521f7022262bb00aea61761f76c3dd5ccefb5</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>And then modify the code to use the <code>Validation</code> enum instead of <code>Result</code>:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#859900;">use </span><span>std::collections::HashMap;
+</span><span style="color:#859900;">use </span><span>validation::Validation;
+</span><span>
+</span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> people = </span><span style="color:#859900;">vec!</span><span>[
+</span><span>        </span><span style="color:#859900;">Ok</span><span>((</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">30</span><span>)),
+</span><span>        </span><span style="color:#859900;">Ok</span><span>((</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Bob</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">35</span><span>)),
+</span><span>        </span><span style="color:#859900;">Err</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Uh-oh, this didn&#39;t work!</span><span style="color:#839496;">&quot;</span><span>),
+</span><span>        </span><span style="color:#859900;">Ok</span><span>((</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Charlies</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">25</span><span>)),
+</span><span>        </span><span style="color:#859900;">Err</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">And neither did this!</span><span style="color:#839496;">&quot;</span><span>),
+</span><span>    ].</span><span style="color:#859900;">into_iter</span><span>().collect::&lt;Validation&lt;HashMap&lt;</span><span style="color:#859900;">_</span><span>, </span><span style="color:#859900;">_</span><span>&gt;, </span><span style="color:#859900;">Vec</span><span>&lt;</span><span style="color:#859900;">&amp;</span><span style="color:#268bd2;">str</span><span>&gt;&gt;&gt;();
+</span><span>
+</span><span>    </span><span style="color:#859900;">match</span><span> people.</span><span style="color:#859900;">into_result</span><span>() {
+</span><span>        </span><span style="color:#859900;">Err</span><span>(errs) </span><span style="color:#859900;">=&gt; </span><span>{
+</span><span>            </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Errors:</span><span style="color:#839496;">&quot;</span><span>);
+</span><span>            errs.</span><span style="color:#859900;">into_iter</span><span>().</span><span style="color:#859900;">map</span><span>(|</span><span style="color:#268bd2;">x</span><span>| </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, x)).</span><span style="color:#859900;">collect</span><span>()
+</span><span>        }
+</span><span>        </span><span style="color:#859900;">Ok</span><span>(people) </span><span style="color:#859900;">=&gt; </span><span>{
+</span><span>            </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice is: </span><span style="color:#cb4b16;">{:?}</span><span style="color:#839496;">&quot;</span><span>, people.</span><span style="color:#859900;">get</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;</span><span>));
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p><strong>Bonus</strong> Note the somewhat cheeky usage of <code>map</code> and <code>collect</code> to print out the errors. This is leveraging the <code>()</code> impl of <code>FromIterator</code>, which collects together a stream of <code>()</code> values into a single one.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>I realize that was a bit of a rambling journey, but hopefully a fun one for Rustaceans, Haskellers, and Scala folk. Here are some of my takeaways:</p>
+<ul>
+<li>The <code>collect</code> method is very flexible</li>
+<li>There's no magic involved in <code>collect</code>, just the <code>FromIterator</code> trait and the behavior of the types that implement it
+<ul>
+<li>This was actually a big takeaway for me. I had somehow forgotten about <code>FromIterator</code> a few months back, and was nervous about what &quot;secret&quot; behavior <code>collect</code> was doing.</li>
+</ul>
+</li>
+<li>The downside of <code>collect</code> is that, since it's not structure preserving like <code>map</code> or <code>traverse</code>, you'll sometimes need type annotations
+<ul>
+<li>Get used to turbofish!</li>
+</ul>
+</li>
+<li>There are lots of useful impls of <code>FromIterator</code> available</li>
+</ul>
+<p>If you enjoyed this post, you may also want to check out these related topics:</p>
+<ul>
+<li><a href="https://tech.fpcomplete.com/blog/2017/07/iterators-streams-rust-haskell/">Iterators and Streams in Rust and Haskell</a></li>
+<li><a href="https://tech.fpcomplete.com/blog/2018/07/streaming-utf8-haskell-rust/">Streaming UTF-8 in Haskell and Rust</a></li>
+<li><a href="https://tech.fpcomplete.com/blog/rust-devops/">Rust with DevOps Success Strategies</a></li>
+<li><a href="https://tech.fpcomplete.com/rust/crash-course/">Rust Crash Course eBook</a></li>
+</ul>
+<p>If you're interested in learning more about FP Complete's <a href="https://tech.fpcomplete.com/training/">consulting and training services</a>, please <a href="https://tech.fpcomplete.com/contact-us/">contact us</a> to talk with our team about how we can help you succeed with Rust, DevOps, and functional programming.</p>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Collect%20in%20Rust%2C%20traverse%20in%20Haskell%20and%20Scala https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;collect-rust-traverse-haskell-scala&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;collect-rust-traverse-haskell-scala&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;collect-rust-traverse-haskell-scala&#x2F;&amp;title=Collect%20in%20Rust%2C%20traverse%20in%20Haskell%20and%20Scala"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;collect-rust-traverse-haskell-scala&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#6615070a031526001605090b160a0312034805090b" targe="_blank"><span class="__cf_email__" data-cfemail="96e5f7faf3e5d6f0e6f5f9fbe6faf3e2f3b8f5f9fb">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

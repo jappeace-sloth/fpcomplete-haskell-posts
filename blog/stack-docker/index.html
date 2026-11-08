@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>How stack can use Docker under the hood</title>
+  <meta property="og:title" content="How stack can use Docker under the hood">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;08&#x2F;stack-docker&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>How stack can use Docker under the hood</h1>
+      
+      <p id="page-description">By Emanuel Borsboom, August  5, 2015</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=How%20stack%20can%20use%20Docker%20under%20the%20hood https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;08&#x2F;stack-docker&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;08&#x2F;stack-docker&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;08&#x2F;stack-docker&#x2F;&amp;title=How%20stack%20can%20use%20Docker%20under%20the%20hood"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;08&#x2F;stack-docker&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>TL;DR: if you just want to get started use <code>stack</code>'s
+Docker support, see the <a href=
+"https://github.com/commercialhaskell/stack/wiki/Docker">Docker
+page on the stack wiki</a>. The rest of this post gives background
+on the benefits, implementation, and reasons for our choices.</p>
+<h2 id="a-brief-history">A brief history</h2>
+<p>Using LXC for containerization is an integral component of the
+FP Complete Haskell Center and <a href=
+"https://www.schoolofhaskell.com/">School of Haskell</a>, so
+lightweight virtualization was not new to us. We started tentative
+experiments using Docker for command-line development about a year
+ago and it quickly became an indispensable part of our development
+tool chain. We soon wrote a wrapper script that did user ID mapping
+and volume mounting so that developers could just prefix their
+usual <code>cabal</code> or build script commands with the wrapper
+and have them automagically run in a container without developers
+needing to adjust their usual workflow for Docker. The wrapper's
+functionality was integrated into an internal build tool and formed
+the core of its sandboxing approach. Then that internal build tool
+became <a href=
+"https://github.com/commercialhaskell/stack">stack</a> which got
+its own non-Docker based sandboxing approach. But the basic core of
+that original wrapper script is still available, and there are
+significant benefits to using stack's Docker integration for
+teams.</p>
+<h2 id="benefits">Benefits</h2>
+<p>The primary pain point we are solving with our use of Docker is
+ensuring that all developers are using a consistent environment for
+building and testing code.</p>
+<p>Before Docker, our approach involved having developers all run
+the same Linux distribution version, install the same additional OS
+packages, and use <a href=
+"https://hackage.haskell.org/package/hsenv">hsenv</a> sandboxes
+(and, as they stabilized, Cabal sandboxes) for Haskell package
+sandboxing. However, this proved deficient in several ways:</p>
+<ul>
+<li>Some people develop on their primary workstation, so have
+additional software or different versions installed. Not everyone
+has a spare extra machine around or wants the overhead of
+developing in a "heavyweight" virtual machine (e.g. using Vagrant
+and/or VirtualBox) that requires dedicated RAM and virtual
+disks.</li>
+<li>Different projects may have different requirements. Again, the
+overhead of multiple heavyweight VMs is undesirable.</li>
+<li>Keeping automated build environments in sync for multiple
+projects and versions with different requirements was
+error-prone.</li>
+</ul>
+<p>In the process of solving the main problems, there were some
+additional goals:</p>
+<ul>
+<li>Avoid changing the developer's workflow. <code>stack</code>
+commands should work as close to normally as possible when Docker
+is enabled.</li>
+<li>Shield developers from having to know the details of how
+containerization is implemented. Developers shouldn't need to learn
+all about Docker in order to build their code.</li>
+<li>Be able to easily update all developers to new and consistent
+versions system tools, libraries, and packages.</li>
+<li>Give developers a way to test their code in an environment that
+is very similar to the environment that it will run in
+production.</li>
+<li>Require as few changes as possible for our existing automated
+build processes. We use Jenkins and Bamboo for automated builds.
+All that should be needed is having Docker available on the build
+slave.</li>
+</ul>
+<h2 id="approach">Approach</h2>
+<p>When Docker is <a href=
+"https://github.com/commercialhaskell/stack/wiki/stack.yaml#docker">
+enabled in stack.yaml</a>, every invocation of <code>stack</code>
+(with the exception of certain sub-commands) transparently
+re-invokes itself in an ephemeral Docker container which has the
+project root directory and the stack home (<code>~/.stack</code>)
+bind-mounted. The container exists only to provide the environment
+in which the build runs, nothing is actually written to the
+container's file-system (any writes happen in the bind-mounted
+directories) and it the container is destroyed immediately after
+<code>stack</code> exits (using <code>docker run --rm</code>). This
+means upgrading to a new image is easy, since it's just a matter of
+creating ephemeral containers from the new image. The directories
+are bind-mounted to the same file-system location in the container,
+which makes it possible to switch between using docker and not and
+still have everything work.</p>
+<p>Docker runs processes in containers as root by default, which
+would result in files all over our project and stack home being
+owned by root when they should be owned by the host OS user. There
+is the <code>docker run --user</code> option to specify a different
+user ID to run the process as, but it works best if that user
+already exists in the Docker image. In this case, we don't know the
+user ID of the developer at image creation. We work around that by
+using <code>docker run --env</code> to pass in the host user's UID
+and GID, and adding an ENTRYPOINT which, inside the container,
+creates the user and then uses <code>sudo -u</code> to run the
+build command as that user.</p>
+<p>In addition, <code>stack</code> and the entrypoint:</p>
+<ul>
+<li>
+<p>Uses the <code>stack.yaml</code> resolver setting to construct
+the Docker image tag (which can be overridden).</p>
+</li>
+<li>
+<p>Copies the Stackage LTS snapshot's build plan and the Hackage
+index from the image into <code>~/.stack</code>, if they are newer.
+This way, they do not need to be downloaded which enables
+Internet-connectionless operation once you have the Docker
+image.</p>
+</li>
+<li>
+<p>Determines whether the stdin/stdout/stderr file handles are
+connected to a terminal device and, if so, runs in interactive
+container (using <code>docker run --interactive --tty</code>).
+Unfortunately there doesn't seem to be a way to get a Dockerized
+process to behave just like a normal process when it comes to
+stdin/stdout/stderr on the host, but this is close enough that it
+behaves as expected most of the time.</p>
+</li>
+<li>
+<p>Volume-mounts special project-and-image-specific
+<code>~/.cabal</code> and <code>~/.ghc</code> directories into the
+image, which means that if you use <code>cabal install</code>
+directly it will end up with an automatic "sandbox" (before
+<code>stack</code> added its own, this was the sandboxing approach
+of our internal build tool, but it is no longer necessary since
+<code>stack</code> doesn't touch <code>~/.cabal</code> or
+<code>~/.ghc</code> anymore).</p>
+</li>
+<li>
+<p>Checks that the version of Docker installed on the host is
+recent enough.</p>
+</li>
+<li>
+<p>Provides <a href=
+"https://github.com/commercialhaskell/stack/wiki/Docker#configuration">
+options</a> to adjust Docker behaviour for common development use
+cases, plus the ability to pass arbitrary arguments to <code>docker
+run</code> for the less common cases.</p>
+</li>
+</ul>
+<h2 id="images">Images</h2>
+<p>For each GHC version + Stackage LTS snapshot combination, we tag
+several images (which layer on top of each other):</p>
+<ul>
+<li><b><a href=
+"https://registry.hub.docker.com/u/fpco/stack-run/">run</a></b>:
+Starts with <a href=
+"https://github.com/phusion/baseimage-docker">phusion/baseimage</a>,
+which itself is built on top of Ubuntu 14.04, and adds basic
+runtime libraries (e.g. libgmp, zlib) and tools (e.g. curl). The
+idea is that any binary built using one of the higher-level images
+would run in the base image without any missing shared libs or
+tools. It does <i>not</i> contain anything to support building
+Haskell code. Includes the ENTRYPOINT and other support for
+<code>stack</code> described in the previous section.</li>
+<li><b><a href=
+"https://registry.hub.docker.com/u/fpco/stack-build/">build</a></b>:
+Adds GHC and a complete set of Haskell build tools (cabal-install,
+alex, happy, cpphs, shake and others, all built from the Stackage
+LTS snapshot). It does <i>not</i> include Stackage packages or any
+packages that are not included with GHC itself.</li>
+<li><b><a href=
+"https://registry.hub.docker.com/u/fpco/stack-full/">full</a></b>:
+Adds a complete build of the Stackage LTS snapshot! Includes
+Haddocks for all packages and a Hoogle database. Adds some extra
+tools that are handy while developing.</li>
+</ul>
+<p>Most of a developer's work is done using a <b>build</b> or
+<b>full</b> image, and they can test using a <b>run</b> image. The
+actual production environment for a server can be built on
+<b>run</b>.</p>
+<p>In addition, there are variants of these images that include
+GHCJS (<a href=
+"https://registry.hub.docker.com/u/fpco/stack-ghcjs-build/">ghcjs-build</a>
+and <a href=
+"https://registry.hub.docker.com/u/fpco/stack-ghcjs-full/">ghcjs-full</a>),
+plus additional private variants for internal and clients' use that
+include proprietary extensions.</p>
+<p>We create and push these images using a <a href=
+"https://shakebuild.com">Shake</a> script on the host, and <a href=
+"https://propellor.branchable.com">Propellor</a> in the container
+to control what is in the image. This provides far more flexibility
+than basic Dockerfiles, and is why we can easily mix-and-match and
+patch images. Our image build process also allows us to provide
+custom images for clients. These might include additional tools or
+proprietary libraries specific to a customer's requirements. We
+intend to open the image build tool, but it currently contains
+proprietary information and needs to be refactored before we can
+extract that and open the rest.</p>
+<h2 id="challenges">Challenges</h2>
+<p>Nothing is perfect, and we have run into some challenges with
+Docker:</p>
+<ul>
+<li>
+<p>It is Linux-only. While Docker does have some support for other
+host operating systems using <a href=
+"https://github.com/boot2docker/boot2docker">boot2docker</a> this has not been reliable
+enough in practice. In particular, since it uses VirtualBox under
+the surface, it relies on VirtualBox's <i>extremely</i> slow
+"shared folders" for bind-mounting directories from the host into
+the container, which makes it nearly unusable for Haskell
+builds.</p>
+</li>
+<li>
+<p>The V1 <a href=
+"https://github.com/docker/docker-registry">private Docker
+registry</a> is not very reliable, so we use a variant of <a href=
+"https://github.com/ActiveState/static-docker-registry">this
+approach to run a static registry</a> hosted directly from S3.
+We're pleased with this static S3 registry since it means we don't
+need to set up high availability for our various registries, so we
+haven't tried the new V2 registry yet.</p>
+</li>
+<li>
+<p>Some corporate customers have extremely restrictive firewalls,
+which pose difficulties for downloading Docker images from the
+registry. The static registry helps with this as well.</p>
+</li>
+<li>
+<p>Docker images, especially when they include a complete set of
+pre-built packages from Stackage, use a lot of disk space. To help
+with this, <code>stack</code> keeps track of which images it uses
+and makes it easy to <a href=
+"https://github.com/commercialhaskell/stack/wiki/Docker#cleanup---clean-up-old-images-and-containers">
+clean up old images</a>.</p>
+</li>
+<li>
+<p>Since the images are large, we have hit limitations in the
+default device-mapper storage driver configuration which require
+some tuning. In particular, we've hit default maximum container
+file system size with the device-mapper driver and and must use the
+<code>--storage-opt dm.basesize=20G</code> <a href=
+"https://docs.docker.com/engine/reference/commandline/docker/#daemon-storage-driver-option">
+option to increase it</a>. When using btrfs, it is not uncommon to
+get <code>No space left on device</code> errors even though there
+is plenty of disk space. This is a <a href=
+"https://coreos.com/docs/cluster-management/debugging/btrfs-troubleshooting/">
+well known issue</a> with btrfs due to it running our of space for
+metadata, which requires a re-balance. We have found the aufs and
+overlay drivers to work out-of-the-box.</p>
+</li>
+</ul>
+<h2 id="alternative-approaches">Alternative approaches</h2>
+<p>There are many other ways to use Docker, but we didn't find that
+the "obvious" ones met our goals.</p>
+<p>The <a href=
+"https://registry.hub.docker.com/_/haskell/">Official Haskell
+image</a> (which didn't exist when we started using Docker)
+approach of iteratively developing using <code>docker build</code>
+and Dockerfile has some disadvantages:</p>
+<ul>
+<li>It's very different from the way developers are accustomed to
+working and requires them to understand Docker.</li>
+<li>While it uses Docker's intermediate step caching to avoid
+rebuilding dependencies, it has to rebuild the entire project every
+time. For anything more than a toy project this would make for slow
+edit-compile-test cycle.</li>
+<li>It also has to upload the "context" (the project directory) to
+the Docker daemon for every build. With a large project, this will
+be time consuming.</li>
+<li>Since each successful build is saved to an image, we end up
+with many images that need to be cleaned up.</li>
+</ul>
+<p>The <a href="https://www.vagrantup.com">Vagrant</a>-style
+approach of having a persistent container with the project
+directory bind-mounted into it, while much better, has other
+disadvantages:</p>
+<ul>
+<li>Developers need to be congnizant of managing multiple running
+containers, one for each project.</li>
+<li>Upgrading to a new image can be more difficult, because this
+approach encourages making custom changes in the persistent
+container which then have to be re-done when upgrading.</li>
+<li>Is more oriented toward heavyweight virtual machines, which
+have high startup costs.</li>
+</ul>
+<h2 id="future">Future</h2>
+<p>There are plenty of directions to take Docker support in
+<code>stack</code> as the container ecosystem evolves. There is
+work-in-progress to have <code>stack</code> create new Docker
+images containing executables automatically, and this works even if
+you perform the builds without Docker. Moving toward more general
+<a href="https://www.opencontainers.org">opencontainers.org</a>
+support is another direction we are considering. A better solution
+to using containers on non-Linux operating system is desirable. As
+stack's support for editor integration via ide-backend improves,
+this will apply equally well to Docker use.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=How%20stack%20can%20use%20Docker%20under%20the%20hood https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;08&#x2F;stack-docker&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;08&#x2F;stack-docker&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;08&#x2F;stack-docker&#x2F;&amp;title=How%20stack%20can%20use%20Docker%20under%20the%20hood"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;08&#x2F;stack-docker&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#295a48454c5a694f594a464459454c5d4c074a4644" targe="_blank"><span class="__cf_email__" data-cfemail="0f7c6e636a7c4f697f6c60627f636a7b6a216c6062">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

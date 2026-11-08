@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>What pure functional programming is all about: Part 1</title>
+  <meta property="og:title" content="What pure functional programming is all about: Part 1">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Exploring what pure functional programming is all about: what it means, reasoning about it, and performance gains.">
+  <meta property="og:description" content="Exploring what pure functional programming is all about: what it means, reasoning about it, and performance gains.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;04&#x2F;pure-functional-programming&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>What pure functional programming is all about: Part 1</h1>
+      
+      <p id="page-description">By Chris Done, April 14, 2017</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=What%20pure%20functional%20programming%20is%20all%20about%3A%20Part%201 https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;04&#x2F;pure-functional-programming&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;04&#x2F;pure-functional-programming&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;04&#x2F;pure-functional-programming&#x2F;&amp;title=What%20pure%20functional%20programming%20is%20all%20about%3A%20Part%201"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;04&#x2F;pure-functional-programming&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>This is a technical post series about <b>pure</b> functional
+programming. The intended audience is general programmers who are
+familiar with closures and some functional programming.</p>
+<p>We're going to be seeing how <i>pure</i> functional programming
+<b>differs</b> from regular "functional programming", in a
+significant way.</p>
+<p>We're going to be looking at a little language theory, type
+theory, and implementation and practice of pure functional
+programming.</p>
+<p>We'll look at correctness, architecture, and performance of pure
+programs.</p>
+<p>We're going to look at code samples in C#, JavaScript and SQL.
+We're going to look at Haskell code. We're going to look at
+assembly language.</p>
+<p>In closing we'll conclude that typed purely functional
+programming <i>matters</i>, and in a different way to what is meant
+by "functional programming".</p>
+<p>Hold onto yer butts.</p>
+<h2 id="in-this-post">In this post</h2>
+<p>Firstly, we'll start with a pinch of theory, but not enough to
+bore you. We'll then look at how functional programming differs
+from "pure" functional programming. I'll establish what we mean by
+"side-effects". Finally, I'll try to motivate using pure languages
+from a correctness perspective.</p>
+<h2 id="types-and-functions">Types and Functions</h2>
+<p>A function is a relation between terms. Every input term has
+<i>exactly one</i> output term. That's as simple as it gets.</p>
+<img alt="No alt provided" src="https://i.imgur.com/3dLJHfV.png"
+width="400">
+<p>In type theory, it's described in notation like this:</p>
+<p><b><i>f : A → B</i></b></p>
+<p>Inputs to <i>f</i> are the terms in type <i>A</i>, and outputs
+from <i>f</i> are the terms in type <i>B</i>. The type might be
+<code>Integer</code> and the terms might be all integers ..,
+<code>-2</code>, <code>-1</code>, <code>0</code>, <code>1</code>,
+<code>2</code>, ...</p>
+<p>The type might be <code>Character</code> and the terms might be
+<code>Homer</code>, <code>Marge</code>, <code>SideShowBob</code>,
+<code>FrankGrimes</code>, <code>InanimateCarbonRod</code>, etc.</p>
+<p>This is the core of functional programming, and without type
+theory, it's hard to even talk formally about the meaning of
+functional programs.</p>
+<p>Get it? I thought so. We'll come back to this later.</p>
+<h2 id="functional-programming-isn39t">Functional programming
+isn't</h2>
+<p><i>Functional programming</i> as used generally by us as an
+industry tends to mean using first-class functions, closures that
+capture their environment properly, immutable data structures,
+trying to write code that doesn't have side-effects, and things
+like that.</p>
+<p>That's perfectly reasonable, but it's distinct from <i>pure</i>
+functional programming. It's called "<i>pure</i> functional",
+because it has <b>only functions</b> as defined in the previous
+section. But why aren't there proper functions in the popular
+meaning of functional programming?</p>
+<img alt="No alt provided" src="https://i.imgur.com/fQUJjqf.png"
+width="600">
+<p>It's something of a misnomer that many popular languages use
+this term <i>function</i>. If you read the language specification
+for <a href=
+"https://www.schemers.org/Documents/Standards/R5RS/r5rs.pdf">Scheme</a>,
+you may notice that it uses the term <i>procedure</i>. Some
+procedures may implement functions like cosine, but not all
+procedures are functions, in fact most aren't. Any procedure can do
+cheeky arbitrary effects. But for the rest of popular languages,
+it's a misnomer we accept.</p>
+<p>Let's look into why this is problematic in the next few
+sections.</p>
+<h2 id="side-effects-mutation-etc.">Side-effects, mutation,
+etc.</h2>
+<p>What actually are side-effects, really? What's purity? I'll
+establish what <i>I am going to mean</i> in this series of blog
+posts. There are plenty of other working definitions.</p>
+<p>These are some things you can do in source code:</p>
+<ol>
+<li>Mutate variables.</li>
+<li>Make side-effects (writing to standard output, connecting to a
+socket, etc.)</li>
+<li>Get the current time.</li>
+</ol>
+<p>These are all things you cannot do in a pure function, because
+they're not explicit inputs into or explicit outputs of the
+function.</p>
+<p>In C#, the expression <code>DateTime.Now.TimeOfDay</code> has
+type <code>TimeSpan</code>, it's not a function with inputs. If you
+put it in your program, you'll get the time since midnight when
+evaluating it. Why?</p>
+<p>In contrast, these are side-effects that pure code can
+cause:</p>
+<ol>
+<li>Allocate lots of memory.</li>
+<li>Take lots of time.</li>
+<li>Loop forever.</li>
+</ol>
+<p>But none of these things can be <i>observed</i> during
+evaluation of a pure functional language. There isn't a meaningful
+pure function that returns the current time, or the current memory
+use, and there usually isn't a function that asks if the program is
+currently in an infinite loop.</p>
+<p>So I am going to use a meaning of purity like this: an effect is
+something implicit that you can observe during evaluation of your
+program.</p>
+<h2 id="which-languages-are-purely-functional">Which languages are
+purely functional</h2>
+<p>So, a pure functional language is simply one in which a function
+cannot observe things besides its inputs. Given that, we can split
+the current crop of Pacman-complete languages up into pure and
+impure ones:</p>
+
+<p><b>Pure languages</b></p>
+
+<img alt="No alt provided" src=
+"https://i.imgur.com/vmY9NnX.png" width="100%">
+
+<p><b>Impure languages</b></p>
+
+<img alt="No alt provided" src=
+"https://i.imgur.com/pHjpfPY.png" width="100%">
+
+<p>Haskell (we'll use Haskell in this series), PureScript and Idris
+are purely functional in this sense. You can't change variables.
+You can't observe time. You can't observe anything not constructed
+inside Haskell's language. Side effects like the machine getting
+hotter, swap space being used, etc. are not in Haskell's ability to
+care about. (But we'll explore how you can straight-forwardly
+interact with the real world to get this type of information safely
+in spite of this fact.)</p>
+<p>We'll look at the theoretical and practical benefits of
+programming in a language that only has functions during this
+series.</p>
+<h2 id="reasoning-and-function-composition">Reasoning and function
+composition</h2>
+<p>In a pure language, every expression is pure. That means you can
+move things around without worrying about implicit dependencies.
+<a href=
+"https://en.wikipedia.org/wiki/Function_composition">Function
+composition</a> is a basic property that lets you take two
+functions and make a third out of them.</p>
+<p>Calling back to the theory section above, you can readily
+understand what function composition is by its types. Lets say we
+have two functions, <code>f : X → Y</code> and <code>g : Y →
+Z</code>:</p>
+<img alt="No alt provided" src="https://i.imgur.com/Qx9WJhd.png">
+<p>The functions <code>f : X → Y</code> and <code>g : Y → Z</code>
+can be composed, written <code>f ∘ g</code>, to yield a function
+which maps <code>x</code> in <code>X</code> to <code>g(f(x))</code>
+in <code>Z</code>:</p>
+<img alt="No alt provided" src="https://i.imgur.com/8AUxr3f.png"
+width="300">
+<p>In JavaScript, <code>f ∘ g</code> is:</p>
+<pre><code class=
+"javascript">function(x){ return f(g(x)); }</code></pre>
+<p>In Haskell, <code>f ∘ g</code> is:</p>
+<pre><span class="hs-keyglyph">\</span><span class=
+"hs-varid">x</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">f</span> <span class="hs-layout">(</span><span class=
+"hs-varid">g</span> <span class="hs-varid">x</span><span class=
+"hs-layout">)</span></pre>
+<p>There's also an operator that provides this out of the box:</p>
+<pre><code>f . g</code></pre>
+<p>You can compare this notion of composition with shell scripting
+pipes:</p>
+<pre>
+<code>sed 's/../../' | grep -v ^[0-9]+ | uniq | sort | ...</code></pre>
+<p>Each command takes an input and produces an output, and you
+compose them together with <code>|</code>.</p>
+<p>We'll use this concept to study equational reasoning next.</p>
+<h2 id="a-really-simple-example">A really simple example</h2>
+<p>Let's look at a really simple example of composition and
+reasoning about it in the following JavaScript code and its
+equivalent in Haskell:</p>
+
+<p><b>JavaScript</b></p>
+
+<pre lang="javascript">
+&gt; [1, 4, 9].map(Math.sqrt)
+[1, 2, 3]
+&gt; [1, 4, 9].map(Math.sqrt).map(function(x){ return x + 1 });
+[2, 3, 4]
+</pre>
+
+<p><b>Haskell</b></p>
+<pre lang="haskell">
+&gt; map sqrt [1,4,9]
+[1.0,2.0,3.0]
+&gt; map (\x -&gt; x + 1) (map sqrt [1,4,9])
+6.0
+</pre>
+
+<p>There's a pattern forming here. It looks like this:</p>
+<pre><code class=
+"javascript">xs.map(first).map(second)</code></pre>
+<pre><span class="hs-definition">map</span> <span class=
+"hs-varid">second</span> <span class=
+"hs-layout">(</span><span class="hs-varid">map</span> <span class=
+"hs-varid">first</span> <span class=
+"hs-varid">xs</span><span class="hs-layout">)</span></pre>
+<p>The <code>f</code> and <code>g</code> variables represent any
+function you might use in their place.</p>
+<h2 id="let39s-do-equational-reasoning">Let's do equational
+reasoning</h2>
+<p>We know that <code>map id ≣ id</code>, that is, applying the
+identity function across a list yields the original list's value.
+What does that tell us? Mapping preserves the structure of a list.
+In JavaScript, this implies that, given <code>id</code></p>
+<pre><span class="hs-definition">var</span> <span class=
+"hs-varid">id</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">function</span><span class="hs-layout">(</span><span class="hs-varid">x</span><span class="hs-layout">)</span><span class="hs-layout">{</span> <span class="hs-varid">return</span> <span class="hs-varid">x</span><span class="hs-layout">;</span> <span class="hs-layout">}</span></pre>
+<p>Then <code>xs.map(id) ≣ xs</code>.</p>
+<p>Map doesn't change the length or shape of the data
+structure.</p>
+<p>By extension and careful reasoning, we can further observe
+that:</p>
+<pre><span class="hs-definition">map</span> <span class=
+"hs-varid">second</span> <span class=
+"hs-varop">.</span> <span class="hs-varid">map</span> <span class=
+"hs-varid">first</span>   <span class=
+"hs-sel">≣</span> <span class="hs-varid">map</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">second</span> <span class=
+"hs-varop">.</span> <span class="hs-varid">first</span><span class=
+"hs-layout">)</span></pre>
+<p>In JavaScript, that's</p>
+<pre><code class=
+"javascript">xs.map(first).map(second) ≣ xs.map(function(x){ return second(first(x)); })</code></pre>
+<p>For example, applying a function that adds 1 across a list, and
+then applying a function that takes the square root, is equivalent
+to applying a function across a list that does both things in one,
+i.e. adding one and taking the square root.</p>
+<p>So you can refactor your code into the latter!</p>
+<p>Actually, whether the refactor was a good idea or a bad idea
+depends on the code in question. It might perform better, because
+you put the first and the second function in one loop, instead of
+two separate loops (and two separate lists). On the other hand, the
+original code is probably easier to read. "Map this, map that
+..."</p>
+<p>You want the freedom to choose between the two, and to make
+transformations like this freely you need to be able to reason
+about your code.</p>
+<h2 id="but-it-doesn39t-work-in-javascript">But it doesn't work in
+JavaScript</h2>
+<p>Turning back to the JavaScript code, is this transformation
+really valid? As an exercise, construct in your head a definition
+of <code>first</code> and <code>second</code> which would violate
+this assumption.</p>
+<pre><code class="javascript">xs.map(first).map(second)
+→
+x.map(function(x){ return second(first(x)); })</code></pre>
+<p>The answer is: no. Because JavaScript's functions <i>are not
+mathematical functions</i>, you can do anything in them. Imagine
+your colleague writes something like this:</p>
+<pre><code class="javascript">var state = 0;
+function first(i){ return state += i; }
+function second(i){ return i `mod` state; }</code></pre>
+<p>You come along and refactor
+<code>x.map(first).map(second)</code>, only to find the following
+results:</p>
+<pre><code class="javascript">&gt; var state = 0;
+  function first(i){ return state += i; }
+  function second(i){ return i % state; }
+  [1,2,3,4].map(first).map(second)
+[1, 3, 6, 0]
+&gt; var state = 0;
+  function first(i){ return state += i; }
+  function second(i){ return i % state; }
+  [1,2,3,4].map(function(x){ return second(first(x)); })
+[0, 0, 0, 0]</code></pre>
+<p>Looking at a really simple example, we see that basic equational
+reasoning, a fundamental "functional" idea, <b>is not valid in
+JavaScript</b>. Even something simple like this!</p>
+<p>So we return back to the original section "Functional
+programming isn't", and why the fact that some procedures are
+functions doesn't get you the same reliable reasoning as when you
+can <i>only define functions</i>.</p>
+<p>A benefit like being able to transform and reason about your
+code translates to practical pay-off because most people are
+changing their code every day, and trying to understand what their
+colleagues have written. This example is both something you might
+do in a real codebase and a super reduced down version of what
+horrors can happen in the large.</p>
+<h2 id="summary">Summary</h2>
+<p>In this post I've laid down some terms and setup for follow up
+posts.</p>
+<ul>
+<li>We've looked at what purity is and what it isn't.</li>
+<li>We've looked at functions and function composition.</li>
+<li>We've looked at how reasoning is easier if you only have
+functions. We'll circle back to this in coming posts when we get to
+more detailed reasoning and optimizations.</li>
+</ul>
+<p>In the next post, we'll explore:</p>
+<ul>
+<li>SQL as a pure language, which is a familiar language to almost
+everybody.</li>
+<li>How pure languages deal with the real-world and doing
+side-effects, which are obviously practical things to do.</li>
+<li>Evaluation vs execution, the generalization of pure vs impure
+languages.</li>
+</ul>
+<p>After that, we'll explore the performance and
+declarative-code-writing benefits of pure functional languages in
+particular detail, looking at generated code, assembly,
+performance, etc.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=What%20pure%20functional%20programming%20is%20all%20about%3A%20Part%201 https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;04&#x2F;pure-functional-programming&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;04&#x2F;pure-functional-programming&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;04&#x2F;pure-functional-programming&#x2F;&amp;title=What%20pure%20functional%20programming%20is%20all%20about%3A%20Part%201"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;04&#x2F;pure-functional-programming&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#c8bba9a4adbb88aeb8aba7a5b8a4adbcade6aba7a5" targe="_blank"><span class="__cf_email__" data-cfemail="2a594b464f596a4c5a4945475a464f5e4f04494547">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,270 @@
+[fp-complet]
+
+Blog Technology Haskell Rust DevOps
+
+The typed-process library
+
+By Michael Snoyman, published February 24, 2017
+
+In October of last year, I published a new library - typed-process. It builds on top of the
+veritable process package, and provides an alternative API (which I'll explain in a bit). It's not
+the first time I've written such a wrapper library; I first did so when creating
+Data.Conduit.Process, which is just a thin wraper around Data.Streaming.Process.
+
+With this proliferation of APIs, why did I go for another one? With Data.(Conduit/
+Streaming).Process, I tried to stay as close as possible to the underlying process API. And the
+underlying process API is rigid for (at least) two reasons:
+
+  • It's one of the most used APIs in the Haskell ecosystem, so breaking changes carry a very high
+    cost
+  • Since process is a dependency of GHC itself (a boot library), we're limited in adding
+    dependencies
+
+After I got sufficiently fed up with limitations in the existing APIs, I decided to take a crack at
+doing it all from scratch. I made a small announcement on Twitter, and have been using this library
+regularly since its release. In addition, a few people have raised questions on the process issue
+tracker whose simplest answer is IMO "use typed-process." Therefore, I think now's a good time to
+discuss the library more publicly and get some feedback as to what to do with it.
+
+Overview of typed-process
+
+There is both a typed-process tutorial and Haddock documentation available. If you want details,
+you should read those. This section is intended to give a little taste of typed-process to set the
+stage for the rest of the post.
+
+Everything starts with the ProcessConfig datatype, which specified all the rules for how we're
+going to run an external process. This includes all of the common settings from the CreateProcess
+type in the process package, like changing the working directory or environment variables.
+Importantly (and the source of the "typed" in the library name), ProcessConfig takes three type
+parameters, representing the type of the three standard streams (input, output, and error). For
+example, ProcessConfig Handle Handle Handle indicates that all three streams will have Handles,
+whereas ProcessConfig () (STM ByteString) () indicates that input and error will be unit, but
+output can be access as an STM action which returns a ByteString. (Much more on this later.)
+
+There are multiple helper functions - like withProcess or readProcess - to take a ProcessConfig and
+turn it into a live, running process. These running processes are represented by the Process type,
+which like ProcessConfig takes three type parameters. There are underscore variants of these launch
+functions (like withProcess_ and readProcess_) to automatically check the exit code of a process
+and, if unsuccessful, throw a runtime exception.
+
+You can access the exit code of a process with waitExitCode and getExitCode, which are blocking and
+non-blocking, respectively. These functions also come in STM variants to more easily work with
+processes from atomic sections of code.
+
+Alright, enough overview, let's start talking about motivation.
+
+Downsides of process
+
+The typed-process tutorial identifies five limitations in the process library that I wanted to
+overcome. (There's also a sixth issue I'm aware of, a race condition, which I've added as a bonus
+section.) Let's dive into these more deeply, and see how typed-process addresses them.
+
+Type variables
+
+I've made a big deal about type variables so far. I believe this is the biggest driving force
+behind the more usable API in typed-process. Let's consider some idiomatic process-based code.
+
+#!/usr/bin/env stack
+-- stack --install-ghc --resolver lts-8.0 runghc
+import Control.Exception
+import System.Process
+import System.IO
+import System.Exit
+
+main :: IO ()
+main = do
+    (Just inh, Just outh, Nothing, ph) <- createProcess
+        (proc "cat" ["-", "/usr/share/dict/words"])
+            { std_in = CreatePipe
+            , std_out = CreatePipe
+            }
+    hPutStrLn inh "This is the list of all words:"
+    hClose inh
+    out <- hGetContents outh
+    evaluate $ length out -- lazy I/O :(
+    mapM_ putStrLn $ take 100 $ lines out
+    ec <- waitForProcess ph
+    if (ec == ExitSuccess)
+        then return ()
+        else error $ "cat process failed: " ++ show ec
+
+The fact that std_in and std_out specify the creation of a Handle is not reflected in the types at
+all. If we left those changes out, our program would still compile, but our pattern match of (Just
+inh, Just outh would fail. By moving this information into the type system, we can catch bugs at
+compile time. Here's the equivalent code as above:
+
+#!/usr/bin/env stack
+-- stack --install-ghc --resolver lts-8.0 runghc --package typed-process
+import Control.Exception
+import System.Process.Typed
+import System.IO
+
+main :: IO ()
+main = do
+    let procConf = setStdin createPipe
+                 $ setStdout createPipe
+                 $ proc "cat" ["-", "/usr/share/dict/words"]
+    withProcess_ procConf $ \p -> do
+        hPutStrLn (getStdin p) "This is the list of all words:"
+        hClose $ getStdin p
+        out <- hGetContents $ getStdout p
+        evaluate $ length out -- lazy I/O :(
+        mapM_ putStrLn $ take 100 $ lines out
+
+If you leave off the setStdin or setStdout calls, the program will not compile. But this is only
+the beginning. Instead of being limited to either generating a Handle or not, we now have huge
+amounts of flexibility in how we configure our streams. For example, here's an alternative approach
+to providing standard input to the process:
+
+#!/usr/bin/env stack
+-- stack --install-ghc --resolver lts-8.0 runghc --package typed-process
+{-# LANGUAGE OverloadedStrings #-}
+import Control.Exception
+import System.Process.Typed
+import System.IO
+
+main :: IO ()
+main = do
+    let procConf = setStdin (byteStringInput "This is the list of all words:\n")
+                 $ setStdout createPipe
+                 $ proc "cat" ["-", "/usr/share/dict/words"]
+    withProcess_ procConf $ \p -> do
+        out <- hGetContents $ getStdout p
+        evaluate $ length out -- lazy I/O :(
+        mapM_ putStrLn $ take 100 $ lines out
+
+There are functions in the process package that allow specifying standard input this easily, but
+they are not as composable as this approach (as we'll discuss below).
+
+There's much more to be said about these type parameters, but hopefully this taste, plus the
+further examples in this post, will demonstrate their usefulness.
+
+Proper concurrency
+
+Functions like readProcessWithExitCode use some pretty hairy (IMO) lazy I/O tricks internally to
+read the output and error streams from a process. For the most part, you can simply use these
+functions without worrying about the crazy innards. However, consider if you want to do something
+off the beaten track, like capture the error stream while allowing the output stream to go to the
+parent process's stdout. There's no built-in function in process to handle that, so you'll be stuck
+implementing that behavior. And this functionality is far from trivial to get right.
+
+By contrast, typed-process does not use any lazy I/O. And while it provides a readProcess function,
+there's nothing magical about it; it's built on top of the byteStringOutput stream config, which
+uses proper threading under the surface and provides its output via STM for even nicer concurrent
+coding.
+
+#!/usr/bin/env stack
+-- stack --install-ghc --resolver lts-8.0 runghc --package typed-process
+{-# LANGUAGE OverloadedStrings #-}
+import Control.Concurrent.STM (atomically)
+import System.Process.Typed
+import qualified Data.ByteString.Lazy.Char8 as L8
+
+main :: IO ()
+main = do
+    let procConf = setStdin closed
+                 $ setStderr byteStringOutput
+                 $ proc "stack" ["path", "--verbose"]
+    err <- withProcess_ procConf $ atomically . getStderr
+    putStrLn "\n\n\nCaptured the following stderr:\n\n"
+    L8.putStrLn err
+
+STM
+
+I won't dwell much on this one, since the benefits are less commonly useful. Since many functions
+in typed-process provide both IO and STM alternatives, it can significantly simplify some
+concurrent algorithms by letting you keep more logic within an atomic block. This is similar to
+(and inspired by) the design choices in the async library, which is my favorite library of all
+time.
+
+Binary I/O
+
+All input and output in typed-process works on binary data as ByteStrings, instead of textual
+String data. This is:
+
+  • More semantically correct
+  • More efficient
+  • Avoids annoying platform-specific bugs
+
+More composable
+
+A major goal of this library has been to be as composable as possible. I've been frustrated by two
+issues in the process package:
+
+ 1. Many common changes to the API necessitate a breaking API change (e.g., the addition of the
+    child_group setting or NoStream constructor)
+ 2. There is a big split between helper functions that work on CreateProcess values (like
+    readCreateProcess) and those that work on raw command/argument pairs (like readProcess). The
+    situation has improved in recent releases, but in older process releases, the lack of
+    CreateProcess variants of many functions made it very difficult to both modify the environment/
+    working directory for a process and capture its output or error.
+
+For (1), I've gone the route of smart constructors throughout the API. You cannot access the
+ProcessConfig data constructor, but instead must use proc, shell, or OverloadedStrings. Instead of
+record accessors, there are setter and getter functions. And instead of a hard-coded list of stream
+types via a set of data constructors, you can create arbitrary StreamSpecs via the mkStreamSpec
+function. I hope this turns out to be an API that is resilient to breaking changes.
+
+For (2), the solution is easy: all launch functions in typed-process work exclusively on
+ProcessConfig. Problem solved. We now have a very clear breakdown in the API: first you configure
+everything you want about your process, and then you choose whichever launch function makes the
+most sense to you.
+
+Bonus: Race condition
+
+There's a long standing race condition in process - which will hopefully be resolved soon - that
+introduces a race condition on waiting for child processes. In typed-process, we've avoided this
+entirely with a different approach to child process exit codes. Namely: we fork a separate thread
+to wait for the process and fill an STM TMVar, which both ensures no race condition and makes it
+possible to observe the process exiting from within an atomic block.
+
+As a side benefit, this also avoids the possibility of accidentally creating zombie processes by
+not getting the process's exit code when it finishes. Similarly, by encouraging the bracket pattern
+(via withProcess) when interacting with a process, killing off child processes in the case of
+exceptions happens far more reliably.
+
+Limitations
+
+For the most part, I have not run into significant limitations with typed-process so far. The
+biggest annoyances I have with it are those inherited from process, specifically that command line
+arguments and environment variables are specified as Strings, leading to some character encoding
+issues.
+
+I'm certain there are limitations of typed-process versus process. And for others, there may be a
+higher learning curve with typed-process versus process. I haven't received enough feedback on that
+yet to assess, however.
+
+The other downside is dependencies, for those who worry about such things. In addition to depending
+on process itself (and therefore inheriting its dependencies), typed-process depends on async,
+bytestring, conduit, conduit-extra, exceptions, stm, and transformers. The conduit deps can easily
+be moved out, it's just for providing a convenience function that could be provided elsewhere.
+Regarding the others:
+
+  • transformers is only needed for MonadIO. Now that MonadIO has moved into base, I could make
+    that dependency conditional.
+  • The exceptions dependency makes withProcess more general, and would be a shame to lose.
+  • Dropping async and stm could be done by inlining their code here, which would work, but is a
+    bad idea IMO.
+
+The only reason for considering these changes would be the next section...
+
+What's next?
+
+I'm left with the question of what to do with this package, especially as more people ask questions
+that can be answered with "just use typed-process."
+
+  • Do nothing. The package can live on Hackage/Stackage as-is, people who want to use it can use
+    it, and that's it.
+  • Add a note to the package process mentioning it as a potential, alternative API. Even though
+    I'm currently the process package maintainer, I feel it would be inappropriate for me to make
+    such a decision myself.
+  • Even more radically: if there is strong support for this API, we could consider merging it back
+    into the process package. I wouldn't be in favor of modifying the System.Process module (we
+    should keep it as-is for backwards compatibility), but adding a new module with this API is
+    certainly doable (sans the dependency issues mentioned aboved).
+
+At the very least, this library has scratched a personal itch. If it helps others, that's a great
+perk :).
+
+2012-2019 FP Complete Corp. Subscribe to the RSS feed.
+

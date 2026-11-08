@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Secure package distribution: ready to roll</title>
+  <meta property="og:title" content="Secure package distribution: ready to roll">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;secure-package-distribution&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Secure package distribution: ready to roll</h1>
+      
+      <p id="page-description">By Michael Snoyman, May 11, 2015</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Secure%20package%20distribution%3A%20ready%20to%20roll https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;secure-package-distribution&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;secure-package-distribution&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;secure-package-distribution&#x2F;&amp;title=Secure%20package%20distribution%3A%20ready%20to%20roll"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;secure-package-distribution&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>We're happy to announce that all users of Haskell packages can
+now securely download packages. As a tl;dr, here are the changes
+you need to make:</p>
+<ol>
+<li>Add the <a href=
+"https://keyserver.ubuntu.com/pks/lookup?op=get&amp;fingerprint=on&amp;search=0xE40D74D6D6CF60FD">
+relevant GPG key</a> by <a href=
+"https://github.com/fpco/stackage-update#gpg-signature-verification">
+following the instructions</a></li>
+<li>Install <a href=
+"https://github.com/fpco/stackage-update#readme">stackage-update</a>
+and <a href=
+"https://github.com/fpco/stackage-install#readme">stackage-install</a>:
+<code>cabal update &amp;& cabal install stackage</code></li>
+<li>From now on, replace usage of <code>cabal update</code> with
+<code>stk update --verify --hashes</code></li>
+<li>From now on, replace usage of <code>cabal install ...</code>
+with <code>stk install ...</code></li>
+</ol>
+<p>This takes advantage of the <a href=
+"https://github.com/commercialhaskell/all-cabal-hashes">all-cabal-hashes</a>
+repository, which contains cabal files that are modified to contain
+package hashes and sizes. The way we generate the all-cabal-hashes
+is interesting in its own right, but I won't shoehorn that
+discussion into this blog post. Wait for a separate blog post soon
+for a description of our lightweight architecture for this.</p>
+<p>Note that this is an implementation of <a href=
+"https://github.com/commercialhaskell/commercialhaskell/wiki/Git-backed-Hackage-index-signing-and-distribution">
+Mathieu's secure distribution proposal</a>, with some details
+modified to work with the current state of our tooling (i.e., lack
+of package hash information from Hackage).</p>
+<h2 id="how-it-works">How it works</h2>
+<p>The all-cabal-hashes repository contains all of the cabal files
+Hackage knows about. These cabal files are tweaked to have a few
+extra metadata fields, including cryptographic hashes of the
+package tarball and the size of the package, in bytes. (It also
+contains the same data in a JSON file, which is what we currently
+use due to <a href=
+"https://github.com/haskell/cabal/issues/2585">cabal issue
+#2585</a>.) There is also a tag on the repo,
+<code>current-hackage</code>, which always points at the latest
+commit and is GPG signed. (If you're wondering, we use a tag
+instead of just commit signing since it's easier to verify a tag
+signature.)</p>
+<p>When you run <code>stk update --verify --hashes</code>, it
+fetches the latest content from that repository, verifies the GPG
+signature, generates a <code>00-index.tar</code> file, and places
+it in the same location that <code>cabal update</code> would place
+it. At this point, you have a verified package index on your
+location machine, which contains cryptographic signatures and sizes
+for each package tarball.</p>
+<p>Now, when you run <code>stk install ...</code>, the
+stackage-install tool handles all downloads for you (subject to
+<a href="https://github.com/fpco/stackage-install#caveats">some
+caveats</a>, like <a href=
+"https://github.com/haskell/cabal/issues/2566">cabal issue
+#2566</a>). stackage-install will look up all of the hashes and
+sizes that are present in your package index, and verify them
+during download. In particular:</p>
+<ul>
+<li>If the server tries to send more data than expected, the
+download stops immediately and an exception is thrown.</li>
+<li>If the server sends less data than expected, an exception is
+thrown.</li>
+<li>If the hash does not match what was expected, an exception is
+thrown.</li>
+</ul>
+<p>Only when the hash and size match does the file get written. In
+this way, tarballs are only made available to the rest of your
+build tools after they have been verified.</p>
+<h2 id="what-about-windows">What about Windows?</h2>
+<p>In mailing list discussions, some people were concerned about
+supporting Windows, in particular that Git and GPG may be difficult
+to install and configure on Windows. But <a href=
+"https://plus.google.com/+MichaelSnoyman/posts/BrQpoQG3Ba1">as I
+shared on Google+</a> last week, <a href=
+"https://github.com/fpco/minghc/">MinGHC</a> will now be shipping
+with both of those tools. I've tested things myself on Windows with
+the new versions of MinGHC, stackage-update, and stackage-install,
+and the instructions above worked without a hitch.</p>
+<p>Of course, if others discover problems- either on Windows or
+elsewhere- please report them so they can be fixed.</p>
+<h2 id="speed-and-reliability">Speed and reliability</h2>
+<p>In addition to the security benefits of this tool chain, there
+are also two other obvious benefits. By downloading the package
+index updates via Git, we are able to download only the differences
+since the last time we downloaded. This leads to less bandwidth
+usage and a quicker download.</p>
+<p>This toolchain also replaces connections to Hackage with two
+high reliability services: Amazon S3 (which holds the package
+contents) and Github. Using off the shelf, widely used services in
+place of hosting everything ourself reduces our community burden
+and increases our ecosystem's reliability.</p>
+<h2 id="caveats">Caveats</h2>
+<p>There are unfortunately still some caveats with this.</p>
+<ul>
+<li>The biggest hole in the fence is that we have no way of
+securing distribution of packages from Hackage itself. While
+all-cabal-hashes downloads the package index from Hackage via HTTPS
+(avoiding MITM attacks), there are still other attack vectors to be
+concerned about (such as breaching the Hackage server itself). The
+<a href=
+"https://github.com/commercialhaskell/commercialhaskell/blob/master/proposal/improved-hackage-security.md">
+improved Hackage security</a> page documents many of these
+concerns. Ideally, Hackage would be modified to perform package
+index signing itself.</li>
+<li>Due to <a href=
+"https://github.com/haskell/cabal/issues/2566">cabal issue
+#2566</a>, it's still possible that cabal-install may download
+packages for you instead of stackage-install, though these
+situations should be rare. Hopefully integrating this download code
+directly with a build tool will eliminate that weakness.</li>
+<li>There is still no verification of package author signatures, so
+that if someone's Hackage credentials are compromised (which is
+<a href=
+"https://www.reddit.com/r/haskell/comments/352wb1/ann_critical_security_releases_of_cabalinstall/">
+unfortunately very probable</a>), a corrupted package could be
+present. This is something Chris Done and Tim Dysinger <a href=
+"https://github.com/commercialhaskell/commercialhaskell/wiki/Package-signing-detailed-propsal">
+are working on</a>. We're looking for others in the community to
+work with us on pushing forward on this. If you're interested,
+please contact us.</li>
+</ul>
+<h2 id="using-preexisting-tools">Using preexisting tools</h2>
+<p>What's great about this toolchain is how shallow it is. All of
+the heavy lifting is handled by Git, GPG, Amazon S3, Github, and
+(as you'll see in a later blog post) Travis CI. We mostly just wrap
+around these high quality tools and services. Not only was this a
+practical decision (reduce development time and code burden), but
+also a security decision. Instead of creating a Haskell-only
+security and distribution framework, we're reusing the same
+components that are being tried and tested on a daily basis by the
+greater software community. While this doesn't guarantee the
+tooling we use is bug free, it does mean that the "many eyeballs"
+principle applies.</p>
+<p>Using preexisting tools also means that we open up the
+possibility of use cases never before considered. For example,
+someone contacted me (anonymity preserved) about a use case where
+he wanted to be able to identify which version of Hackage was being
+used. Until now, such a concept didn't exist. With a Git-based
+package index, the Hackage version can be identified by its
+commit.</p>
+<p>I'm sure others will come up with new and innovative tricks to
+pull off, and I look forward to hearing about them.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Secure%20package%20distribution%3A%20ready%20to%20roll https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;secure-package-distribution&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;secure-package-distribution&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;secure-package-distribution&#x2F;&amp;title=Secure%20package%20distribution%3A%20ready%20to%20roll"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;secure-package-distribution&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#483b29242d3b082e382b272538242d3c2d662b2725" targe="_blank"><span class="__cf_email__" data-cfemail="6714060b021427011704080a170b0213024904080a">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

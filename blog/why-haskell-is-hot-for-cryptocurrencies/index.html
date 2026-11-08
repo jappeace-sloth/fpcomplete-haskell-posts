@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Why Haskell is hot for cryptocurrencies</title>
+  <meta property="og:title" content="Why Haskell is hot for cryptocurrencies">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="There are almost 1,600 cryptocurrencies available today and that number continues to grow. Standing out among these currencies is almost an impossible task - Unless your cryptocurrency is written in Haskell. Code is Money and Haskell is your best bet for a rock solid cryptocurrency.">
+  <meta property="og:description" content="There are almost 1,600 cryptocurrencies available today and that number continues to grow. Standing out among these currencies is almost an impossible task - Unless your cryptocurrency is written in Haskell. Code is Money and Haskell is your best bet for a rock solid cryptocurrency.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;why-haskell-is-hot-for-cryptocurrencies&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Why Haskell is hot for cryptocurrencies</h1>
+      
+      <p id="page-description">By Niklas Hambüchen, April 18, 2018</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Why%20Haskell%20is%20hot%20for%20cryptocurrencies https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;why-haskell-is-hot-for-cryptocurrencies&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;why-haskell-is-hot-for-cryptocurrencies&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;why-haskell-is-hot-for-cryptocurrencies&#x2F;&amp;title=Why%20Haskell%20is%20hot%20for%20cryptocurrencies"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;why-haskell-is-hot-for-cryptocurrencies&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>This is a short and non-technical blog post demonstrating why
+the <a href="/haskell" rel="noopener" target="_blank">Haskell
+programming language</a> is a good choice for building
+cryptocurrencies.</p>
+<h2>Cryptocurrencies are not your average software</h2>
+<p>Cryptocurrencies are different from other programs in one key
+way: One mistake in the code can result in the instantaneous loss
+of all value of all users.</p>
+<p>This is not often the case with other software. In conventional
+applications and services, mistakes in the code lead to downtime,
+unsatisfied users, or a successful hack of the service provider.
+Only in the rarest cases does this mean the complete and permanent
+destruction of the service and all invested money being gone for
+good. Recovery is usually possible for ordinary business software.
+In cryptocurrencies <em>code is money</em>, so extra caution is
+needed when writing it.</p>
+<p>While other financial software also needs lots of caution,
+mistakes in cryptocurrencies can be especially severe due to their
+decentralised nature. Traditional banking has safety mechanisms
+like chargebacks and contracts between banks that make it possible
+to undo transactions correct mistakes after they happened. In
+cryptocurrencies, money that's gone is usually gone for good.</p>
+<h2>Avoiding mistakes through good tooling</h2>
+<p>How do you avoid mistakes in your code? One way is to hire
+excellent programmers. However, all programmers are humans and they
+will eventually make mistakes. It's safer to have human-written
+code cross-checked by a machine to the fullest extent possible. It
+is crucial to use a programming language that makes mandatory
+automated checks easy to write.</p>
+<p>Haskell is a programming language that was designed for safety.
+Haskell provides <em>hard guarantees</em> that certain kinds of
+mistakes cannot be in the code. How does it do this? Let's look at
+some features that make this possible.</p>
+<h2>Haskell safety features</h2>
+<ul>
+<li>
+<p><strong>Memory safety.</strong> This means that you cannot
+accidentally modify values in your computer's memory that you did
+not intend to modify. Haskell prevents mistakes where garbage data
+is written into memory and the program is exhibiting arbitrary
+behaviour from that point. It also makes one of the most dangerous
+security vulnerabilities, <em>remote code execution by an
+attacker</em>, impossible.</p>
+</li>
+<li>
+<p><strong>Static types.</strong>. Haskell enforces that the
+operations you do with your data are sound. Any function that
+processes data must declare what <em>types</em> of data (such as
+numbers, user names, <a href=
+"/blog/2017/09/cryptographic-hashing-haskell" rel="noopener"
+target="_blank">cryptographic hashes</a>) are consumed or produced
+by it. When you try to feed a function data of the wrong type
+Haskell will complain and refuse to build your code. This means the
+problem is detected long before the code ever ships, and in fact
+it's <em>impossible</em> to ship the code until the mistake is
+corrected. The types of all things being explicitly clear also
+makes it easier to understand the code. The ease of understanding
+enables programmers on your team to work faster and makes the job
+of external experts easier.</p>
+</li>
+<li>
+<p><strong>Purity.</strong> Purity is the ability to prove the
+<em>absence of unwanted side-effects</em>. In Haskell you can
+indicate (usually done with the <code>IO</code> type) whether a
+function in the code has any interaction with the outside world. If
+you indicate that code doesn't interact with the outside world,
+Haskell <em>guarantees</em> that it will not do so. If a function
+with the type <code>checkSufficientBalanceForTransaction :: User
+-&gt; Amount -&gt; Result</code> does not carry an <code>IO</code>
+label you know it cannot access the Internet, that it cannot read
+any files, and that it cannot by itself have any visible effect on
+the world. You are guaranteed that all it can do is access the data
+that is passed in (the <code>User</code> whose balance is to be
+checked, and the <code>Amount</code> the user would like to send)
+and return a <code>Result</code> that says whether the user's
+balance is sufficient. This dramatically reduces the amount of code
+you have to vet against malicious inputs. Pure functions are
+guaranteed to always return the same output value given the same
+input values. This property allows the Haskell compiler to produce
+programs that run faster and use all available CPU cores. It also
+eases testing and quality assurance.</p>
+</li>
+</ul>
+<p>Haskell forces you to write code that is explicit, <a href=
+"/blog/2016/11/devops-best-practices-multifaceted-testing" rel=
+"noopener" target="_blank">covers all corner cases</a>, and is hard
+to misunderstand.</p>
+<p><img alt="Blockchain HandShake" sizes=
+"(max-width: 600px) 100vw, 600px" src=
+"/images/hubspot/c04f7976e4f7dc8fcaa07036053554e39a5b9cad62ac26b3a0c2a774f0584969.jpeg"
+srcset=
+"/images/hubspot/405ae31943fe945fdd27c4bbf52ebd26e670c88d1b3bbd40883b13b1a234d0d4.jpeg 300w, /images/hubspot/c04f7976e4f7dc8fcaa07036053554e39a5b9cad62ac26b3a0c2a774f0584969.jpeg 600w, /images/hubspot/d9e2e2bc3417f3d701f2864e76d1cb609a9563322dbb2333845bab9dd7f9250c.jpeg 900w, /images/hubspot/20f9caeb0993225ee9015132ebdbbd2a1dabd8b8e86ba1d82ad59e068f0058bc.jpeg 1200w, /images/hubspot/c58ec2d4a01ff752f6a15c26c1665e4208ad22ab816699fa7ebc9975c3cec865.jpeg 1500w, /images/hubspot/ccb3dd21136f92af1b68654ef0eaf7af3a74b165afbb4c1f5e45e92c73a15057.jpeg 1800w"
+style="width: 600px; display: block; margin: 0px auto;" width=
+"600"></p>
+<h2>Benefits of the Haskell ecosystem</h2>
+<p>Raw technical features are not the only reason why Haskell is
+becoming popular for writing cryptocurrencies. It is also the
+ecosystem that surrounds the language, and the mind set of Haskell
+programmers that make it an attractive choice.</p>
+<h3>Quality focused community</h3>
+<p>Haskell tends to select for engineers who are particularly
+interested in creating quality focused, high reliability software.
+Some Haskellers started their programming career with Haskell and
+stuck to it, but this is still rare. Most Haskellers chose Haskell
+after a long journey in search for better tools and improved
+productivity. They are often versed in many programming languages
+and have explored myriad techniques.</p>
+<p>Haskell programmers tend to be well trained and enjoy
+understanding the problem domain before starting to code. This
+discipline is crucial when working on high-risk projects like
+cryptocurrencies.</p>
+<p>The design and implementation of new programming language
+features often happens in Haskell before they are adapted into
+other languages. This entices software developers that wish to work
+outside of current boundaries. The diversity, passion, and
+experience makes the Haskell community a great place to build teams
+for creating new technology.</p>
+<h3>Owning the toolchain</h3>
+<p>While Haskell and the surrounding tools and libraries are
+sophisticated and require effort to get into, those that do master
+them find themselves equipped with an unexpected power: being able
+to own their entire programming toolchain. An expert Haskell
+programmer can modify the code their team writes, the libraries
+that the project depends on, down to the Haskell compiler that
+creates the final machine code. This “hackability” of the Haskell
+toolchain brings various benefits:</p>
+<ul>
+<li>If something doesn't work the way you want or need it too, you
+can change it.</li>
+<li>If you need a new compiler feature to make your code safer or
+easier to write, you can add it without too much effort.</li>
+<li>If the maintainer of a library you depend on no longer takes
+care of it, you can take over maintenance with relative ease. Tools
+like <a href="https://haskellstack.org/" rel="noopener" target=
+"_blank"><code>stack</code></a> make this straightforward, allowing
+you to easily swap out upstream projects with your own forks. This
+reduces the risk relying on dependencies exposes to your
+project.</li>
+<li>Vetting the code of all your dependencies (which is critical
+for safety especially of cryptocurrencies) is a feasible task.</li>
+</ul>
+<p>This is different compared to many other programming languages.
+Even an expert C++ programmer often does not feel equipped to make
+changes to the C++ compiler due to the complexities and sheer
+amount of code involved. The GCC compiler has over 7 million lines
+of code.</p>
+<p>The Haskell toolchain is clean and consists of relatively small
+amounts of code. <a href="https://www.haskell.org/ghc/" rel=
+"noopener" target="_blank">GHC</a> totals around 0.5 million lines,
+including all of its Haskell dependencies. This makes it possible
+for a single programmer to be familiar with Haskell's compiler,
+runtime, and libraries in their entirety.</p>
+<h2>Summary</h2>
+<p>A number of technical and non-technical points come together in
+making Haskell a great choice for cryptocurrency implementations.
+This is especially true when it comes to safety and programming
+ecosystems.</p>
+<p>One of the biggest strengths of Haskell for cryptocurrencies is
+its advertisability:</p>
+<p>Haskell has a <em>reputation</em> for excelling in these areas.
+It is already known and respected for providing strong guarantees
+and for being made and used by experts. At time of writing <a href=
+"https://coinmarketcap.com/" rel="noopener" target=
+"_blank">coinmarketcap.com</a> listed 1595 existing
+cryptocurrencies. A new cryptocurrency can set itself apart from
+that competition by drawing attention to the improved safety and
+quality derived from being built in Haskell.</p>
+<h3>If you liked this post you may also like:</h3>
+<ul>
+<li><a href=
+"/blog/fp-complete-and-cardano-blockchain-audit-partnership" rel=
+"noopener" target="_blank">Cardano and FP Complete team up to Audit
+Blockchain Technology</a></li>
+<li><a href=
+"/blog/fintech-best-practices-devops-priorities-for-financial-technology-applications"
+rel="noopener" target="_blank">Best Practices for FinTech
+Software</a></li>
+<li><a href="/5-winning-devops-strategies-for-fintech-companies"
+rel="noopener" target="_blank">5 Killer Devops Strategies for Great
+FinTech Software</a></li>
+<li><a href=
+"/blog/10-common-mistakes-to-avoid-in-fintech-software-development"
+rel="noopener" target="_blank">10 Common Mistakes to Avoid when
+Developing FinTech Software</a></li>
+</ul>
+<p><a href="/5-winning-devops-strategies-for-fintech-companies"
+rel="noopener" target="_blank"><img alt="fpc-fintech-tofu-banner"
+height="174" sizes="(max-width: 600px) 100vw, 600px" src=
+"/images/hubspot/8a9d345b4139555cb0e094f161d3d98243f004329271b8aff1e52b4232652ed0.jpeg"
+srcset=
+"/images/hubspot/9410af799c001c1500d18c228d823f7e41c69242dfd492a6eeb8acd54e578362.jpeg 300w, /images/hubspot/8a9d345b4139555cb0e094f161d3d98243f004329271b8aff1e52b4232652ed0.jpeg 600w, /images/hubspot/9c68c3b841c0f8874c1643685333537a12ad0d00bb427de53531d410948ba8bd.jpeg 900w, /images/hubspot/b261b79e2769553de7cc2a3761907c83d9c9eb390f9f24290027a17c0a15ec63.jpeg 1200w, /images/hubspot/d4ca96cdbb1d817fdb209463ff84b8ff94f0c7c4005589012605ddd6a284312c.jpeg 1500w, /images/hubspot/3c7028a382819b9a5bd8af76d68515f2fab1bedc18be7b9d33c3b9682bf23298.jpeg 1800w"
+style="width: 600px; margin: 0px auto; display: block;" width=
+"600"></a></p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Why%20Haskell%20is%20hot%20for%20cryptocurrencies https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;why-haskell-is-hot-for-cryptocurrencies&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;why-haskell-is-hot-for-cryptocurrencies&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;why-haskell-is-hot-for-cryptocurrencies&#x2F;&amp;title=Why%20Haskell%20is%20hot%20for%20cryptocurrencies"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;why-haskell-is-hot-for-cryptocurrencies&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#aeddcfc2cbddeec8decdc1c3dec2cbdacb80cdc1c3" targe="_blank"><span class="__cf_email__" data-cfemail="daa9bbb6bfa99abcaab9b5b7aab6bfaebff4b9b5b7">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

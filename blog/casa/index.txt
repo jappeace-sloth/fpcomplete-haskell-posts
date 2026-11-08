@@ -1,0 +1,163 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Casa: Content-Addressable Storage Archive
+
+By Chris Done, December 9, 2019
+
+Share this     
+
+Casa stands for "content-addressable storage archive", and also means "home" in romance languages,
+and it is an online service we're announcing to store packages in a content-addressable way.
+
+It's the natural next step in our general direction towards reproducible builds and immutable
+infrastructure. Its first application is use in the most popular Haskell build tool, Stack. The
+master branch of this tool is now download its package indexes, metadata and content from this
+service.
+
+Although its primary use case was for Haskell, it could easily apply to other languages, such as
+Rust's Cargo package manager. This post will focus on Casa in general. Next week, we'll dive into
+its implications for Haskell build tooling.
+
+Content-addressable storage in a nutshell
+
+CAS is primarily an addressing system:
+
+  • When you store content in the storage system, you generate a key for it by hashing the content,
+    e.g. a SHA256.
+  • When you want to retrieve the content, you use this SHA256 key.
+
+Because the SHA256 refers to only this piece of content, you can validate that what you get out is
+what you put in originally. The logic goes something like:
+
+  • Put "Hello, World!" into system.
+  • Key is: dffd6021bb2bd5b0af676290809ec3a53191dd81c7f70a4b28688a362182986f
+  • Later, request dffd6021bb2bd5b0af676290809ec3a53191dd81c7f70a4b28688a362182986f from system.
+  • Receive back content, check that sha256sum(content) =
+    dffd6021bb2bd5b0af676290809ec3a53191dd81c7f70a4b28688a362182986f.
+  • If so, great! If not, reject this content and raise an error.
+
+This is how Casa works. Other popular systems that use this style of addressing are IPFS and, of
+course, Git.
+
+Casa endpoints
+
+There is one simple download entry point to the service.
+
+  • GET https://casa.fpcomplete.com/<your key> -- to easily grab the content of a key with curl.
+    This doesn't have an API version associated with it, because it will only ever accept a key and
+    return a blob.
+
+These two are versioned because they accept and return JSON/binary formats that may change in the
+future:
+
+  • GET https://casa.fpcomplete.com/v1/metadata/<your key> -- to display metadata about a value.
+  • POST https://casa.fpcomplete.com/v1/pull - we POST up to a thousand key-len pairs in binary
+    format (32 bytes for the key, 8 bytes for the length) and the server will stream all the
+    contents back to the client in key-content pairs.
+
+Beyond 1000 keys, the client must make separate requests for the next 1000, etc. This is due to
+request length limits intentionally applied to the server for protection.
+
+Protected upload
+
+Upload is protected under the endpoint /v1/push. This is similar to the pull format, but sends
+length-content pairs instead. The server streamingly inserts these into the database.
+
+The current workflow here is that the operator of the archive sets up a regular push system which
+accesses casa on a separate port which is not publicly exposed. In the Haskell case, we pull from
+Stackage and Hackage (two Haskell package repositories) every 15 minutes, and push content to Casa.
+
+Furthermore, rather than uploading packages as tarballs, we instead upload individual files. With
+this approach, we remove a tonne of duplication on the server. Most new package uploads change only
+a few files, and yet an upgrading user has to download the whole package all over again.
+
+Service characteristics
+
+Here are some advantages of using CAS for package data:
+
+ 1. It's reproducible. You always get the package that you wanted.
+ 2. It's secure on the wire; a man-in-the-middle attack cannot alter a package without the SHA256
+    changing, which can be trivially rejected. However, we connect over a TLS-encrypted HTTP
+    connection to preserve privacy.
+ 3. You don't have to trust the server. It could get hacked, and you could still trust content from
+    it if it gives you content with the correct SHA256 digest.
+ 4. The client is protected from a DoS by a man-in-the-middle that might send an infinitely sized
+    blob in return; the client already knows the length of the blob, so it can streamingly consume
+    only this length, and check it against the SHA256.
+ 5. It's inherently mirror-able. Because we don't need to trust servers, anyone can be a mirror.
+
+Recalling the fact that each unique blob is a file from a package, a cabal file, a snapshot, or a
+tree rendered to a binary blob, that removes a lot of redundancy. The storage requirements for Casa
+are trivial. There are currently around 1,000,000 unique blobs (with the largest file at 46MB).
+Rather than growing linearly with respect to the number of uploaded package versions, we grow
+linearly with respect to unique files.
+
+Internal Company Casas
+
+Companies often run their own package archive on their own network (or IP-limited public server)
+and upload their custom packages to it, to be used by everyone in the company.
+
+Here are some reasons you might want to do that:
+
+  • Some organizations block outside Internet access, for security and retaining IP.
+  • Even if the download has integrity guarantees, organizations might not want to reveal what is
+    being downloaded for privacy.
+  • An organization may simply for speed reasons want downloads of packages to come within the same
+    network, rather than reaching across the world which can have significant latency.
+
+You can do the same with Casa.
+
+The Casa repository is here which includes both the server and a binary for uploading and querying
+blobs.
+
+In the future we will include in the Casa server a trivial way to support mirroring, by querying
+keys on-demand from other Casa servers (including the main one run by us).
+
+Summary
+
+Here's what we've brought to the table with Casa:
+
+  • Reliable, reproducible referring to packages and their files.
+  • De-duplication of package files; fewer things to download, on your dev machine or on CI.
+  • An easy to use and rely on server.
+  • A way to run an archive of your own that is trivial to run.
+
+We believe this CAS architecture has use in other language ecosystems, not just Haskell. If you're
+a company interested in running your own Casa server, and/or updating your tooling, e.g. Cargo, to
+use this service, please contact us.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

@@ -1,0 +1,131 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Experimental package releases via Stackage Server
+
+By Michael Snoyman, December 1, 2014
+
+Share this     
+
+Right now, Hackage has no concept of a stable and an unstable release of a package. As a result,
+authors are hesitant to release code to Hackage unless it's already stable. But it's difficult to
+get people to test new versions of packages if it's difficult to install. Installing a single new
+package from Github may not be difficult, but sometimes you want people to test out a new set of
+versions for multiple packages, which can be tedious. This blog post will demonstrate how you can
+use Stackage Server to make that easy.
+
+While the primary purpose of Stackage Server is to host the official Stackage snapshots, it has
+been designed as completely generic server for hosting any set of packages desired, including
+custom packages not yet released to Hackage. All you need to do is:
+
+ 1. Create an account on Stackage Server (by logging in with Google+ or Mozilla Persona)
+ 2. Create a tarball in the correct format (described below)
+ 3. Upload it from the snapshot upload page
+
+Tarball format
+
+You can download a sample bundle file by clicking on the "Bundle" link at the top of any snapshot
+page. It might be useful to open one up as you looking through the rest of this section.
+
+You can view the tarball parsing code in the Stackage Server codebase itself. The format is
+designed to be simple to replicate and extensible for future functionality. (In fact, the slug file
+feature I mention below was only recently added.)
+
+The tarball must be tarred in a format that the tar package can read, and then gzipped. Each file
+in the tarball is treated indepedently. Directory structure inside the tarball is ignored. Using
+tar cfz mybundle.tar.gz somedirectory is usually sufficient to meet these criterion.
+
+Each file inside the tarball is treated separately. There are four kinds of files recognized:
+
+  • desc gives the human-readable title and description for the snapshot. Put the title on the
+    first line, and the description on the following lines. (Note that, currently, we only display
+    the title on the site, though we may add the description to the display in the future.)
+  • slug is a recommendation for the short name of the snapshot. For example, the most recent GHC
+    7.8 snapshot as I write this is https://www.stackage.org/snapshot/2014-11-26-ghc78-exc, which
+    has a slug of 2014-11-26-ghc78-exc. Slugs must be globally unique, so if someone else has
+    already taken that slug, Stackage Server will append a randomized token to the end.
+  • hackage is a list of all the package/version combos to be included in this snapshot from
+    Hackage. For example, you might have:
+
+    foo-1.0.0
+    bar-1.0.1
+
+    You're free to have multiple versions per package.
+
+  • Any file ending in .tar.gz will be treated as a custom sdist tarball, and will be made
+    available for download from stackage.org. This is how you can provide custom versions of a
+    package not released on Hackage. As an example of this, here's a snapshot with two unreleased
+    packages in it (link removed).
+
+Custom snapshot
+
+Another use case is customizing an official Stackage snapshot. For example, you may be using a
+certain snapshot, but want to get a newer version of one of the packages from Hackage, or write a
+custom patch for one of the package versions and use that. If so, all you need to do is:
+
+ 1. Download the bundle file
+ 2. Tweak its contents
+ 3. Upload it
+ 4. Use the new URL
+
+Replace or augment Hackage?
+
+The instructions for using a Stackage snapshot mention replacing the hackage.haskell.org
+remote-repo line in your cabal config file with the stackage.org URL. This makes sense if you're
+providing a snapshot that has all the packages from Hackage that you'll need. However, if you're
+testing out a few new packages, it's simpler to just provide those few extra packages, and add an
+extra remote-repo line to your config file instead of replacing the primary entry. Note that this
+trick can be used to augment a Stackage snapshot in addition to adding extra packages to Hackage.
+
+Caveats
+
+You should keep two things in mind when using Stackage Server in this manner:
+
+  • Snapshots you create live forever. In cases of extreme issues (like accidentally uploading
+    copyrighted data) we will of course assist in removing the snapshot. But generally speaking, a
+    snapshot is forever, just like uploading a package to Hackage makes it available forever.
+  • All snapshots are publicly listed, so you don't want to put any sensitive information in there.
+    Of course, the Stackage Server codebase is open source, so you're free to run your own, private
+    instance if you'd like. Alternatively, FP Complete provides private Stackage Server instances
+    as a service, feel free to contact us for more information.
+
+Other uses
+
+Creating a generic tool like that has the advantage that it can be (ab)used to purposes other than
+the original intent of the author. In this case, I've described some intended alternate use cases
+for this functionality. If people come up with other unintended use cases, let me know!
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

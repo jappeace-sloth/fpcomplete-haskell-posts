@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Haskell from C: Where are the for Loops?</title>
+  <meta property="og:title" content="Haskell from C: Where are the for Loops?">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2013&#x2F;06&#x2F;haskell-from-c&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Haskell from C: Where are the for Loops?</h1>
+      
+      <p id="page-description">By Chad Scherrer, March 19, 2013</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Haskell%20from%20C%3A%20Where%20are%20the%20for%20Loops%3F https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2013&#x2F;06&#x2F;haskell-from-c&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2013&#x2F;06&#x2F;haskell-from-c&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2013&#x2F;06&#x2F;haskell-from-c&#x2F;&amp;title=Haskell%20from%20C%3A%20Where%20are%20the%20for%20Loops%3F"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2013&#x2F;06&#x2F;haskell-from-c&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>If you're coming from a language like C, Haskell can take some
+getting used to. It's typical for a new language to feel a little
+different, but in Haskell the differences are more dramatic, and
+more fundamental. In particular...</p>
+<h2 id="where-are-the-codeforcode-loops">Where are the
+<code>for</code> loops?</h2>
+<p>In most imperative languages, <code>for</code> loops are all
+over the place, and are used for a wide variety of <i>different
+things</i>. Whether you're squaring every value of an array or
+finding its sum, you're probably using a <code>for</code> loop.</p>
+<p>In Haskell, control structures are more expressive. Sure,
+there's a counterpart to C's <code>for</code> (Haskell's
+<code>forM_</code>). But that's a discussion for another time.
+Today, we'll see some <code>for</code> loops in C that can be
+written very differently in Haskell, and why that's a good
+thing.</p>
+<p>Consider the simple example of computing the norm of a vector.
+For a vector <strong>x</strong>∈ℝ<sup>n</sup>, this is just</p>
+| | x | | = ∑ i = 0 n - 1 x i 2
+<p>Conceptually, there are three stages to this computation:</p>
+<ol>
+<li><strong><code>mapSq</code></strong>: Square each element</li>
+<li><strong><code>sum</code></strong>: Compute the sum</li>
+<li><strong><code>sqrt</code></strong>: Compute the square
+root</li>
+</ol>
+<p>We can think of the first step as building (at least abstractly)
+a new array whose <code>i</code>th element is <code>y[i] = x[i] *
+x[i]</code>. In functional programming, we refer to this as
+<i>mapping</i> the square function over the array.</p>
+<p>Putting everything in terms of functions, we can write this (in
+Haskell-like pseudocode) as</p>
+<pre><code>norm(x) = sqrt(sum(mapSq(x))) ,</code></pre>
+<p>To clean up the syntax a bit, we can instead use the notation
+for function composition and write</p>
+<pre><code>norm(x) = (sqrt ○ sum ○ mapSq)(x) ,</code></pre>
+<p>or just</p>
+<pre><code>norm = sqrt ○ sum ○ mapSq .</code></pre>
+<h2 id="computing-norms-in-c">Computing Norms in C</h2>
+<p>In C, this modular approach leads to something like</p>
+<pre><code>void mapSq(double *x, double *y, int n) {
+  int i;
+  for(i=0; i&lt;n; i++) {
+    y[i] = x[i] * x[i];
+  }
+}
+
+double sum(double *x, int n) {
+  double result = 0;
+  int i;
+  for(i=0; i&lt;n; i++) {
+    result += x[i];
+  }
+  return result;
+}
+
+double norm1(double *x, int n) {
+  double *y = malloc(n * sizeof(double));
+  mapSq(x, y, n);
+  theSum = sum(y, n);
+  free(y);
+  return sqrt(theSum);
+}</code></pre>
+<p>We'd probably never do it this way, for a few reasons:</p>
+<ul>
+<li>For such a simple computation, it's way too verbose.</li>
+<li>It uses two separate <code>for</code> loops, where only one is
+needed.</li>
+<li>There's an unnecessary <code>malloc</code> that's unlikely to
+be removed by the compiler.</li>
+</ul>
+<p>If it weren't for these issues, we probably would write code
+like the above. It has the advantage of being more modular and of
+faithfully representing the concepts. But the problems are too big
+to ignore, so we typically make some code transformations in our
+head, and instead write</p>
+<pre><code>double norm2(double *x, int n) {
+  double theSum = 0.0;
+  for (int i = 0; i &lt; n; i++) { 
+    theSum += x[i]*x[i]; }
+  return sqrt(theSum);
+}</code></pre>
+<p>This code is very clear, and performs well, but we've entirely
+lost modularity. In this case the code is very short, so we don't
+give the compromise a second thought. But at a larger scale, this
+kind of manual optimization reduces code reuse and makes components
+more complex. Code becomes harder to understand, and harder to test
+for correctness.</p>
+<h5 style="text-align: center;"><span style=
+"color: #9a00ff;"><strong>Click below to&nbsp;learn more about a
+unique offer</strong></span></h5>
+<h2 id="computing-norms-in-haskell">Computing Norms in Haskell</h2>
+<p>In Haskell, we could write <code>norm</code> as</p>
+<pre><code class="active haskell">import Prelude hiding (sum)
+import Data.List (foldl')
+
+-- show
+mapSq x = map sq x
+  where
+  sq xi = xi * xi
+
+sum x = foldl' (+) 0.0 x
+
+norm x = (sqrt . sum . mapSq) x
+
+main = print (norm [1,2,3,4,5])</code></pre>
+<p>While the C example is in terms of arrays, this Haskell example
+instead uses <i>lazy linked lists</i>. We'll change this in a
+bit.</p>
+<p>Let's step through this code. The first function,
+<code>mapSq</code>, is defined in terms of the <code>map</code>
+function, and produces a new list by squaring every element of the
+original list. The squaring function <code>sq</code> can also be
+written as <code>(\x -&gt; x*x)</code>, allowing us to write the
+function as</p>
+<pre><span class="hs-definition">mapSq</span> <span class=
+"hs-varid">x</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">map</span> <span class="hs-layout">(</span><span class=
+"hs-keyglyph">\</span><span class="hs-varid">x</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">x</span><span class="hs-varop">*</span><span class=
+"hs-varid">x</span><span class="hs-layout">)</span> <span class=
+"hs-varid">x</span></pre>
+<p>or simply</p>
+<pre><span class="hs-definition">mapSq</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">map</span> <span class="hs-layout">(</span><span class=
+"hs-keyglyph">\</span><span class="hs-varid">x</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">x</span><span class="hs-varop">*</span><span class=
+"hs-varid">x</span><span class="hs-layout">)</span></pre>
+<p>Next, the <code>sum</code> function is defined in terms of
+<code>foldl'</code>. Before you worry too much about the name, you
+should know that a <i>fold</i> is just a function that traverses
+some data structure, using a given function to update some
+<i>accumulator</i> as it goes. In the current case, the accumulator
+is the counterpart of "<code>theSum</code>" in the C version.
+Accumulation is via addition, and starts at 0.0.</p>
+<p>Lists can be folded from either side. In our case, we're using
+<code>foldl'</code>. The "<code>l</code>" in this function name is
+for "left", the side we're starting on, and the "<code>'</code>"
+indicates that this fold is <i>strict</i>. Haskell is lazy by
+default, but for numeric there's no point in delaying evaluation of
+the accumulator (and for large lists it can lead to a stack
+overflow), so in this case we prefer to evaluate it at every
+step.</p>
+<p>As it turns out, our <code>sum</code> function is common enough
+that it's included in Haskell's Prelude; we can use it exactly as
+described with no need to define it.<sup>1</sup> Our
+<code>norm</code> function is now simple:</p>
+<pre><code class=
+"active haskell">norm = sqrt . sum . map (\x -&gt; x*x)
+
+main = print (norm [1,2,3,4,5])</code></pre>
+<p>This looks remarkably like the mathematical specification; some
+have affectionately refered to Haskell as an <i>executable
+specification language</i>.</p>
+<h2 id="but-what-about-performance">But what about
+performance?</h2>
+<p>Let's compare performance with C. In order to measure easily
+across languages, we'll make the vector much bigger - lets say a
+billion elements. We'll start with a standard list implementation
+in Haskell and compare this to an implementation in C using arrays.
+Then we'll make a couple of minor changes in Haskell that allow us
+to use unboxed vectors.</p>
+<p>We'll test using an AMD A6-3670 APU running Ubuntu 13.04. For
+compilation, we'll use GHC 7.6.3 (with <code>-O2</code>) and GCC
+4.7.3 (with <code>-O3</code>).</p>
+<h3 id="haskell---lists">Haskell - Lists</h3>
+<p>Our Haskell version is certainly elegant, but using linked lists
+in this way is not the best approach for performance. For a billion
+elements, the running time is <strong>over 2 minutes</strong>.
+What's going on here?</p>
+<p>Haskell lists are <i>lazy</i> (only those elements required by
+later calculations are computed) and <i>polymorphic</i> (you can
+have a list of elements of any type, even if elements of that type
+don't take up a fixed number of bytes). In order to implement this,
+a list in Haskell is really a <i>list of pointers to elements</i>.
+In cases like this, all that pointer chasing adds up.</p>
+<p>We'll soon see an easy way to improve this and get Haskell
+running really fast.</p>
+<h3 id="c---arrays">C - Arrays</h3>
+<p>Before we get Haskell zipping along, let's look at how we would
+do this in C. We'll use the faster version of our norm in C
+(<code>norm2</code> above). Here's the plan:</p>
+<ol>
+<li><code>malloc</code> an array of a billion elements</li>
+<li>Fill the array so that <code>x[i] = i</code></li>
+<li>Find the norm of the vector</li>
+<li>Free the array and print the result</li>
+</ol>
+<p>We'll use the OS to measure the time of the whole process, and
+insert some code to measure step (3) alone. So all together we have
+this:</p>
+<pre><code>#include &lt;time.h&gt;
+#include &lt;math.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#define x_size 1000000000
+
+double norm(double *x, int n) {
+  double theSum = 0.0;
+  int i;
+  for (i=0; i&lt;n; i++) { 
+    theSum += x[i]*x[i]; 
+  }
+  return sqrt(theSum);
+}
+
+int main() {
+  double *x = malloc(x_size * sizeof(double));
+  int i;
+  for(i=0; i&lt;x_size; i++) {
+    x[i] = (double) i;
+  }
+  clock_t start = clock();
+  double result = norm(x, x_size);
+  clock_t end = clock();
+  printf("%3.2f\n", result);
+  printf("%3.2f sec\n", (end-start)/(double)CLOCKS_PER_SEC);
+  free(x);
+  return 0;
+}</code></pre>
+<p>The whole thing takes about <strong>7 seconds</strong> to run,
+with the <code>norm</code> function itself taking <strong>1.9
+seconds</strong>.</p>
+<h3 id="haskell---unboxed-vectors">Haskell - Unboxed Vectors</h3>
+<p>To close in on C, let's make some minor changes. Instead of
+using lists, we'll use unboxed <i>vector</i>s. The "unboxed"
+qualifier just means that the elements are available directly,
+without the need to follow a pointer.</p>
+<p>From a data structure standpoint, Haskell's vectors are a lot
+like C's arrays. There is an important difference, though; many
+operations on vectors (even boxed ones) are subject to
+<i>fusion</i>. A <code>map</code> followed by a <code>sum</code>
+will be represented as a tight loop, but the code can remain
+modular. Remember the malloc in our original C code? Through
+fusion, it's eliminated entirely.</p>
+<p>Updating the original code to operate on vectors is
+straightforward. And To stay entirely outside the realm of lists,
+we can generate our vector using <code>iterateN</code>, which plays
+the role of our data-filling loop in C.</p>
+<p>[EDIT: Because School of Haskell compilation does not use
+<code>-O2</code>, there is no fusion, so we'll need to keep the
+values a bit smaller. In this case, I'll use an unusually small
+value for <code>oneBillion</code>, though for benchmarking I still
+use 10<sup>9</sup>]</p>
+<pre><code class="active haskell">import Data.Vector.Unboxed as V
+
+norm ::  Vector Double -&gt; Double
+norm = sqrt . V.sum . V.map (\x -&gt; x*x)
+
+oneBillion = 100
+
+main = print $ norm $ V.iterateN oneBillion (+1) 0.0 </code></pre>
+<p>This code runs in about <strong>2.5 seconds</strong>. It's just
+a bit longer than C's inner loop alone, but much less than the 7
+seconds if the malloc is included.</p>
+<p>EDIT: As Pedro Vasconcelos points out, tight numerical loops
+like this can often benefit from using the LLVM back-end, via
+<code>-fllvm</code>. This brings the time for the entire Haskell
+run down to <strong>1.9 seconds</strong>, the same as the inner
+loop alone in C!</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Haskell's control structures express that a reduction (a
+<i>fold</i> in Haskell) is very different than a
+<i>map</i>.<sup>2</sup> Libraries like <strong>vector</strong>
+implement powerful fusion techniques to combine loops and eliminate
+intermediate data structures. And <i>unboxing</i> elminates
+excessive pointer chasing required by built-in lists.</p>
+<p>All in all, this lets us write <i>high-level code without
+sacrificing high performance</i>. The need for any compromise
+between the two is becoming more rare every day.</p>
+<hr>
+<sup>1</sup> The Prelude's `sum` function is not defined in terms
+of `foldl'`, but instead relies on GHC's strictness analysis. In
+GHC 7.6.3 there's a regression, as described in [this
+ticket](https://hackage.haskell.org/trac/ghc/ticket/7954). Because
+of this, we stuck with `foldl' (+) 0.0` in timing our Haskell
+version using lists.<br>
+<sup>2</sup> EDIT: Michael Sloan has pointed out that the
+difference is not so fundamental, since `map f = foldr ((:) . f)
+[]`.
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Haskell%20from%20C%3A%20Where%20are%20the%20for%20Loops%3F https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2013&#x2F;06&#x2F;haskell-from-c&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2013&#x2F;06&#x2F;haskell-from-c&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2013&#x2F;06&#x2F;haskell-from-c&#x2F;&amp;title=Haskell%20from%20C%3A%20Where%20are%20the%20for%20Loops%3F"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2013&#x2F;06&#x2F;haskell-from-c&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#e695878a8395a6809685898b968a839283c885898b" targe="_blank"><span class="__cf_email__" data-cfemail="e291838e8791a28492818d8f928e879687cc818d8f">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

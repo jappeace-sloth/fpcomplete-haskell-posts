@@ -1,0 +1,232 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Our composable community infrastructure
+
+By Mathieu Boespflug, March 26, 2015
+
+Share this     
+
+Our composable community infrastructure
+
+TL;DR: we propose to factor Hackage into a separate, very simple service serving a stash of Haskell
+packages, with the rest of Hackage built on top of that, in the name of availability, reliability
+and extensibility.
+
+One of the main strengths of Haskell is just how much it encourages composable code. As
+programmers, we are goaded along a good path for composability by the strictures of purity, which
+forces us to be honest about the side effects we might use, but first and foremost because first
+class functions and lazy evaluation afford us the freedom to decompose solutions into orthogonal
+components and recompose them elsewhere. In the words of John Hughes, Haskell provides the
+necessary glue to build composable programs, ultimately enabling robust code reuse. Perhaps we
+ought to build our shared community infrastructure along the same principles: freedom to build
+awesome new services by assembling together existing ones, made possible by the discipline to write
+these basic building blocks as stateless, scalable, essentially pure services. Let's think about
+how, taking packages hosting as an example, with a view towards solving three concrete problems:
+
+  • Availability of package metadata and source code (currently these are no longer available when
+    hackage.haskell.org goes down).
+  • Long cabal update download times.
+  • The difficulty of third party services and other community services to interoperate with
+    hackage.haskell.org and extend it in any direction the community deems fit.
+
+Haskell packages
+
+Today Haskell packages are sets of files with a distinguished *.cabal file containing the package
+metadata. We host these files on a central package repository called Hackage, a community supported
+service. Hackage is a large service that has by and large served the community well, and has done
+so since 2007. The repository has grown tremendously, by now hosting no less than 5,600 packages.
+It implements many features, some of which include package management. In particular, Hackage
+allows registered users to:
+
+  • Upload a new package: either from the browser or via cabal upload.
+
+  • Download an index of all packages available: this index includes the full content of all
+    *.cabal files for all packages and all versions.
+
+  • Query the package database via a web interface: from listing all packages available by
+    category, to searching packages by name. Hackage maintains additional metadata for each package
+    not stored in the package itself, such as download counts, package availability in various
+    popular Linux distributions. Perhaps in the future this metadata will also include social
+    features such as number of "stars", à la Github.
+
+Some of the above constitute the defining features of a central package repository. Of course,
+Hackage is much more than just that today - it is a portal for exploring what packages are out
+there through a full blown web interface, running nightly builds on all packages to make sure they
+compile and putting together build reports, generating package API documentation and providing
+access to the resulting HTML files, maintaining RSS feeds for new package uploads, generating
+activity graphs, integration with Hoogle and Hayoo, etc.
+
+In the rest of this blog post, we'll explore why it's important to tweeze out the package
+repository from the rest, and build the Hackage portal on top of that. That is to say, talk
+separately about Hackage-the-repository and Hackage-the-portal.
+
+A central hub is the cement of the community
+
+A tell-tale sign of a thriving development community is that a number of services pop up
+independently to address the needs of niche segments of the community or indeed the community as a
+whole. Over time, these community resources together as a set of resources form an ecosystem, or
+perhaps even a market, in much the same way that the set of all Haskell packages form an ecosystem.
+There is no central authority deciding which package ought to be the unique consecrated package for
+e.g. manipulating filesystem paths: on Hackage today there are at least 5, each exploring different
+parts of the design space.
+
+However, we do need common infrastructure in place, because we do need consensus about what package
+names refer to what code and where to find it. People often refer to Hackage as the "wild west" of
+Haskell, due to its very permissive policies about what content makes it on Hackage. But that's not
+to say that it's an entirely chaotic free-for-all: package names are unique, only designated
+maintainers can upload new versions of some given package and version numbers are bound to a
+specific set of source files and content for all time.
+
+The core value of Hackage-the-repository then, is to establish consensus about who maintains what
+package, what versions are available and the metadata associated with each version. If Alice has
+created a package called foolib, then Bob can't claim foolib for any of his own packages, he must
+instead choose another name. There is therefore agreement across the community about what foolib
+means. Agreement makes life much easier for users, tools and developers talking about these
+packages.
+
+What doesn't need consensus is anything outside of package metadata and authorization: we may want
+multiple portals to Haskell code, or indeed have some portals dedicated to particular views (a
+particular subset of the full package set) of the central repository. For example, stackage.org
+today is one such portal, dedicated to LTS Haskell and Stackage Nightly, two popular views of
+consistent package sets maintained by FP Complete. We fully anticipate that others will over time
+contribute other views — general-purpose or niche (e.g. specialized for a particular web framework)
+— or indeed alternative portals — ranging from small, fast and stable to experimental and replete
+with social features aplenty. Think powerful new search functionality, querying reverse
+dependencies, pre-built package sets for Windows, OS X and Linux, package reviews, package voting
+... you name it!
+
+Finally, by carving out the central package repository into its own simple and reliable service, we
+limit the impact of bugs on both availability and reliably, and thus preserve on one of our most
+valuable assets: the code that we together as a community have written. Complex solutions
+invariably affect reliability. Keeping the core infrastructure small and making it easy to build on
+top is how we manage that.
+
+The next section details one way to carve the central package repository, to illustrate my point.
+Alternative designs are possible of course - I merely wish to seek agreement that a modular
+architecture with at its core a set of very small and simple services as our community commons
+would be beneficial to the community.
+
+Pairing down the central hub to its bare essence
+
+Before we proceed, let's first introduce a little bit of terminology:
+
+  • A persistent data structure is an data structure that is never destructively updated: when
+    modified, all previous versions of the data structure are still available. Data.Map from the
+    containers package is persistent in this sense, as are lists and most other data structures in
+    Haskell.
+  • A service is stateless if its response is a function of the state of other services and the
+    content of the request. Stateless services are trivially scaled horizontally - limited only by
+    the scalability of the services they depend on.
+  • A persistent service is a service that maintains its only state as a persistent data structure.
+    Most resources served by a persistent service are immutable. Persistent services share many of
+    the same properties as stateless services: keeping complexity down and scaling them is easy
+    because concurrent access and modification of a persistent data structure requires little to no
+    coordination (think locks, critical sections, etc).
+
+A central hub for all open source Haskell packages might look something like this:
+
+  • A persistent read-only directory of metadata for all versions of all packages (i.e. the content
+    of the .cabal file). Only the upload service may modify this directory, and even then, only in
+    a persistent way.
+
+  • A persistent read-only directory of the packages themselves, that is to say the content of the
+    archives produced by cabal sdist.
+
+  • An upload service, for uploading new revisions of the metadata directory. This service
+    maintains no state of its own, therefore multiple upload services can be spawned if necessary.
+
+  • An authentication service, granting access tokens to users for adding a new package or
+    modifying the metadata for their own existing packages via the upload service(s).
+
+The metadata and package directories together form a central repository of all open source Haskell
+packages. Just as is the case with Hackage today, anyone is allowed to upload any package they like
+via the upload service. We might call these directories collectively The Haskell Stash. End-user
+command-line tools, such as cabal-install, need only interact with the Stash to get the latest list
+of packages and versions. If the upload or authentication services go down, existing packages can
+still be downloaded without any issue.
+
+Availability is a crucial property for such a core piece of infrastructure: users from around the
+world rely on it today to locate the dependencies necessary for building and deploying Haskell
+code. The strategy for maintaining high availability can be worked out independently for each
+service. A tried and tested approach is to avoid reinventing as much of the wheel as we can,
+reusing existing protocols and infrastructure where possible. I envision the following
+implementation:
+
+  • Serve the metadata directory as a simple Git repository. A Git repository is persistent
+    (objects are immutable and live forever), easy to add new content to, easy to backup, easy to
+    mirror and easy to mine for insights on how packages changes over time. Advanced features such
+    as package candidates fall out nearly for free. Rather than serving in its entirety a whole new
+    static tarball of all package metadata (totalling close to 9MB of compressed data) as we do
+    today, we can leverage the existing Git wire protocol to transfer new versions to end users
+    much more efficiently. In short, a faster cabal update!.
+
+    The point here is very much not to use Git as a favoured version control system (VCS), fine as
+    it may be for that purpose, at the expense of any other such tool. Git is at its core an
+    efficient persistent object store first and foremost, with a VCS layered on top. The idea is to
+    not reinvent our own object store. It features a simple disk format that has remained
+    incredibly stable over the years. Hosting all our metadata as a simple Git repository means we
+    can leverage any number of existing Git hosting providers to serve our community content with
+    high uptime guarantees.
+
+  • Serve package source archives (produced by cabal sdist) via S3, a de facto standard API for
+    file storage, supported by a large array of cloud providers. These archives can be large, but
+    unlike package metadata, their content is fixed for all time. Uploading a new version of a
+    package means uploading a new source archive with a different name. Serving our package content
+    via a standard API means we can have that content hosted on a reliable cloud platform. In
+    short, better uptime and higher chance that cabal install will not randomly fail.
+
+Conclusion
+
+The Haskell Stash is a repository in which to store our community's shared code assets in as
+simple, highly available and composable a manner as possible. Reduced to its bare essence, easily
+consumable by all manner of downstream services, most notably, Hackage itself,
+packdeps.haskellers.com, hdiff.luite.com, stackage.org, etc. It is by enabling people to extend
+core infrastructure in arbitrary directions that we can hope to build a thriving community that
+meets not just the needs of those that happened to seed it, but that furthermore embraces new uses,
+new needs, new people.
+
+Provided community interest in this approach, the next steps would be:
+
+ 1. implement the Haskell Stash;
+ 2. implement support for the Haskell Stash in Hackage Server;
+ 3. in the interim, if needed, mirror Hackage content in the Haskell Stash.
+
+In the next post in this series, we'll explore ways to apply the same principles of composability
+to our command-line tooling, in the interest of making our tools more hackable, more powerful and
+ship with fewer bugs.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

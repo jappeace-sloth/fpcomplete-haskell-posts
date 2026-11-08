@@ -1,0 +1,156 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+GHC 7.10RC1 Stackage build results
+
+By Michael Snoyman, December 24, 2014
+
+Share this     
+
+As many of you likely saw recently, GHC 7.10.1 release candidate 1 was just released. As usually
+occurs with this process, there is currently lots of breakage in the Haskell library ecosystem.
+Herbert asked me today if I had plans to throw Stackage at the GHC 7.10 release candidate.
+
+I've used Stackage in the past to be a catalyst to test out packages before release. Until now,
+I've needed to wait until people relax their upper bounds on Hackage to do a proper test. However,
+it would be useful to get more information up front. With the newly overhauled Stackage build
+system, this turned out to be easy: just skip the bounds checks, and pass --allow-newer to cabal
+configure.
+
+I've already opened an issue about restrictive upper bounds preventing GHC 7.10 packages, namely
+Cabal, base, bytestring, deepseq, ghc, template-haskell, time and transformers. The rest of this
+blog post will cover issues I ran into while running the actual build, ignoring version bound
+constraints.
+
+haddock --hoogle is broken
+
+This is easily reproducible. Unpack a package (BoundedChan in this case) and run:
+
+$ cabal haddock --hoogle
+Running Haddock for BoundedChan-1.0.3.0...
+Preprocessing library BoundedChan-1.0.3.0...
+Haddock coverage:
+ 100% ( 10 / 10) in 'Control.Concurrent.BoundedChan'
+haddock: internal error: expectJust getPackageDetails
+
+After this error message, I disabled --hoogle. I've already opened a Trac ticket for this.
+
+Build and test errors
+
+I turned off reporting of packages that failed due to a build failure in one of their dependencies,
+since at this point it's simply noise. With those filtered out, the following are the primary build
+and test failures:
+
+  • MaybeT: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • MonadRandom: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • Octree: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • Yampa: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • alex: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • arithmoi: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • binary-list: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • bytestring-trie: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • bzlib: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • control-monad-free: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • crypto-numbers: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • djinn-ghc: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • doctest: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • fclabels: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • fgl: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • file-location: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • filemanip: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • fixed-list: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • ghc-syb-utils: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • haddock-library: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • happy: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • haskell-src: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • hdevtools: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • heaps: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • hint: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • histogram-fill: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • hslogger: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • hspec-expectations: BuildFailureException Process exited with ExitFailure 1: cabal configure
+    --enable-tests --allow-newer --package-db=clear --package-db=global --package-db=/home
+  • /ubuntu/haskell/stackage/builds/stackage-nightly-2014-12-24/pkgdb --libdir=/home/ubuntu/haskell
+    /stackage/builds/stackage-nightly-2014-12-24/lib --bindir=/home/ubuntu/haskell/stack
+  • age/builds/stackage-nightly-2014-12-24/bin --datadir=/home/ubuntu/haskell/stackage/builds/
+    stackage-nightly-2014-12-24/share --docdir=/home/ubuntu/haskell/stackage/builds/stackage-
+  • nightly-2014-12-24/doc --flags=blazehtml05 -bytestring-in-base https network-uri new-base
+    old-locale smallbase splitbase -test-hlint
+  • hybrid-vectors: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • kure: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • lca: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • lhs2tex: BuildFailureException Process exited with ExitFailure 1: cabal configure --allow-newer
+    --package-db=clear --package-db=global --package-db=/home/ubuntu/haskell/stackage/b
+  • uilds/stackage-nightly-2014-12-24/pkgdb --libdir=/home/ubuntu/haskell/stackage/builds/
+    stackage-nightly-2014-12-24/lib --bindir=/home/ubuntu/haskell/stackage/builds/stackage-nightl
+  • y-2014-12-24/bin --datadir=/home/ubuntu/haskell/stackage/builds/stackage-nightly-2014-12-24/
+    share --docdir=/home/ubuntu/haskell/stackage/builds/stackage-nightly-2014-12-24/doc --f
+  • lags=blazehtml05 -bytestring-in-base https network-uri new-base old-locale smallbase splitbase
+    -test-hlint
+  • libgit: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • list-t: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • logfloat: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • matrix: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • mtl-prelude: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • mtlparse: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • mysql: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • nanospec: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • options: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • pqueue: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • rank1dynamic: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • repa: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • speculation: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • storable-complex: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • stringsearch: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • syb: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • syb-with-class: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • tar: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • text: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • th-desugar: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • th-expand-syns: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • transformers-compat: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • udbus: BuildFailureException Process exited with ExitFailure 1: cabal build
+  • word8: BuildFailureException Process exited with ExitFailure 1: cabal test --log=/home/ubuntu/
+    haskell/stackage/logs/stackage-nightly-2014-12-24/word8-0.1.1/test-run.out
+
+Altogether, 355 packages attempted builds, with 62 failures. Stackage normally builds about 820
+packages, so approximately 465 packages depend on a package which failed to build.
+
+I've uploaded a tarball with all of the build and test logs included. If there are any questions
+about the results, let me know. I've saved all changes for this build system to the ghc7.10 branch
+of the stackage repo, so I'll be able to easily run this analysis again in the future.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

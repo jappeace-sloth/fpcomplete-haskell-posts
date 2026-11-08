@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Yesod Tutorial 1. My First Web Site</title>
+  <meta property="og:title" content="Yesod Tutorial 1. My First Web Site">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="1">
+  <meta property="og:description" content="1">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;10&#x2F;yesod-tutorial-1-my-first-web-site&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Yesod Tutorial 1. My First Web Site</h1>
+      
+      <p id="page-description">By Bartosz Milewski, October  1, 2012</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Yesod%20Tutorial%201.%20My%20First%20Web%20Site https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;10&#x2F;yesod-tutorial-1-my-first-web-site&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;10&#x2F;yesod-tutorial-1-my-first-web-site&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;10&#x2F;yesod-tutorial-1-my-first-web-site&#x2F;&amp;title=Yesod%20Tutorial%201.%20My%20First%20Web%20Site"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;10&#x2F;yesod-tutorial-1-my-first-web-site&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>This is the first in the series of tutorials introducing a new
+approach to web development using Haskell and Yesod. Haskell is a
+functional language and Yesod is a web development framework
+written in Haskell by Michael Snoyman who also wrote a book about
+it. Michael is a member of the FP Complete team and he provided a
+lot of valuable feedback for this tutorial.</p>
+<p>No previous knowledge of Haskell is required from the reader,
+although you might want to have a peek at Haskell syntax in
+<a href="/blog/2012/09/ten-things-you-should-know-about-haskell-syntax">
+Ten Things You Should Know About Haskell Syntax</a> or at the "A
+Bit of Haskell" section at the end of this tutorial. I will also
+try to explain some of the concepts of modern web development as we
+go.</p>
+<h2>Yesod and Web Development</h2>
+We build web sites using a combination of at least four languages.
+We use HTML for markup, CSS for formatting, JavaScript for the
+logic that runs on a client's browser; and yet another language for
+server-side logic (Java, C#, php, and so on).
+<p>While it makes sense to have specialized languages for
+specialized tasks, it's also important that those languages
+inter-operate. Unfortunately, this is not the case in traditional
+web development. Programmers are forced to keep track of horizontal
+dependencies either by using strict discipline or using a system of
+ad-hoc preprocessors.</p>
+<p>The simplest test for interoperability is to be able to define a
+variable in one language and access it from another. For instance,
+how would you define an ID for a particular element of the web
+page? You could define it, say, in Java, as an integer, and
+initialize it to a unique number. Now you'd like to use this number
+(as a string) in your HTML to identify a marked-up element. Then,
+in CSS, to define the style of this element and, occasionally, in
+your JavaScript code to dynamically change its properties in
+response to user actions.</p>
+<p>Because Yesod is written in Haskell, which is a great language
+for embedding domain specific languages, such horizontal
+integration is easy. HTML, CSS, and JavaScript are simply
+<em>embedded</em> in Haskell code. The code written in these
+languages is <em>quasi-quoted</em> and then pre-parsed by Haskell.
+Because of that last step, it's possible to <em>interpolate</em>
+Haskell code inside those quasi-quotes. So it's perfectly natural
+to define an integral identifier in Haskell and embed it in HTML,
+CSS, or JavaScript. If, for instance, <code>hdr</code> is a Haskell
+variable, it can be interpolated in (quasi-quoted) HTML using an
+escape sequence starting with <code>#{</code> and ending with
+<code>}</code>:</p>
+<pre>&lt;div id=<span style="color:#800">#{hdr}</span>&gt;</pre>
+This way any change in the definition or usage of an ID will be
+checked at compile time.
+<p>This is just a small example of the power of Haskell and Yesod.
+Once you learn how to use those powerful techniques, you'll never
+want to go back to traditional ways of programming.</p>
+<h2>Hello Piggies!</h2>
+Let's start with the simplest nontrivial Yesod program that serves
+just one web page with the text: "Welcome to the Pigsty!". We'll be
+building up this web site to prove that even Piggies can write
+clean, maintainable code.
+<p>Our page can be displayed locally by any browser at the address
+<code>http://localhost:3000</code>. Have a look at this code even
+if you won't understand anything yet. It's highly stylized Haskell
+with some embedded domain-specific languages thrown into the
+mix.</p>
+<pre>{-# LANGUAGE TypeFamilies, QuasiQuotes, MultiParamTypeClasses,
+             TemplateHaskell, OverloadedStrings #-}
+import Yesod
+data Piggies = Piggies
+instance Yesod Piggies
+mkYesod "Piggies" [parseRoutes|
+  / HomeR GET
+|]
+getHomeR = defaultLayout [whamlet|
+  Welcome to the Pigsty!
+|]
+main = warpDebug 3000 Piggies</pre>
+This program starts with some book-keeping. Haskell is an evolving
+language. The last ratified standard dates back to 2010, but it
+wasn't a big change from the 1998 standard, and anything added
+after that is considered an extension. Yesod uses a lot of Haskell
+extensions, so the first line lists those.
+<pre>{-# LANGUAGE TypeFamilies, QuasiQuotes, MultiParamTypeClasses,
+             TemplateHaskell, OverloadedStrings #-}</pre>
+Strictly speaking anything enclosed between <code>{-</code> and
+<code>-}</code> is a comment, but this particular comment is
+understood by the Haskell compiler as a language pragma. This is
+all you need to know about it for now.
+<p>Next we have a statement to import the Yesod library.</p>
+<pre>import Yesod</pre>
+This is a little more than a C++ <code>#include</code>, because
+Haskell has a full-blown module system.
+<p>Next, every Yesod website must define its foundation data
+structure. Here I'm defining a type called
+<code>Piggies</code>:</p>
+<pre>data Piggies = Piggies</pre>
+The Haskell syntax here is: The keyword <code>data</code>
+introduces a new type that I call <code>Piggies</code>. The right
+hand side of a data definition is usually a series of data
+constructors -- here just one; and it's called by the same name as
+the type itself (this is customary for types that have only one
+constructor). This constructor happens to be trivial -- it takes no
+arguments and has no data associated with it. This will not always
+be true in more complex Yesod examples. If you're a C++ programmer,
+you may think of this data type as an enumeration called Piggies
+with only one element also called Piggies.
+<p>This foundation data type represents our particular web site. It
+doesn't matter that the type is trivial (in this case). What
+matters is that it's an instance of a very rich <em>type
+class</em>. The code below tells the compiler that our
+<code>Piggies</code> type is an instance of the <code>Yesod</code>
+class defined in the <code>Yesod</code> library. <em>Yesod</em>
+means <em>foundation</em> in Hebrew, so <code>Piggies</code> form a
+foundation of our web site.</p>
+<pre>instance Yesod Piggies</pre>
+It's not a far reach for a Java or C++ programmer to think of a
+type class as an interface with a bunch of virtual functions. These
+functions often have their default implementations (so they are not
+strictly interfaces). <code>Yesod</code> is just such a class.
+Later we'll see how to customize some of the behaviors of the web
+site by overriding <code>Yesod</code> functions. The
+<code>instance</code> declaration is the place for defining such
+overrides.
+<p>A lot of boilerplate code can be abstracted into Template
+Haskell functions. <code>TemplateHaskell</code> was listed as one
+of the language extensions at the top of the file. One way of
+looking at Template Haskell is as a generator of textual code --
+sort of like C macros, except not that messy. (Acutally, Template
+Haskell generates type-checked Abstract Syntax Trees, but that's a
+completely different story.) <code>mkYesod</code> is an exaple of
+such a TH function.</p>
+<pre>mkYesod "Piggies" [parseRoutes|
+  / HomeR GET
+|]</pre>
+This template function takes two arguments. The first argument is
+the string version of the name of the foundation type, "Piggies".
+The string is used to generate some glue code.
+<p>The second argument to <code>mkYesod</code> is some quasi-quoted
+code:</p>
+<pre>[parseRoutes|
+  / HomeR GET
+|]</pre>
+You'll see a lot of quasi-quoting in Yesod as a way to introduce
+embedded domain-specific languages (EDSLs). Here the language (or
+its parser function) is called <code>parseRoutes</code>. The code
+between <code>[parseRoutes|</code> and <code>|]</code> is written
+in this mini-language.
+<p>I'll explain the syntax of <code>parseRoute</code> later. For
+now let's concentrate on its purpose. When the user is typing a URL
+into their browser or is clicking on a link, the first part of the
+URL is used to find the web server, the rest is the <em>route</em>
+inside the web site. For instance, in the URL
+<code>https://www.fpcomplete.com/blog</code> the part
+<code>https://www.fpcomplete.com</code> is translated by the browser
+and the Internet into the address of the FP Complete server. The
+part <code>/blog</code> is interpreted by the FP Complete server as
+a route.</p>
+<p>The <code>parseRoutes</code> code contains a list of routes,
+their corresponding <em>resources</em>, and methods for accessing
+them. In this case, I have just one route, <code>/</code> (slash),
+that identifies the root of this web site -- the home page if you
+will.</p>
+<code>HomeR</code> is the name (actually, a data constructor) for
+this route. We'll be using this name internally. This is an
+important point: We don't want to use literal URLs for internal
+links. It would be a maintenance nightmare (as it is in other
+approaches to web programming). Instead, whenever I want to embed a
+link to the home page, I'll use <code>HomeR</code>. This approach
+has numerous advantages, one of them being that there will be no
+broken internal links in my code. If I break a link, the code will
+not compile! Also, I'm free to rename the route but keep the
+resource name the same -- the code will work just fine.
+<p>The final part of our route entry, <code>GET</code>, specifies
+the request method by which the web page is accessed. There are
+several request methods used in HTTP, <code>GET</code> and
+<code>POST</code> being the most common ones (by the way, you may
+define separate <code>GET</code> and <code>POST</code> methods for
+the same route, which is useful, for instance, when working with
+forms).</p>
+<p>The important role of <code>mkYesod</code> template function is
+that it dispatches requests to handlers for each route. The
+handlers must be implemented by the programmer. They have very
+specific names, a concatenation of the lowercase request method
+followed by the resource name. In our case it's <code>get</code>,
+the lowercase version of <code>GET</code>, and <code>HomeR</code>,
+resulting in <code>getHomeR</code>. This is our implementation of
+the home page handler:</p>
+<pre>getHomeR = defaultLayout [whamlet|
+  Welcome to the Pigsty!
+|]</pre>
+The implementation calls the function <code>defaultLayout</code>
+which lays out the page, whose contents is given by its
+quasi-quoted argument:
+<pre>[whamlet|
+  Welcome to the Pigsty!
+|]</pre>
+First of all, the function <code>defaultLayout</code> is provided
+as part of the <code>Yesod</code> type class (that's one of those
+"virtual" functions that have the default implementation). As such,
+it can be overridden by the programmer as part of the
+<code>instance Yesod ...</code> statement. We'll use this
+capability later; for now let's just stick to defaults.
+<p>The argument to <code>defaultLayout</code> is a
+<code>Widget</code>, a very useful composable abstraction that may
+combine HTML, CSS, JavaScript, and more. I'll talk more about
+widgets later. Here I'm creating a widget in-line using an HTML
+EDSL called <code>whamlet</code> (it's really a version of
+<code>hamlet</code>, whose consonants are the anagram of html; the
+'w' stands for widget). Like the other EDSL,
+<code>parseRoute</code>, <code>whamlet</code> is implemented using
+quasi-quotations. Here I'm quoting a trivial piece of HTML: a
+string "Welcome to the Pigsty!". This will be the body of my web
+page.</p>
+<p>Finally, our program has to start a web server that will be
+processing requests from web browsers. There are multiple backends
+supported by Yesod, including FastCGI and SCGI, which allow it to
+work with the popular servers like Apache. But there is also a
+built-in backend and server written in Haskell called
+<em>warp</em>. As the name suggests, it's a very fast server. Here
+I'll be using the debug version of warp, so you can see what kind
+of requests are coming its way.</p>
+<pre>main = warpDebug 3000 Piggies</pre>
+The first argument to <code>warpDebug</code> is the port it will be
+listening on, here it's port 3000; the second argument is a value
+of the type which is our foundation data type. This value is
+constructed by calling the data constructor <code>Piggies</code>
+with no arguments.
+<p>And that's it. You can now open your browser and type in
+<code>http://localhost:3000</code> and you'll see the web page I
+have just constructed.</p>
+<p>This might seem like a lot of work just to display "Welcome to
+the Pigsty!" but consider that I have constructed a whole active
+web site and touched a lot of customization points for future
+functionality.</p>
+<h3>Running the Program</h3>
+Let's see what happens when our program runs. A warp server is
+started in the background. It calls the system and waits for http
+requests coming through port 3000. You can see this in the debug
+output of the program:
+<pre>runhaskell 0-minimal
+Application launched, listening on port 3000</pre>
+When you open a web browser and type in the URL
+<code>http://localhost:3000/</code>, a <em>GET</em> request is sent
+to the local system. Again, you can see this request in the debug
+output:
+<pre>
+127.0.0.1 - - [22/Aug/2012:12:08:23 +0200] "GET / HTTP/1.1" 200 4 "" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:6.0.2) Gecko/20100101 Firefox/6.0.2"</pre>
+The requested route is the single slash after GET (if you don't
+include the trailing slash in the URL, the browser will add it for
+you). This route in combination with GET resolves to the
+<code>HomeR</code> resource and is dispatched to the handler
+<code>getHomeR</code>. All this is done in the code generated by
+<code>mkYesod</code>.
+<p>The handler <code>getHomeR</code> produces the HTML page that is
+sent back to the browser. You can see the contents of this page by
+viewing page source in your browser:</p>
+<pre>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    Welcome to the Pigsty!
+  &lt;/body&gt;
+&lt;/html&gt;</pre>
+<h4>Conclusion</h4>
+Even in this simple program you may see important elements of the
+philosophy of Haskell and Yesod. Yesod is not a one-shot program,
+it's a framework. A well designed framework hides the details of
+its plumbing and exposes just the right customization points while
+keeping them orthogonal.
+<p>When you are using a modern elevator, you don't have to worry
+about regulating the current running through the motors using some
+kind of variable resistor -- you just press a button with the floor
+number. You also know that a car can be operated with a steering
+wheel and two pedals (the automatic models). These two pedals are
+not orthogonal though, since you can slow your car either by
+releasing the accelerator or by stepping on the brake. Flying a
+(non-computerized) helicopter is hard because when you increase the
+speed of the main rotor to go up, you have to adjust the speed of
+the tail rotor to stop the helicopter from spinning. A seasoned
+pilot doesn't have to think about it since his or her brain has
+been rewired through training.</p>
+<p>By the same token even a lousy framework is usable because the
+brains of a programmer can be rewired. But if it takes years of
+training to correctly operate a few levers and wheels, how much
+time is needed to master cross-dependencies between web code
+written in four languages? Having a well-designed orthogonal set of
+controls makes a huge difference.</p>
+<p>Let's have another look at our program, this time with the eye
+on customization points.</p>
+<ol>
+<li>Foundation type: You can add arbitrary data that pertains to
+the web site as a whole (what is achieved with global variables in
+other frameworks).</li>
+<li>Yesod instance: You can customize the look and feel of your
+whole web site by overriding default implementations of
+functions.</li>
+<li>Routing tables (the <code>mkYesod</code> function): You can
+design and modify the site map of your web site.</li>
+<li>Handlers for individual web pages/routes/request types.</li>
+<li><code>main</code>: Starting and shutting down the web
+site.</li>
+</ol>
+I will go through all these and many more customization points in
+more detail in later installments of this tutorial.
+<h2>A Bit of Haskell</h2>
+<p>There is very little redundancy in Haskell so almost everything,
+including whitespace, has meaning.</p>
+<p>The good thing is that, once you get used to it, you’ll be able
+to see more program logic at a glance. In a wordy language you not
+only waste precious keystrokes but you also dilute the structure
+and meaning of your program. Code that fills one screenful in
+Haskell, would be spread over several screenfuls in Java. For a
+Haskell programmer, studying a Java or a C++ program is like
+looking at it through a microscope: you see lots of detail but miss
+the big picture.</p>
+<p>One of those things that seem indispensable in other languages
+are special characters for separating statements (e.g., semicolons)
+and delimiting blocks (e.g., braces). Mind you, every programmer
+worth his or her salt uses formatting to make their code readable,
+but the compiler throws the formatting away. Haskell does (almost)
+the opposite. It recognizes blocks by indentation (but please use
+spaces, not tabs), and treats newlines as separators.</p>
+<h4>Function Call Syntax</h4>
+<p>This is probably the first and the hardest obstacle in reading
+Haskell code fluently: There is no special syntax for function
+application. Any set of identifiers separated by
+<strong>spaces</strong> is a function call. For instance:</p>
+<pre>a b c d e</pre>
+is a call to function <code>a</code> with arguments <code>b</code>,
+<code>c</code>, <code>d</code>, and <code>e</code>. If you use
+parentheses it's only to delimit individual arguments (if they are
+expressions); and commas are used to separate tuple elements. So if
+you see something like this:
+<pre>f (a, b, c)</pre>
+you interpret it as a call to (application of) a function
+<code>f</code> to just <em>one argument</em> -- a tuple of three
+elements. It's very important to train your eyes to look for
+spaces. They separate functions from their arguments and arguments
+from each other.
+<p>When an argument to a function is a result of another function
+application, you have to use parentheses for that. For
+instance,</p>
+<pre>a b (c d)</pre>
+means the function <code>a</code> acting on two arguments,
+<code>b</code> and <code>(c d)</code>, which itself is an
+application of function <code>c</code> to <code>d</code>. There is
+a way to omit the parentheses in the above by using the operator
+<code>$</code> (dollar sign):
+<pre>a b $ c d</pre>
+A <code>$</code> is interpreted as: What follows is the last
+argument to the function you're calling.
+<p>In this tutorial we've seen examples of function calls. Here's
+one:</p>
+<pre>defaultLayout [whamlet|
+  Welcome to the Pigsty!
+|]</pre>
+<p>The argument to the function <code>defaultLayout</code> is split
+over several lines, but it could be written in one line as
+well:</p>
+<pre>defaultLayout [whamlet| Welcome to the Pigsty!|]</pre>
+<p>Here's another example:</p>
+<pre>warpDebug 3000 Piggies</pre>
+<p>The third one is a little tricky, since the function
+<code>mkYesod</code> is a Template Haskell function, but the syntax
+is the same (I condensed it to one line):</p>
+<pre>mkYesod "Piggies" [parseRoutes| / HomeR GET|]</pre>
+<h4>Function Definition Syntax</h4>
+A function definition:
+<ul>
+<li>starts with the name of the function,</li>
+<li>followed by its formal parameters separated by white
+spaces,</li>
+<li>an <strong>equal sign</strong>,</li>
+<li>and an expression that is the body of the function.</li>
+</ul>
+You should be able to parse this line of code:
+<pre>a b c = d e f</pre>
+It's a definition of the function <code>a</code> that takes two
+formal parameters, <code>b</code> and <code>c</code>. The body of
+this function is a call to <code>d</code> with two arguments,
+<code>e</code> and <code>f</code>. Of course, the use of short
+meaningless names is not encouraged in Haskell but I do it here to
+help you prime your internal parser.
+<p>In this tutorial there are two function definitions,
+<code>getHomeR</code> and <code>main</code>:</p>
+<pre>getHomeR = defaultLayout [whamlet|Welcome to the Pigsty!|]
+main = warpDebug 3000 Piggies</pre>
+<p>In both definitions the expression on the right hand side of the
+equal sign is another function call.</p>
+<p>The function <code>main</code> is the entry point of the program
+(just like in C++).</p>
+<h3>Appendix</h3>
+You would probably like to play with Yesod. You can find
+instructions on how to install Haskell Platform and Yesod on
+Windows, Linux, or the Mac in this <a href=
+"https://www.yesodweb.com/page/quickstart" target=
+"_blank">Quickstart Guide</a>. A <a href=
+"https://www.yesodweb.com/book" target="_blank">book on Yesod</a> by
+Michael Snoyman is available both online and on paper. Or, if it's
+too much effort, you may wait for an interactive tutorial coming
+soon to the FP Complete site. To try the program from this
+tutorial, create a file <code>main.hs</code> and paste the source
+into it. You can then load the file into the interpreter GHCi, run
+it from command line using <code>runhaskell main</code>, or compile
+it with <code>GHC main.hs</code>.
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Yesod%20Tutorial%201.%20My%20First%20Web%20Site https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;10&#x2F;yesod-tutorial-1-my-first-web-site&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;10&#x2F;yesod-tutorial-1-my-first-web-site&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;10&#x2F;yesod-tutorial-1-my-first-web-site&#x2F;&amp;title=Yesod%20Tutorial%201.%20My%20First%20Web%20Site"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;10&#x2F;yesod-tutorial-1-my-first-web-site&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#b2c1d3ded7c1f2d4c2d1dddfc2ded7c6d79cd1dddf" targe="_blank"><span class="__cf_email__" data-cfemail="354654595046755345565a5845595041501b565a58">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

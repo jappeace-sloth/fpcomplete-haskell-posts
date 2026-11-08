@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Tying the Knot in Haskell</title>
+  <meta property="og:title" content="Tying the Knot in Haskell">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="An overview of a somewhat obscure technique in Haskell code, when you can use it, and its limitations.">
+  <meta property="og:description" content="An overview of a somewhat obscure technique in Haskell code, when you can use it, and its limitations.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;tying-the-knot-haskell&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images&#x2F;blog&#x2F;tying-the-knot-haskell.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Tying the Knot in Haskell</h1>
+      
+      <p id="page-description">By Michael Snoyman, May 25, 2021</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Tying%20the%20Knot%20in%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;tying-the-knot-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;tying-the-knot-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;tying-the-knot-haskell&#x2F;&amp;title=Tying%20the%20Knot%20in%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;tying-the-knot-haskell&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  <p>This post has nothing to do with marriage. Tying the knot is, in my opinion at least, a relatively obscure technique you can use in Haskell to address certain corner cases. I've used it myself only a handful of times, one of which I'll reference below. I preface it like this to hopefully make clear: tying the knot is a fine technique to use in certain cases, but don't consider it a general technique that you should need regularly. It's not nearly as generally useful as something like <a href="https://tech.fpcomplete.com/haskell/library/stm/">Software Transactional Memory</a>.</p>
+<p>That said, you're still interested in this technique, and are still reading this post. Great! Let's get started where all bad Haskell code starts: C++.</p>
+<h2 id="doubly-linked-lists">Doubly linked lists</h2>
+<p>Typically I'd demonstrate imperative code in Rust, but <a href="https://rust-unofficial.github.io/too-many-lists/">it's not a good idea for this case</a>. So we'll start off with a very simple doubly linked list implementation in C++. And by &quot;very simple&quot; I should probably say &quot;very poorly written,&quot; since I'm out of practice.</p>
+<p><img src="/images/haskell/cpp-is-rusty.png" alt="Rusty C++" /></p>
+<p>Anyway, reading the entire code isn't necessary to get the point across. Let's look at some relevant bits. We define a node of the list like this, including a nullable pointer to the previous and next node in the list:</p>
+<pre data-lang="cpp" style="background-color:#fdf6e3;color:#657b83;" class="language-cpp "><code class="language-cpp" data-lang="cpp"><span style="color:#268bd2;">template </span><span>&lt;</span><span style="color:#268bd2;">typename</span><span> T&gt; </span><span style="color:#268bd2;">class </span><span style="color:#b58900;">Node </span><span>{
+</span><span style="color:#859900;">public</span><span>:
+</span><span>  </span><span style="color:#b58900;">Node</span><span>(T </span><span style="color:#268bd2;">value</span><span>) : </span><span style="color:#268bd2;">value</span><span>(value), </span><span style="color:#268bd2;">prev</span><span>(</span><span style="color:#b58900;">NULL</span><span>), </span><span style="color:#268bd2;">next</span><span>(</span><span style="color:#b58900;">NULL</span><span>) {}
+</span><span>  Node </span><span style="color:#859900;">*</span><span>prev;
+</span><span>  T value;
+</span><span>  Node </span><span style="color:#859900;">*</span><span>next;
+</span><span>};
+</span></code></pre>
+<p>When you add the first node to the list, you set the new node's previous and next values to <code>NULL</code>, and the list's first and last values to the new node. The more interesting case is when you already have something in the list. To add a new node to the back of the list, you need some code that looks like the following:</p>
+<pre data-lang="cpp" style="background-color:#fdf6e3;color:#657b83;" class="language-cpp "><code class="language-cpp" data-lang="cpp"><span>node-&gt;</span><span style="color:#268bd2;">prev </span><span>= </span><span style="color:#d33682;">this</span><span>-&gt;</span><span style="color:#268bd2;">last</span><span>;
+</span><span style="color:#d33682;">this</span><span>-&gt;</span><span style="color:#268bd2;">last</span><span>-&gt;</span><span style="color:#268bd2;">next </span><span>= node;
+</span><span style="color:#d33682;">this</span><span>-&gt;</span><span style="color:#268bd2;">last </span><span>= node;
+</span></code></pre>
+<p>For those (like me) not fluent in C++, I'm making three mutations:</p>
+<ol>
+<li>Mutating the new node's <code>prev</code> member to point to the currently last node of the list.</li>
+<li>Mutating the currently last node's <code>next</code> member to point at the new node.</li>
+<li>Mutating the list itself so that its <code>last</code> member points to the new node.</li>
+</ol>
+<p>Point being in all of this: there's a lot of mutation going on in order to create a double linked list. Contrast that with singly linked lists in Haskell, which are immutable data structures and require no mutation at all.</p>
+<p>Anyway, I've written my annual quota of C++ at this point, it's time to go back to Haskell.</p>
+<h2 id="riih-rewrite-it-in-haskell">RIIH (Rewrite it in Haskell)</h2>
+<p>Using <code>IORef</code>s and lots of <code>IO</code> calls everywhere, it's possible to reproduce the C++ concept of a mutable doubly linked list in Haskell. Full code is <a href="https://gist.github.com/snoyberg/5de410aba87a4208b7c701e954c61d9d">available in a Gist</a>, but let's step through the important bits. Our core data types look quite like the C++ version, but with <code>IORef</code> and <code>Maybe</code> sprinkled in for good measure:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">data </span><span style="color:#cb4b16;">Node</span><span> a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Node
+</span><span>    { prev  </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">IORef</span><span> (</span><span style="color:#cb4b16;">Maybe</span><span> (</span><span style="color:#cb4b16;">Node</span><span> a))
+</span><span>    , value </span><span style="color:#859900;">::</span><span> a
+</span><span>    , next  </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">IORef</span><span> (</span><span style="color:#cb4b16;">Maybe</span><span> (</span><span style="color:#cb4b16;">Node</span><span> a))
+</span><span>    }
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">List</span><span> a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">List
+</span><span>    { first </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">IORef</span><span> (</span><span style="color:#cb4b16;">Maybe</span><span> (</span><span style="color:#cb4b16;">Node</span><span> a))
+</span><span>    , last </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">IORef</span><span> (</span><span style="color:#cb4b16;">Maybe</span><span> (</span><span style="color:#cb4b16;">Node</span><span> a))
+</span><span>    }
+</span></code></pre>
+<p>And adding a new value to a non-empty list looks like this:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>node </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">Node </span><span style="color:#859900;">&lt;$&gt;</span><span> newIORef (</span><span style="color:#cb4b16;">Just</span><span> last&#39;) </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> pure value </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> newIORef </span><span style="color:#cb4b16;">Nothing
+</span><span>writeIORef (next last&#39;) (</span><span style="color:#cb4b16;">Just</span><span> node)
+</span><span>writeIORef (last list) (</span><span style="color:#cb4b16;">Just</span><span> node)
+</span></code></pre>
+<p>Notice that, like in the C++ code, we need to perform mutations on the existing node and the <code>last</code> member of the list.</p>
+<p>This certainly works, but it probably feels less than satisfying to a Haskeller:</p>
+<ul>
+<li>I don't love the idea of mutations all over the place.</li>
+<li>The code looks and feels ugly.</li>
+<li>I can't access the values of the list from pure code.</li>
+</ul>
+<p>So the challenge is: can we write a doubly linked list in Haskell in pure code?</p>
+<h2 id="defining-our-data">Defining our data</h2>
+<p>I'll warn you in advance. Every single time I've written code that &quot;ties the knot&quot; in Haskell, I've gone through at least two stages:</p>
+<ol>
+<li>This doesn't make any sense, there's no way this is going to work, what exactly am I doing?</li>
+<li>Oh, it's done, how exactly did that work?</li>
+</ol>
+<p>It happened while writing the code below. You're likely to have the same feeling while reading this of &quot;wait, what? I don't get it, huh?&quot;</p>
+<p>Anyway, let's start off by defining our data types. We didn't like the fact that we had <code>IORef</code> all over the place. So let's just get rid of it!</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">data </span><span style="color:#cb4b16;">Node</span><span> a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Node
+</span><span>    { prev  </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Maybe</span><span> (</span><span style="color:#cb4b16;">Node</span><span> a)
+</span><span>    , value </span><span style="color:#859900;">::</span><span> a
+</span><span>    , next  </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Maybe</span><span> (</span><span style="color:#cb4b16;">Node</span><span> a)
+</span><span>    }
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">List</span><span> a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">List
+</span><span>    { first </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Maybe</span><span> (</span><span style="color:#cb4b16;">Node</span><span> a)
+</span><span>    , last </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Maybe</span><span> (</span><span style="color:#cb4b16;">Node</span><span> a)
+</span><span>    }
+</span></code></pre>
+<p>We still have <code>Maybe</code> to indicate the presence or absence of nodes before or after our own. That translation is pretty easy. The problem is going to arise when we try to build such a structure, since we've seen that we need mutation to make it happen. We'll need to rethink our API to get going.</p>
+<h2 id="non-mutable-api">Non-mutable API</h2>
+<p>The first change we need to consider is getting rid of the <em>concept</em> of mutation in the API. Previously, we had functions like <code>pushBack</code> and <code>popBack</code>, which were inherently mutating. Instead, we should be thinking in terms of immutable data structures and APIs.</p>
+<p>We already know all about singly linked lists, the venerable <code>[]</code> data type. Let's see if we can build a function that will let us construct a doubly linked list from a singly linked list. In other words:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">buildList </span><span style="color:#859900;">::</span><span> [</span><span style="color:#268bd2;">a</span><span>] </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">List a
+</span></code></pre>
+<p>Let's knock out two easy cases first. An empty list should end up with no nodes at all. That clause would be:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>buildList </span><span style="color:#b58900;">[] </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">List Nothing Nothing
+</span></code></pre>
+<p>The next easy case is a single value in the list. This ends up with a single node with no pointers to other nodes, and a <code>first</code> and <code>last</code> field that both point to that one node. Again, fairly easy, no knot tying required:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>buildList [x] </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">let</span><span> node </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Node Nothing</span><span> x </span><span style="color:#cb4b16;">Nothing
+</span><span>     </span><span style="color:#859900;">in </span><span style="color:#cb4b16;">List</span><span> (</span><span style="color:#cb4b16;">Just</span><span> node) (</span><span style="color:#cb4b16;">Just</span><span> node)
+</span></code></pre>
+<p>OK, that's too easy. Let's kick it up a notch.</p>
+<h2 id="two-element-list">Two-element list</h2>
+<p>To get into things a bit more gradually, let's handle the two element case next, instead of the general case of &quot;2 or more&quot;, which is a bit more complicated. We need to:</p>
+<ol>
+<li>Construct a first node that points at the last node</li>
+<li>Construct a last node that points at the first node</li>
+<li>Construct a list that points at both the first and last nodes</li>
+</ol>
+<p>Step (3) isn't too hard. Step (2) doesn't sound too bad either, since presumably the first node already exists at that point. The problem appears to be step (1). How can we construct a first node that points at the second node, when we haven't constructed the second node yet? Let me show you how:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>buildList [x, y] </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">let</span><span> firstNode </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Node Nothing</span><span> x (</span><span style="color:#cb4b16;">Just</span><span> lastNode)
+</span><span>        lastNode </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Node</span><span> (</span><span style="color:#cb4b16;">Just</span><span> firstNode) y </span><span style="color:#cb4b16;">Nothing
+</span><span>     </span><span style="color:#859900;">in </span><span style="color:#cb4b16;">List</span><span> (</span><span style="color:#cb4b16;">Just</span><span> firstNode) (</span><span style="color:#cb4b16;">Just</span><span> lastNode)
+</span></code></pre>
+<p>If that code doesn't confuse or bother you you've probably already learned about tying the knot. This seems to make no sense. I'm referring to <code>lastNode</code> while constructing <code>firstNode</code>, and referring to <code>firstNode</code> while constructing <code>lastNode</code>. This kind of makes me think of an <a href="https://en.wikipedia.org/wiki/Ouroboros">Ouroboros</a>, or a snake eating its own tail:</p>
+<p><img src="/images/haskell/ouroboros.jpeg" alt="Ouroboros" /></p>
+<p>In a normal programming language, this concept wouldn't make sense. We'd need to define <code>firstNode</code> first with a null pointer for <code>next</code>. Then we could define <code>lastNode</code>. And then we could mutate <code>firstNode</code>'s <code>next</code> to point to the last node. But not in Haskell! Why? Because of <em>laziness</em>. Thanks to laziness, both <code>firstNode</code> and <code>lastNode</code> are initially created as thunks. Their contents need not exist yet. But thankfully, we can still create pointers to these not-fully-evaluated values.</p>
+<p>With those pointers available, we can then define an expression for each of these that leverages the pointer of the other. And we have now, successfully, tied the knot.</p>
+<h2 id="expanding-beyond-two">Expanding beyond two</h2>
+<p>Expanding beyond two elements follows the exact same pattern, but (at least in my opinion) is significantly more complicated. I implemented it by writing a helper function, <code>buildNodes</code>, which (somewhat spookily) takes the previous node in the list as a parameter, and returns back the next node and the final node in the list. Let's see all of this in action:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>buildList (x</span><span style="color:#859900;">:</span><span>y</span><span style="color:#859900;">:</span><span>ys) </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">let</span><span> firstNode </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Node Nothing</span><span> x (</span><span style="color:#cb4b16;">Just</span><span> secondNode)
+</span><span>        (secondNode, lastNode) </span><span style="color:#859900;">=</span><span> buildNodes firstNode y ys
+</span><span>     </span><span style="color:#859900;">in </span><span style="color:#cb4b16;">List</span><span> (</span><span style="color:#cb4b16;">Just</span><span> firstNode) (</span><span style="color:#cb4b16;">Just</span><span> lastNode)
+</span><span>
+</span><span style="color:#93a1a1;">-- | Takes the previous node in the list, the current value, and all following
+</span><span style="color:#93a1a1;">-- values. Returns the current node as well as the final node constructed in
+</span><span style="color:#93a1a1;">-- this list.
+</span><span style="color:#b58900;">buildNodes </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Node a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt;</span><span> [</span><span style="color:#268bd2;">a</span><span>] </span><span style="color:#859900;">-&gt;</span><span> (</span><span style="color:#268bd2;">Node a</span><span>, </span><span style="color:#268bd2;">Node a</span><span>)
+</span><span>buildNodes prevNode value </span><span style="color:#b58900;">[] </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">let</span><span> node </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Node</span><span> (</span><span style="color:#cb4b16;">Just</span><span> prevNode) value </span><span style="color:#cb4b16;">Nothing
+</span><span>     </span><span style="color:#859900;">in</span><span> (node, node)
+</span><span>buildNodes prevNode value (x</span><span style="color:#859900;">:</span><span>xs) </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">let</span><span> node </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Node</span><span> (</span><span style="color:#cb4b16;">Just</span><span> prevNode) value (</span><span style="color:#cb4b16;">Just</span><span> nextNode)
+</span><span>        (nextNode, lastNode) </span><span style="color:#859900;">=</span><span> buildNodes node x xs
+</span><span>     </span><span style="color:#859900;">in</span><span> (node, lastNode)
+</span></code></pre>
+<p>Notice that in <code>buildList</code>, we're using the same kind of trick to use <code>secondNode</code> to construct <code>firstNode</code>, and <code>firstNode</code> is a parameter passed to <code>buildNodes</code> that is used to construct <code>secondNode</code>.</p>
+<p>Within <code>buildNodes</code>, we have two clauses. The first clause is one of those simpler cases: we've only got one value left, so we create a terminal node that points back at previous. No knot tying required. The second clause, however, once again uses the knot tying technique, together with a recursive call to <code>buildNodes</code> to build up the rest of the nodes in the list.</p>
+<p>The full code is <a href="https://gist.github.com/snoyberg/876ad1ad0f106c80239bf098a6965a53">available as a Gist</a>. I recommend reading through the code a few times until you feel comfortable with it. When you have a good grasp on what's going on, try implementing it from scratch yourself.</p>
+<h2 id="limitation">Limitation</h2>
+<p>It's important to understand a limitation of this approach versus both mutable doubly linked lists and singly linked lists. With singly linked lists, I can easily construct a new singly linked list by <code>cons</code>ing a new value to the front. Or I can drop a few values from the front and cons some new values in front of that new tail. In other words, I can construct new values based on old values as much as I want.</p>
+<p>Similarly, with mutable doubly linked lists, I'm free to mutate at will, changing my existing data structure. This behaves slightly different from constructing new singly linked lists, and falls into the same category of mutable-vs-immutable data structures that Haskellers know and love so well. If you want a refresher, check out:</p>
+<ul>
+<li><a href="https://tech.fpcomplete.com/haskell/tutorial/data-structures/">Data structures</a></li>
+<li><a href="https://tech.fpcomplete.com/haskell/library/vector/">vector</a></li>
+<li><a href="https://tech.fpcomplete.com/haskell/tutorial/mutable-variables/">Mutable variables</a></li>
+</ul>
+<p>None of these apply with a tie-the-knot approach to data structures. Once you construct this doubly linked list, it is locked in place. If you try to prepend a new node to the front of this list, you'll find that you cannot update the <code>prev</code> pointer in the old first node.</p>
+<p>There is a workaround. You can construct a brand new doubly linked list using the values in the original. A common way to do this would be to provide a conversion function back from your <code>List a</code> to a <code>[a]</code>. Then you could append a value to a doubly linked list with some code like:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">let</span><span> oldList </span><span style="color:#859900;">=</span><span> buildList [</span><span style="color:#6c71c4;">2</span><span style="color:#859900;">..</span><span style="color:#6c71c4;">10</span><span>]
+</span><span>    newList </span><span style="color:#859900;">=</span><span> buildList </span><span style="color:#859900;">$ </span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">:</span><span> toSinglyLinkedList oldList
+</span></code></pre>
+<p>However, unlike singly linked lists, we lose all possibilities of data sharing, at least at the structure level (the values themselves can still be shared).</p>
+<h2 id="why-tie-the-knot">Why tie the knot?</h2>
+<p>That's a cool trick, but is it actually useful? In some situations, absolutely! One example I've worked on is in the <a href="https://www.stackage.org/package/xml-conduit">xml-conduit</a> package. Some people may be familiar with XPath, a pretty nice standard for XML traversals. It allows you to say things like &quot;find the first <code>ul</code> tag in document, then find the <code>p</code> tag before that, and tell me its <code>id</code> attribute.&quot;</p>
+<p>A simple implementation of an XML data type in Haskell may look like this:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">data </span><span style="color:#cb4b16;">Element </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Element Name</span><span> (</span><span style="color:#cb4b16;">Map Name AttributeValue</span><span>) [</span><span style="color:#cb4b16;">Node</span><span>]
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Node
+</span><span>    </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">NodeElement Element
+</span><span>    </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">NodeContent Text
+</span></code></pre>
+<p>Using this kind of data structure, it would be pretty difficult to implement the traversal that I just described. You would need to write logic to keep track of where you are in the document, and then implement logic to say &quot;OK, given that I was in the third child of the second child of the sixth child, what are all of the nodes that came before me?&quot;</p>
+<p>Instead, in <code>xml-conduit</code>, we use knot tying to create a data structure called a <a href="https://www.stackage.org/haddock/nightly-2021-05-23/xml-conduit-1.9.1.1/Text-XML-Cursor.html#t:Cursor"><code>Cursor</code></a>. A <code>Cursor</code> not only keeps track of its own contents, but also contains a pointer to its parent cursor, its predecessor cursors, its following cursors, and its child cursors. You can then traverse the tree with ease. The traversal above would be implemented as:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-17.12 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Text.XML </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">X
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Text.XML.Cursor
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    doc </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">X</span><span style="color:#859900;">.</span><span>readFile </span><span style="color:#cb4b16;">X</span><span style="color:#859900;">.</span><span>def </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">input.xml</span><span style="color:#839496;">&quot;
+</span><span>    </span><span style="color:#859900;">let</span><span> cursor </span><span style="color:#859900;">=</span><span> fromDocument doc
+</span><span>    print </span><span style="color:#859900;">$</span><span> cursor </span><span style="color:#859900;">$//</span><span> element </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">ul</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&gt;=&gt;</span><span> precedingSibling </span><span style="color:#859900;">&gt;=&gt;</span><span> element </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">p</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&gt;=&gt;</span><span> attribute </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">id</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>You can test this out yourself with this sample input document:</p>
+<pre data-lang="xml" style="background-color:#fdf6e3;color:#657b83;" class="language-xml "><code class="language-xml" data-lang="xml"><span style="color:#93a1a1;">&lt;</span><span style="color:#268bd2;">foo</span><span style="color:#93a1a1;">&gt;
+</span><span>    </span><span style="color:#93a1a1;">&lt;</span><span style="color:#268bd2;">bar</span><span style="color:#93a1a1;">&gt;
+</span><span>        </span><span style="color:#93a1a1;">&lt;</span><span style="color:#268bd2;">baz</span><span style="color:#93a1a1;">&gt;
+</span><span>            </span><span style="color:#93a1a1;">&lt;</span><span style="color:#268bd2;">p </span><span style="color:#b58900;">id</span><span>=</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">hello</span><span style="color:#839496;">&quot;</span><span style="color:#93a1a1;">&gt;</span><span>Something</span><span style="color:#93a1a1;">&lt;/</span><span style="color:#268bd2;">p</span><span style="color:#93a1a1;">&gt;
+</span><span>            </span><span style="color:#93a1a1;">&lt;</span><span style="color:#268bd2;">ul</span><span style="color:#93a1a1;">&gt;
+</span><span>                </span><span style="color:#93a1a1;">&lt;</span><span style="color:#268bd2;">li</span><span style="color:#93a1a1;">&gt;</span><span>Bye!</span><span style="color:#93a1a1;">&lt;/</span><span style="color:#268bd2;">li</span><span style="color:#93a1a1;">&gt;
+</span><span>            </span><span style="color:#93a1a1;">&lt;/</span><span style="color:#268bd2;">ul</span><span style="color:#93a1a1;">&gt;
+</span><span>        </span><span style="color:#93a1a1;">&lt;/</span><span style="color:#268bd2;">baz</span><span style="color:#93a1a1;">&gt;
+</span><span>    </span><span style="color:#93a1a1;">&lt;/</span><span style="color:#268bd2;">bar</span><span style="color:#93a1a1;">&gt;
+</span><span style="color:#93a1a1;">&lt;/</span><span style="color:#268bd2;">foo</span><span style="color:#93a1a1;">&gt;
+</span></code></pre>
+<h2 id="should-i-tie-the-knot">Should I tie the knot?</h2>
+<p><em>Insert bad marriage joke here</em></p>
+<p>Like most techniques in programming in general, and Haskell in particular, it can be tempting to go off and look for a use case to throw this technique at. The use cases definitely exist. I think <code>xml-conduit</code> is one of them. But let me point out that it's the <em>only</em> example I can think of in my career as a Haskeller where tying the knot was a great solution to the problem. There are similar cases out there that I'd include too (such as JSON document traversal).</p>
+<p>Is it worth learning the technique? Yeah, definitely. It's a mind-expanding move. It helps you internalize concepts of laziness just a bit better. It's really fun and mind-bending. But don't rush off to rewrite your code to use a relatively niche technique.</p>
+<p>If anyone's wondering, this blog post came out of a question that popped up during a Haskell training course. If you'd like to come learn some Haskell and dive into weird topics like this, come find out more about <a href="https://tech.fpcomplete.com/training/">FP Complete's training programs</a>. We're gearing up for some intermediate Haskell and Rust courses soon, so add your name to the list if you want to get more information.</p>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Tying%20the%20Knot%20in%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;tying-the-knot-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;tying-the-knot-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;tying-the-knot-haskell&#x2F;&amp;title=Tying%20the%20Knot%20in%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;tying-the-knot-haskell&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#9fecfef3faecdff9effcf0f2eff3faebfab1fcf0f2" targe="_blank"><span class="__cf_email__" data-cfemail="fc8f9d90998fbc9a8c9f93918c90998899d29f9391">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

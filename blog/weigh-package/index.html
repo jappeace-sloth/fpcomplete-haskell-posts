@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>weigh: Measuring allocations in Haskell</title>
+  <meta property="og:title" content="weigh: Measuring allocations in Haskell">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;weigh-package&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>weigh: Measuring allocations in Haskell</h1>
+      
+      <p id="page-description">By Chris Done, May 27, 2016</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=weigh%3A%20Measuring%20allocations%20in%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;weigh-package&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;weigh-package&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;weigh-package&#x2F;&amp;title=weigh%3A%20Measuring%20allocations%20in%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;weigh-package&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  <h2 id="work-motivation">Work motivation</h2>
+<p>While working for various clients that needed fast binary
+serialization, we had discovered that the <a href=
+"https://hackage.haskell.org/package/binary"><code>binary</code></a>
+and <a href=
+"https://hackage.haskell.org/package/cereal"><code>cereal</code></a>
+packages are both inefficient and so we created the <a href=
+"https://github.com/fpco/store"><code>store</code></a> package.</p>
+<p>In the high-frequency trading sector, we had to decode and
+encode a binary protocol into Haskell data structures for analysis.
+During this process it was made apparent to us that while we had
+been attentive to micro-benchmark with the venerable <a href=
+"https://hackage.haskell.org/package/criterion"><code>criterion</code></a>
+package, we hadn't put a lot of work into ensuring that memory
+usage was well studied. Bringing down allocations (and thus work,
+and garbage collection) was key to achieving reasonable speed.</p>
+<h2 id="let39s-measure-space">Let's measure space</h2>
+<p>In response, let's measure space more, in an automatic way.</p>
+<p>The currently available way to do this is by compiling with
+profiling enabled and adding call centers and then running our
+program with RTS options. For example, we write a program with an
+<code>SCC</code> call center, like this:</p>
+<pre><span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varop">!</span><span class="hs-keyword">_</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-comment">{-# SCC myfunction_10 #-}</span> <span class=
+"hs-varid">myfunction</span> <span class="hs-num">10</span>
+  <span class="hs-varid">return</span> <span class=
+"hs-conid">()</span></pre>
+<p>Then compile with profiling enabled with <code>-p</code> and run
+with <code>+RTS -P</code> and we get an output like this:</p>
+<pre><code>COST CENTRE       MODULE no. entries  ... bytes
+<p>MAIN              MAIN   43  0        ... 760
+CAF:main1        Main   85  0        ... 0
+main            Main   86  1        ... 0
+myfunction_10  Main   87  1        ... 160</code></pre></p>
+<p>(Information omitted with <code>...</code> to save space.)</p>
+<p>That's great, exactly the kind of information we'd like to get.
+But we want it in a more concise, programmatic fashion. On a test
+suite level.</p>
+<h2 id="announcing-codeweighcode">Announcing
+<code>weigh</code></h2>
+<p>To serve this purpose, I've written the <a href=
+"https://github.com/fpco/weigh"><code>weigh</code></a> package,
+which seeks to automate the measuring of memory usage of programs,
+in the same way that <code>criterion</code> does for timing of
+programs.</p>
+<p>It doesn't promise perfect measurement and comes with a grain of
+salt, but it's reproducible. Unlike timing, allocation is generally
+reliable provided you use something like <a href=
+"https://haskellstack.org"><code>stack</code></a> to pin the GHC
+version and packages, so you can also make a test suite out of
+it.</p>
+<h2 id="how-it-works">How it works</h2>
+<p>There is a simple DSL, like <code>hspec</code>, for writing out
+your tests. It looks like this:</p>
+<pre><span class="hs-keyword">import</span> <span class=
+"hs-conid">Weigh</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">mainWith</span> <span class=
+"hs-layout">(</span><span class="hs-keyword">do</span> <span class=
+"hs-varid">func</span> <span class=
+"hs-str">"integers count 0"</span> <span class=
+"hs-varid">count</span> <span class="hs-num">0</span>
+               <span class="hs-varid">func</span> <span class=
+"hs-str">"integers count 1"</span> <span class=
+"hs-varid">count</span> <span class="hs-num">1</span>
+               <span class="hs-varid">func</span> <span class=
+"hs-str">"integers count 2"</span> <span class=
+"hs-varid">count</span> <span class="hs-num">2</span>
+               <span class="hs-varid">func</span> <span class=
+"hs-str">"integers count 3"</span> <span class=
+"hs-varid">count</span> <span class="hs-num">3</span>
+               <span class="hs-varid">func</span> <span class=
+"hs-str">"integers count 10"</span> <span class=
+"hs-varid">count</span> <span class="hs-num">10</span>
+               <span class="hs-varid">func</span> <span class=
+"hs-str">"integers count 100"</span> <span class=
+"hs-varid">count</span> <span class="hs-num">100</span><span class=
+"hs-layout">)</span>
+  <span class="hs-keyword">where</span> <span class=
+"hs-varid">count</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Integer</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">()</span>
+        <span class="hs-varid">count</span> <span class=
+"hs-num">0</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">()</span>
+        <span class="hs-varid">count</span> <span class=
+"hs-varid">a</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">count</span> <span class=
+"hs-layout">(</span><span class="hs-varid">a</span> <span class=
+"hs-comment">-</span> <span class="hs-num">1</span><span class=
+"hs-layout">)</span></pre>
+<p>This example weighs the function <code>count</code>, which
+counts down to zero. We want to measure the bytes allocated to
+perform the action. The output is:</p>
+<pre><code>Case                Bytes  GCs  Check
+integers count 0        0    0  OK
+integers count 1       32    0  OK
+integers count 2       64    0  OK
+integers count 3       96    0  OK
+integers count 10     320    0  OK
+integers count 100  3,200    0  OK</code></pre>
+<p>Weee! We can now go around weighing everything! I encourage you
+to do that. Even Haskell newbies can make use of this to get a
+vague idea of how costly their code (or libraries they're using)
+is.</p>
+<h2 id="real-world-use-case:-codestorecode">Real-world use-case:
+<code>store</code></h2>
+<p>I wrote a few tests, while developing <code>weigh</code>, for
+the <code>store</code> package: encoding of lists, vectors and
+storable vectors. Here's the <code>criterion</code> result for
+encoding a regular <code>Vector</code> type:</p>
+<pre><code>benchmarking encode/1kb normal (Vector Int32)/store
+time                 3.454 μs   (3.418 μs .. 3.484 μs)
+benchmarking encode/1kb normal (Vector Int32)/cereal
+time                 19.56 μs   (19.34 μs .. 19.79 μs)
+<p>benchmarking encode/10kb normal (Vector Int32)/store
+time                 33.09 μs   (32.73 μs .. 33.57 μs)
+benchmarking encode/10kb normal (Vector Int32)/cereal
+time                 202.7 μs   (201.2 μs .. 204.6 μs)</code></pre></p>
+<p><code>store</code> is <b>6x</b> faster than <code>cereal</code>
+at encoding Int32 vectors. Great! Our job is done, we've overcome
+previous limitations of binary encoding speed. Let's take a look at
+how heavy this process is. Weighing the program on 1 million and 10
+million elements yields:</p>
+<pre>
+<code>   1,000,000 Boxed Vector Int     Encode: Store      88,008,584     140  OK
+   1,000,000 Boxed Vector Int     Encode: Cereal    600,238,200   1,118  OK
+<p>10,000,000 Boxed Vector Int     Encode: Store     880,078,896   1,384  OK
+10,000,000 Boxed Vector Int     Encode: Cereal  6,002,099,680  11,168  OK</code></pre></p>
+<p><code>store</code> is 6.8x more memory efficient than
+<code>cereal</code>. Excellent. But is our job really finished?
+Take a look at those allocations. To simply allocate a vector of
+that size, it's:</p>
+<pre>
+<code>   1,000,000 Boxed Vector Int     Allocate            8,007,936       1  OK
+<p>10,000,000 Boxed Vector Int     Allocate           80,078,248       1  OK</code></pre></p>
+<p>While <code>store</code> is more efficient than
+<code>cereal</code>, how are we allocating 11x the amount of space
+necessary? We looked into this in the codebase, it turned out more
+inlining was needed. After comprehensively applying the
+<code>INLINE</code> pragma to key methods and functions, the memory
+was brought down to:</p>
+<pre>
+<code>   1,000,000 Boxed Vector Int     Allocate            8,007,936       1  OK
+   1,000,000 Boxed Vector Int     Encode: Store      16,008,568       2  OK
+   1,000,000 Boxed Vector Int     Encode: Cereal    600,238,200   1,118  OK
+<p>10,000,000 Boxed Vector Int     Allocate           80,078,248       1  OK
+10,000,000 Boxed Vector Int     Encode: Store     160,078,880       2  OK
+10,000,000 Boxed Vector Int     Encode: Cereal  6,002,099,680  11,168  OK</code></pre></p>
+<p>Now, <code>store</code> takes an additional 8MB to encode an 8MB
+vector, 80MB for an 80MB buffer. That's perfect 1:1 memory usage!
+Let's check out the new speed without these allocations:</p>
+<pre><code>benchmarking encode/1kb normal (Vector Int32)/store
+time                 848.4 ns   (831.6 ns .. 868.6 ns)
+benchmarking encode/1kb normal (Vector Int32)/cereal
+time                 20.80 μs   (20.33 μs .. 21.20 μs)
+<p>benchmarking encode/10kb normal (Vector Int32)/store
+time                 7.708 μs   (7.606 μs .. 7.822 μs)
+benchmarking encode/10kb normal (Vector Int32)/cereal
+time                 207.4 μs   (204.9 μs .. 210.3 μs)</code></pre></p>
+<p><code>store</code> is 4x faster than previously!
+<code>store</code> is also now 20x faster than <code>cereal</code>
+at encoding a vector of ints.</p>
+<h2 id="containers-vs-unordered-containers">Containers vs unordered-containers</h2>
+<p>Another quick example, the Map structures from the two
+containers packages. Let's weigh how heavy <code>fromList</code> is
+on 1 million elements. For fun, the keys are randomly generated
+rather than ordered. We force the list completely ahead of time,
+because we just want to see the allocations by the library, not our
+input list.</p>
+<pre><span class="hs-definition">fromlists</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Weigh</span> <span class="hs-conid">()</span>
+<span class="hs-definition">fromlists</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-keyword">do</span> <span class=
+"hs-keyword">let</span> <span class="hs-varop">!</span><span class=
+"hs-varid">elems</span> <span class="hs-keyglyph">=</span>
+           <span class="hs-varid">force</span> <span class=
+"hs-layout">(</span><span class="hs-varid">zip</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">randoms</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">mkStdGen</span> <span class=
+"hs-num">0</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-keyglyph">[</span><span class="hs-conid">Int</span><span class=
+"hs-keyglyph">]</span><span class="hs-layout">)</span>
+                      <span class=
+"hs-keyglyph">[</span><span class="hs-num">1</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">..</span> <span class=
+"hs-num">1000000</span><span class=
+"hs-keyglyph">]</span><span class="hs-layout">)</span>
+     <span class="hs-varid">func</span> <span class=
+"hs-str">"Data.Map.Strict.fromList     (1 million)"</span> <span class="hs-conid">Data</span><span class="hs-varop">.</span><span class="hs-conid">Map</span><span class="hs-varop">.</span><span class="hs-conid">Strict</span><span class="hs-varop">.</span><span class="hs-varid">fromList</span> <span class="hs-varid">elems</span>
+     <span class="hs-varid">func</span> <span class=
+"hs-str">"Data.Map.Lazy.fromList       (1 million)"</span> <span class="hs-conid">Data</span><span class="hs-varop">.</span><span class="hs-conid">Map</span><span class="hs-varop">.</span><span class="hs-conid">Lazy</span><span class="hs-varop">.</span><span class="hs-varid">fromList</span> <span class="hs-varid">elems</span>
+     <span class="hs-varid">func</span> <span class=
+"hs-str">"Data.IntMap.Strict.fromList  (1 million)"</span> <span class="hs-conid">Data</span><span class="hs-varop">.</span><span class="hs-conid">IntMap</span><span class="hs-varop">.</span><span class="hs-conid">Strict</span><span class="hs-varop">.</span><span class="hs-varid">fromList</span> <span class="hs-varid">elems</span>
+     <span class="hs-varid">func</span> <span class=
+"hs-str">"Data.IntMap.Lazy.fromList    (1 million)"</span> <span class="hs-conid">Data</span><span class="hs-varop">.</span><span class="hs-conid">IntMap</span><span class="hs-varop">.</span><span class="hs-conid">Lazy</span><span class="hs-varop">.</span><span class="hs-varid">fromList</span> <span class="hs-varid">elems</span>
+     <span class="hs-varid">func</span> <span class=
+"hs-str">"Data.HashMap.Strict.fromList (1 million)"</span> <span class="hs-conid">Data</span><span class="hs-varop">.</span><span class="hs-conid">HashMap</span><span class="hs-varop">.</span><span class="hs-conid">Strict</span><span class="hs-varop">.</span><span class="hs-varid">fromList</span> <span class="hs-varid">elems</span>
+     <span class="hs-varid">func</span> <span class=
+"hs-str">"Data.HashMap.Lazy.fromList   (1 million)"</span> <span class="hs-conid">Data</span><span class="hs-varop">.</span><span class="hs-conid">HashMap</span><span class="hs-varop">.</span><span class="hs-conid">Lazy</span><span class="hs-varop">.</span><span class="hs-varid">fromList</span> <span class="hs-varid">elems</span></pre>
+<p>We clearly see that <code>IntMap</code> from
+<code>containers</code> is about 1.3x more memory efficient than
+the generic <code>Ord</code>-based <code>Map</code>. However,
+<code>HashMap</code> wipes the floor with both of them (for
+<code>Int</code>, at least), using 6.3x less memory than
+<code>Map</code> and 4.8x less memory than <code>IntMap</code>:</p>
+<pre>
+<code>Data.Map.Strict.fromList     (1 million)  1,016,187,152  1,942  OK
+Data.Map.Lazy.fromList       (1 million)  1,016,187,152  1,942  OK
+Data.IntMap.Strict.fromList  (1 million)    776,852,648  1,489  OK
+Data.IntMap.Lazy.fromList    (1 million)    776,852,648  1,489  OK
+Data.HashMap.Strict.fromList (1 million)    161,155,384    314  OK
+Data.HashMap.Lazy.fromList   (1 million)    161,155,384    314  OK</code></pre>
+<p>This is just a trivial few lines of code to generate this
+result, as you see above.</p>
+<h2 id="caveat">Caveat</h2>
+<p>But beware: it's not going to be obvious exactly where
+allocations are coming from in the computation (if you need to know
+that, use the profiler). It's better to consider a computation
+holistically: this is how much was allocated to produce this
+result.</p>
+<p>Analysis at finer granularity is likely to be guess-work (beyond
+even what's available in profiling). For the brave, let's study
+some examples of that.</p>
+<h2 id="interpreting-the-results:-codeintegercode">Interpreting the
+results: <code>Integer</code></h2>
+<p>Notice that in the table we generated, there is a rather odd
+increase of allocations:</p>
+<pre><code>Case                Bytes  GCs  Check
+integers count 0        0    0  OK
+integers count 1       32    0  OK
+integers count 2       64    0  OK
+integers count 3       96    0  OK
+integers count 10     320    0  OK
+integers count 100  3,200    0  OK</code></pre>
+<p>What's the explanation for those bytes in each iteration?</p>
+<p>Refreshing our memory: The space taken up by a "small" Integer
+is <a href="https://stackoverflow.com/a/3256825/89574">two machine
+words.</a> On 64-bit that's 16 bytes. <code>Integer</code> is
+defined like this:</p>
+<pre><span class="hs-keyword">data</span> <span class=
+"hs-conid">Integer</span>
+  <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">S</span><span class="hs-cpp">#</span> <span class=
+"hs-conid">Int</span><span class=
+"hs-cpp">#</span>                            <span class=
+"hs-comment">-- small integers</span>
+  <span class="hs-keyglyph">|</span> <span class=
+"hs-conid">J</span><span class="hs-cpp">#</span> <span class=
+"hs-conid">Int</span><span class="hs-cpp">#</span> <span class=
+"hs-conid">ByteArray</span><span class=
+"hs-cpp">#</span>                 <span class=
+"hs-comment">-- large integers</span></pre>
+<p>For the rest, we'd expect only 16 bytes per iteration, but we're
+seeing more than that. <b>Why?</b> Let's look at <a href=
+"https://stackoverflow.com/questions/6121146/reading-ghc-core">the
+Core</a> for <code>count</code>:</p>
+<pre><span class="hs-conid">Main</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">main48</span> <span class="hs-keyglyph">=</span> <span class="hs-sel">__integer</span> <span class="hs-num">0</span>
+<span class="hs-conid">Main</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">main41</span> <span class="hs-keyglyph">=</span> <span class="hs-sel">__integer</span> <span class="hs-num">1</span>
+<span class="hs-conid">Rec</span> <span class="hs-layout">{</span>
+<span class="hs-conid">Main</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">main_count</span> <span class=
+"hs-keyglyph">[</span><span class="hs-conid">Occ</span><span class=
+"hs-keyglyph">=</span><span class=
+"hs-conid">LoopBreaker</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Integer</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">()</span>
+<span class="hs-keyglyph">[</span><span class=
+"hs-conid">GblId</span><span class=
+"hs-layout">,</span> <span class="hs-conid">Arity</span><span class="hs-keyglyph">=</span><span class="hs-num">1</span><span class="hs-layout">,</span> <span class="hs-conid">Str</span><span class="hs-keyglyph">=</span><span class="hs-conid">DmdType</span> <span class="hs-varop">&lt;</span><span class="hs-conid">S</span><span class="hs-layout">,</span><span class="hs-conid">U</span><span class="hs-varop">&gt;</span><span class="hs-keyglyph">]</span>
+<span class="hs-conid">Main</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">main_count</span> <span class="hs-keyglyph">=</span>
+  <span class="hs-keyglyph">\</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">ds_d4Am</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Integer</span><span class=
+"hs-layout">)</span> <span class="hs-keyglyph">-&gt;</span>
+    <span class="hs-keyword">case</span> <span class=
+"hs-varid">eqInteger</span><span class=
+"hs-cpp">#</span> <span class=
+"hs-varid">ds_d4Am</span> <span class="hs-conid">Main</span><span class="hs-varop">.</span><span class="hs-varid">main48</span> <span class="hs-keyword">of</span> <span class="hs-varid">wild_a4Fq</span> <span class="hs-layout">{</span> <span class="hs-sel">__DEFAULT</span> <span class="hs-keyglyph">-&gt;</span>
+    <span class="hs-keyword">case</span> <span class=
+"hs-varid">ghc</span><span class="hs-comment">-</span><span class=
+"hs-varid">prim</span><span class="hs-comment">-</span><span class=
+"hs-num">0.4</span><span class="hs-varop">.</span><span class=
+"hs-num">0.0</span><span class="hs-conop">:</span><span class=
+"hs-conid">GHC</span><span class="hs-varop">.</span><span class=
+"hs-conid">Prim</span><span class="hs-varop">.</span><span class=
+"hs-varid">tagToEnum</span><span class=
+"hs-cpp">#</span> <span class="hs-keyglyph">@</span> <span class=
+"hs-conid">Bool</span> <span class="hs-varid">wild_a4Fq</span>
+    <span class="hs-keyword">of</span> <span class=
+"hs-keyword">_</span> <span class=
+"hs-keyglyph">[</span><span class="hs-conid">Occ</span><span class=
+"hs-keyglyph">=</span><span class=
+"hs-conid">Dead</span><span class="hs-keyglyph">]</span> <span class="hs-layout">{</span>
+      <span class="hs-conid">False</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Main</span><span class="hs-varop">.</span><span class=
+"hs-varid">main_count</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">minusInteger</span> <span class=
+"hs-varid">ds_d4Am</span> <span class=
+"hs-conid">Main</span><span class="hs-varop">.</span><span class=
+"hs-varid">main41</span><span class=
+"hs-layout">)</span><span class="hs-layout">;</span>
+      <span class="hs-conid">True</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">ghc</span><span class="hs-comment">-</span><span class=
+"hs-varid">prim</span><span class="hs-comment">-</span><span class=
+"hs-num">0.4</span><span class="hs-varop">.</span><span class=
+"hs-num">0.0</span><span class="hs-conop">:</span><span class=
+"hs-conid">GHC</span><span class="hs-varop">.</span><span class=
+"hs-conid">Tuple</span><span class="hs-varop">.</span><span class=
+"hs-conid">()</span>
+    <span class="hs-layout">}</span>
+    <span class="hs-layout">}</span>
+<span class="hs-definition">end</span> <span class=
+"hs-conid">Rec</span> <span class="hs-layout">}</span></pre>
+<p>The <code>eqInteger#</code> function is <a href=
+"https://ghc.haskell.org/trac/ghc/wiki/PrimBool#Implementationdetails">
+a pretend-primop</a>, which apparently combines with
+<code>tagToEnum#</code> and is optimized away at <a href=
+"https://ghc.haskell.org/trac/ghc/ticket/8317">the code generation
+phase.</a> This should lead to an unboxed comparison of something
+like <code>Int#</code>, which should not allocate. This leaves only
+the addition operation, which should allocate one new 16-byte
+<code>Integer</code>.</p>
+<p>So where are those additional 16 bytes from? <a href=
+"https://hackage.haskell.org/package/integer-gmp-1.0.0.1/docs/src/GHC.Integer.Type.html#minusInteger">
+The implementation of <code>minusInteger</code> for
+<code>Integer</code> types</a> is actually implemented as <code>x +
+-y</code>:</p>
+<pre><span class="hs-comment">-- TODO</span>
+<span class=
+"hs-comment">-- | Subtract two 'Integer's from each other.</span>
+<span class="hs-definition">minusInteger</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Integer</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Integer</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Integer</span>
+<span class="hs-definition">minusInteger</span> <span class=
+"hs-varid">x</span> <span class="hs-varid">y</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">inline</span> <span class=
+"hs-varid">plusInteger</span> <span class=
+"hs-varid">x</span> <span class="hs-layout">(</span><span class=
+"hs-varid">inline</span> <span class=
+"hs-varid">negateInteger</span> <span class=
+"hs-varid">y</span><span class="hs-layout">)</span></pre>
+<p>This means we're allocating <b>one more Integer</b>. That
+explains the additional 16 bytes!</p>
+<p>There's a <code>TODO</code> there. I guess someone implemented
+<code>negateInteger</code> and <code>plusInteger</code> (which is
+<a href=
+"https://hackage.haskell.org/package/integer-gmp-1.0.0.1/docs/src/GHC.Integer.Type.html#plusInteger">
+non-trivial</a>) and had enough.</p>
+<p>If we implement a second function <code>count'</code> that takes
+this into account,</p>
+<pre><span class="hs-keyword">import</span> <span class=
+"hs-conid">Weigh</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">mainWith</span> <span class=
+"hs-layout">(</span><span class="hs-keyword">do</span> <span class=
+"hs-varid">func</span> <span class=
+"hs-str">"integers count 0"</span> <span class=
+"hs-varid">count</span> <span class="hs-num">0</span>
+               <span class="hs-varid">func</span> <span class=
+"hs-str">"integers count 1"</span> <span class=
+"hs-varid">count</span> <span class="hs-num">1</span>
+               <span class="hs-varid">func</span> <span class=
+"hs-str">"integers count 2"</span> <span class=
+"hs-varid">count</span> <span class="hs-num">2</span>
+               <span class="hs-varid">func</span> <span class=
+"hs-str">"integers count 3"</span> <span class=
+"hs-varid">count</span> <span class="hs-num">3</span>
+               <span class="hs-varid">func</span> <span class=
+"hs-str">"integers count' 0"</span> <span class=
+"hs-varid">count'</span> <span class="hs-num">0</span>
+               <span class="hs-varid">func</span> <span class=
+"hs-str">"integers count' 1"</span> <span class=
+"hs-varid">count'</span> <span class="hs-num">1</span>
+               <span class="hs-varid">func</span> <span class=
+"hs-str">"integers count' 2"</span> <span class=
+"hs-varid">count'</span> <span class="hs-num">2</span>
+               <span class="hs-varid">func</span> <span class=
+"hs-str">"integers count' 3"</span> <span class=
+"hs-varid">count'</span> <span class="hs-num">3</span><span class=
+"hs-layout">)</span>
+  <span class="hs-keyword">where</span> <span class=
+"hs-varid">count</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Integer</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">()</span>
+        <span class="hs-varid">count</span> <span class=
+"hs-num">0</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">()</span>
+        <span class="hs-varid">count</span> <span class=
+"hs-varid">a</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">count</span> <span class=
+"hs-layout">(</span><span class="hs-varid">a</span> <span class=
+"hs-comment">-</span> <span class="hs-num">1</span><span class=
+"hs-layout">)</span>
+        <span class="hs-varid">count'</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Integer</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">()</span>
+        <span class="hs-varid">count'</span> <span class=
+"hs-num">0</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">()</span>
+        <span class="hs-varid">count'</span> <span class=
+"hs-varid">a</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">count'</span> <span class=
+"hs-layout">(</span><span class="hs-varid">a</span> <span class=
+"hs-varop">+</span> <span class="hs-layout">(</span><span class=
+"hs-comment">-</span><span class="hs-num">1</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span></pre>
+<p>we get more reasonable allocations:</p>
+<pre><code>Case                Bytes  GCs  Check
+integers count 0        0    0  OK
+integers count 1       32    0  OK
+integers count 2       64    0  OK
+integers count 3       96    0  OK
+<p>integers count' 0       0    0  OK
+integers count' 1      16    0  OK
+integers count' 2      32    0  OK
+integers count' 3      48    0  OK</code></pre></p>
+<p>It turns out that <code>count'</code> is 20% faster (from
+<code>criterion</code> benchmarks), but realistically, if speed
+matters, we'd be using <code>Int</code>, which is practically 1000x
+faster.</p>
+<p>What did we learn? Even something as simple as
+<code>Integer</code> subtraction doesn't behave as you would
+naively expect.</p>
+<h2 id="considering-a-different-type:-codeintcode">Considering a
+different type: <code>Int</code></h2>
+<p>Comparatively, let's look at <code>Int</code>:</p>
+<pre><span class="hs-keyword">import</span> <span class=
+"hs-conid">Weigh</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-varid">mainWith</span> <span class=
+"hs-layout">(</span><span class="hs-keyword">do</span> <span class=
+"hs-varid">func</span> <span class=
+"hs-str">"int count 0"</span> <span class=
+"hs-varid">count</span> <span class="hs-num">0</span>
+               <span class="hs-varid">func</span> <span class=
+"hs-str">"int count 1"</span> <span class=
+"hs-varid">count</span> <span class="hs-num">1</span>
+               <span class="hs-varid">func</span> <span class=
+"hs-str">"int count 10"</span> <span class=
+"hs-varid">count</span> <span class="hs-num">10</span>
+               <span class="hs-varid">func</span> <span class=
+"hs-str">"int count 100"</span> <span class=
+"hs-varid">count</span> <span class="hs-num">100</span><span class=
+"hs-layout">)</span>
+  <span class="hs-keyword">where</span> <span class=
+"hs-varid">count</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">()</span>
+        <span class="hs-varid">count</span> <span class=
+"hs-num">0</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">()</span>
+        <span class="hs-varid">count</span> <span class=
+"hs-varid">a</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">count</span> <span class=
+"hs-layout">(</span><span class="hs-varid">a</span> <span class=
+"hs-comment">-</span> <span class="hs-num">1</span><span class=
+"hs-layout">)</span></pre>
+<p>The output is:</p>
+<pre><code>Case                Bytes  GCs  Check
+ints count 1            0    0  OK
+ints count 10           0    0  OK
+ints count 1000000      0    0  OK</code></pre>
+<p>It allocates zero bytes. Why? Let's take a look at the Core:</p>
+<pre><span class="hs-conid">Rec</span> <span class=
+"hs-layout">{</span>
+<span class="hs-conid">Main</span><span class=
+"hs-varop">.$</span><span class=
+"hs-varid">wcount1</span> <span class=
+"hs-keyglyph">[</span><span class=
+"hs-conid">InlPrag</span><span class=
+"hs-keyglyph">=</span><span class=
+"hs-keyglyph">[</span><span class="hs-num">0</span><span class=
+"hs-keyglyph">]</span><span class="hs-layout">,</span> <span class=
+"hs-conid">Occ</span><span class="hs-keyglyph">=</span><span class=
+"hs-conid">LoopBreaker</span><span class="hs-keyglyph">]</span>
+  <span class="hs-keyglyph">::</span> <span class=
+"hs-varid">ghc</span><span class="hs-comment">-</span><span class=
+"hs-varid">prim</span><span class="hs-comment">-</span><span class=
+"hs-num">0.4</span><span class="hs-varop">.</span><span class=
+"hs-num">0.0</span><span class="hs-conop">:</span><span class=
+"hs-conid">GHC</span><span class="hs-varop">.</span><span class=
+"hs-conid">Prim</span><span class="hs-varop">.</span><span class=
+"hs-conid">Int</span><span class="hs-cpp">#</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">()</span>
+<span class="hs-keyglyph">[</span><span class=
+"hs-conid">GblId</span><span class=
+"hs-layout">,</span> <span class="hs-conid">Arity</span><span class="hs-keyglyph">=</span><span class="hs-num">1</span><span class="hs-layout">,</span> <span class="hs-conid">Caf</span><span class="hs-keyglyph">=</span><span class="hs-conid">NoCafRefs</span><span class="hs-layout">,</span> <span class="hs-conid">Str</span><span class="hs-keyglyph">=</span><span class="hs-conid">DmdType</span> <span class="hs-varop">&lt;</span><span class="hs-conid">S</span><span class="hs-layout">,</span><span class="hs-num">1</span><span class="hs-varop">*</span><span class="hs-conid">U</span><span class="hs-varop">&gt;</span><span class="hs-keyglyph">]</span>
+<span class="hs-conid">Main</span><span class=
+"hs-varop">.$</span><span class=
+"hs-varid">wcount1</span> <span class="hs-keyglyph">=</span>
+  <span class="hs-keyglyph">\</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">ww_s57C</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-varid">ghc</span><span class="hs-comment">-</span><span class=
+"hs-varid">prim</span><span class="hs-comment">-</span><span class=
+"hs-num">0.4</span><span class="hs-varop">.</span><span class=
+"hs-num">0.0</span><span class="hs-conop">:</span><span class=
+"hs-conid">GHC</span><span class="hs-varop">.</span><span class=
+"hs-conid">Prim</span><span class="hs-varop">.</span><span class=
+"hs-conid">Int</span><span class="hs-cpp">#</span><span class=
+"hs-layout">)</span> <span class="hs-keyglyph">-&gt;</span>
+    <span class="hs-keyword">case</span> <span class=
+"hs-varid">ww_s57C</span> <span class=
+"hs-keyword">of</span> <span class=
+"hs-varid">ds_X4Gu</span> <span class="hs-layout">{</span>
+      <span class="hs-sel">__DEFAULT</span> <span class=
+"hs-keyglyph">-&gt;</span>
+        <span class="hs-conid">Main</span><span class=
+"hs-varop">.$</span><span class=
+"hs-varid">wcount1</span> <span class=
+"hs-layout">(</span><span class="hs-varid">ghc</span><span class=
+"hs-comment">-</span><span class="hs-varid">prim</span><span class=
+"hs-comment">-</span><span class="hs-num">0.4</span><span class=
+"hs-varop">.</span><span class="hs-num">0.0</span><span class=
+"hs-conop">:</span><span class="hs-conid">GHC</span><span class=
+"hs-varop">.</span><span class="hs-conid">Prim</span><span class=
+"hs-varop">.-#</span> <span class=
+"hs-varid">ds_X4Gu</span> <span class="hs-num">1</span><span class=
+"hs-layout">)</span><span class="hs-layout">;</span>
+      <span class="hs-num">0</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">ghc</span><span class="hs-comment">-</span><span class=
+"hs-varid">prim</span><span class="hs-comment">-</span><span class=
+"hs-num">0.4</span><span class="hs-varop">.</span><span class=
+"hs-num">0.0</span><span class="hs-conop">:</span><span class=
+"hs-conid">GHC</span><span class="hs-varop">.</span><span class=
+"hs-conid">Tuple</span><span class="hs-varop">.</span><span class=
+"hs-conid">()</span>
+    <span class="hs-layout">}</span>
+<span class="hs-definition">end</span> <span class=
+"hs-conid">Rec</span> <span class="hs-layout">}</span></pre>
+<p>It's clear that GHC is able to optimize this tight loop, and
+unbox the <code>Int</code> into an <code>Int#</code>, which can be
+put into a register rather than being allocated by the GHC runtime
+allocator to be freed later.</p>
+<p>The lesson is not to take for granted that everything has a 1:1
+memory mapping at runtime with your source, and to take each case
+in context.</p>
+<h2 id="data-structures">Data structures</h2>
+<p>Finally, from our contrived examples we can take a look at
+user-defined data types and observe some of the optimizations that
+GHC does for memory.</p>
+<p>Let's demonstrate that unpacking a data structure yields less
+memory. Here is a data type that contains an <code>Int</code>:</p>
+<pre><span class="hs-keyword">data</span> <span class=
+"hs-conid">HasInt</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">HasInt</span> <span class=
+"hs-varop">!</span><span class="hs-conid">Int</span>
+  <span class="hs-keyword">deriving</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Generic</span><span class="hs-layout">)</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">NFData</span> <span class="hs-conid">HasInt</span></pre>
+<p>Here are two identical data types which use <code>HasInt</code>,
+but the first simply uses <code>HasInt</code>, and the latter
+unpacks it.</p>
+<pre><span class="hs-keyword">data</span> <span class=
+"hs-conid">HasPacked</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">HasPacked</span> <span class="hs-conid">HasInt</span>
+  <span class="hs-keyword">deriving</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Generic</span><span class="hs-layout">)</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">NFData</span> <span class="hs-conid">HasPacked</span>
+<p><span class="hs-keyword">data</span> <span class=
+"hs-conid">HasUnpacked</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">HasUnpacked</span> <span class=
+"hs-comment">{-# UNPACK #-}</span> <span class=
+"hs-varop">!</span><span class="hs-conid">HasInt</span>
+<span class="hs-keyword">deriving</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Generic</span><span class="hs-layout">)</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">NFData</span> <span class=
+"hs-conid">HasUnpacked</span></pre></p>
+<p>We can measure the difference by weighing them like this:</p>
+<pre><span class=
+"hs-comment">-- | Weigh: packing vs no packing.</span>
+<span class="hs-definition">packing</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Weigh</span> <span class="hs-conid">()</span>
+<span class="hs-definition">packing</span> <span class=
+"hs-keyglyph">=</span>
+  <span class="hs-keyword">do</span> <span class=
+"hs-varid">func</span> <span class=
+"hs-str">"\\x -&gt; HasInt x"</span> <span class=
+"hs-layout">(</span><span class="hs-keyglyph">\</span><span class=
+"hs-varid">x</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">HasInt</span> <span class=
+"hs-varid">x</span><span class="hs-layout">)</span> <span class=
+"hs-num">5</span>
+     <span class="hs-varid">func</span> <span class=
+"hs-str">"\\x -&gt; HasPacked (HasInt x)"</span> <span class=
+"hs-layout">(</span><span class="hs-keyglyph">\</span><span class=
+"hs-varid">x</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">HasPacked</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">HasInt</span> <span class=
+"hs-varid">x</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span> <span class="hs-num">5</span>
+     <span class="hs-varid">func</span> <span class=
+"hs-str">"\\x -&gt; HasUnpacked (HasInt x)"</span> <span class=
+"hs-layout">(</span><span class="hs-keyglyph">\</span><span class=
+"hs-varid">x</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">HasUnpacked</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">HasInt</span> <span class=
+"hs-varid">x</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span> <span class="hs-num">5</span></pre>
+<p>The output is:</p>
+<pre><span class="hs-keyglyph">\</span><span class=
+"hs-varid">x</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">HasInt</span> <span class=
+"hs-varid">x</span>                      <span class=
+"hs-num">16</span>    <span class="hs-num">0</span>  <span class=
+"hs-conid">OK</span>
+<span class="hs-keyglyph">\</span><span class=
+"hs-varid">x</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">HasPacked</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">HasInt</span> <span class=
+"hs-varid">x</span><span class="hs-layout">)</span>          <span class="hs-num">32</span>    <span class="hs-num">0</span>  <span class="hs-conid">OK</span>
+<span class="hs-keyglyph">\</span><span class=
+"hs-varid">x</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">HasUnpacked</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">HasInt</span> <span class=
+"hs-varid">x</span><span class="hs-layout">)</span>        <span class="hs-num">16</span>    <span class="hs-num">0</span>  <span class="hs-conid">OK</span></pre>
+<p>Voilà! Here we've demonstrated that:</p>
+<ul>
+<li><code>HasInt x</code> consists of the 8 byte header for the
+constructor, and 8 bytes for the Int.</li>
+<li><code>HasPacked</code> has 8 bytes for the constructor, 8 bytes
+for the first slot, then another 8 bytes for the
+<code>HasInt</code> constructor, finally 8 bytes for the
+<code>Int</code> itself.</li>
+<li><code>HasUnpacked</code> only allocates 8 bytes for the header,
+and 8 bytes for the <code>Int</code>.</li>
+</ul>
+<p>GHC did what we wanted!</p>
+<h2 id="summary">Summary</h2>
+<p>We've looked at:</p>
+<ul>
+<li>What lead to this package.</li>
+<li>Propose that we start measuring our functions more, especially
+libraries.</li>
+<li>How to use this package.</li>
+<li>Some of our use-cases at FP Complete.</li>
+<li>Caveats.</li>
+<li>Some contrived examples do not lead to obvious
+explanations.</li>
+</ul>
+<p>Now I encourage you to try it out!</p>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=weigh%3A%20Measuring%20allocations%20in%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;weigh-package&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;weigh-package&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;weigh-package&#x2F;&amp;title=weigh%3A%20Measuring%20allocations%20in%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;weigh-package&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#d4a7b5b8b1a794b2a4b7bbb9a4b8b1a0b1fab7bbb9" targe="_blank"><span class="__cf_email__" data-cfemail="295a48454c5a694f594a464459454c5d4c074a4644">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

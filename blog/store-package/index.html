@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>store: a new and efficient binary serialization library</title>
+  <meta property="og:title" content="store: a new and efficient binary serialization library">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;store-package&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>store: a new and efficient binary serialization library</h1>
+      
+      <p id="page-description">By Michael Sloan, May 24, 2016</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=store%3A%20a%20new%20and%20efficient%20binary%20serialization%20library https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;store-package&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;store-package&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;store-package&#x2F;&amp;title=store%3A%20a%20new%20and%20efficient%20binary%20serialization%20library"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;store-package&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>A couple months ago, Michael Snoyman wrote a <a href=
+"/blog/2016/03/efficient-binary-serialization">blogpost</a>
+describing an experiment in an efficient implementation of binary
+serialization. Since then, we've developed this approach into a new
+package for efficient serialization of Haskell datatypes. I'm happy
+to announce that today we are putting out the initial release of
+our new <a href="https://github.com/fpco/store/">new
+<code>store</code> package</a>!</p>
+<p>The <code>store</code> package takes a different approach than
+most prior serialization packages, in that performance is
+prioritized over other concerns. In particular, we do not make many
+guarantees about binary compatibility, and instead favor machine
+representations. For example, the <code>binary</code> and
+<code>cereal</code> packages use big endian encodings for numbers,
+whereas x86 machines use little endian. This means that to encode +
+decode numbers on an x86 machine, those packages end up swapping
+all of the individual bytes around twice!</p>
+<p>To serialize a value, <code>store</code> first computes its size
+and allocates a properly sized <code>ByteString</code>. This keeps
+the serialization logic simple and fast, rather than mixing in
+logic to allocate new buffers. For datatypes that need to visit
+many values to compute their size, this can be inefficient - the
+datatype is traversed once to compute the size and once to do the
+serialization. However, for datatypes with constant size, or
+vectors of datatypes with constant size, it is possible to very
+quickly compute the total required size. List / set / map-like
+<code>Store</code> instances all implement this optimization when
+their elements have constant size.</p>
+<p><code>store</code> comes with instances for most datatypes from
+<code>base</code>, <code>vector</code>, <code>bytestring</code>,
+<code>text</code>, <code>containers</code>, and <code>time</code>.
+You can also use either GHC generics or Template Haskell to derive
+efficient instances for your datatypes.</p>
+<h2 id="benchmark-results">Benchmark Results</h2>
+<p>I updated the <a href=
+"https://github.com/fpco/serial-bench">serial-bench</a> with
+<code>store</code>. Happily, <code>store</code> is even faster than
+any of the implementations we had in the benchmark.</p>
+<p><img alt="serial-bench results" src=
+"https://raw.githubusercontent.com/fpco/serial-bench/master/output/bench-2016-05-23.png"></p>
+<p>See the detailed report <a href=
+"https://cdn.rawgit.com/fpco/serial-bench/3a6e3f450c2e507df775faef64c94762e49586f0/output/bench-2016-05-23.html">
+here</a>. Note that the x-axis is measured in micro-seconds taken
+to serialize a 100 element <code>Vector</code> where each element
+occupies at least 17 bytes. <code>store</code> is actually
+performing this operations in the sub-microseconds (431ns to
+encode, 906ns to decode). The results for <code>binary</code> have
+been omitted from this graph as it blows out the x-axis scale,
+taking around 8 times longer than <code>cereal</code>, nearly 100x
+slower than <code>store</code>)</p>
+<p>We could actually write a benchmark even more favorable to
+<code>store</code>, if we used storable or unboxed vectors! In that
+case, <code>store</code> essentially implements a
+<code>memcpy</code>.</p>
+<h2 id="speeding-up-stack-builds">Speeding up stack builds</h2>
+<p>Now, the benchmark is biased towards the usecase we are
+concerned with - serializing a <code>Vector</code> of a small
+datatype which always takes up the same amount of space.
+<code>store</code> was designed with this variety of usecase in
+mind, so naturally it excels in this benchmark. But lets say we
+choose a case that isn't exactly <code>store</code>'s strongsuit,
+how well does it perform? In our experiments, it seems that
+<code>store</code> does a darn good job of that too!</p>
+<p>The development version of <code>stack</code> now uses
+<code>store</code> for serializing caches of info needed by the
+build.</p>
+<p>With store (~0.082 seconds):</p>
+<pre>
+<code>2016-05-23 19:52:06.964518: [debug] Trying to decode /home/mgsloan/.stack/indices/Hackage/00-index.cache @(stack_I9M2eJwnG6d3686aQ2OkVk:Data.Store.VersionTagged src/Data/Store/VersionTagged.hs:49:5)
+2016-05-23 19:52:07.046851: [debug] Success decoding /home/mgsloan/.stack/indices/Hackage/00-index.cache @(stack_I9M2eJwnG6d3686aQ2OkVk:Data.Store.VersionTagged src/Data/Store/VersionTagged.hs:58:13)
+
+21210280 bytes</code></pre>
+<p>With binary (~0.197 seconds):</p>
+<pre>
+<code>2016-05-23 20:22:29.855724: [debug] Trying to decode /home/mgsloan/.stack/indices/Hackage/00-index.cache @(stack_4Jm00qpelFc1pPl4KgrPav:Data.Binary.VersionTagged src/Data/Binary/VersionTagged.hs:55:5)
+2016-05-23 20:22:30.053367: [debug] Success decoding /home/mgsloan/.stack/indices/Hackage/00-index.cache @(stack_4Jm00qpelFc1pPl4KgrPav:Data.Binary.VersionTagged src/Data/Binary/VersionTagged.hs:64:13)
+
+20491950 bytes</code></pre>
+<p>So this part of <code>stack</code> is now twice as fast!</p>
+<h2 id="extras">Extras</h2>
+<p>Beyond the core of <code>store</code>'s functionality, this
+initial release also provides:</p>
+<ul>
+<li>
+<p><code>Data.Store.Streaming</code> - functions for using
+<code>Store</code> for streaming serialization with <a href=
+"https://www.stackage.org/package/conduit"><code>conduit</code></a>.
+This makes it so that you don't need to have everything in memory
+at once when serializing / deserializing. For applications
+involving lots of data, this can essential to having reasonable
+performance, or even functioning at all.</p>
+<p>This allows us to recoup the benefits of lazy serialization,
+without paying for the overhead when we don't need it. This
+approach is also more explicit / manual with regards to the
+laziness - the user must determine how their data will be streamed
+into chunks.</p>
+</li>
+<li>
+<p><code>Data.Store.TypeHash</code>, which provides utilities for
+computing hashes based on the structural definitions of datatypes.
+The purpose of this is to provide a mechanism for tagging
+serialized data in such a way that deserialization issues can be
+anticipated.</p>
+<p>This is included in the <code>store</code> package for a couple
+reasons:</p>
+<ol>
+<li>
+<p>It is quite handy to include these hashes with your encoded
+datatypes. The assumption is that any structural differences are
+likely to correspond with serialization incompatibilities. This is
+particularly true when the generics / TH deriving is used rather
+than custom instances.</p>
+</li>
+<li>
+<p>It uses <code>store</code> on Template Haskell types in order to
+compute a ByteString. This allows us to directly use cryptographic
+hashes from the <code>cryptohash</code> package to get a hash of
+the type info.</p>
+</li>
+</ol>
+</li>
+<li>
+<p><code>Data.Store.TH</code> not only provides a means to derive
+<code>Store</code> instances for your datatypes, but it also
+provides utilities for checking them via <a href=
+"https://www.stackage.org/package/smallcheck">smallcheck</a> and
+<a href="https://www.stackage.org/package/hspec">hspec</a>. This
+makes it easy to check that all of your datatypes do indeed
+serialize properly.</p>
+</li>
+</ul>
+<p>These extras were the more recently added parts of
+<code>store</code>, and so are likely to change quite a bit from
+the current API. The entirety of <code>store</code> is quite new,
+and so is also subject to API change while it stabilizes. That
+said, we encourage you to give it a try for your application!</p>
+<h2 id="th-cleverness">TH cleverness</h2>
+<p>Usually, we directly use <code>Storable</code> instances to
+implement <code>Store</code>. In functionality,
+<code>Storable</code> is very similar to <code>Store</code>. The
+key difference is that <code>Store</code> instances can take up a
+variable amount of size, whereas <code>Storable</code> types must
+use a constant number of bytes. The store package also provides the
+convenience of <code>Peek</code> and <code>Poke</code> monads, so
+defining custom <code>Store</code> instances is quite a bit more
+convenient</p>
+<p><code>Data.Store.TH.Internal</code> defines a function
+<code>deriveManyStoreFromStorable</code>, which does the
+following:</p>
+<ul>
+<li>Reifies all <code>Store</code> instances</li>
+<li>Reifies all <code>Storable</code> instances.</li>
+<li>Implements <code>Store</code> instances for all
+<code>Storable</code> instances</li>
+</ul>
+<p>In the future, <code>store</code> will likely provide such a
+function for users, which restricts it to only deriving
+<code>Store</code> instances for types in the current package or
+current module. For now, this is just internal convenience.</p>
+<p>I noticed that the Storable instance for <code>Bool</code> is a
+bit wasteful with its bytes. Rather inexplicably, perhaps due to
+alignment concerns, it takes up a whopping 4 bytes to represent a
+single bit of info:</p>
+<pre><span class="hs-keyword">instance</span> <span class=
+"hs-conid">Storable</span> <span class=
+"hs-conid">Bool</span> <span class="hs-keyword">where</span>
+   <span class="hs-varid">sizeOf</span> <span class=
+"hs-keyword">_</span>          <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">sizeOf</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">undefined</span><span class=
+"hs-keyglyph">::</span><span class=
+"hs-conid">HTYPE_INT</span><span class="hs-layout">)</span>
+   <span class="hs-varid">alignment</span> <span class=
+"hs-keyword">_</span>       <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">alignment</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">undefined</span><span class=
+"hs-keyglyph">::</span><span class=
+"hs-conid">HTYPE_INT</span><span class="hs-layout">)</span>
+   <span class="hs-varid">peekElemOff</span> <span class=
+"hs-varid">p</span> <span class="hs-varid">i</span>   <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">liftM</span> <span class=
+"hs-layout">(</span><span class="hs-varop">/=</span> <span class=
+"hs-layout">(</span><span class="hs-num">0</span><span class=
+"hs-keyglyph">::</span><span class=
+"hs-conid">HTYPE_INT</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">peekElemOff</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">castPtr</span> <span class=
+"hs-varid">p</span><span class="hs-layout">)</span> <span class=
+"hs-varid">i</span>
+   <span class="hs-varid">pokeElemOff</span> <span class=
+"hs-varid">p</span> <span class="hs-varid">i</span> <span class=
+"hs-varid">x</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">pokeElemOff</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">castPtr</span> <span class=
+"hs-varid">p</span><span class="hs-layout">)</span> <span class=
+"hs-varid">i</span> <span class="hs-layout">(</span><span class=
+"hs-keyword">if</span> <span class="hs-varid">x</span> <span class=
+"hs-keyword">then</span> <span class="hs-num">1</span> <span class=
+"hs-keyword">else</span> <span class="hs-num">0</span><span class=
+"hs-keyglyph">::</span><span class=
+"hs-conid">HTYPE_INT</span><span class="hs-layout">)</span></pre>
+<p>We'd prefer to just use a single byte. Since
+<code>deriveManyStoreFromStorable</code> skips types that already
+have <code>Store</code> instances, all I needed to do was define
+our own instance for <code>Bool</code>. To do this, I used the
+<code>derive</code> function from the new <a href=
+"https://github.com/fpco/th-utilities"><code>th-utilities</code></a>
+package (blogpost pending!), to define an instance for
+<code>Bool</code>:</p>
+<pre><span class="hs-varop">$</span><span class=
+"hs-layout">(</span><span class="hs-varop">$</span><span class=
+"hs-layout">(</span><span class=
+"hs-varid">derive</span> <span class=
+"hs-keyglyph">[</span><span class="hs-varid">d</span><span class=
+"hs-keyglyph">|</span>
+    <span class="hs-keyword">instance</span> <span class=
+"hs-conid">Deriving</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Store</span> <span class="hs-conid">Bool</span><span class="hs-layout">)</span>
+    <span class="hs-keyglyph">|</span><span class=
+"hs-keyglyph">]</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span></pre>
+<p>This is a bit of a magical incantation - it runs code at
+compiletime which generates an efficient <code>instance Store Bool
+where ...</code>. We could also use generic deriving, and rely on
+the method defaults to just write <code>instance Store Bool</code>.
+However, this can be less efficient, because the generics instances
+will yield a <code>VarSize</code> for its <code>size</code>,
+whereas the TH instance is smart enough to yield
+<code>ConstSize</code>. In practice, this is the difference between
+having an <code>O(1)</code> implementation for <code>size :: Size
+(Vector MyADT)</code>, and having an <code>O(n)</code>
+implementation. The <code>O(1)</code> implementation just
+multiplies the element size by the length, whereas the
+<code>O(n)</code> implementation needs to ask each element for its
+size.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=store%3A%20a%20new%20and%20efficient%20binary%20serialization%20library https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;store-package&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;store-package&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;store-package&#x2F;&amp;title=store%3A%20a%20new%20and%20efficient%20binary%20serialization%20library"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;05&#x2F;store-package&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#e390828f8690a38593808c8e938f869786cd808c8e" targe="_blank"><span class="__cf_email__" data-cfemail="6d1e0c01081e2d0b1d0e02001d01081908430e0200">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

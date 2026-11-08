@@ -1,0 +1,242 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Hash Based Package Downloads - part 1 of 2
+
+By Michael Snoyman, January 23, 2018
+
+Share this     
+
+This is part 1 of a 2 part series. This post will define the problem we're trying to solve, and
+part 2 will go into some details on a potential storage mechanism to make this a reality.
+
+Suppose you're working on a highly regulated piece of software. For example, something on a defense
+contract, or a medical device, or the space shuttle. One goal that most regulators will have is
+that we can fully determine how the software was built at any point in time. The gold standard for
+this is fully reproducible builds, where you get byte-identical artifacts for rerunning the build
+system at different times.
+
+Not all of our build tools support that unfortunately, due to a variety of reasons which I'm not
+going to go into. The Debian project has been making great strides in that direction, as has NixOS.
+But let's talk about a slightly weaker guarantee: reproducible build plans.
+
+The idea here is simple: for a given set of source files, I can deterministically know exactly
+which versions of its dependencies will be used. Usually, there's some kind of boundary to how
+deeply this determinism goes. For example, which of the following are determined:
+
+  • The exact versions of my language-specific (Haskell, Rust, Python, etc) source files
+  • The exact versions of the system's libraries
+  • The version of the kernel I'm building on
+  • The hardware I'm building on
+
+NOTE Other things, like filesystem state, also apply. For that matter, in a crazy build system, GPS
+location could matter too, if it somehow affected the build. But these are some of the most common
+cases.
+
+Building with something like Nix will guarantee determinism in the first two bullets. Docker can be
+(ab)used to give the same guarantee. Virtual machines can give guarantees about the kernel as well.
+
+The rest of this blog post will talk about just that first bullet: language-specific source file
+determinism. That's not because the other points are unimportant, but because:
+
+ 1. It's the problem I typically have to solve
+ 2. Docker and VMs can encapsulate the others very well for most cases
+ 3. In practice, there tends to be the most variability in build process output from
+    language-specific source files, due to often large numbers of such dependencies and frequent
+    releases of those dependencies
+
+I'll primarily be talking about how this affects the Haskell world, and in particular the Stack
+build tool, but the ideas hopefully generalize well to other languages too.
+
+Snapshots
+
+A primary design goal in Stack is reproducible build plans, usually (but not exclusively) provided
+via Stackage Snapshots. These snapshots define a compiler version, a set of packages and their
+versions*, and various configuration like build flags. These snapshots are also immutable. Most
+users use the Long Term Support (LTS) flavor of snapshots, and end up with a stack.yaml
+configuration file like the following:
+
+resolver: lts-10.3
+
+Stack knows where to download the lts-10.3.yaml configuration file from (specifically, from a
+Github repo), and takes care of that for you automatically. This looks perfectly reproducible: LTS
+10.3 is immutable, fully determines the exact content of all of its packages, and the flags to
+provide to build it. Given the same OS and same executable of the Stack build tool, you should be
+able to make a very strong argument to a regulator that this is a fully reproducible build plan…
+right?
+
+* And for those familiar: also specifies Hackage revisions of the cabal file.
+
+Immutable?
+
+How do you know that LTS 10.3 is immutable? Easy: I just told you! And I am clearly:
+
+  • Totally trustworthy
+  • The only person with the ability to change the lts-10.3.yaml file. There are clearly no other
+    people with push access to the repo, or someone at Github with the ability to override our
+    access controls.
+  • Going to live forever, and never pass on control of the project to anyone else.
+  • Happy to sign a boatload of liability documents that your regulator demands be signed to
+    determine who will be at fault and responsible to pay damages when the missile guidance system
+    you're writing bombs the wrong house due to a faulty version of leftpad being used.
+
+Obviously, my goal as one of the Stackage Curators is to strive to deliver on the guarantees we're
+claiming. We want snapshots to remain immutable for all time. But we can't ignore the fact that
+some things are completely outside of our control. And a good regulator will notice and challenge
+this.
+
+Same with packages
+
+OK, let's pretend for just a moment that you could convince your regulator that snapshots are
+totally immutable and awesome. Next, she's going to open up that lts-10.3.yaml file and see
+something along the lines of:
+
+compiler: ghc-8.2.2
+packages:
+- name: foobar
+  version: 1.2.3
+  flags:
+    be-awesome: true
+# And lots and lots and lots more
+# Note that our config files in practice look
+# nothing like this :)
+
+stock-vector-conceptual-tag-cloud-containing-names-of-programming-languages-haskell-emphasized-related-to-web-245439163-352442-edited.jpg
+
+I imagine a conversation going something like this:
+
+Regulator: Alright, how do you know what foobar-1.2.3 is?
+Developer: Well, obviously you go to your package index… which isn't specified in the snapshot
+file, of course. It's specified in Stack's global config. Regulator: Why?
+Developer: Well, it allows people to more easily host mirrors.
+Regulator: So you mean if you change some other config file, it can totally change which
+foobar-1.2.3 is used?
+Developer: Yeah, but that's totally a feature, not a bug. And anyway, we guarantee in our build
+process that this doesn't happen.
+Regulator: OK. Fine. And how do you know that when you download foobar-1.2.3 that it contains the
+exact same content at all time?
+Developer: Oh, remember how I told you that Michael's a real trustworthy guy and runs Stackage
+Snapshots? Yeah, same for the Hackage package index.
+
+Notice the pattern here. Even taken as a given that everyone wants to work towards immutability, if
+my job is to make guarantees to a regulator, everyone's best intentions are irrelevant.
+
+Using hashes
+
+The solution to this is relatively straightforward. Instead of trusting some arbitrary identifier
+which gives no guarantees of the file contents, let's consider this reality instead:
+
+resolver:
+  name: lts-10.3 # display purposes only
+  sha256: bd7a6cbf8bce34086aff452c03ae1f3d8e0bbe9427f753936fabcdd797848d06
+  bytes: 6693345 # byte count, avoid an overflow attack
+
+Now the conversation with the regulator:
+
+Regulator: How do we know what lts-10.3 is?
+Developer: We don't, and we don't care.
+Regulator: What's it there for?
+Developer: Documentation purposes only.
+Regulator: OK, and how do we know that we have the right snapshot content?
+Developer: We perform a cryptographic hash on the file contents and ensure it matches the hash we
+placed in our config file.
+
+This depends on trusting cryptographic hashes (which most regulators are willing to do in my
+experience), and on having some way of finding the config file based on the cryptographic hash
+(more on that in a bit). And for that second bit, we have a guarantee that the snapshot cannot be
+changed without detection, which is not the case with lts-10.3 as the only identifier.
+
+Similarly, we would want to extend the snapshot format itself to retain this metadata:
+
+packages:
+- name: foobar
+  version: 1.2.3
+  flags:
+    be-awesome: true
+  sha256: 7cbb4101018cdc92244c321db8c99b709681f4b7c3ea2ce24ceea0d9ae1595ce
+  bytes: 1234
+
+There's no way for an attacker to slip in a nefarious foobar-1.2.3 without breaking SHA256
+security. And once again, we can use the hash for performing downloads, and then simply verify the
+contents actually contain foobar-1.2.3 by inspecting metadata (in Haskell land: the cabal package
+file).
+
+Tooling assistance
+
+I love typing in resolver: lts-10.3: it's easy to remember, quick, and explains exactly what I
+want. But easy and quick are not the cornerstones of regulated software. To make this story more
+palatable, we could easily add some tooling support, e.g.:
+
+  • stack add-hashes, which modifies a stack.yaml to add the cryptographic hashes to a stack.yaml
+    file
+  • A --verified mode (or similar) that refuses to download anything that doesn't have a
+    cryptographic hash to back it up
+
+These could even be provided outside of the build tool itself, there's no necessity for it being in
+Stack.
+
+Keep build metadata files separately
+
+This may be a specific quirk of Haskell, but I'll spell it out here anyway. It's common in Haskell
+build tools to want to analyze the build metadata files (cabal package files) to determine
+dependency trees. Therefore, we'd want to support downloading them separately, e.g.:
+
+packages:
+- name: foobar
+  version: 1.2.3
+  flags:
+    be-awesome: true
+  sha256: 7cbb4101018cdc92244c321db8c99b709681f4b7c3ea2ce24ceea0d9ae1595ce
+  bytes: 1234
+  cabal-file:
+    sha256: 7cbb4101018cdc92244c321db8c99b709681f4b7c3ea2ce24ceea0d9ae1595ce
+    bytes: 10685
+
+This allows us to download the metadata without downloading the entire package. Also, for those
+familiar with it, this provides a robust way to handle Hackage file revisions.
+
+Next time
+
+In the next post, we'll discuss how to create a storage system that can provide downloads of
+packages, package metadata, and snapshot definitions. Stay tuned!
+
+If you liked this article you may also like:
+
+  • Case Study: FDA Regulated Medical Device
+  • Major IT project roadblocks and how to avoid them
+  • Immutability - Docker - Haskell
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

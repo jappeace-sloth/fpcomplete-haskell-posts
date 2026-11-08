@@ -1,0 +1,395 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Functional Dependencies
+
+A quick tutorial on understanding functional dependencies, multi param type classes, and the basics
+of the mtl library
+
+Functional dependencies (aka fundeps) are a language extension. It builds on top of multi param
+type classes, and provides the basis for many common libraries. In particular, fundeps are core to
+mtl, the monad transformer library. And finally, fundeps overlap these days a bit with type
+families. We'll touch on that at the end.
+
+Prereqs: you should have an understanding of type classes (the boring, single-parameter kind) and
+monads to understand this tutorial.
+
+PersonReader
+
+Our motivating use case will be the Reader monad. We're going to deal with a simplified version of
+Reader that provides just one action: ask. And this Reader will always allow us to only hold onto
+values of one type: Person. Let's see it in practice. We'll include all the boring boilerplate for
+defining our own PersonReader:
+
+#!/usr/bin/env stack
+-- stack --resolver ghc-8.8.3 script
+{-# LANGUAGE DeriveFunctor #-}
+
+data Person = Person
+  { name :: String
+  , age :: Int
+  }
+  deriving Show
+
+newtype PersonReader a = PersonReader { runPersonReader :: Person -> a }
+  deriving Functor
+instance Applicative PersonReader where
+  pure x = PersonReader $ \_env -> x
+  PersonReader f <*> PersonReader x = PersonReader $ \env -> f env (x env)
+instance Monad PersonReader where
+  return = pure
+  PersonReader x >>= f = PersonReader $ \env -> runPersonReader (f (x env)) env
+
+ask :: PersonReader Person
+ask = PersonReader $ \env -> env
+
+greeting :: PersonReader String
+greeting = do
+  person <- ask
+  pure $ concat
+    [ "Greetings, "
+    , show $ name person
+    , ", you are "
+    , show $ age person
+    , " years old"
+    ]
+
+main :: IO ()
+main = do
+  let alice = Person "Alice" 30
+  putStrLn $ runPersonReader greeting alice
+
+The type of ask is fully monomorphic: there are no type variables at all. When you use ask, you
+will get a PersonReader action which, when run, gives you a Person.
+
+Generalizing the environment
+
+But having our PersonReader so constrained in what it can hold is limiting. We may want to hold
+other types! So as good Haskellers we obviously want to use a type variable here. And behold: our
+PersonReader can easily turn into a Reader with very little extra work:
+
+#!/usr/bin/env stack
+-- stack --resolver ghc-8.8.3 script
+{-# LANGUAGE DeriveFunctor #-}
+
+data Person = Person
+  { name :: String
+  , age :: Int
+  }
+
+newtype Reader env a = Reader { runReader :: env -> a }
+  deriving Functor
+instance Applicative (Reader env) where
+  pure x = Reader $ \_env -> x
+  Reader f <*> Reader x = Reader $ \env -> f env (x env)
+instance Monad (Reader env) where
+  return = pure
+  Reader x >>= f = Reader $ \env -> runReader (f (x env)) env
+
+ask :: Reader env env
+ask = Reader $ \env -> env
+
+greeting :: Reader Person String
+greeting = do
+  person <- ask
+  pure $ concat
+    [ "Greetings, "
+    , show $ name person
+    , ", you are "
+    , show $ age person
+    , " years old"
+    ]
+
+main :: IO ()
+main = do
+  let alice = Person "Alice" 30
+  putStrLn $ runReader greeting alice
+
+Hurrah!
+
+Unifying ask
+
+Now we have two different type signatures for ask:
+
+ask :: PersonReader Person
+ask :: Reader Person Person
+
+We would like to be able to represent both of these with a single typeclass method, so we can write
+functions that work on both Reader and PersonReader. Let's take a few obviously wrong attempts.
+First, let's try:
+
+class MonadReader m where
+  ask :: m Person
+
+This forces the result type to a Person. This works fine for PersonReader:
+
+instance MonadReader PersonReader where
+  ask = PersonReader $ \env -> env
+
+However, we're left with something that doesn't work too well for Reader. If we try to keep a type
+variable for the Reader like this:
+
+instance MonadReader (Reader env) where
+  ask = Reader $ \env -> env
+
+We get an error message:
+
+/Users/michael/Desktop/Main.hs:16:9: error:
+    • Couldn't match type ‘env’ with ‘Person’
+      ‘env’ is a rigid type variable bound by
+        the instance declaration
+        at /Users/michael/Desktop/Main.hs:15:10-33
+      Expected type: Reader env Person
+        Actual type: Reader env env
+
+And if we try to use instance MonadReader (Reader Person), we have two problems:
+
+  • GHC insists that we turn on FlexibleInstances as a language extension. Fine, easy enough.
+    But...
+  • We also are limited massively in the usefulness of the ask method: it only works with Persons!
+
+Instead, let's try a more generic version of MonadReader. Up until now, the m parameter has had
+kind Type -> Type, meaning the monad takes a single type variable. This is true for PersonReader.
+But Reader takes two type variables: env and a. That's why we had to provide the extra env type
+variable in the instance definition. Instead, let's try this class:
+
+class MonadReader m where
+  ask :: m env env
+
+Now m has two parameters, and we're able to define an instance for Reader easily:
+
+instance MonadReader Reader where
+  ask = Reader $ \env -> env
+
+However, we're completely unable to define an instance for PersonReader. If we try with something
+like this:
+
+instance MonadReader PersonReader where
+  ask = PersonReader $ \env -> env
+
+We get the error message:
+
+/Users/michael/Desktop/Main.hs:13:22: error:
+    • Expected kind ‘* -> * -> *’, but ‘PersonReader’ has kind ‘* -> *’
+    • In the first argument of ‘MonadReader’, namely ‘PersonReader’
+      In the instance declaration for ‘MonadReader PersonReader’
+
+Note that * -> * -> * is the same as saying Type -> Type -> Type.
+
+So how do we come up with a type class that:
+
+  • Works for both Reader and PersonReader
+  • Allows Reader to have any environment type it wants
+
+MultiParamTypeClasses
+
+The MonadReader type classes we've tried so far all have a single parameter: m. In order to fix our
+problem above, we're going to use multiple parameters: both m (the monad) and env (the
+environment). Since all production Haskell code is 43% made up of language extensions, add this to
+the top of your module:
+
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
+
+And then we can define our typeclass as:
+
+class MonadReader env m where
+  ask :: m env
+
+Defining the instance for PersonReader is a bit simpler. The env parameter is Person, the m is
+PersonReader, and therefore we have:
+
+instance MonadReader Person PersonReader where
+  ask = PersonReader $ \env -> env
+
+The instance for Reader is slightly more complicated. We don't have a concrete env type variable.
+So instead, we keep it as a type variable! And our m still needs to have kind Type -> Type. So we
+need to partially apply Reader to env. We end up with:
+
+instance MonadReader env (Reader env) where
+  ask = Reader $ \env -> env
+
+And voila, we have a real ask method!
+
+Where's the fundeps?
+
+So far, this example works just fine, and we didn't have to use any functional dependencies. You
+may be thinking: maybe we don't need fundeps at all! But let's get a little more complicated.
+
+I want to modify the greeting function I wrote before. Instead of generating a nice, pretty
+message, I'm just going to reuse the Show instance:
+
+greeting :: PersonReader String
+greeting = do
+  person <- ask
+  pure $ show person
+
+Ugly, but it seems reasonable. Unfortunately, GHC is not amused with us:
+
+/Users/michael/Desktop/Main.hs:39:13: error:
+    • Ambiguous type variable ‘a0’ arising from a use of ‘ask’
+      prevents the constraint ‘(MonadReader
+                                  a0 PersonReader)’ from being solved.
+      Probable fix: use a type annotation to specify what ‘a0’ should be.
+      These potential instance exist:
+        instance MonadReader Person PersonReader
+          -- Defined at /Users/michael/Desktop/Main.hs:16:10
+
+Here's what's happening: we have two type parameters for the MonadReader type class. In our
+greeting function, we call ask in a context where type inference tells us that the value must be
+ask :: PersonReader a. However, nothing tells us what that a must be. Previously, we were using the
+name and age record accessors, which helped type inference along. But that doesn't apply with the
+show method.
+
+Before we introduce fundeps, let's see how we can fix the problem here, and some cool extra
+features we get. First, we can do example what GHC tells us: "use a type annotation." This looks
+like:
+
+greeting :: PersonReader String
+greeting = do
+  person <- ask
+  pure $ show (person :: Person)
+
+But at its core, this error message is hinting at something bigger: we're allowed to have more than
+one instance of MonadReader for PersonReader. So far, we've only provided one such instance. But we
+could provide more. For example:
+
+instance MonadReader String PersonReader where
+  ask = PersonReader $ \person -> name person
+instance MonadReader Int PersonReader where
+  ask = PersonReader $ \person -> age person
+
+And then, using type annotations, we can tell GHC which instance we want to use, e.g.:
+
+greeting :: PersonReader String
+greeting = do
+  person <- ask
+  pure $ show (person :: Int) -- show the age
+
+That's kind of nifty.... I guess.
+
+Introducing fundeps
+
+With our multi param type class, we end up with a lot of flexibility (many different instances),
+but lose type inference. Usually, we prefer to keep the type inference, not the flexibility. And
+that's exactly where fundeps come into play. Be sure to appease the Haskell deities with:
+
+{-# LANGUAGE FunctionalDependencies #-}
+
+What we want to say is that, for each type parameter m, there is only ever allowed to be a single
+instance of MonadReader. The way we say that with fundeps is "the type parameters m dictates
+exactly what the type parameter env will be." And the syntax we use for this is:
+
+class MonadReader env m | m -> env where
+  ask :: m env
+
+With this in place, our earlier greeting works just fine:
+
+greeting :: PersonReader String
+greeting = do
+  person <- ask
+  pure $ show person
+
+That's because type inference now holds. We know from the type signature of greeting that ask must
+have type ask :: PersonReader env. And we know from the fundep that the m dictates the env. And in
+this case, where m is PersonReader, env must be Person.
+
+If we try to add in the extra MonadReader instances like we had before, we get an error message
+from GHC:
+
+Functional dependencies conflict between instance declarations:
+  instance MonadReader Person PersonReader
+    -- Defined at /Users/michael/Desktop/Main.hs:17:10
+  instance MonadReader String PersonReader
+    -- Defined at /Users/michael/Desktop/Main.hs:38:10
+  instance MonadReader Int PersonReader
+    -- Defined at /Users/michael/Desktop/Main.hs:40:10
+
+So we've lost the flexibility to have multiple instances per monad, but instead gained back type
+inference. And overall, this is considered a win.
+
+Type families
+
+Historically, fundeps were introduced before type families. Type families are another language
+extension which provide for slightly different use cases than fundeps. However, in many cases type
+families can be used to solve the same problems as fundeps, including here. Type families may be
+more familiar to you under the phrase "associated types."
+
+Let's restate our problem: we want a MonadReader typeclass where there is only a single instance
+per m, and we know the env parameter that will be available from each m. Multi param type classes
+let us specify explicitly what the env was, and fundeps allowed us to constrain ourselves to a
+single instance. Type families arguably do all of this more directly. Appease the deities again:
+
+{-# LANGUAGE TypeFamilies #-}
+
+Then we change our typeclass to:
+
+class MonadReader m where
+  type Env m
+  ask :: m (Env m)
+
+We now have an associated type Env for our m type variable. We can use that associated type in our
+method definitions. Here we're saying "the method ask returns a value wrapped in the m monad, and
+that value must be the Env associated with m."
+
+Another way to put this: Env is a function at the type level. You give me a type m, and I'll give
+you back the type which is its environment.
+
+Defining the typeclass instances for PersonReader and Reader is fairly straightforward:
+
+instance MonadReader PersonReader where
+  type Env PersonReader = Person
+  ask = PersonReader $ \env -> env
+instance MonadReader (Reader env) where
+  type Env (Reader env) = env
+  ask = Reader $ \env -> env
+
+So, should you use fundeps or type families? Your call. Like many other things in Haskell, there
+are more than one way to do it. And as you use libraries in the ecosystem, you'll find both used.
+There are some advantages to both. mtl uses fundeps, both for historical reasons, and arguably
+because it's slightly easier to work with. Many other use cases are better served with type
+families. The decision is yours!
+
+Exercises
+
+  • Using the fundep version of the MonadReader type class, write functions askName and askAge so
+    that the following greeting function works:
+
+    greeting :: (Monad m, MonadReader Person m) => m String
+    greeting = do
+      name <- askName
+      age <- askAge
+      pure $ name ++ " is " ++ show age ++ " years old"
+    
+    Some pointers:
+
+      □ You'll probably need to add an extra language extension... of course :)
+      □ You may want to add a superclass constraint to MonadReader of Monad m
+  • Write State and PersonState monads and define a MonadState typeclass with get and put methods.
+
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

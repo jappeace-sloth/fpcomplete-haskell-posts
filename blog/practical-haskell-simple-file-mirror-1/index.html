@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Practical Haskell: Simple File Mirror (Part 1)</title>
+  <meta property="og:title" content="Practical Haskell: Simple File Mirror (Part 1)">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;practical-haskell-simple-file-mirror-1&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Practical Haskell: Simple File Mirror (Part 1)</h1>
+      
+      <p id="page-description">By Michael Snoyman, September 14, 2016</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Practical%20Haskell%3A%20Simple%20File%20Mirror%20%28Part%201%29 https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;practical-haskell-simple-file-mirror-1&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;practical-haskell-simple-file-mirror-1&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;practical-haskell-simple-file-mirror-1&#x2F;&amp;title=Practical%20Haskell%3A%20Simple%20File%20Mirror%20%28Part%201%29"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;practical-haskell-simple-file-mirror-1&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>The other day I threw together a quick program to solve an
+annoyance some people on our team were expressing. We sometimes do
+our development on remote machines, but would still like to use
+local file editors. There are plenty of solutions for this (SSHFS,
+<code>inotify</code>+<code>rsync</code>), but none of us ever found
+a prebaked solution that was low-latency and robust enough to use
+regularly.</p>
+<p>The program I put together is a simple client/server combo,
+where the client watches for local file changes and sends the
+updates to the server, which writes them to disk. This approach
+reduces latency significantly by keeping an open TCP connection,
+and can be tunneled over SSH for security. It's simple, and the
+<a href=
+"https://github.com/fpco/simple-file-mirror/blob/master/src/Main.hs">
+code is short and readable</a>.</p>
+<p>This program turned out to be a good demonstration of a few
+different common problem domains when writing practical, real world
+Haskell code:</p>
+<ul>
+<li>Communication protocols</li>
+<li>Streaming of data</li>
+<li>Network communications</li>
+<li>File monitoring (eh, probably not <i>that</i> common, but
+cool)</li>
+<li>Command line option parsing</li>
+</ul>
+<p>This blog post series will build up from basics to being able to
+implement a program like the simple file mirror. This first post of
+three planned posts will cover communication protocols and
+streaming of data. You can also read:</p>
+<ul>
+<li>
+<p><a href=
+"/blog/2016/09/practical-haskell-simple-file-mirror-2">Part 2</a>,
+on network communication and concurrency</p>
+</li>
+</ul>
+<h2 id="prereqs">Prereqs</h2>
+<p>This series will contain a number of self-contained code
+samples, presented as runnable scripts. In order to run these
+scripts, copy them into a file ending with <code>.hs</code> (e.g.,
+<code>practical.hs</code>), and then run it with <code>stack
+practical.hs</code>). You will need to install the <a href=
+"https://haskell-lang.org/get-started">Stack build tool</a>. Stack
+will take care of downloading and installing any compiler and
+libraries necessary. Because of that: your first time running a
+script will take a bit of time while downloading and
+installing.</p>
+<p>If you'd like to test that you're ready to proceed, try running
+this program:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --resolver nightly-2016-09-10 --install-ghc runghc</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">putStrLn</span> <span class=
+"hs-str">"Hello world!"</span></pre>
+<p>Also, this series of posts will use the
+<code>classy-prelude-conduit</code> library, which provides a lot
+of built-in functionality to make it easier to follow. If you'd
+like to kick off a build of that library now so it's available when
+you want to use it, run:</p>
+<pre>
+<code>$ stack --resolver nightly-2016-09-10 --install-ghc build classy-prelude-conduit</code></pre>
+<h2 id="textual-versus-binary-data">Textual versus binary data</h2>
+<p>We humans have an interesting tendancy to want to communicate -
+with each other and our computers - in human languages. Computers
+don't care: they just see binary data. Often times, this overlaps
+just fine, specifically when dealing with the ASCII subset of the
+character set. But generally speaking, we need some way to
+distinguish between textual and binary data.</p>
+<p>In Haskell, we do this by using two different data types:
+<code>Text</code> and <code>ByteString</code>. In order to convert
+between these two, we need to choose a <i>character encoding</i>,
+and most often we'll choose <a href=
+"https://utf8everywhere.org/">UTF-8</a>. We can perform this
+conversion with the <code>encodeUtf8</code> and
+<code>decodeUtf8</code> functions:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --resolver nightly-2016-09-10 --install-ghc runghc --package classy-prelude-conduit</span>
+
+<span class="hs-comment">{-# LANGUAGE NoImplicitPrelude #-}</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">ClassyPrelude</span><span class=
+"hs-varop">.</span><span class="hs-conid">Conduit</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-varid">someText</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">Text</span>
+        <span class="hs-varid">someText</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">unlines</span>
+            <span class="hs-keyglyph">[</span> <span class=
+"hs-str">"Hello, this is English."</span>
+            <span class="hs-layout">,</span> <span class=
+"hs-str">"Hola, este es el español."</span>
+            <span class="hs-layout">,</span> <span class=
+"hs-str">"שלום, זה עברית."</span>
+            <span class="hs-keyglyph">]</span>
+        <span class="hs-varid">binary</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">ByteString</span>
+        <span class="hs-varid">binary</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">encodeUtf8</span> <span class="hs-varid">someText</span>
+
+        <span class="hs-varid">filePath</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">FilePath</span>
+        <span class="hs-varid">filePath</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-str">"say-hello.txt"</span>
+
+    <span class="hs-varid">writeFile</span> <span class=
+"hs-varid">filePath</span> <span class="hs-varid">binary</span>
+    <span class="hs-varid">binary2</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">readFile</span> <span class=
+"hs-varid">filePath</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">ByteString</span>
+
+    <span class="hs-keyword">let</span> <span class=
+"hs-varid">text2</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">decodeUtf8</span> <span class="hs-varid">binary2</span>
+    <span class="hs-varid">putStrLn</span> <span class=
+"hs-varid">text2</span></pre>
+<p>If you're coming from a language that doesn't have this strong
+separation, it may feel clunky at first. But after years of
+experience with having a type-level distinction between textual and
+binary data, I can attest to the fact that the compiler has
+<i>many</i> times prevented me from making some mistakes that would
+have been terrible in practice. One example popped up when working
+on the simple-file-mirror tool itself: I tried to send the number
+of characters in a file path over the wire, instead of sending the
+number of bytes after encoding it.</p>
+<p>The <code>OverloadedStrings</code> language extension lets us
+use string literals for all of these string-like things, including
+(as you saw above) file paths.</p>
+<p><b>NOTE</b>: For historical reasons which are being worked on,
+there is additionally a <code>String</code> type, which is
+redundant with <code>Text</code> but far less efficient. I mention
+it because you may see references to it when working with some
+Haskell documentation. Whenever possible, stick to
+<code>Text</code> or <code>ByteString</code>, depending on your
+actual data content.</p>
+<h2 id="some-simple-data-streaming">Some simple data streaming</h2>
+<p>OK, that was a bit abstract. Let's do something more concrete.
+We're going to use the <a href=
+"https://haskell-lang.org/library/conduit">conduit library</a> to
+represent streaming data. To start off simple, let's stream the
+numbers 1 to 10 and print each of them:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --resolver nightly-2016-09-10 --install-ghc runghc --package classy-prelude-conduit</span>
+
+<span class="hs-comment">{-# LANGUAGE NoImplicitPrelude #-}</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">ClassyPrelude</span><span class=
+"hs-varop">.</span><span class="hs-conid">Conduit</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">yieldMany</span> <span class=
+"hs-keyglyph">[</span><span class="hs-num">1</span><span class=
+"hs-keyglyph">..</span><span class="hs-num">10</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-varop">$$</span> <span class="hs-varid">mapM_C</span> <span class="hs-varid">print</span></pre>
+<p>Our <code>yieldMany</code> function will take a sequence of
+values - in this case a list from 1 to 10 - and yield them
+<i>downstream</i>. For those familiar, this is similar to
+<code>yield</code>ing in Python with generators. The idea is that
+we will build a pipeline of multiple components, each
+<code>await</code>ing for values from upstream and
+<code>yield</code>ing values downstream.</p>
+<p>Our <code>mapM_C print</code> component will apply the function
+<code>print</code> to every value it receives from upstream. The
+<code>C</code> suffix is used for disambiguating conduit functions
+from non-conduit functions. Finally, the <code>$$</code> operator
+in the middle is the "connect" function, which connects a source of
+data to a sink of data and runs it. As you might guess, the above
+prints the numbers 1 to 10.</p>
+<p>We can also put other components into our pipeline, including
+functions that both <code>await</code> values from upstream
+<i>and</i> <code>yield</code> them downstream. For example:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --resolver nightly-2016-09-10 --install-ghc runghc --package classy-prelude-conduit</span>
+
+<span class="hs-comment">{-# LANGUAGE NoImplicitPrelude #-}</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">ClassyPrelude</span><span class=
+"hs-varop">.</span><span class="hs-conid">Conduit</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">yieldMany</span> <span class=
+"hs-keyglyph">[</span><span class="hs-num">1</span><span class=
+"hs-keyglyph">..</span><span class="hs-num">10</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-varop">$$</span> <span class="hs-varid">mapC</span> <span class="hs-layout">(</span><span class="hs-varop">*</span> <span class="hs-num">10</span><span class="hs-layout">)</span> <span class="hs-varop">=$</span> <span class="hs-varid">mapM_C</span> <span class="hs-varid">print</span></pre>
+<p>The <code>mapC</code> function applies a function to each value
+in the stream and yields it downstream, while the <code>=$</code>
+operator connects two components together. Take a guess at what the
+output from this will be, and then give it a try.</p>
+<p><b>NOTE</b> There's a subtle but important different between
+<code>$$</code> and <code>=$</code>. <code>$$</code> will connect
+two components and then run the result to completion to get a
+result. <code>=$</code> will connect two components <i>without</i>
+running them so that it can be further connected to other
+components. In a single pipeline, you'll end up with one
+<code>$$</code> usage.</p>
+<p>We can also do more interesting consumption of a stream, like
+summing:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --resolver nightly-2016-09-10 --install-ghc runghc --package classy-prelude-conduit</span>
+
+<span class="hs-comment">{-# LANGUAGE NoImplicitPrelude #-}</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">ClassyPrelude</span><span class=
+"hs-varop">.</span><span class="hs-conid">Conduit</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">total</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">yieldMany</span> <span class=
+"hs-keyglyph">[</span><span class="hs-num">1</span><span class=
+"hs-keyglyph">..</span><span class="hs-num">10</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-varop">$$</span> <span class="hs-varid">mapC</span> <span class="hs-layout">(</span><span class="hs-varop">*</span> <span class="hs-num">10</span><span class="hs-layout">)</span> <span class="hs-varop">=$</span> <span class="hs-varid">sumC</span>
+    <span class="hs-varid">print</span> <span class=
+"hs-varid">total</span>
+
+    <span class="hs-comment">-- or more explicitly...</span>
+    <span class="hs-varid">total</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">yieldMany</span> <span class=
+"hs-keyglyph">[</span><span class="hs-num">1</span><span class=
+"hs-keyglyph">..</span><span class="hs-num">10</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-varop">$$</span> <span class="hs-varid">mapC</span> <span class="hs-layout">(</span><span class="hs-varop">*</span> <span class="hs-num">10</span><span class="hs-layout">)</span> <span class="hs-varop">=$</span> <span class="hs-varid">foldlC</span> <span class="hs-layout">(</span><span class="hs-varop">+</span><span class="hs-layout">)</span> <span class="hs-num">0</span>
+    <span class="hs-varid">print</span> <span class=
+"hs-varid">total</span></pre>
+<p>Or limit how much of the stream we want to consume:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --resolver nightly-2016-09-10 --install-ghc runghc --package classy-prelude-conduit</span>
+
+<span class="hs-comment">{-# LANGUAGE NoImplicitPrelude #-}</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">ClassyPrelude</span><span class=
+"hs-varop">.</span><span class="hs-conid">Conduit</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">total</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">yieldMany</span> <span class=
+"hs-keyglyph">[</span><span class="hs-num">1</span><span class=
+"hs-keyglyph">..</span><span class="hs-num">10</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-varop">$$</span> <span class="hs-varid">mapC</span> <span class="hs-layout">(</span><span class="hs-varop">*</span> <span class="hs-num">10</span><span class="hs-layout">)</span> <span class="hs-varop">=$</span> <span class="hs-varid">takeC</span> <span class="hs-num">5</span> <span class="hs-varop">=$</span> <span class="hs-varid">sumC</span>
+    <span class="hs-varid">print</span> <span class=
+"hs-varid">total</span></pre>
+<p>This only scratches the surface of what we can do with conduit,
+but hopefully it gives enough of a basic intuition for the library
+to get started. If you're interested in diving in deep on the
+conduit library, check out the <a href=
+"https://github.com/snoyberg/conduit#readme">previously linked
+tutorial</a>.</p>
+<h2 id="streaming-chunked-data">Streaming chunked data</h2>
+<p>Having a stream of individual bytes turns out to be inefficient
+in practice. It's much better to chunk a series of bytes into an
+efficient data structure like a <code>ByteString</code>. Let's see
+what it looks like to stream data from a file to standard
+output:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --resolver nightly-2016-09-10 --install-ghc runghc --package classy-prelude-conduit</span>
+
+<span class="hs-comment">{-# LANGUAGE NoImplicitPrelude #-}</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">ClassyPrelude</span><span class=
+"hs-varop">.</span><span class="hs-conid">Conduit</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">IO</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">writeFile</span> <span class=
+"hs-str">"some-file.txt"</span> <span class=
+"hs-layout">(</span><span class=
+"hs-str">"This is just some text."</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">ByteString</span><span class="hs-layout">)</span>
+
+    <span class=
+"hs-comment">-- Yes, this is clunky. We'll do something much slicker in a bit.</span>
+    <span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">withBinaryFile</span> <span class=
+"hs-str">"some-file.txt"</span> <span class=
+"hs-conid">IO</span><span class="hs-varop">.</span><span class=
+"hs-conid">ReadMode</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">fileHandle</span> <span class="hs-keyglyph">-&gt;</span>
+           <span class="hs-varid">sourceHandle</span> <span class=
+"hs-varid">fileHandle</span>
+        <span class="hs-varop">$$</span> <span class=
+"hs-varid">decodeUtf8C</span>
+        <span class="hs-varop">=$</span> <span class=
+"hs-varid">stdoutC</span></pre>
+<p>This is good, but what if we want to deal with the individual
+bytes in the stream instead of the chunks. For example, let's say
+we want to get just the first 10 bytes of our file. The
+<code>takeC</code> function we used above would take the first five
+<i>chunks</i> of data. We instead need a function which will work
+on the elements of the bytestrings (the individual bytes).
+Fortunately, conduit provides for this with the
+<code>E</code>-suffixed element-specific functions:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --resolver nightly-2016-09-10 --install-ghc runghc --package classy-prelude-conduit</span>
+
+<span class="hs-comment">{-# LANGUAGE NoImplicitPrelude #-}</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">ClassyPrelude</span><span class=
+"hs-varop">.</span><span class="hs-conid">Conduit</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">IO</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">writeFile</span> <span class=
+"hs-str">"some-file.txt"</span> <span class=
+"hs-layout">(</span><span class=
+"hs-str">"This is just some text."</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">ByteString</span><span class="hs-layout">)</span>
+
+    <span class=
+"hs-comment">-- Yes, this is clunky. We'll do something much slicker in a bit.</span>
+    <span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">withBinaryFile</span> <span class=
+"hs-str">"some-file.txt"</span> <span class=
+"hs-conid">IO</span><span class="hs-varop">.</span><span class=
+"hs-conid">ReadMode</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">fileHandle</span> <span class="hs-keyglyph">-&gt;</span>
+           <span class="hs-varid">sourceHandle</span> <span class=
+"hs-varid">fileHandle</span>
+        <span class="hs-varop">$$</span> <span class=
+"hs-varid">takeCE</span> <span class="hs-num">10</span>
+        <span class="hs-varop">=$</span> <span class=
+"hs-varid">decodeUtf8C</span>
+        <span class="hs-varop">=$</span> <span class=
+"hs-varid">stdoutC</span></pre>
+<p>In the simple-file-mirror program, we will be sending files over
+the network, and will need to limit some operations to the actual
+file sizes in question. Functions like <code>takeCE</code> will be
+vital for doing this.</p>
+<h2 id="managing-resources">Managing resources</h2>
+<p>While the <code>withBinaryFile</code> approach above worked, it
+felt kind of clunky. And for more complicated control flows,
+opening up the file in advance won't be an option (like when we'll
+only know which file to open after the network connection tells us
+the file path). To allow for these cases, we're going to introduce
+the <code>runResourceT</code>, which allows us to acquire resources
+in an exception-safe manner. Let's rewrite the above example with
+<code>runResourceT</code>:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --resolver nightly-2016-09-10 --install-ghc runghc --package classy-prelude-conduit</span>
+
+<span class="hs-comment">{-# LANGUAGE NoImplicitPrelude #-}</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">ClassyPrelude</span><span class=
+"hs-varop">.</span><span class="hs-conid">Conduit</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">writeFile</span> <span class=
+"hs-str">"some-file.txt"</span> <span class=
+"hs-layout">(</span><span class=
+"hs-str">"This is just some text."</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">ByteString</span><span class="hs-layout">)</span>
+
+    <span class="hs-varid">runResourceT</span>
+         <span class="hs-varop">$</span> <span class=
+"hs-varid">sourceFile</span> <span class=
+"hs-str">"some-file.txt"</span>
+        <span class="hs-varop">$$</span> <span class=
+"hs-varid">takeCE</span> <span class="hs-num">10</span>
+        <span class="hs-varop">=$</span> <span class=
+"hs-varid">decodeUtf8C</span>
+        <span class="hs-varop">=$</span> <span class=
+"hs-varid">stdoutC</span></pre>
+<p>Internally, <code>sourceFile</code> uses the
+<code>bracketP</code> function, which runs some initialization
+function (in our case, opening a file handle), registers some
+cleanup function (in our case, closing that file handle), and then
+performs an action with the resource. To demonstrate what that
+looks like more explicitly, let's write a modified
+<code>sourceFile</code> function which will return some default
+file contents if the requested file can't be read from.</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --resolver nightly-2016-09-10 --install-ghc runghc --package classy-prelude-conduit</span>
+
+<span class="hs-comment">{-# LANGUAGE NoImplicitPrelude #-}</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">ClassyPrelude</span><span class=
+"hs-varop">.</span><span class="hs-conid">Conduit</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">IO</span>
+
+<span class="hs-definition">sourceFileDef</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadResource</span> <span class="hs-varid">m</span>
+              <span class="hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">FilePath</span>
+              <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Source</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">ByteString</span>
+<span class="hs-definition">sourceFileDef</span> <span class=
+"hs-varid">fp</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-comment">-- tryIO catches all IO exceptions and puts them in a Left</span>
+        <span class="hs-comment">-- value.</span>
+        <span class="hs-varid">open</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">tryIO</span> <span class=
+"hs-varop">$</span> <span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">openBinaryFile</span> <span class=
+"hs-varid">fp</span> <span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class="hs-conid">ReadMode</span>
+
+        <span class=
+"hs-comment">-- Exception occurred, so nothing to close.</span>
+        <span class="hs-varid">close</span> <span class=
+"hs-layout">(</span><span class="hs-conid">Left</span> <span class=
+"hs-varid">e</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span>
+            <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-str">"No file to close, got an exception: "</span> <span class=
+"hs-varop">++</span> <span class=
+"hs-varid">tshow</span> <span class="hs-varid">e</span>
+        <span class=
+"hs-comment">-- No exception, so close the file handle.</span>
+        <span class="hs-varid">close</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Right</span> <span class="hs-varid">h</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">hClose</span> <span class="hs-varid">h</span>
+
+    <span class="hs-varid">bracketP</span> <span class=
+"hs-varid">open</span> <span class=
+"hs-varid">close</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">eitherHandle</span> <span class=
+"hs-keyglyph">-&gt;</span>
+        <span class="hs-keyword">case</span> <span class=
+"hs-varid">eitherHandle</span> <span class="hs-keyword">of</span>
+            <span class="hs-conid">Left</span> <span class=
+"hs-varid">ex</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+                <span class="hs-varid">yield</span> <span class=
+"hs-str">"I was unable to open the file in question:\n"</span>
+                <span class="hs-varid">yield</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">encodeUtf8</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">tshow</span> <span class="hs-varid">ex</span> <span class="hs-varop">++</span> <span class="hs-str">"\n"</span>
+            <span class="hs-conid">Right</span> <span class=
+"hs-varid">fileHandle</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">sourceHandle</span> <span class=
+"hs-varid">fileHandle</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">runResourceT</span>
+     <span class="hs-varop">$</span> <span class=
+"hs-varid">sourceFileDef</span> <span class=
+"hs-str">"some-file.txt"</span>
+    <span class="hs-varop">$$</span> <span class=
+"hs-varid">decodeUtf8C</span>
+    <span class="hs-varop">=$</span> <span class=
+"hs-varid">stdoutC</span></pre>
+<h2 id="implementing-our-protocol">Implementing our protocol</h2>
+<p>Let's at least get started on our actual simple-file-mirror
+code. The wire protocol we're going to use is defined <a href=
+"https://github.com/fpco/simple-file-mirror#how-it-works">in the
+README</a>, but we can describe it briefly as:</p>
+<ul>
+<li>Client sends data to server, server never sends to client</li>
+<li>A line like <code>9:hello.txt11:Hello World</code> means "write
+the file <code>hello.txt</code> with the content <code>Hello
+World</code>"</li>
+<li>We provide lengths of both the file paths and the file contents
+with a decimal-encoded integer followed by a colon (similar to
+<a href="https://en.wikipedia.org/wiki/Netstring">netstrings</a>,
+but without the trailing comma)</li>
+<li>If a file has been deleted, we use a special length of -1, e.g.
+<code>9:hello.txt-1:</code> means "<code>hello.txt</code> was
+deleted"</li>
+</ul>
+<p>So let's get started with implementing the integer send/receive
+logic in conduit. There are many ways of doing this, some more
+efficient than others. For this program, I elected to go with the
+simplest approach possible (though you can <a href=
+"https://github.com/fpco/simple-file-mirror/blob/37165ba581a6b3d65b7c3d936739c10d276ce1e6/src/Main.hs#L288">
+see some historical more complicated/efficient versions</a>). Let's
+start with sending, which is pretty trivial:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --resolver nightly-2016-09-10 --install-ghc runghc --package classy-prelude-conduit</span>
+
+<span class="hs-comment">{-# LANGUAGE NoImplicitPrelude #-}</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-comment">{-# LANGUAGE RankNTypes        #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">ClassyPrelude</span><span class=
+"hs-varop">.</span><span class="hs-conid">Conduit</span>
+
+<span class="hs-definition">sendInt</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-conid">Int</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Producer</span> <span class="hs-varid">m</span> <span class="hs-conid">ByteString</span>
+<span class="hs-definition">sendInt</span> <span class=
+"hs-varid">i</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">yield</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">encodeUtf8</span> <span class="hs-varop">$</span> <span class="hs-varid">tshow</span> <span class="hs-varid">i</span> <span class="hs-varop">++</span> <span class="hs-str">":"</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span>
+    <span class="hs-varid">yieldMany</span> <span class=
+"hs-varid">sampleInts</span> <span class=
+"hs-varop">$$</span> <span class=
+"hs-varid">awaitForever</span> <span class=
+"hs-varid">sendInt</span> <span class=
+"hs-varop">=$</span> <span class="hs-varid">stdoutC</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">sampleInts</span> <span class=
+"hs-keyglyph">=</span>
+        <span class="hs-keyglyph">[</span> <span class=
+"hs-num">1</span>
+        <span class="hs-layout">,</span> <span class=
+"hs-num">10</span>
+        <span class="hs-layout">,</span> <span class=
+"hs-comment">-</span><span class="hs-num">5</span>
+        <span class="hs-layout">,</span> <span class=
+"hs-num">0</span>
+        <span class="hs-layout">,</span> <span class=
+"hs-num">60</span>
+        <span class="hs-keyglyph">]</span></pre>
+<p>Here we've introduced a new function, <code>awaitForever</code>,
+which repeatedly applies a function as long as data exists on the
+stream. Take a guess at what the output of this program will be,
+and then try it out.</p>
+<p>Now let's try out the receiving side of this, which is slightly
+more complicated, but not too bad:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">{- stack --resolver nightly-2016-09-10 --install-ghc runghc
+    --package classy-prelude-conduit
+    --package word8
+-}</span>
+
+<span class="hs-comment">{-# LANGUAGE NoImplicitPrelude #-}</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-comment">{-# LANGUAGE RankNTypes        #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">ClassyPrelude</span><span class=
+"hs-varop">.</span><span class="hs-conid">Conduit</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Word8</span> <span class=
+"hs-layout">(</span><span class="hs-sel">_colon</span><span class=
+"hs-layout">)</span>
+
+<span class="hs-definition">sendInt</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-conid">Int</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Producer</span> <span class="hs-varid">m</span> <span class="hs-conid">ByteString</span>
+<span class="hs-definition">sendInt</span> <span class=
+"hs-varid">i</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">yield</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">encodeUtf8</span> <span class="hs-varop">$</span> <span class="hs-varid">tshow</span> <span class="hs-varid">i</span> <span class="hs-varop">++</span> <span class="hs-str">":"</span>
+
+<span class="hs-definition">recvInt</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadThrow</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">Consumer</span> <span class=
+"hs-conid">ByteString</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">recvInt</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">intAsText</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">takeWhileCE</span> <span class=
+"hs-layout">(</span><span class="hs-varop">/=</span> <span class=
+"hs-sel">_colon</span><span class="hs-layout">)</span> <span class=
+"hs-varop">=$</span> <span class=
+"hs-varid">decodeUtf8C</span> <span class=
+"hs-varop">=$</span> <span class="hs-varid">foldC</span>
+    <span class="hs-varid">dropCE</span> <span class=
+"hs-num">1</span> <span class=
+"hs-comment">-- drop the colon from the stream</span>
+    <span class="hs-keyword">case</span> <span class=
+"hs-varid">readMay</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">unpack</span> <span class=
+"hs-varid">intAsText</span> <span class="hs-keyword">of</span>
+        <span class="hs-conid">Nothing</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">error</span> <span class=
+"hs-varop">$</span> <span class="hs-str">"Invalid int: "</span> <span class="hs-varop">++</span> <span class="hs-varid">show</span> <span class="hs-varid">intAsText</span>
+        <span class="hs-conid">Just</span> <span class=
+"hs-varid">i</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">return</span> <span class="hs-varid">i</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span>
+       <span class="hs-varid">yieldMany</span> <span class=
+"hs-varid">sampleInts</span>
+    <span class="hs-varop">$$</span> <span class=
+"hs-varid">awaitForever</span> <span class=
+"hs-varid">sendInt</span>
+    <span class="hs-varop">=$</span> <span class=
+"hs-varid">peekForeverE</span> <span class=
+"hs-layout">(</span><span class="hs-keyword">do</span> <span class=
+"hs-varid">i</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">recvInt</span>
+                        <span class=
+"hs-varid">print</span> <span class="hs-varid">i</span><span class=
+"hs-layout">)</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">sampleInts</span> <span class=
+"hs-keyglyph">=</span>
+        <span class="hs-keyglyph">[</span> <span class=
+"hs-num">1</span>
+        <span class="hs-layout">,</span> <span class=
+"hs-num">10</span>
+        <span class="hs-layout">,</span> <span class=
+"hs-comment">-</span><span class="hs-num">5</span>
+        <span class="hs-layout">,</span> <span class=
+"hs-num">0</span>
+        <span class="hs-layout">,</span> <span class=
+"hs-num">60</span>
+        <span class="hs-keyglyph">]</span></pre>
+<p><code>peekForeverE</code> is similar to
+<code>awaitForever</code>, in that it repeatedly performs an action
+as long as there is data on the stream. However, it's different in
+that it doesn't grab the data off of the stream itself, leaving it
+to the action provided to do that, and it deals correctly with
+chunked data by ignoring empty chunks.</p>
+<p>We've also introduced <code>takeWhileCE</code>, which is like
+<code>takeCE</code>, but instead of giving it a fixed size of the
+stream to consume, it continues consuming until it finds the given
+byte. In our case: we consume until we get to a colon. Then we
+decode into UTF-8 data, and use <code>foldC</code> to concatenate
+multiple chunks of <code>Text</code> into a single
+<code>Text</code> value. Then we use <code>readMay</code> to parse
+the textual value into an <code>Int</code>. (And yes, we could do a
+much better job at error handling, but using <code>error</code> is
+the simplest approach.)</p>
+<p>Building on top of these two functions, it becomes a lot easier
+to send and receive complete file paths. Let's put that code in
+here, together with a test suite to prove it's all working as
+expected:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">{- stack --resolver nightly-2016-09-10 --install-ghc runghc
+    --package classy-prelude-conduit
+    --package word8
+    --package hspec
+-}</span>
+
+<span class="hs-comment">{-# LANGUAGE NoImplicitPrelude #-}</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-comment">{-# LANGUAGE RankNTypes        #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">ClassyPrelude</span><span class=
+"hs-varop">.</span><span class="hs-conid">Conduit</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Word8</span> <span class=
+"hs-layout">(</span><span class="hs-sel">_colon</span><span class=
+"hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Test</span><span class="hs-varop">.</span><span class=
+"hs-conid">Hspec</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Test</span><span class="hs-varop">.</span><span class=
+"hs-conid">Hspec</span><span class="hs-varop">.</span><span class=
+"hs-conid">QuickCheck</span> <span class=
+"hs-layout">(</span><span class="hs-varid">prop</span><span class=
+"hs-layout">)</span>
+
+<span class="hs-definition">sendInt</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-conid">Int</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Producer</span> <span class="hs-varid">m</span> <span class="hs-conid">ByteString</span>
+<span class="hs-definition">sendInt</span> <span class=
+"hs-varid">i</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">yield</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">encodeUtf8</span> <span class="hs-varop">$</span> <span class="hs-varid">tshow</span> <span class="hs-varid">i</span> <span class="hs-varop">++</span> <span class="hs-str">":"</span>
+
+<span class="hs-definition">sendFilePath</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-conid">FilePath</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Producer</span> <span class="hs-varid">m</span> <span class="hs-conid">ByteString</span>
+<span class="hs-definition">sendFilePath</span> <span class=
+"hs-varid">fp</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-comment">-- UTF-8 encode the filepath</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-varid">bs</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">encodeUtf8</span> <span class="hs-varop">$</span> <span class="hs-varid">pack</span> <span class="hs-varid">fp</span> <span class="hs-keyglyph">::</span> <span class="hs-conid">ByteString</span>
+
+    <span class="hs-comment">-- Send the number of bytes</span>
+    <span class="hs-varid">sendInt</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">length</span> <span class="hs-varid">bs</span>
+
+    <span class="hs-comment">-- Send the actual path</span>
+    <span class="hs-varid">yield</span> <span class=
+"hs-varid">bs</span>
+
+<span class="hs-definition">recvInt</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadThrow</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">Consumer</span> <span class=
+"hs-conid">ByteString</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">recvInt</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">intAsText</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">takeWhileCE</span> <span class=
+"hs-layout">(</span><span class="hs-varop">/=</span> <span class=
+"hs-sel">_colon</span><span class="hs-layout">)</span> <span class=
+"hs-varop">=$</span> <span class=
+"hs-varid">decodeUtf8C</span> <span class=
+"hs-varop">=$</span> <span class="hs-varid">foldC</span>
+    <span class="hs-varid">dropCE</span> <span class=
+"hs-num">1</span> <span class=
+"hs-comment">-- drop the colon from the stream</span>
+    <span class="hs-keyword">case</span> <span class=
+"hs-varid">readMay</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">unpack</span> <span class=
+"hs-varid">intAsText</span> <span class="hs-keyword">of</span>
+        <span class="hs-conid">Nothing</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">error</span> <span class=
+"hs-varop">$</span> <span class="hs-str">"Invalid int: "</span> <span class="hs-varop">++</span> <span class="hs-varid">show</span> <span class="hs-varid">intAsText</span>
+        <span class="hs-conid">Just</span> <span class=
+"hs-varid">i</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">return</span> <span class="hs-varid">i</span>
+
+<span class="hs-definition">recvFilePath</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadThrow</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">Consumer</span> <span class=
+"hs-conid">ByteString</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">FilePath</span>
+<span class="hs-definition">recvFilePath</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-comment">-- Get the byte count</span>
+    <span class="hs-varid">fpLen</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">recvInt</span>
+
+    <span class=
+"hs-comment">-- Read in the given number of bytes, decode as UTF-8 text, and</span>
+    <span class=
+"hs-comment">-- then fold all of the chunks into a single Text value</span>
+    <span class="hs-varid">fpText</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">takeCE</span> <span class=
+"hs-varid">fpLen</span> <span class=
+"hs-varop">=$=</span> <span class=
+"hs-varid">decodeUtf8C</span> <span class=
+"hs-varop">=$=</span> <span class="hs-varid">foldC</span>
+
+    <span class=
+"hs-comment">-- Unpack the text value into a FilePath</span>
+    <span class="hs-varid">return</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">unpack</span> <span class="hs-varid">fpText</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">hspec</span> <span class=
+"hs-varop">$</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">prop</span> <span class=
+"hs-str">"sendInt/recvInt are inverses"</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">i</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+        <span class="hs-varid">res</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">sendInt</span> <span class=
+"hs-varid">i</span> <span class="hs-varop">$$</span> <span class=
+"hs-varid">recvInt</span>
+        <span class="hs-varid">res</span> <span class=
+"hs-varop">`shouldBe`</span> <span class="hs-varid">i</span>
+
+    <span class="hs-varid">prop</span> <span class=
+"hs-str">"sendFilePath/recvFilePath are inverses"</span> <span class="hs-varop">$</span> <span class="hs-keyglyph">\</span><span class="hs-varid">fp</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+        <span class="hs-varid">res</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">sendFilePath</span> <span class=
+"hs-varid">fp</span> <span class="hs-varop">$$</span> <span class=
+"hs-varid">recvFilePath</span>
+        <span class="hs-varid">res</span> <span class=
+"hs-varop">`shouldBe`</span> <span class="hs-varid">fp</span></pre>
+<p>We've used the hspec test framework library and its QuickCheck
+support to create a test suite which automatically generates test
+cases based on the types in our program. In this case, it will
+generate 100 random <code>Int</code>s and 100 random
+<code>FilePath</code>s each time it's run, and ensure that our
+properties hold. This is a great way to quickly get significant
+test coverage for a program.</p>
+<h2 id="sending-the-files-themselves">Sending the files
+themselves</h2>
+<p>OK, finally time to put all of this together. We're going to add
+in some new functions for sending and receiving files themselves.
+This is a fairly simple composition of all of the work we've done
+until now. And this is the nice thing about Haskell in general, as
+well as the conduit library: purity and strong typing often make it
+possible to trivially combine smaller functions into more
+complicated beasts. Let's see this all in action:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">{- stack --resolver nightly-2016-09-10 --install-ghc runghc
+    --package classy-prelude-conduit
+    --package word8
+    --package hspec
+    --package temporary
+-}</span>
+
+<span class="hs-comment">{-# LANGUAGE NoImplicitPrelude #-}</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-comment">{-# LANGUAGE RankNTypes        #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">ClassyPrelude</span><span class=
+"hs-varop">.</span><span class="hs-conid">Conduit</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Word8</span>            <span class=
+"hs-layout">(</span><span class="hs-sel">_colon</span><span class=
+"hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Directory</span>      <span class=
+"hs-layout">(</span><span class=
+"hs-varid">createDirectoryIfMissing</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">doesFileExist</span><span class="hs-layout">,</span>
+                              <span class=
+"hs-varid">removeFile</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">FilePath</span>       <span class=
+"hs-layout">(</span><span class=
+"hs-varid">takeDirectory</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span>             <span class=
+"hs-layout">(</span><span class=
+"hs-conid">IOMode</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ReadMode</span><span class=
+"hs-layout">)</span><span class="hs-layout">,</span> <span class=
+"hs-varid">hFileSize</span><span class=
+"hs-layout">,</span> <span class=
+"hs-varid">openBinaryFile</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span><span class="hs-varop">.</span><span class=
+"hs-conid">Temp</span>        <span class=
+"hs-layout">(</span><span class=
+"hs-varid">withSystemTempDirectory</span><span class=
+"hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Test</span><span class="hs-varop">.</span><span class=
+"hs-conid">Hspec</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Test</span><span class="hs-varop">.</span><span class=
+"hs-conid">Hspec</span><span class="hs-varop">.</span><span class=
+"hs-conid">QuickCheck</span> <span class=
+"hs-layout">(</span><span class="hs-varid">prop</span><span class=
+"hs-layout">)</span>
+
+<span class="hs-definition">sendInt</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-conid">Int</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Producer</span> <span class="hs-varid">m</span> <span class="hs-conid">ByteString</span>
+<span class="hs-definition">sendInt</span> <span class=
+"hs-varid">i</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">yield</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">encodeUtf8</span> <span class="hs-varop">$</span> <span class="hs-varid">tshow</span> <span class="hs-varid">i</span> <span class="hs-varop">++</span> <span class="hs-str">":"</span>
+
+<span class="hs-definition">sendFilePath</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-conid">FilePath</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Producer</span> <span class="hs-varid">m</span> <span class="hs-conid">ByteString</span>
+<span class="hs-definition">sendFilePath</span> <span class=
+"hs-varid">fp</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-comment">-- UTF-8 encode the filepath</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-varid">bs</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">encodeUtf8</span> <span class="hs-varop">$</span> <span class="hs-varid">pack</span> <span class="hs-varid">fp</span> <span class="hs-keyglyph">::</span> <span class="hs-conid">ByteString</span>
+
+    <span class="hs-comment">-- Send the number of bytes</span>
+    <span class="hs-varid">sendInt</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">length</span> <span class="hs-varid">bs</span>
+
+    <span class="hs-comment">-- Send the actual path</span>
+    <span class="hs-varid">yield</span> <span class=
+"hs-varid">bs</span>
+
+<span class="hs-definition">sendFile</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadResource</span> <span class="hs-varid">m</span>
+         <span class="hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">FilePath</span> <span class=
+"hs-comment">-- ^ root directory</span>
+         <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">FilePath</span> <span class=
+"hs-comment">-- ^ path relative to root</span>
+         <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Producer</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">ByteString</span>
+<span class="hs-definition">sendFile</span> <span class=
+"hs-varid">root</span> <span class=
+"hs-varid">fp</span> <span class="hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class=
+"hs-comment">-- Send the relative file path, so the other side knows where to</span>
+    <span class="hs-comment">-- put the contents</span>
+    <span class="hs-varid">sendFilePath</span> <span class=
+"hs-varid">fp</span>
+
+    <span class="hs-keyword">let</span> <span class=
+"hs-varid">open</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">tryIO</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">openBinaryFile</span> <span class="hs-varid">fpFull</span> <span class="hs-conid">ReadMode</span>
+
+        <span class=
+"hs-comment">-- If the opening failed, we'll have an error message. So</span>
+        <span class=
+"hs-comment">-- there's nothing to close, just do nothing!</span>
+        <span class="hs-varid">close</span> <span class=
+"hs-layout">(</span><span class="hs-conid">Left</span> <span class=
+"hs-sel">_err</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">return</span> <span class="hs-conid">()</span>
+        <span class=
+"hs-comment">-- Opening succeeded, so close the file handle.</span>
+        <span class="hs-varid">close</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Right</span> <span class="hs-varid">h</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">hClose</span> <span class="hs-varid">h</span>
+
+    <span class="hs-comment">-- Grab the file handle...</span>
+    <span class="hs-varid">bracketP</span> <span class=
+"hs-varid">open</span> <span class=
+"hs-varid">close</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">eh</span> <span class="hs-keyglyph">-&gt;</span>
+        <span class="hs-keyword">case</span> <span class=
+"hs-varid">eh</span> <span class="hs-keyword">of</span>
+            <span class=
+"hs-comment">-- No file, send a -1 length to indicate file does not</span>
+            <span class="hs-comment">-- exist</span>
+            <span class="hs-conid">Left</span> <span class=
+"hs-sel">_ex</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">sendInt</span> <span class=
+"hs-layout">(</span><span class="hs-comment">-</span><span class=
+"hs-num">1</span><span class="hs-layout">)</span>
+
+            <span class="hs-comment">-- File exists</span>
+            <span class="hs-conid">Right</span> <span class=
+"hs-varid">h</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+                <span class=
+"hs-comment">-- Send the size of the file</span>
+                <span class="hs-varid">size</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">liftIO</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">hFileSize</span> <span class="hs-varid">h</span>
+                <span class="hs-varid">sendInt</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">fromInteger</span> <span class="hs-varid">size</span>
+
+                <span class=
+"hs-comment">-- And stream the contents</span>
+                <span class=
+"hs-varid">sourceHandle</span> <span class="hs-varid">h</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">fpFull</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">root</span> <span class=
+"hs-varop">&lt;/&gt;</span> <span class="hs-varid">fp</span>
+
+<span class="hs-definition">recvInt</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadThrow</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">Consumer</span> <span class=
+"hs-conid">ByteString</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">recvInt</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">intAsText</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">takeWhileCE</span> <span class=
+"hs-layout">(</span><span class="hs-varop">/=</span> <span class=
+"hs-sel">_colon</span><span class="hs-layout">)</span> <span class=
+"hs-varop">=$</span> <span class=
+"hs-varid">decodeUtf8C</span> <span class=
+"hs-varop">=$</span> <span class="hs-varid">foldC</span>
+    <span class="hs-varid">dropCE</span> <span class=
+"hs-num">1</span> <span class=
+"hs-comment">-- drop the colon from the stream</span>
+    <span class="hs-keyword">case</span> <span class=
+"hs-varid">readMay</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">unpack</span> <span class=
+"hs-varid">intAsText</span> <span class="hs-keyword">of</span>
+        <span class="hs-conid">Nothing</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">error</span> <span class=
+"hs-varop">$</span> <span class="hs-str">"Invalid int: "</span> <span class="hs-varop">++</span> <span class="hs-varid">show</span> <span class="hs-varid">intAsText</span>
+        <span class="hs-conid">Just</span> <span class=
+"hs-varid">i</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">return</span> <span class="hs-varid">i</span>
+
+<span class="hs-definition">recvFilePath</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadThrow</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">Consumer</span> <span class=
+"hs-conid">ByteString</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">FilePath</span>
+<span class="hs-definition">recvFilePath</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-comment">-- Get the byte count</span>
+    <span class="hs-varid">fpLen</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">recvInt</span>
+
+    <span class=
+"hs-comment">-- Read in the given number of bytes, decode as UTF-8 text, and</span>
+    <span class=
+"hs-comment">-- then fold all of the chunks into a single Text value</span>
+    <span class="hs-varid">fpText</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">takeCE</span> <span class=
+"hs-varid">fpLen</span> <span class=
+"hs-varop">=$=</span> <span class=
+"hs-varid">decodeUtf8C</span> <span class=
+"hs-varop">=$=</span> <span class="hs-varid">foldC</span>
+
+    <span class=
+"hs-comment">-- Unpack the text value into a FilePath</span>
+    <span class="hs-varid">return</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">unpack</span> <span class="hs-varid">fpText</span>
+
+<span class="hs-definition">recvFile</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadResource</span> <span class="hs-varid">m</span>
+         <span class="hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">FilePath</span> <span class=
+"hs-comment">-- ^ directory to store files in</span>
+         <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Sink</span> <span class=
+"hs-conid">ByteString</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">()</span>
+<span class="hs-definition">recvFile</span> <span class=
+"hs-varid">root</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class=
+"hs-comment">-- Get the relative path to store in</span>
+    <span class="hs-varid">fpRel</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">recvFilePath</span>
+
+    <span class=
+"hs-comment">-- Prepend with the root directory to get a complete path</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-varid">fp</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">root</span> <span class="hs-varop">&lt;/&gt;</span> <span class="hs-varid">fpRel</span>
+
+    <span class="hs-comment">-- Get the size of the file</span>
+    <span class="hs-varid">fileLen</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">recvInt</span>
+
+    <span class="hs-keyword">if</span> <span class=
+"hs-varid">fileLen</span> <span class=
+"hs-varop">==</span> <span class="hs-layout">(</span><span class=
+"hs-comment">-</span><span class="hs-num">1</span><span class=
+"hs-layout">)</span>
+        <span class=
+"hs-comment">-- We use -1 to indicate the file should be removed. Go ahead</span>
+        <span class=
+"hs-comment">-- and call removeFile, but ignore any IO exceptions that</span>
+        <span class=
+"hs-comment">-- occur when doing so (in case the file doesn't exist</span>
+        <span class="hs-comment">-- locally, for example)</span>
+        <span class="hs-keyword">then</span> <span class=
+"hs-varid">liftIO</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">void</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">tryIO</span> <span class="hs-varop">$</span> <span class="hs-varid">removeFile</span> <span class="hs-varid">fp</span>
+        <span class="hs-keyword">else</span> <span class=
+"hs-keyword">do</span>
+            <span class=
+"hs-comment">-- Create the containing directory</span>
+            <span class="hs-varid">liftIO</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">createDirectoryIfMissing</span> <span class=
+"hs-conid">True</span> <span class="hs-varop">$</span> <span class=
+"hs-varid">takeDirectory</span> <span class="hs-varid">fp</span>
+
+            <span class=
+"hs-comment">-- Stream out the specified number of bytes and write them</span>
+            <span class="hs-comment">-- into the file</span>
+            <span class="hs-varid">takeCE</span> <span class=
+"hs-varid">fileLen</span> <span class=
+"hs-varop">=$=</span> <span class=
+"hs-varid">sinkFile</span> <span class="hs-varid">fp</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">hspec</span> <span class=
+"hs-varop">$</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">prop</span> <span class=
+"hs-str">"sendInt/recvInt are inverses"</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">i</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+        <span class="hs-varid">res</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">sendInt</span> <span class=
+"hs-varid">i</span> <span class="hs-varop">$$</span> <span class=
+"hs-varid">recvInt</span>
+        <span class="hs-varid">res</span> <span class=
+"hs-varop">`shouldBe`</span> <span class="hs-varid">i</span>
+
+    <span class="hs-varid">prop</span> <span class=
+"hs-str">"sendFilePath/recvFilePath are inverses"</span> <span class="hs-varop">$</span> <span class="hs-keyglyph">\</span><span class="hs-varid">fp</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+        <span class="hs-varid">res</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">sendFilePath</span> <span class=
+"hs-varid">fp</span> <span class="hs-varop">$$</span> <span class=
+"hs-varid">recvFilePath</span>
+        <span class="hs-varid">res</span> <span class=
+"hs-varop">`shouldBe`</span> <span class="hs-varid">fp</span>
+
+    <span class=
+"hs-comment">-- A more standard unit test, checking that sending and receiving</span>
+    <span class=
+"hs-comment">-- a file does what is expected.</span>
+    <span class="hs-varid">it</span> <span class=
+"hs-str">"create and delete files"</span> <span class=
+"hs-varop">$</span>
+      <span class=
+"hs-comment">-- Get temporary source and destination directories</span>
+      <span class=
+"hs-varid">withSystemTempDirectory</span> <span class=
+"hs-str">"src"</span> <span class="hs-varop">$</span> <span class=
+"hs-keyglyph">\</span><span class=
+"hs-varid">srcDir</span> <span class="hs-keyglyph">-&gt;</span>
+      <span class=
+"hs-varid">withSystemTempDirectory</span> <span class=
+"hs-str">"dst"</span> <span class="hs-varop">$</span> <span class=
+"hs-keyglyph">\</span><span class=
+"hs-varid">dstDir</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+
+        <span class="hs-keyword">let</span> <span class=
+"hs-varid">relPath</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-str">"somepath.txt"</span>
+            <span class="hs-varid">content</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-str">"This is the content of the file"</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">ByteString</span>
+
+        <span class=
+"hs-comment">-- Ensure that sending a file that exists makes it appear in</span>
+        <span class="hs-comment">-- the destination</span>
+        <span class="hs-varid">writeFile</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">srcDir</span> <span class=
+"hs-varop">&lt;/&gt;</span> <span class=
+"hs-varid">relPath</span><span class=
+"hs-layout">)</span> <span class="hs-varid">content</span>
+
+        <span class="hs-varid">runResourceT</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">sendFile</span> <span class=
+"hs-varid">srcDir</span> <span class=
+"hs-varid">relPath</span> <span class=
+"hs-varop">$$</span> <span class=
+"hs-varid">recvFile</span> <span class="hs-varid">dstDir</span>
+
+        <span class="hs-varid">content'</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">readFile</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">dstDir</span> <span class=
+"hs-varop">&lt;/&gt;</span> <span class=
+"hs-varid">relPath</span><span class="hs-layout">)</span>
+        <span class="hs-varid">content'</span> <span class=
+"hs-varop">`shouldBe`</span> <span class="hs-varid">content</span>
+
+        <span class=
+"hs-comment">-- Ensure that sending a file that doesn't exist makes it</span>
+        <span class=
+"hs-comment">-- disappear in the destination</span>
+        <span class="hs-varid">removeFile</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">srcDir</span> <span class=
+"hs-varop">&lt;/&gt;</span> <span class=
+"hs-varid">relPath</span><span class="hs-layout">)</span>
+
+        <span class="hs-varid">runResourceT</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">sendFile</span> <span class=
+"hs-varid">srcDir</span> <span class=
+"hs-varid">relPath</span> <span class=
+"hs-varop">$$</span> <span class=
+"hs-varid">recvFile</span> <span class="hs-varid">dstDir</span>
+
+        <span class="hs-varid">exists</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">doesFileExist</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">dstDir</span> <span class=
+"hs-varop">&lt;/&gt;</span> <span class=
+"hs-varid">relPath</span><span class="hs-layout">)</span>
+        <span class="hs-varid">exists</span> <span class=
+"hs-varop">`shouldBe`</span> <span class=
+"hs-conid">False</span></pre>
+<p>Our <code>sendFile</code> function looks very similar to our
+<code>sourceFileDef</code> example at the beginning of the post.
+But instead of streaming a default value, we just send a length of
+-1, as our protocol dictates. The <code>recvFile</code> function
+relies heavily on <code>recvFilePath</code> and
+<code>recvInt</code>. In the case of a <code>-1</code>, it removes
+the file in question. Otherwise, it creates the containing
+directory if necessary, and then composes <code>takeCE</code> with
+<code>sinkFile</code> to stream the correct number of bytes into
+the file.</p>
+<p>We also have a unit test covering the interaction of these two
+new functions. While some kind of property could perhaps be devised
+for testing this with QuickCheck, a more standard unit test seemed
+far more straightforward in this case.</p>
+<h2 id="next-time-on-practical-haskell">Next time on Practical
+Haskell</h2>
+<p>This part of the tutorial covered quite a number of topics, so
+this is a good place to take a break. Next time, we'll dive into
+the network communication aspect of things, including:</p>
+<ul>
+<li>Implementing a really simple HTTP client</li>
+<li>Implementing an echo server</li>
+<li>Using some basic concurrency in Haskell to have a client and
+server in the same process</li>
+</ul>
+<p>If you have feedback on how to make this tutorial series more
+useful, please share it in the comments below, on Twitter (<a href=
+"https://twitter.com/snoyberg">@snoyberg</a>), or in any Reddit
+discussions about it. I'll try to review feedback and make changes
+to parts 2 and 3.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Practical%20Haskell%3A%20Simple%20File%20Mirror%20%28Part%201%29 https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;practical-haskell-simple-file-mirror-1&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;practical-haskell-simple-file-mirror-1&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;practical-haskell-simple-file-mirror-1&#x2F;&amp;title=Practical%20Haskell%3A%20Simple%20File%20Mirror%20%28Part%201%29"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;practical-haskell-simple-file-mirror-1&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#ef9c8e838a9caf899f8c80829f838a9b8ac18c8082" targe="_blank"><span class="__cf_email__" data-cfemail="344755585147745244575b5944585140511a575b59">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>The Downfall of Imperative Programming</title>
+  <meta property="og:title" content="The Downfall of Imperative Programming">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Multicore processing will force imperative programmers to become functional programmers whether they are ready or not. It&#x27;s time to accept the future.">
+  <meta property="og:description" content="Multicore processing will force imperative programmers to become functional programmers whether they are ready or not. It&#x27;s time to accept the future.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;04&#x2F;the-downfall-of-imperative-programming&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>The Downfall of Imperative Programming</h1>
+      
+      <p id="page-description">By Bartosz Milewski, March  9, 2012</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=The%20Downfall%20of%20Imperative%20Programming https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;04&#x2F;the-downfall-of-imperative-programming&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;04&#x2F;the-downfall-of-imperative-programming&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;04&#x2F;the-downfall-of-imperative-programming&#x2F;&amp;title=The%20Downfall%20of%20Imperative%20Programming"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;04&#x2F;the-downfall-of-imperative-programming&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>Imperative programming is in my bloodstream. I've been a C++
+programmer for most of my life. I wrote a book about C++. I helped
+Andrei and Walter design an imperative language D. If I dabbled in
+functional programming, it was mostly to make my imperative
+programs better.</p>
+<p>Over the years I also developed a real passion for concurrent
+programming. I wrote <a href="https://BartoszMilewski.com">blogs</a>
+and recorded <a href=
+"https://www.youtube.com/playlist?list=PL1835A90FC78FF8BE">tutorials</a>
+about concurrency support in C++11. I went to conferences and read
+academic papers. I proposed an ownership system for D, which didn't
+fly because it required far reaching extensions to the type system
+and looked painful to use.</p>
+<p>There is no doubt in my mind, and most experts agree, that
+concurrency and parallelism are the future of programming. The key
+word here is "future." The hardware is already there -- even phones
+use multicore processors with powerful GPUs. Hardware vendors are
+desperate for programmers to harness this power. Yet very little is
+happening in the world of software.</p>
+<p>I have recently attended the Multicore DevCon in San Jose, which
+was part of a big DesignWest Expo. I witnessed tremendous progress
+in hardware since previous years. Hardware is forging ahead without
+any signs of slowdown. Year after year more cores and more GPUs are
+packed into single chips. This is in stark contrast with the
+situation in software. One could argue that software engineering is
+actually moving backwards in that area.</p>
+<p>Remember the times when progress in software was driven by
+adding abstraction layers between programming languages and the
+details of processor architectures? From flipping binary switches
+to assembly, to FORTRAN and C. Then there was the object-oriented
+revolution. Programs were written in terms of objects, often with
+domain-specific names like Student or Account. Java even let go of
+pointers and explicit memory management. These were the good times.
+Enter parallel programming...</p>
+<p>I may surprise you that the state of the art in parallel
+programming is OpenMP and OpenCL. At least this is the consensus
+among panelists who discuss the future of multicore programming at
+various conferences I attend. To remind you, OpenMP is a system of
+pragmas that you insert into a program to make parts of it
+parallel. OpenCL is a low-level language to communicate with GPUs
+(there's also CUDA, in case OpenCL is not low enough for you).</p>
+<p>But maybe this is just a temporary state of affairs and there is
+ongoing work to ratchet the levels of abstraction back to where
+they'd been. Sure, there's the <a href=
+"http://chapel.cray.com/">Chapel</a> language that nicely separates
+concerns about how to parallelize or distribute a computation from
+the algorithms required by the problem domain. There are also
+higher level libraries like Intel TBB (Threading Building Blocks)
+and Microsoft PPL (Parallel Pattern Library). GPU programming is
+being addressed by Microsoft C++AMP extensions.</p>
+<p>They are all failing because of one problem -- data races.</p>
+<p>Programmers are scared of concurrency, and rightly so. Managers
+are scared of concurrency even more. If programmers were
+electricians, parallel programmers would be bomb disposal experts.
+Both cut wires. Except that, when the latter cut the wrong wire,
+mayhem ensues. We make mistakes in coding and we have systems for
+debugging and testing programs -- there is no such system for
+concurrency bugs. I should know because I worked for a company that
+made state of the art data race detector. But this detector
+couldn't prove that a program was 100% data-race free. There was
+always a chance that a data race could sneak into a released
+product and strike at the most inconvenient moment. The company's
+web site had a list of major disasters caused by data races. Among
+them was the famous <a href=
+"https://en.wikipedia.org/wiki/Therac-25">Therac-25</a> disaster
+that killed three patients and injured several others, and the
+<a href=
+"https://en.wikipedia.org/wiki/Northeast_blackout_of_2003">Northeast
+Blackout of 2003</a> that affected 55 million people. The fears are
+well founded!</p>
+<p>So why are data races so much harder to detect and fix than
+regular bugs? It all has to do with non-determinism. Every time a
+multi-threaded program is run, its threads may interleave
+differently. The number of possible interleavings is astronomical.
+If your program has a data race, it usually manifests itself only
+in a very small subset of possible interleavings. To discover a
+bug, two threads must access the same memory location at
+<em>exactly</em> the same time, and one of the threads must modify
+that location. I have written programs with deliberate data races
+and I couldn't trigger buggy behavior even with extensive
+testing.</p>
+<p>Here's the key insight:</p>
+<strong>Imperative programs will always be vulnerable to data races
+because they contain mutable variables</strong>.
+<p>Did you notice that in the definition of a data race there's
+always talk of mutation? Any number of threads may read a memory
+location without synchronization but if even one of them mutates
+it, you have a race. That's why the majority of imperative
+programmers with their mutable variables will always be reluctant
+to embrace concurrent programming. And that is the downfall of
+imperative programming.</p>
+<p>So what's the solution? As Sherlock Holmes famously said, "Once
+you eliminate the impossible, whatever remains, no matter how
+improbable, must be the truth." Enter functional programming.</p>
+<p>Here's the second key insight:</p>
+<strong>There are no data races in purely functional languages
+because they don't have mutable variables.</strong>
+<p>All data is immutable. All functions are pure. You might think
+this is crazy -- how can you program with such stifling
+restrictions? It turns out that people have been doing just that
+for a long time. In fact the most popular language for parallel and
+distributed programming is Erlang -- a functional language. An even
+better candidate for parallel programming is Haskell, which
+supports a large variety of parallel paradigms.</p>
+<p>If you think you can stay away from functional programming,
+you're mistaken. Imperative languages are incorporating more and
+more of the functional style, exactly because of the pressure from
+the multicore world. In C++ you already have lambdas and higher
+order functions in the guise of STL algorithms. C# has delegates,
+Java is introducing closures, D supports immutable objects and pure
+functions; the list goes on and on. This is all good, but not
+enough. If you are just mixing functional elements into a
+predominantly imperative program, the specter of data races will
+always be lurking in the shadows. You may be a very disciplined
+expert concurrent programmer and still, a less knowledgeable member
+of your team may break your code and nothing in the language is
+going to prevent it. No whistles will blow, no bells will ring.</p>
+<p>So here's the situation: Sooner or later you'll have to face the
+multicore reality. You will be forced to learn functional methods
+to the extent to which your imperative language supports them.
+Despite that, data races will infest your code and leak into
+released products. So you might as well take a shortcut and embrace
+a full blown functional language now.</p>
+<p>How hard is functional programming? It definitely requires some
+getting used to. You'll have to learn to replace loops with
+recursion, to map and fold your lists, traverse data structures
+without iterators, do input/output using monads, and many other
+exciting things. All these techniques have value on their own. As
+programmers we constantly learn new tricks, and functional
+programming is just another bag of tricks.</p>
+<p>Originally there wasn't much interest in FP outside of academic
+circles because there was no functional killer app. Now we know
+that this killer app is concurrency. For a functional programmer
+there is no barrier to concurrency, parallelism, or GPU
+programming.</p>
+<p>After dedicating many years of my life to C++ and imperative
+languages, I decided to switch to functional programming and try to
+convince as many programmers as I can to make the same
+decision.</p>
+<h2>Bibliography</h2>
+<ol>
+<li>Miran Lipovača, <a href=
+"http://learnyouahaskell.com/chapters">Learn You a Haskell for
+Great Good!</a> -- an excellent Haskell tutorial</li>
+<li>Manuel Chakravarty, <a href="https://vimeo.com/28477220">Data
+Parallelism in Haskell</a> -- a video presentation.</li>
+<li><a href=
+"https://research.microsoft.com/en-us/um/people/simonpj/papers/ndp/">
+Data Parallel Haskell</a> -- a collection of papers.</li>
+<li><a href="http://repa.ouroborus.net/">Repa</a> -- REgular
+PArallel arrays.</li>
+</ol>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=The%20Downfall%20of%20Imperative%20Programming https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;04&#x2F;the-downfall-of-imperative-programming&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;04&#x2F;the-downfall-of-imperative-programming&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;04&#x2F;the-downfall-of-imperative-programming&#x2F;&amp;title=The%20Downfall%20of%20Imperative%20Programming"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;04&#x2F;the-downfall-of-imperative-programming&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#7a091b161f093a1c0a1915170a161f0e1f54191517" targe="_blank"><span class="__cf_email__" data-cfemail="5a293b363f291a3c2a3935372a363f2e3f74393537">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

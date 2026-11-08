@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Announcing Stack 1.6.1 release</title>
+  <meta property="og:title" content="Announcing Stack 1.6.1 release">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="The Stack build tool for Haskell, version 1.6.1, is now available. Come read about the new features.">
+  <meta property="og:description" content="The Stack build tool for Haskell, version 1.6.1, is now available. Come read about the new features.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;12&#x2F;announcing-stack-1.6.1-release&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Announcing Stack 1.6.1 release</h1>
+      
+      <p id="page-description">By Emanuel Borsboom, December  7, 2017</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Announcing%20Stack%201.6.1%20release https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;12&#x2F;announcing-stack-1.6.1-release&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;12&#x2F;announcing-stack-1.6.1-release&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;12&#x2F;announcing-stack-1.6.1-release&#x2F;&amp;title=Announcing%20Stack%201.6.1%20release"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;12&#x2F;announcing-stack-1.6.1-release&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>See <a href=
+"https://haskellstack.org">https://haskellstack.org</a> for
+installation and upgrade instructions.</p>
+<p>Note: we are releasing a bit earlier than planned due to
+<a href="https://github.com/commercialhaskell/stack/issues/3624">#3624</a>.
+As such, not all the binaries have been built yet, but the commonly
+used 64-bit binaries of Linux static, macOS, and Windows are
+available.</p>
+<p>In addition, the Windows installer and binary has not been
+codesigned (we are awaiting validation of a new codesign
+certificate), and you may see a “Windows Defender SmartScreen
+prevented an unrecognized app from starting” warning when you try
+to run them. If so, click on <strong>More info</strong>, and then
+click on the <strong>Run anyway</strong> button that appears.</p>
+<h2>Major changes since v1.5.1</h2>
+<ul>
+<li>Complete overhaul of how snapshots are defined, the
+<code>packages</code> and <code>extra-deps</code> fields, and a
+number of related items. For full details, please see <a href=
+"/blog/2017/07/stacks-new-extensible-snapshots">the writeup on
+these changes</a>. <a href=
+"https://github.com/commercialhaskell/stack/pull/3249">PR
+#3249</a>, see the PR description for a number of related
+issues.</li>
+<li>Upgraded to version 2.0 of the Cabal library.</li>
+</ul>
+<h2>Behavior changes</h2>
+<ul>
+<li>The <code>--install-ghc</code> flag is now on by default. For
+example, if you run <code>stack build</code> in a directory
+requiring a GHC that you do not currently have, Stack will
+automatically download and install that GHC. You can explicitly set
+<code>install-ghc: false</code> or pass the flag
+<code>--no-install-ghc</code> to regain the previous behavior.</li>
+<li><code>stack ghci</code> no longer loads modules grouped by
+package. This is always an improvement for plain ghci - it makes
+loading faster and less noisy. For intero, this has the side-effect
+that it will no longer load multiple packages that depend on TH
+loading relative paths. TH relative paths will still work when
+loading a single package into intero. See <a href=
+"https://github.com/commercialhaskell/stack/issues/3309">#3309</a></li>
+<li>Setting GHC options for a package via <code>ghc-options:</code>
+in your <code>stack.yaml</code> will promote it to a local package,
+providing for more consistency with flags and better
+reproducibility. See: <a href=
+"https://github.com/commercialhaskell/stack/issues/849">#849</a></li>
+<li>The <code>package-indices</code> setting with Hackage no longer
+works with the <code>00-index.tar.gz</code> tarball, but must use
+the <code>01-index.tar.gz</code> file to allow revised packages to
+be found.</li>
+<li>Options passsed via <code>--ghci-options</code> are now passed
+to the end of the invocation of ghci, instead of the middle. This
+allows using <code>+RTS</code> without an accompanying
+<code>-RTS</code>.</li>
+<li>When auto-detecting <code>--ghc-build</code>,
+<code>tinfo6</code> is now preferred over <code>standard</code> if
+both versions of libtinfo are installed</li>
+<li>Addition of <code>stack build --copy-compiler-tool</code>, to
+allow tools like intero to be installed globally for a particular
+compiler. <a href=
+"https://github.com/commercialhaskell/stack/issues/2643">#2643</a></li>
+<li>Stack will ask before saving hackage credentials to file. This
+new prompt can be avoided by using the
+<code>save-hackage-creds</code> setting. Please see <a href=
+"https://github.com/commercialhaskell/stack/issues/2159">#2159</a>.</li>
+<li>The <code>GHCRTS</code> environment variable will no longer be
+passed through to every program stack runs. Instead, it will only
+be passed through commands like <code>exec</code>,
+<code>runghc</code>, <code>script</code>, <code>ghci</code>, etc.
+See <a href=
+"https://github.com/commercialhaskell/stack/issues/3444">#3444</a>.</li>
+<li><code>ghc-options:</code> for specific packages will now come
+after the options specified for all packages / particular sets of
+packages. See <a href=
+"https://github.com/commercialhaskell/stack/issues/3573">#3573</a>.</li>
+<li>The <code>pvp-bounds</code> feature is no longer fully
+functional, due to some issues with the Cabal library's printer.
+See <a href=
+"https://github.com/commercialhaskell/stack/issues/3550">#3550</a>.</li>
+</ul>
+<h2>Other enhancements:</h2>
+<ul>
+<li>The <code>with-hpack</code> configuration option specifies an
+Hpack executable to use instead of the Hpack bundled with Stack.
+Please see <a href=
+"https://github.com/commercialhaskell/stack/issues/3179">#3179</a>.</li>
+<li>It's now possible to skip tests and benchmarks using
+<code>--skip</code> flag</li>
+<li><code>GitSHA1</code> is now <code>StaticSHA256</code> and is
+implemented using the <code>StaticSize 64 ByteString</code> for
+improved performance. See <a href=
+"https://github.com/commercialhaskell/stack/issues/3006">#3006</a></li>
+<li>Dependencies via HTTP(S) archives have been generalized to
+allow local file path archives, as well as to support setting a
+cryptographic hash (SHA256) of the contents for better
+reproducibility.</li>
+<li>Allow specifying <code>--git-branch</code> when upgrading</li>
+<li>When running <code>stack upgrade</code> from a file which is
+different from the default executable path (e.g., on POSIX systems,
+<code>~/.local/bin/stack</code>), it will now additionally copy the
+new executable over the currently running <code>stack</code>
+executable. If permission is denied (such as in
+<code>/usr/local/bin/stack</code>), the user will be prompted to
+try again using <code>sudo</code>. This is intended to assist with
+the user experience when the <code>PATH</code> environment variable
+has not been properly configured, see <a href=
+"https://github.com/commercialhaskell/stack/issues/3232">#3232</a>.</li>
+<li><code>stack setup</code> for ghcjs will now install
+<code>alex</code> and <code>happy</code> if they are not present.
+See <a href=
+"https://github.com/commercialhaskell/stack/issues/3232">#3109</a>.</li>
+<li>Added <code>stack ghci --only-main</code> flag, to skip loading
+/ importing all but main modules. See the ghci documentation page
+for further info.</li>
+<li>Allow GHC's colored output to show through. GHC colors output
+starting with version 8.2.1, for older GHC this does nothing.
+Sometimes GHC's heuristics would work fine even before this change,
+for example in <code>stack ghci</code>, but this override's GHC's
+heuristics when they're broken by our collecting and processing
+GHC's output.</li>
+<li>Extended the <code>ghc-options</code> field to support
+<code>$locals</code>, <code>$targets</code>, and
+<code>$everything</code>. See: <a href=
+"https://github.com/commercialhaskell/stack/issues/3329">#3329</a></li>
+<li>Better error message for case that <code>stack ghci</code> file
+targets are combined with invalid package targets. See: <a href=
+"https://github.com/commercialhaskell/stack/issues/3342">#3342</a></li>
+<li>For profiling now uses <code>-fprof-auto -fprof-cafs</code>
+instead of the deprecated <code>-auto-all -caf-all</code>. See:
+<a href=
+"https://github.com/commercialhaskell/stack/issues/3360">#3360</a></li>
+<li>Better descriptions are now available for <code>stack upgrade
+--help</code>. See: <a href=
+"https://github.com/commercialhaskell/stack/issues/3070">#3070</a></li>
+<li>When using Nix, nix-shell now depends always on gcc to prevent
+build errors when using the FFI. As ghc depends on gcc anyway, this
+doesn't increase the dependency footprint.</li>
+<li><code>--cwd DIR</code> can now be passed to <code>stack
+exec</code> in order to execute the program in a different
+directory. See: <a href=
+"https://github.com/commercialhaskell/stack/issues/3264">#3264</a></li>
+<li>Plan construction will detect if you add an executable-only
+package as a library dependency, resulting in much clearer error
+messages. See: <a href=
+"https://github.com/commercialhaskell/stack/issues/2195">#2195</a>.</li>
+<li>Addition of <code>--ghc-options</code> to <code>stack
+script</code> to pass options directly to GHC. See: <a href=
+"https://github.com/commercialhaskell/stack/issues/3454">#3454</a></li>
+<li>Add hpack <code>package.yaml</code> to build Stack itself</li>
+<li>Add <code>ignore-revision-mismatch</code> setting. See:
+<a href="https://github.com/commercialhaskell/stack/issues/3520">#3520</a>.</li>
+<li>Log when each individual test suite finishes. See: <a href=
+"https://github.com/commercialhaskell/stack/issues/3552">#3552</a>.</li>
+<li>Avoid spurious rebuilds when using <code>--file-watch</code> by
+not watching files for executable, test and benchmark components
+that aren't a target. See: <a href=
+"https://github.com/commercialhaskell/stack/issues/3483">#3483</a>.</li>
+<li>Stack will now try to detect the width of the running terminal
+(only on POSIX for the moment) and use that to better display
+output messages. Work is ongoing, so some messages will not be
+optimal yet. The terminal width can be overriden with the new
+<code>--terminal-width</code> command-line option (this works even
+on non-POSIX).</li>
+<li>Passing non local packages as targets to <code>stack
+ghci</code> will now cause them to be used as <code>-package</code>
+args along with package hiding.</li>
+<li>Detect when user changed .cabal file instead of package.yaml.
+This was implemented upstream in hpack. See <a href=
+"https://github.com/commercialhaskell/stack/issues/3383">#3383</a>.</li>
+<li>Automatically run <code>autoreconf -i</code> as necessary when
+a <code>configure</code> script is missing. See <a href=
+"https://github.com/commercialhaskell/stack/issues/3534">#3534</a></li>
+<li>GHC bindists can now be identified by their SHA256 checksum in
+addition to their SHA1 checksum, allowing for more security in
+download.</li>
+<li>For filesystem setup-info paths, it's no longer assumed that
+the directory is writable, instead a temp dir is used. See <a href=
+"https://github.com/commercialhaskell/stack/issues/3188">#3188</a>.</li>
+</ul>
+<h2>Bug fixes</h2>
+<ul>
+<li><code>stack hoogle</code> correctly generates Hoogle databases.
+See: <a href=
+"https://github.com/commercialhaskell/stack/issues/3362">#3362</a></li>
+<li><code>stack --docker-help</code> is now clearer about –docker
+implying system-ghc: true, rather than both –docker and
+–no-docker.</li>
+<li><code>stack haddock</code> now includes package names for all
+modules in the Haddock index page. See: <a href=
+"https://github.com/commercialhaskell/stack/issues/2886">#2886</a></li>
+<li>Fixed an issue where Stack wouldn't detect missing Docker
+images properly with newer Docker versions. <a href=
+"https://github.com/commercialhaskell/stack/pull/3171">#3171</a></li>
+<li>Previously, cabal files with just test-suite could cause build
+to fail (<a href=
+"https://github.com/commercialhaskell/stack/issues/2862">#2862</a>)</li>
+<li>If an invalid snapshot file has been detected (usually due to
+mismatched hashes), Stack will delete the downloaded file and
+recommend either retrying or filing an issue upstream. See <a href=
+"https://github.com/commercialhaskell/stack/issues/3319">#3319</a>.</li>
+<li>Modified the flag parser within Stack to match the behavior of
+Cabal's flag parser, which allows multiple sequential dashes. See
+<a href=
+"https://github.com/commercialhaskell/stack/issues/3345">#3345</a></li>
+<li>Now clears the hackage index cache if it is older than the
+downloaded index. Fixes potential issue if stack was interrupted
+when updating index. See <a href=
+"https://github.com/commercialhaskell/stack/issues/3033">#3033</a></li>
+<li>The Stack install script now respects the <code>-d</code>
+option. See <a href=
+"https://github.com/commercialhaskell/stack/pull/3366">#3366</a>.</li>
+<li><code>stack script</code> can now handle relative paths to
+source files. See <a href=
+"https://github.com/commercialhaskell/stack/issues/3372">#3372</a>.</li>
+<li>Fixes explanation of why a target is needed by the build plan,
+when the target is an extra dependency from the commandline. See
+<a href=
+"https://github.com/commercialhaskell/stack/issues/3378">#3378</a>.</li>
+<li>Previously, if you delete a yaml file from ~/.stack/build-plan,
+it would trust the etag and not re-download. Fixed in this
+version.</li>
+<li>Invoking <code>stack --docker</code> in parallel now correctly
+locks the sqlite database. See <a href=
+"https://github.com/commercialhaskell/stack/issues/3400">#3400</a>.</li>
+<li>docs.haskellstack.org RTD documentation search is replaced by
+the mkdocs search. Please see <a href=
+"https://github.com/commercialhaskell/stack/issues/3376">#3376</a>.</li>
+<li><code>stack clean</code> now works with nix. See <a href=
+"https://github.com/commercialhaskell/stack/issues/3376">#3468</a>.</li>
+<li><code>stack build --only-dependencies</code> no longer builds
+local project packages that are depended on. See <a href=
+"https://github.com/commercialhaskell/stack/issues/3476">#3476</a>.</li>
+<li>Properly handle relative paths stored in the precompiled cache
+files. See <a href=
+"https://github.com/commercialhaskell/stack/issues/3431">#3431</a>.</li>
+<li>In some cases, Cabal does not realize that it needs to
+reconfigure, and must be told to do so automatically. This would
+manifest as a “shadowed dependency” error message. We now force a
+reconfigure whenever a dependency is built, even if the package ID
+remained the same. See <a href=
+"https://github.com/commercialhaskell/stack/issues/2781">#2781</a>.</li>
+<li>When <code>--pvp-bounds</code> is enabled for sdist or upload,
+internal dependencies could cause errors when uploaded to hackage.
+This is fixed, see <a href=
+"https://github.com/commercialhaskell/stack/issues/3290">#3290</a></li>
+<li>Fixes a bug where nonexistent hackage versions would cause
+stack to suggest the same package name, without giving version
+info. See <a href=
+"https://github.com/commercialhaskell/stack/issues/3562">#3562</a></li>
+<li>Fixes a bug that has existed since 1.5.0, where <code>stack
+setup --upgrade-cabal</code> would say that Cabal is already the
+latest version, when it wasn't.</li>
+<li>Ensure that an <code>extra-dep</code> from a local directory is
+not treated as a <code>$locals</code> for GHC options purposes. See
+<a href=
+"https://github.com/commercialhaskell/stack/issues/3574">#3574</a>.</li>
+<li>Building all executables only happens once instead of every
+time. See <a href=
+"https://github.com/commercialhaskell/stack/issues/3229">#3229</a>
+for more info.</li>
+</ul>
+<h2>Contributors</h2>
+<p>Thanks to all our contributors for this release:</p>
+<ul>
+<li>Aaron McDaid</li>
+<li>Adam McCullough</li>
+<li>Alexey Zabelin</li>
+<li>Andy</li>
+<li>Ashley Towns</li>
+<li>Chris Done</li>
+<li>Chris Martin</li>
+<li>d-dorazio</li>
+<li>Deni Bertovic</li>
+<li>Dmitry Ivanov</li>
+<li>Echo Nolan</li>
+<li>Emanuel Borsboom</li>
+<li>Felix Yan</li>
+<li>Filippo Vitale</li>
+<li>Gábor Lipták</li>
+<li>Ivan Lazar Miljenovic</li>
+<li>Joshua Simmons</li>
+<li>Judah Jacobson</li>
+<li>Khan Thompson</li>
+<li>Lizao Li</li>
+<li>Luke Murphy</li>
+<li>Martin Kolinek</li>
+<li>Mathieu Boespflug</li>
+<li>Matt Audesse</li>
+<li>Matthias Heinzel</li>
+<li>Michael Sloan</li>
+<li>Michael Snoyman</li>
+<li>mrkkrp</li>
+<li>Neil Mitchell</li>
+<li>Oleg Grenrus</li>
+<li>OvermindDL1</li>
+<li>Paolo G. Giarrusso</li>
+<li>Rafe</li>
+<li>Reuben D'Netto</li>
+<li>Roman Cheplyaka</li>
+<li>Samuli Thomasson</li>
+<li>Schlueter</li>
+<li>Scott Fleischman</li>
+<li>Shea Levy</li>
+<li>Simon Jakobi</li>
+<li>Tom Sydney Kerckhove</li>
+<li>tswelsh</li>
+<li>Walter Franzini</li>
+</ul>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Announcing%20Stack%201.6.1%20release https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;12&#x2F;announcing-stack-1.6.1-release&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;12&#x2F;announcing-stack-1.6.1-release&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;12&#x2F;announcing-stack-1.6.1-release&#x2F;&amp;title=Announcing%20Stack%201.6.1%20release"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;12&#x2F;announcing-stack-1.6.1-release&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#6310020f0610230513000c0e130f0617064d000c0e" targe="_blank"><span class="__cf_email__" data-cfemail="e695878a8395a6809685898b968a839283c885898b">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>vectorBuilder: packed-representation yielding for conduit</title>
+  <meta property="og:title" content="vectorBuilder: packed-representation yielding for conduit">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;07&#x2F;vectorbuilder-packed-conduit-yielding&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>vectorBuilder: packed-representation yielding for conduit</h1>
+      
+      <p id="page-description">By Michael Snoyman, May 20, 2014</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=vectorBuilder%3A%20packed-representation%20yielding%20for%20conduit https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;07&#x2F;vectorbuilder-packed-conduit-yielding&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;07&#x2F;vectorbuilder-packed-conduit-yielding&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;07&#x2F;vectorbuilder-packed-conduit-yielding&#x2F;&amp;title=vectorBuilder%3A%20packed-representation%20yielding%20for%20conduit"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;07&#x2F;vectorbuilder-packed-conduit-yielding&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>Back in March, I <a href=
+"/blog/2014/03/monte-carlo-haskell">mentioned that we'd be using
+conduit for high performance analyses</a>. We've been busy working
+on various aspects of this behind the scenes. This is the first
+publicly available follow-up since then.</p>
+<p>One issue with financial analyses is bridging the gap between
+in-memory representations and streaming data. The former allows for
+higher performance for many forms of analysis, while the latter
+allows us to deal with far larger data sets and to generate output
+more quickly for certain analyses.</p>
+<p>We'll be using the vector package almost exclusively for
+efficient in-memory representations in IAP, and conduit for
+streaming data. The question comes: what happens when we need to
+transition from one to the other? There are already functions like
+<code>yieldMany</code> to yield values from a <code>Vector</code>
+as a <code>Conduit</code>, and <code>conduitVector</code> or
+<code>sinkVector</code> to consume values from a
+<code>Conduit</code> into a packed representation.</p>
+<p>While these solutions are always sufficient, they aren't always
+optimal. When we're going for high speed analyses, we don't want to
+waste time boxing unpacked values or allocating extra constructors
+unnecessarily. This blog post introduces a new tool we're adding to
+the IAP toolchain (and the conduit toolchain in general):
+<code>vectorBuilder</code>.</p>
+<h2 id="the-problem">The problem</h2>
+<p>Often times when working with Haskell in a high performance
+context, the overhead introduced by a linked list representation
+can be too high. Having an extra constructor around each value, a
+constructor for each cons cell, and the indirection introduced by
+having to follow pointers, can completely kill performance. The
+most common examples of this are the high speedup you can often
+achieve by replacing <code>String</code> with <code>Text</code> (or
+sometimes <code>ByteString</code>), or by using
+<code>Vector</code>s- especially unboxed or storable
+<code>Vector</code>s.</p>
+<p>conduit has a similar representation of a stream as a list,
+including the constructor overheads just mentioned. It's not
+surprising, therefore, that in a situation that a list would be a
+poor representation, conduits will often suffer similar performance
+problems. Like lists, some of this overhead is mitigated by
+shortcut fusion (a.k.a., rewrite rules). But this isn't always the
+case.</p>
+<p>conduit-combinators provides a helper function which allows us
+to take back performance, by working with a packed representation
+instead of creating a bunch of cons cells. It does this by using
+the vector package's generic mutable interface under the surface,
+while at a user-facing level providing a simple yield-like
+function, avoiding the need to muck around with mutable
+buffers.</p>
+<p>This article will cover how to use this function, some
+implementation details, and comparisons to other approaches.</p>
+<p><b>NOTE</b>: At the time of writing, the version of
+conduit-combinators provided on School of Haskell does not contain
+the <code>vectorBuilder</code> function, and therefore the active
+code below will not run.</p>
+<h2 id="motivating-use-case">Motivating use case</h2>
+<p>Let's start with a simple goal: we have chunks of bytes coming
+in, and we want to (1) duplicate each successive byte so that, e.g.
+[1, 2, 3] becomes [1, 1, 2, 2, 3, 3] and (2) rechunk the values
+into vectors of size 512. The original data could be chunked in any
+way, so we can rely on any specific incoming chunk size (in this
+case, a known 256 chunk size would be convenient).</p>
+<p>Likely the easiest approach is to convert our stream of chunked
+values (e.g., <code>ByteString</code> or <code>Vector Word8</code>)
+into a stream of elements (e.g., <code>Word8</code>), duplicate the
+individual values, then chunk those back up. Such a solution would
+look like:</p>
+<pre><span class="hs-definition">rechunk1</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">concatC</span>
+       <span class="hs-varop">=$=</span> <span class=
+"hs-varid">concatMapC</span> <span class=
+"hs-layout">(</span><span class="hs-keyglyph">\</span><span class=
+"hs-varid">x</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-keyglyph">[</span><span class="hs-varid">x</span><span class=
+"hs-layout">,</span> <span class="hs-varid">x</span><span class=
+"hs-keyglyph">]</span><span class="hs-layout">)</span>
+       <span class="hs-varop">=$=</span> <span class=
+"hs-varid">conduitVector</span> <span class=
+"hs-num">512</span></pre>
+<p>This uses the <code>concatC</code> combinator to "flatten out"
+the input stream, <code>concatMapC</code> to duplicate each
+individual <code>Word8</code>, and then <code>conduitVector</code>
+to create a stream of 512-sized <code>Vector</code>s. In my simple
+benchmark, this function took 13.06ms.</p>
+<p>But as we can probably guess, this falls into the problem zone
+described in our introduction. So instead of dealing with things on
+the individual byte level, let's try to use some higher-level
+functions operating on <code>Vector</code>s of values instead. Our
+new approach will be to first <code>mapC</code> over the stream and
+use vector's <code>concatMap</code> to double each value, and then
+use <code>takeCE</code> and <code>foldC</code> to extract
+successive chunks of size 4096. In code:</p>
+<pre><span class="hs-definition">rechunk2</span> <span class=
+"hs-keyglyph">=</span>
+    <span class="hs-varid">mapC</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">concatMap</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">replicate</span> <span class=
+"hs-num">2</span><span class="hs-layout">)</span> <span class=
+"hs-varop">=$=</span> <span class="hs-varid">loop</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">loop</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+        <span class="hs-varid">x</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">takeCE</span> <span class=
+"hs-num">512</span> <span class="hs-varop">=$=</span> <span class=
+"hs-varid">foldC</span>
+        <span class="hs-varid">unless</span> <span class=
+"hs-layout">(</span><span class="hs-varid">null</span> <span class=
+"hs-varid">x</span><span class="hs-layout">)</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">yield</span> <span class="hs-varid">x</span> <span class="hs-varop">&gt;&gt;</span> <span class="hs-varid">loop</span></pre>
+<p>In the same benchmark, this performed at 8.83ms, a 32% speedup.
+While respectable, we can do better.</p>
+<h2 id="buffer-copying">Buffer copying</h2>
+<p>Our first approach is optimal in one way: it avoids needless
+buffer copying. Each <code>Word8</code> is copied precisely once
+into an output <code>Vector</code> by <code>conduitVector</code>.
+Unfortunately, this advantage is killed by the overhead of boxing
+the <code>Word8</code>s and allocating constructors for conduit.
+Our second approach avoids the boxing and constructors by always
+operating on <code>Vector</code>s, but we end up copying buffers
+multiple times: from the original <code>Vector</code> to the
+doubled <code>Vector</code>, and then when folding together
+multiple <code>Vector</code>s into a single <code>Vector</code> of
+size 512.</p>
+<p>What we want to do is to be able to <code>yield</code> a
+<code>Word8</code> and have it fill up an output buffer, and once
+that buffer is filled, <code>yield</code> that buffer downstream
+and start working on a new one. We could do that by directly
+dealing with mutable <code>Vector</code>s, but that's error-prone
+and tedious. Instead, let's introduce our new combinator function:
+<code>vectorBuilder</code> (or its unqualified name,
+<code>vectorBuilderC</code>).</p>
+<p>The idea is simple. <code>vectorBuilder</code> will allocate an
+output buffer for you. It provides you with a special
+<code>yield</code>-like function that fills up this buffer, and
+when it's full, yields the entire buffer downstream for you.</p>
+<p>To use it, we're going to use one other combinator function:
+<code>mapM_CE</code>, which performs an action for every value in a
+chunked input stream (in our case, for each <code>Word8</code> in
+our input <code>Vector Word8</code>s). Altogether, this looks
+like:</p>
+<pre><span class="hs-definition">rechunk3</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">vectorBuilderC</span> <span class=
+"hs-num">512</span> <span class="hs-varop">$</span> <span class=
+"hs-keyglyph">\</span><span class=
+"hs-varid">yield'</span> <span class="hs-keyglyph">-&gt;</span>
+    <span class="hs-varid">mapM_CE</span> <span class=
+"hs-layout">(</span><span class="hs-keyglyph">\</span><span class=
+"hs-varid">x</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">yield'</span> <span class=
+"hs-varid">x</span> <span class=
+"hs-varop">&gt;&gt;</span> <span class=
+"hs-varid">yield'</span> <span class=
+"hs-varid">x</span><span class="hs-layout">)</span></pre>
+<p>We call <code>yield'</code> twice to double our bytes.
+<code>vectorBuilder</code> ensures that each output buffer is of
+size 512. <code>mapM_CE</code> efficiently traverses the incoming
+<code>Vector</code>s without creating intermediate data
+structures.</p>
+<p>This version benchmarks at 401.12us. This is approximately 95%
+faster than our previous attempt!</p>
+<h2 id="avoiding-transformers">Avoiding transformers</h2>
+<p>There's something tricky about the <code>yield'</code> function
+above. Notice how it's not being used in the <code>Conduit</code>
+monad transformer, but is instead living the base monad (e.g.,
+<code>IO</code>). This is not accidental. Not only does this allow
+us to use existing monadic combinators like <code>mapM_CE</code>,
+it also allows for <i>far</i> more efficient code. To demonstrate,
+let's look at two different ways of doing the same thing:</p>
+<pre><span class="hs-definition">bgroup</span> <span class=
+"hs-str">"transformers"</span> <span class="hs-varop">$</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-varid">src</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">return</span> <span class=
+"hs-conid">()</span> <span class="hs-keyword">in</span>
+    <span class="hs-keyglyph">[</span> <span class=
+"hs-varid">bench</span> <span class=
+"hs-str">"single"</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">nfIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyword">do</span>
+        <span class="hs-varid">ref</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">newIORef</span> <span class="hs-num">0</span>
+        <span class="hs-keyword">let</span> <span class=
+"hs-varid">incr</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">modifyIORef</span> <span class=
+"hs-varid">ref</span> <span class="hs-varid">succ</span>
+        <span class="hs-varid">src</span> <span class=
+"hs-varop">$$</span> <span class=
+"hs-varid">liftIO</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">replicateM_</span> <span class=
+"hs-num">1000</span> <span class="hs-varid">incr</span><span class=
+"hs-layout">)</span>
+    <span class="hs-layout">,</span> <span class=
+"hs-varid">bench</span> <span class=
+"hs-str">"multi"</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">nfIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyword">do</span>
+        <span class="hs-varid">ref</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">newIORef</span> <span class="hs-num">0</span>
+        <span class="hs-keyword">let</span> <span class=
+"hs-varid">incr</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">liftIO</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">modifyIORef</span> <span class=
+"hs-varid">ref</span> <span class="hs-varid">succ</span>
+        <span class="hs-varid">src</span> <span class=
+"hs-varop">$$</span> <span class=
+"hs-varid">replicateM_</span> <span class=
+"hs-num">1000</span> <span class="hs-varid">incr</span>
+    <span class="hs-keyglyph">]</span></pre>
+<p>Both of these benchmarks use no conduit features. They both
+create an <code>IORef</code>, then increment it 1000 times. The
+difference is that the first calls <code>liftIO</code> once, while
+the second calls <code>liftIO</code> 1000 times. Let's see the
+difference in benchmark results:</p>
+<pre><code>benchmarking transformers/single
+mean: 4.292891 us, lb 4.285319 us, ub 4.303626 us, ci 0.950
+std dev: 45.83832 ns, lb 35.04324 ns, ub 59.43617 ns, ci 0.950
+
+benchmarking transformers/multi
+mean: 93.10228 us, lb 92.95708 us, ub 93.30159 us, ci 0.950
+std dev: 869.6636 ns, lb 673.8342 ns, ub 1.090044 us, ci 0.950</code></pre>
+<p>Avoiding extra <code>liftIO</code> calls has a profound
+performance impact. The reason for this is somewhat similar to what
+we've been discussing up until now about extra cons cells. In our
+case, it's extra <code>PipeM</code> constructors used by conduit's
+<code>MonadIO</code> instance. I don't want to dwell on those
+details too much right now, as that's a whole separate topic of
+analysis, involving looking at GHC core output. But let's take it
+as a given right now.</p>
+<p>The question is: how does <code>vectorBuilder</code> allow you
+to live in the base monad, but still <code>yield</code> values
+downstream, which requires access to the <code>Conduit</code>
+transformer? There's a trick here using mutable variables. The
+implementation essentially works like this:</p>
+<ul>
+<li>Allocate a new, empty mutable vector.</li>
+<li>Allocate a mutable variable holding an empty list.</li>
+<li>Start running the user-supplied <code>Conduit</code> function,
+providing it with a specialized <code>yield</code> function.</li>
+<li>The specialized <code>yield</code> function- which lives in the
+base monad- will write values into the mutable vector. Once that
+mutable vector is filled, the vector is frozen and added to the end
+of the mutable variable's list, and a new mutable vector is
+allocated.</li>
+<li>The next time the user's function <code>await</code>s for
+values from upstream, we jump into action. Since we're already
+forced to be in the <code>Conduit</code> transformer at that point,
+this is our chance to <code>yield</code>. We grab all of the frozen
+vectors from the mutable variable and <code>yield</code> them
+downstream. Once that's done, we <code>await</code> for new data
+from upstream, and provide it to the user's function.</li>
+<li>When the user's function is finished, we freeze the last bit of
+data from the mutable vector and yield that downstream too.</li>
+</ul>
+<p>The upsides of this approach are ease-of-use and performance.
+There <i>is</i> one downside you should be aware of: if you
+generate a large amount of output without <code>await</code>ing for
+more data from upstream, you can begin to accumulate more memory.
+You can force the collection of frozen <code>Vector</code>s to be
+flushed using the following helper function:</p>
+<pre><span class="hs-definition">forceFlush</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-conid">ConduitM</span> <span class="hs-varid">i</span> <span class="hs-varid">o</span> <span class="hs-varid">m</span> <span class="hs-conid">()</span>
+<span class="hs-definition">forceFlush</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">await</span> <span class=
+"hs-varop">&gt;&gt;=</span> <span class=
+"hs-varid">maybe</span> <span class=
+"hs-layout">(</span><span class="hs-varid">return</span> <span class="hs-conid">()</span><span class="hs-layout">)</span> <span class="hs-varid">leftover</span></pre>
+<p>This simply <code>await</code>s for a value, allowing
+<code>vectorBuilder</code> to clear its cache, and then gives the
+new value back as a leftover.</p>
+<p>Overall, your goal should be to have a decent trade-off between
+memory and time efficiency. To demonstrate, try playing around with
+the functions f1, f2, and f3 in the following code snippet:</p>
+<pre><code class=
+"haskell active">{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE FlexibleContexts #-}
+import ClassyPrelude.Conduit
+
+forceFlush :: Monad m =&gt; ConduitM i o m ()
+forceFlush = await &gt;&gt;= maybe (return ()) leftover
+
+-- Memory inefficient, time efficient
+f1 :: (Int -&gt; IO ()) -&gt; Sink () IO ()
+f1 f = liftIO $ forM_ [1..1000000] f
+
+-- Memory efficient, time inefficient
+f2 :: (Int -&gt; Sink () IO ()) -&gt; Sink () IO ()
+f2 f = forM_ [1..1000000] $ \i -&gt; do
+    f i
+    forceFlush
+
+-- Good trade-off
+f3 f = forM_ (chunksOf 10000 [1..1000000]) $ \is -&gt; do
+    liftIO $ mapM_ f is
+    forceFlush
+  where
+    chunksOf _ [] = []
+    chunksOf i x =
+        y : chunksOf i z
+      where
+        (y, z) = splitAt i x
+
+main = vectorBuilderC 4096 f3
+    $$ (sinkNull :: Sink (Vector Int) IO ())</code></pre>
+<h2 id="bytestring-and-vector">ByteString and Vector</h2>
+<p>It may be surprising to have seen an entire article on packed
+representations of bytes, and not yet seen <code>ByteString</code>.
+As a matter of fact, the <a href=
+"https://www.reddit.com/r/haskell/comments/29nvsx/how_to_get_good_performance_when_processing/">
+original use case</a> I started working on this for had nothing to
+do with the vector package. However, I decided to focus on
+<code>vector</code> for two reasons:</p>
+<ol>
+<li>Unlike bytestring, it provides a well developed mutable
+interface. Not only that, but the mutable interface is optimized
+for storable, unboxed, and generic vectors, plus existing helper
+packages like <a href=
+"https://hackage.haskell.org/package/hybrid-vectors">hybrid-vectors</a>.
+In other words, this is a far more general-purpose solution.</li>
+<li>It's trivial and highly efficient to convert a
+<code>ByteString</code> to and from a storable
+<code>Vector</code>.</li>
+</ol>
+<p>To demonstrate that second point, let's try to read a file,
+duplicate all of its bytes as we did above, and write it back to a
+separate file. We'll use the <code>toByteVector</code> and
+<code>fromByteVector</code> functions, which I recently added to
+mono-traversable for just this purpose:</p>
+<pre><code class=
+"haskell active">{-# LANGUAGE NoImplicitPrelude #-}
+import           ClassyPrelude.Conduit
+import           System.IO             (IOMode (ReadMode, WriteMode),
+                                        withBinaryFile)
+
+double :: (Word8 -&gt; IO ()) -&gt; Sink (SVector Word8) IO ()
+double yield' = mapM_CE $ \w -&gt;
+    yield' w &gt;&gt; yield' w
+
+main :: IO ()
+main = withBinaryFile "input.txt" ReadMode $ \inH -&gt;
+       withBinaryFile "output.txt" WriteMode $ \outH -&gt;
+       sourceHandle inH
+    $$ mapC toByteVector
+    =$ vectorBuilderC 4096 double
+    =$ mapC fromByteVector
+    =$ sinkHandle outH</code></pre>
+<h2 id="comparison-with-blaze-builder">Comparison with
+blaze-builder</h2>
+<p>There's a strong overlap between what <code>vectorBuilder</code>
+does, and how blaze-builder (and more recently, bytestring's
+<code>Builder</code> type) are intended to be used. I unfortunately
+can't give any conclusive comparisons between these two techniques
+right now. What I <i>can</i> say is that there are cases where
+using a <code>Builder</code> has proven to be inefficient, and
+<code>vectorBuilder</code> provides a large performance
+improvement. I can also say that <code>vectorBuilder</code>
+addresses many more use cases that <code>Builder</code>. For
+example, at FP Complete we're planning to use this in financial
+analyses for creating time series data.</p>
+<p>On the other hand, blaze-builder and bytestring's
+<code>Builder</code> have both had far more real-world tuning than
+<code>vectorBuilder</code>. They also have support for things such
+as copying existing <code>ByteString</code>s into the output
+stream, whereas <code>vectorBuilder</code> always works by copying
+a single element at a time.</p>
+<p>So for now, if you have a use case and you're uncertain whether
+to use <code>vectorBuilder</code> to blaze-builder, I recommend
+either trying both approaches, or discussing it on one of the
+Haskell mailing lists to get more feedback.</p>
+<h2 id="complete-code">Complete code</h2>
+<p>The code for most of the blog post above is below. Sorry that
+it's a bit messy:</p>
+<pre><code class=
+"haskell active">{-# LANGUAGE FlexibleContexts          #-}
+{-# LANGUAGE NoImplicitPrelude         #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
+import           ClassyPrelude.Conduit
+import           Control.Monad.Primitive (PrimMonad)
+import           Control.Monad.ST        (runST)
+import           Criterion.Main          (bench, bgroup, defaultMain, nfIO,
+                                          whnfIO)
+import qualified Data.Vector.Generic     as VG
+import qualified System.Random.MWC       as MWC
+import           Test.Hspec              (hspec, shouldBe)
+import           Test.Hspec.QuickCheck   (prop)
+
+rechunk1 :: ( Monad m
+            , VG.Vector vector (Element input)
+            , PrimMonad base
+            , MonadBase base m
+            , MonoFoldable input
+            )
+         =&gt; Conduit input m (vector (Element input))
+rechunk1 = concatC =$= concatMapC (\x -&gt; [x, x]) =$= conduitVector 512
+{-# INLINE rechunk1 #-}
+
+rechunk2 :: (Monad m, IsSequence a) =&gt; Conduit a m a
+rechunk2 =
+    mapC (concatMap $ replicate 2) =$= loop
+  where
+    loop = do
+        x &lt;- takeCE 512 =$= foldC
+        unless (null x) $ yield x &gt;&gt; loop
+{-# INLINE rechunk2 #-}
+
+rechunk3 :: ( MonadBase base m
+            , PrimMonad base
+            , MonoFoldable input
+            , VG.Vector vector (Element input)
+            )
+         =&gt; Conduit input m (vector (Element input))
+rechunk3 = vectorBuilderC 512 $ \yield' -&gt;
+    mapM_CE (\x -&gt; yield' x &gt;&gt; yield' x)
+{-# INLINE rechunk3 #-}
+
+main :: IO ()
+main = do
+    hspec $ prop "rechunking" $ \ws -&gt; do
+        let src = yield (pack ws :: UVector Word8)
+            doubled = concatMap (\w -&gt; [w, w]) ws
+            res1 = runST $ src $$ rechunk1 =$ sinkList
+            res2 = runST $ src $$ rechunk2 =$ sinkList
+            res3 = runST $ src $$ rechunk3 =$ sinkList
+        res1 `shouldBe` (res2 :: [UVector Word8])
+        (res3 :: [UVector Word8]) `shouldBe` (res2 :: [UVector Word8])
+        (unpack $ (mconcat res2 :: UVector Word8)) `shouldBe` (doubled :: [Word8])
+        case reverse res1 :: [UVector Word8] of
+            [] -&gt; return ()
+            x:xs -&gt; do
+                (length x &lt;= 512) `shouldBe` True
+                all ((== 512) . length) xs `shouldBe` True
+
+    gen &lt;- MWC.createSystemRandom
+    bytes &lt;- replicateM 20 $
+        MWC.uniformR (12, 1024) gen &gt;&gt;= MWC.uniformVector gen
+
+    defaultMain
+        [ bgroup "copy bytes"
+            [ bench "rechunk1" $ whnfIO
+                $ yieldMany (bytes :: [UVector Word8])
+               $$ (rechunk1 :: Conduit (UVector Word8) IO (UVector Word8))
+               =$ sinkNull
+            , bench "rechunk2" $ whnfIO
+                $ yieldMany (bytes :: [UVector Word8])
+               $$ (rechunk2 :: Conduit (UVector Word8) IO (UVector Word8))
+               =$ sinkNull
+            , bench "rechunk3" $ whnfIO
+                $ yieldMany (bytes :: [UVector Word8])
+               $$ (rechunk3 :: Conduit (UVector Word8) IO (UVector Word8))
+               =$ sinkNull
+            ]
+        , bgroup "transformers" $
+            let src = return () in
+            [ bench "single" $ nfIO $ do
+                ref &lt;- newIORef (0 :: Int)
+                let incr = modifyIORef ref succ
+                src $$ liftIO (replicateM_ 1000 incr)
+            , bench "multi" $ nfIO $ do
+                ref &lt;- newIORef (0 :: Int)
+                let incr = liftIO $ modifyIORef ref succ
+                src $$ replicateM_ 1000 incr
+            ]
+        ]</code></pre>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=vectorBuilder%3A%20packed-representation%20yielding%20for%20conduit https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;07&#x2F;vectorbuilder-packed-conduit-yielding&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;07&#x2F;vectorbuilder-packed-conduit-yielding&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;07&#x2F;vectorbuilder-packed-conduit-yielding&#x2F;&amp;title=vectorBuilder%3A%20packed-representation%20yielding%20for%20conduit"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2014&#x2F;07&#x2F;vectorbuilder-packed-conduit-yielding&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#dcafbdb0b9af9cbaacbfb3b1acb0b9a8b9f2bfb3b1" targe="_blank"><span class="__cf_email__" data-cfemail="8cffede0e9ffcceafcefe3e1fce0e9f8e9a2efe3e1">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>The new Stackage Server</title>
+  <meta property="og:title" content="The new Stackage Server">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;new-stackage-server&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>The new Stackage Server</h1>
+      
+      <p id="page-description">By Michael Snoyman, May 22, 2015</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=The%20new%20Stackage%20Server https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;new-stackage-server&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;new-stackage-server&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;new-stackage-server&#x2F;&amp;title=The%20new%20Stackage%20Server"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;new-stackage-server&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p><b>tl;dr</b> Please check out beta.stackage.org</p>
+<p>I made the first commit to the <a href=
+"https://github.com/fpco/stackage-server">Stackage Server code
+base</a> a little over a year ago. The goal was to provide a place
+to host package sets which both <i>limited</i> the number of
+packages from Hackage available, and <i>modified</i> packages where
+necessary. This server was to be populated by regular Stackage
+builds, targeted at multiple GHC versions, and consisted of both
+inclusive and exclusive sets. It also allowed interested
+individuals to create their own package sets.</p>
+<p>If any of those details seem surprising today, they should. A
+lot has happened for the Stackage project in the past year, making
+details of what was initially planned irrelevant, and making other
+things (like hosting of package documentation) vital. We now have
+LTS Haskell. Instead of running with multiple GHC versions, we have
+Stackage Nightly which is targeted at a single GHC major version.
+To accomodate goals for GPS Haskell (which unfortunately <a href=
+"/blog/2014/12/backporting-bug-fixes">never materialized</a>),
+Stackage no longer makes corrections to upstream packages.</p>
+<p>I could go into lots more detail on what is different in project
+requirements. Instead, I'll just summarize: I've been working on a
+simplified version of the Stackage Server codebase to address our
+goals better, more easily ensure high availability, and make the
+codebase easier to maintain. We also used this opportunity to test
+out a new hosting system our DevOps team put together. The result
+is running on
+beta.stackage.org, and will replace the official stackage.org
+after a bit more testing (which I hope readers will help with).</p>
+<h2 id="the-code">The code</h2>
+<p>All of this code lives on the <code>simpler</code> branch of the
+stackage-server code base, and much to my joy, resulted in <a href=
+"https://github.com/fpco/stackage-server/compare/simpler">quite a
+bit less code</a>. In fact, there's just about a 2000 line
+reduction. The rest of this post will get into how that
+happened.</p>
+<h2 id="no-more-custom-package-sets">No more custom package
+sets</h2>
+<p>One of the features I mentioned above was custom package sets.
+This fell out automatically from the initial way Stackage Server
+was written, so it was natural to let others create package sets of
+their own. However, since release, only one person actually used
+that feature. I discussed with him, and he agreed with the decision
+to deprecate and then remove that functionality.</p>
+<p>So why get rid of it now? Two powerful reasons:</p>
+<ul>
+<li>We already host a <a href="/blog/2015/03/hackage-mirror">public
+mirror of all packages on S3</a>. Since we no longer patch upstream
+packages, it's best if tooling is able to just refer to that
+high-reliability service.</li>
+<li>We now have Git repositories for all of <a href=
+"https://github.com/fpco/lts-haskell">LTS Haskell</a> and <a href=
+"https://github.com/fpco/stackage-nightly">Stackage Nightly</a>.
+Making these the sources of package sets means we don't have two
+(possibly conflicting) sources of data. That brings me to the
+second point</li>
+</ul>
+<h2 id="upload-code-is-gone">Upload code is gone</h2>
+<p>We had some complicated logic to allow users to upload package
+sets. It started off simple, but over time we added Haddock hosting
+and other metadata features, making the code more complex.
+Actually, it ended up having two parallel code paths for this. So
+instead, we now just upload information on the package sets to the
+Git repositories, and leave it up to a separate process (described
+below) to clone these repositories and make the data available to
+the server.</p>
+<h2 id="haddocks-on-s3">Haddocks on S3</h2>
+<p>After generating a snapshot, the Haddocks used to be tarred and
+compressed, and then uploaded as a compressed bundle to S3. Then,
+Stackage Server would receive a request for files, unpack them, and
+serve them. This presented some problems:</p>
+<ul>
+<li>Users would have to wait for a first request to succeed during
+the unpacking</li>
+<li>With enough snapshots being generated, we would eventually run
+out of disk space and need to clear our temp directory</li>
+<li>Since we run our cluster in a high availabilty mode with
+multiple horizontally-scaled machines, one machine may have
+finished unpacking when another didn't, resulting in unstyled
+content (see <a href=
+"https://github.com/fpco/stackage-server/issues/82">issue
+#82</a>).</li>
+</ul>
+<p>Instead, we now just upload the files to S3 and redirect there
+from stackage-server (though we'll likely switch to reverse
+proxying to allow for nicer SSL urls). In fact, you can easily view
+these docs, at URLs such as https://haddock.stackage.org/lts-2.9/
+or <a href=
+"https://s3.amazonaws.com/haddock.stackage.org/nightly-2015-05-21/index.html">
+https://s3.amazonaws.com/haddock.stackage.org/nightly-2015-05-21/index.html</a>.</p>
+<p>These Haddocks are publicly available, and linkable from
+projects beyond Stackage Server. Each set of Haddocks is guaranteed
+to have consistent internal links to other compatible packages. And
+while some documentation doesn't generate due to <a href=
+"https://github.com/fpco/stackage/blob/ce594395337c3073c8983986455cf3920c9104d4/build-constraints.yaml#L1416">
+known package bugs</a>, the generation is otherwise reliable.</p>
+<p>I've already offered access to these docs to Duncan for usage on
+Hackage, and hope that will improve the experience for users
+there.</p>
+<h2 id="metadata-sqlite-database">Metadata SQLite database</h2>
+<p>Previously, information on snapshots was stored in a PostgreSQL
+database that was maintained by Stackage Server. This database also
+had package metadata, like author, homepage, and description. Now,
+we have a completely different process:</p>
+<ul>
+<li>The <a href=
+"https://github.com/commercialhaskell/all-cabal-metadata">all-cabal-metadata</a>
+from the <a href="https://commercialhaskell.com/">Commercial Haskell
+Special Interest Group</a> provides an easily cloneable Git repo
+with package metadata, which is automatically updated by
+Travis.</li>
+<li>We run a cron job on the stackage-build server that updates the
+lts-haskell, stackage-nightly, and all-cabal-metadata repos and
+generates a SQLite database from them with all of the data that
+Stackage Server needs. You can look at <a href=
+"https://github.com/fpco/stackage-server/blob/59fac14f732a30537886d0cb461befd0bb295fc4/Stackage/Database.hs">
+the Stackage.Database module</a> for some ideas of what this
+consists of. That database gets uploaded to Amazon S3, and is
+actually <a href=
+"https://s3.amazonaws.com/haddock.stackage.org/stackage-database/stackage-database-1.sqlite3">
+publicly available</a> if you want to poke at it</li>
+<li>The live server downloads a new version of this file on a
+regular basis</li>
+</ul>
+<p>I've considered spinning off the Stackage.Download code into its
+own repository so that others can take advantage of this
+functionality in different contexts if desired. Let me know if
+you're interested.</p>
+<p>At this point, the PostgreSQL database is just used for
+non-critical functionality, such as social features (tags and
+likes).</p>
+<h2 id="slightly-nicer-urls">Slightly nicer URLs</h2>
+<p>When referring to a snapshot, there are "official" short names
+(slugs), of the form <code>lts-2.9</code> and
+<code>nightly-2015-05-22</code>. The URLs on the new server now
+reflect this perfectly, e.g.: https://beta.stackage.org/nightly-2015-05-22.
+We originally used hashes of the snapshot content for the original
+URLs, but <a href=
+"https://github.com/fpco/stackage-server/issues/37">that was fixed
+a while ago</a>. Now that we only have to support these official
+snapshots, we can always (and exclusively) use these short
+names.</p>
+<p>As a convenience, if you visit the following URLs, you get
+automatic redirects:</p>
+<ul>
+<li><code>/nightly</code> redirects to the most recent nightly</li>
+<li><code>/lts</code> to the latest LTS</li>
+<li><code>/lts-X</code> to the latest LTS in the X.* major version
+(e.g., today, <code>/lts-2</code> redirects to
+<code>/lts-2.9</code>)</li>
+</ul>
+<p>This also works for URLs under that hierarchy. For example,
+consider https://beta.stackage.org/lts/cabal.config,
+which is an easy way to get set up with LTS in your project (by
+running <code>wget
+https://beta.stackage.org/lts/cabal.config</code>).</p>
+<h2 id="ecs-based-hosting">ECS-based hosting</h2>
+<p>While not a new feature of the server itself, the hosting
+cluster we're running this on is brand new. Amazon recently
+released EC2 Container Service, which is a service for running
+Docker containers. Since we're going to be using this for <a href=
+"/blog/2015/05/school-of-haskell-2.0">the new School of
+Haskell</a>, it's nice to be giving it a serious usage now. We also
+make extensive use of Docker for customer projects, both for builds
+and hosting, so it's a natural extension for us.</p>
+<p>This ECS cluster uses standard Amazon services like Elastic Load
+Balancer (ELB) and auto-scaling to provide for high availability in
+the case of machine failure. And while we have a lot of confidence
+in our ability to keep Stackage Server up and running regularly,
+it's nice that our most important user-facing content is provided
+by these external services:</p>
+<ul>
+<li>Haddocks on S3</li>
+<li>Package mirroring on S3</li>
+<li>LTS Haskell and Stackage Nightly build plans on Github</li>
+<li>Package metadata on Github</li>
+<li>Package index metadata on Github (via <a href=
+"/blog/2015/05/secure-package-distribution">stackage-update and
+all-cabal-files/hashes</a>)</li>
+</ul>
+<p>This provides for a pleasant experience in both browsing the
+website and using Stackage in your build system.</p>
+<p>A special thanks to Jason Boyer for providing this new hosting
+cluster, which the whole FP Complete team is looking forward to
+putting through its paces.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=The%20new%20Stackage%20Server https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;new-stackage-server&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;new-stackage-server&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;new-stackage-server&#x2F;&amp;title=The%20new%20Stackage%20Server"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;new-stackage-server&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#93e0f2fff6e0d3f5e3f0fcfee3fff6e7f6bdf0fcfe" targe="_blank"><span class="__cf_email__" data-cfemail="e99a88858c9aa98f998a868499858c9d8cc78a8684">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

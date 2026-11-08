@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>IDE and Stackage</title>
+  <meta property="og:title" content="IDE and Stackage">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2013&#x2F;07&#x2F;ide-stackage&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>IDE and Stackage</h1>
+      
+      <p id="page-description">By Michael Snoyman, July 16, 2013</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=IDE%20and%20Stackage https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2013&#x2F;07&#x2F;ide-stackage&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2013&#x2F;07&#x2F;ide-stackage&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2013&#x2F;07&#x2F;ide-stackage&#x2F;&amp;title=IDE%20and%20Stackage"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2013&#x2F;07&#x2F;ide-stackage&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>As most of you know by now, at FP Complete we’ve just launched
+the beta of the FP Haskell Center, our integrated development and
+deployment environment. We’ve been letting people onto the system
+over the past few weeks. For those of you waiting for your beta
+invitation, you can get a more immediate idea of what we’re
+offering by viewing the screencast.&nbsp;But in this blog post, I
+want to talk about some of the work that’s going on behind the
+scenes, what it means for our users, and how it will benefit the
+greater Haskell community.</p>
+<p>Not interested in my analysis of the problems, and just want to
+hear how we’ll solve them? Feel free to <a href="/index">skip
+ahead</a>.</p>
+<h2 id="current-issues">Current issues</h2>
+<p>The set of functionality that we’ve included in our product has
+not been randomly thrown together. Gregg has spent a lot of time
+talking with people with existing Haskell setups to ascertain the
+major pain points, and we’ve tailored our offering to solve as many
+of those problems as possible.</p>
+<p>You’ve already seen a few of our solutions: an integrated
+development environment paired with an application deployment
+server, an interactive learning system, and a higher emphasis on
+user-friendly documentation and code samples. I’d like to talk
+right now about a different set of issues we’re trying to solve, a
+set that probably isn’t so obvious at first glance.</p>
+<h2 id="dependency-conflicts-cabal-hell">Dependency conflicts
+(“Cabal hell”)</h2>
+<p>Almost anyone who has been using Haskell for any length of time
+has run into some kind of library dependency conflict. These
+situations often get labeled as “Cabal hell,” but to be fair the
+issue is rarely related to Cabal itself. Managing dependencies
+between many different libraries is a difficult task. This isn’t
+Haskell specific; these problems exist in other languages as
+well.</p>
+<p>Nonetheless, getting a set of packages built and coexisting that
+can all be used simultaneously can be a daunting task, and is
+something we want to provide a solution to.</p>
+<h2 id="libraries-are-fast-moving-targets">Libraries are
+fast-moving targets</h2>
+<p>One of the great strengths of the Haskell community is the
+tendency to solve problems the right way. If a problem is found
+with an existing approach, the default response tends to be to fix
+the library, even if it means a breaking change. This leads to fast
+iteration and high quality libraries. The downside is it can be a
+pain to stay on top of the latest version of all libraries. (And
+related to the previous point, it can be difficult to get all
+downstream dependencies to update to the newest version of an
+upstream package.)</p>
+<p>The solution for end users could be to just stick with old
+versions of libraries. That, however, brings us to our next
+point.</p>
+<h2 id="lack-of-bugfixes-for-older-releases">Lack of bugfixes for
+older releases</h2>
+<p>Virtually every package on Hackage is volunteer maintained. It
+is difficult enough to maintain a single version of your library.
+Maintaining older versions as well can be overwhelming. But that’s
+exactly what people need: stable versions of libraries which still
+receive backported bugfixes. This is commonplace in many parts of
+the software world, both open and closed source. We simply haven’t
+gotten to that point in the Haskell world yet.</p>
+<h2 id="non-trivial-to-get-started">Non-trivial to get started</h2>
+<p>Assuming you could solve all the other problems listed, getting
+set up to start coding can be non-trivial. You need to install your
+tool chain correctly, which presents a number of questions:</p>
+<ol>
+<li>Do you use your distribution’s copy of GHC, or install your own
+copy?</li>
+<li>Do you use the Haskell Platform, or just cabal install all your
+dependencies?</li>
+<li>Should you use plain cabal, cabal-dev, or hsenv?</li>
+</ol>
+<p>And you’ll almost certainly need to perform some task for which
+you don’t know which library is the right library. How do you
+determine which one to use? How do you know that it will be
+compatible with the rest of your library set?</p>
+<h2 id="vision">Our vision for customers</h2>
+<p>We’ve thought long and hard about how to make Haskell an easier
+language to get up-and-running with, and have started putting
+together a vision for our customers. Let me share this vision, and
+then nail down <a href="/index">the concrete steps we’ll take to
+get to that point</a>.</p>
+<h2 id="stable-libraries">Stable libraries</h2>
+<p>Since the launch of the School of Haskell, we’ve provided a
+large and growing set of libraries on our servers. This library set
+is going to be available for all of our IDE users as well. The
+important thing to note is that at no point did you have to
+manually install any packages. System libraries are available,
+dependencies installed, and conflicting versions resolved.</p>
+<p>The final component which is missing is stability. Currently,
+our libraries update on a regular basis. We will be taking
+snapshots of this library set and providing them as options to our
+users. We will only include bug fixes into these libraries as
+necessary. This will provide users with the ability to start
+developing software and not worry that they’ll have to rewrite
+their code to stay up-to-date with security and bug fixes.</p>
+<h2 id="bleeding-edge-for-those-who-want-it">Bleeding edge for
+those who want it</h2>
+<p>While we will recommend these stable libraries for most users,
+we will continue to offer our bleeding-edge library set as well.
+This will allow users to try out the newest versions of libraries.
+This will also allow our system to remain as inclusive as possible.
+Anyone who wants to get a new library into our system just needs to
+<a href=
+"https://github.com/fpco/stackage/wiki/Maintainers-Agreement">send
+a pull request</a>, and at our next bleeding-edge build, the
+library will be available. And any packages that make it into our
+bleeding edge will also be snapshotted at our next stable library
+build.</p>
+<p>Note that there are a few reasons why a library may not be
+included on our system even after a pull request. The most obvious
+is if the package doesn’t build. But more subtle issues are
+licensing concerns, security flaws, or naming conflicts with
+existing code. These situations are rare, however, and can usually
+be worked around easily.</p>
+<h2 id="recommendationstutorials-for-those-who-need-it">
+Recommendations/tutorials (for those who need it)</h2>
+<p>While we try to provide as many packages as possible in our
+environments, we’re also aware that this much choice can be
+overwhelming. Therefore, we will be selecting some libraries to be
+our recommended solutions to some problem domains. The purpose here
+is not&nbsp;to tell seasoned Haskellers how to write their code.
+Instead, we want new users to have a simple path to follow from “I
+have a problem” to “I have a solution.”</p>
+<p>In addition to the <a href=
+"https://www.schoolofhaskell.com/user/snoyberg/ide-documentation/recommended-libraries">
+recommended library list</a>, we will be providing two other
+advantages to sticking with our recommended libraries: a higher
+level of customer support (including bug fixing), and more training
+material on using these libraries.</p>
+<h2 id="how-we-get-there">How we get there</h2>
+<p>You know the problems we want to solve, and you know how we want
+the solutions to look. The question remaining is how to implement
+them.</p>
+<h2 id="stackage">Stackage</h2>
+<p>The most publicly-visible work we’ve done towards solving the
+problems listed has been the Stackage project. Stackage is a
+project aiming to make it possible to build stable, vetted sets of
+packages. You can read more about the project and its goals in the
+<a href=
+"https://www.yesodweb.com/blog/2012/11/stable-vetted-hackage">Stackage
+release announcement.</a></p>
+<p>For a while I’ve wanted to share more details about how we’re
+using Stackage and how I see it fitting into the existing
+ecosystem, but I’ve waited until things of settled down and the
+answer could be reliable. Fortunately we’re at that point now.</p>
+<p>Stackage is really two things in one:</p>
+<ol>
+<li>A set of tools for building and testing a set of
+libraries.</li>
+<li>A community driven ecosystem for creating a list of libraries
+that should be installable together, and the communication
+infrastructure for letting package authors know when there’s a
+problem.</li>
+</ol>
+<p>We use Stackage internally to build all of our package
+databases. Stackage itself, however, is not&nbsp;such a database.
+Said another way, Stackage is not a competitor to something like
+Debian’s Haskell packages; instead, Stackage is a tool that could
+be used to build&nbsp;the Debian package set. Stackage is also not
+a competitor to the Haskell Platform; the HP is a set of vetted and
+reviewed packages. Stackage is a community process that allows
+any&nbsp;package to be included, and only cares about the
+coexistence.</p>
+<p>Just as a member of the Haskell community and a package
+maintainer, I think Stackage has been a big success. There are
+currently over 400 packages built by Stackage. Numerous bugs and
+incompatibilities have been reported back to upstream maintainers,
+giving maintainers more prompt and reliable feedback, and improving
+the quality of packages across the board for Haskellers. If
+Stackage did nothing more than it does today, I think it would have
+earned its keep.</p>
+<p>But I do hope to see it continue improving. I’ve discussed
+having Stackage used as part of the distribution maintainer toolset
+in the past, and while those conversations have stalled, I hope
+they resume. I also hope the community gets more involved. At the
+time of writing, there are 5292 packages available on Hackage. I’d
+like to see more of them included in Stackage, so if you maintain
+any Hackage packages that aren’t on Stackage, I encourage you to
+submit them.</p>
+<h2 id="working-with-upstream">Working with upstream</h2>
+<p>My work on Stackage has put me in a position to interact quite
+regularly with upstream package maintainers. I want to clarify
+exactly how we’ll be interacting with the community.</p>
+<h3 id="monitor-security-problems">Monitor security problems</h3>
+<p>We take security very seriously, and are constantly taking
+measures to improve the security of our toolset. One problematic
+area is the fact that Hackage allows anyone to upload any package,
+without any warnings. While this will be solved by Hackage 2, we
+are currently vulnerable.</p>
+<p>For the past month, I’ve started monitoring the package upload
+logs, and signaling alerts when a new uploader uploads a package
+for the first time. For example, if Alice uploads the package
+alice-package, and Bob uploads a new version a few days later, I’ll
+get a warning and contact Alice. (And internally, we won’t build
+any new library sets until the problem has been resolved.)</p>
+<p>I think this kind of review is vital to keeping the Haskell
+ecosystem safe. So if you get an email from me about this, you’ll
+know why.</p>
+<h3 id="report-bugs">Report bugs</h3>
+<p>We automatically run test suites each time we perform a Stackage
+build, which has uncovered a number of regressions in upstream
+packages. We file these reports upstream as soon as possible, and
+(due to the wonderful nature of the Haskell community) bugs tend to
+be fixed very quickly.</p>
+<p>As our user base grows, we anticipate more bug reports coming
+from our users. We’re looking forward to working with upstream
+providers to get these bugs triaged and fixed. And as part of our
+stable library plans, we have infrastructure in place to maintain
+patchsets against older versions of packages, to simplify the task
+of backporting fixes.</p>
+<h3 id="notify-of-outdated-dependencies">Notify of outdated
+dependencies</h3>
+<p>The most common interaction we have with the community has been
+to notify of outdated dependencies. Since Stackage has started, the
+number of emails I send about this topic has decreased drastically.
+I’m sure there are many factors at play here, but I see this as a
+sign that the Haskell ecosystem is beginning to stabilize.
+Previously, it was to be expected that breaking releases would
+happen on a regular basis. In the past six months, I’ve seen this
+happen very infrequently for any of the most heavily used
+packages.</p>
+<h3 id="identify-possible-library-improvements">Identify possible
+library improvements</h3>
+<p>As we get user feedback about libraries, we hope to share this
+information with the rest of the community. Some sample feedback we
+expect to be sharing is:</p>
+<ol>
+<li>Tasks that could be made easier in a library with some
+convenience functions.</li>
+<li>Places where documentation (especially tutorials) are
+lacking.</li>
+<li>Functionality which simply isn’t covered by existing
+packages.</li>
+</ol>
+<h2 id="internal-work-at-fp-complete">Internal work at FP
+Complete</h2>
+<p>Our main goal at FP Complete will be to continue building and
+polishing our end user tools. It’s my sincere belief that by
+providing these resources, we can drastically boost Haskell’s
+adoption, which will have a profound effect on the Haskell
+community.</p>
+<p>In addition, we intend to take part in community efforts. Our
+main focus has been on the documentation front. The School of
+Haskell was entirely about improving the documentation
+infrastructure for the community. Our recent announcement of
+tutorial and code sample contests is designed to get high quality
+tutorials produced as quickly as possible.</p>
+<p>For the most part, we have not felt the need to participate very
+much in the production of libraries. The open source community has
+done a fantastic job at creating a large, high-quality library
+ecosystem. However, as we build up libraries for our own purposes,
+or identify gaps in the existing library ecosystem, we intend to
+get involved: in the former case, releasing our code to the
+community, and in the latter, either working with community members
+to produce a suitable library, or providing one ourselves.</p>
+<h2 id="unified-product-vision">Unified product vision</h2>
+<p>I hope the above discussion gives a good idea of how we’re
+hoping to work with the community to make everyone’s lives better.
+I just want to close with a summarized view of what our upcoming
+product (the FP Haskell Center) will be providing to users.</p>
+<ol>
+<li>IDE: fully loaded with the tools you need</li>
+<li>Libraries: no need to configure or build, just start
+coding</li>
+<li>Tutorials tie in for easy learning on the job</li>
+<li>Develop and deploy from the cloud</li>
+</ol>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=IDE%20and%20Stackage https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2013&#x2F;07&#x2F;ide-stackage&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2013&#x2F;07&#x2F;ide-stackage&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2013&#x2F;07&#x2F;ide-stackage&#x2F;&amp;title=IDE%20and%20Stackage"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2013&#x2F;07&#x2F;ide-stackage&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#1f6c7e737a6c5f796f7c70726f737a6b7a317c7072" targe="_blank"><span class="__cf_email__" data-cfemail="e59684898096a58395868a889589809180cb868a88">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

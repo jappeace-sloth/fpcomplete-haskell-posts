@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Efficient binary serialization</title>
+  <meta property="og:title" content="Efficient binary serialization">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;03&#x2F;efficient-binary-serialization&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Efficient binary serialization</h1>
+      
+      <p id="page-description">By Michael Snoyman, March 14, 2016</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Efficient%20binary%20serialization https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;03&#x2F;efficient-binary-serialization&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;03&#x2F;efficient-binary-serialization&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;03&#x2F;efficient-binary-serialization&#x2F;&amp;title=Efficient%20binary%20serialization"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;03&#x2F;efficient-binary-serialization&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>We do a lot of work at FP Complete in the realm of multi-machine
+computing for our customers. One of the things we need to do
+efficiently to get good speedups from adding more machines is
+optimizing serialization. Since our multi-machine work often
+revolves around scientific and mathematical computing, we primarily
+need to make sure that there is efficient serialization of
+primitive data types (like <code>Int64</code> and
+<code>Double</code>), strict/unpacked product types (e.g.
+<code>data Foo = Foo !Int64 !Double</code>), and vectors of any of
+these.</p>
+<p><strong>For the impatient</strong>: <a href=
+"https://s3.amazonaws.com/download.fpcomplete.com/michael/serial-bench-2016-03-13.html">
+benchmark results</a> and <a href=
+"https://github.com/fpco/serial-bench">repo</a></p>
+<p>Not too long ago Francesco <a href=
+"https://www.reddit.com/r/haskell/comments/44w15q/psa_if_youre_serializing_floating_point_numbers/">
+discovered and reported</a> some issues with the binary package's
+serialization of <code>Double</code>s. In response to this, we
+internally switched over to using the cereal package instead, which
+resulted in <a href=
+"https://github.com/GaloisInc/cereal/pulls?q=is%3Apr+author%3Abitonic+is%3Aclosed">
+a few more performance related PRs</a>. However, when the FP
+Complete team discussed serialization, and particularly the needs
+that our multi-machine computing and other client projects require,
+we realized that we may have some opportunities to do better.</p>
+<p>Both the binary and cereal packages are very featureful, and
+with these features come some overhead. We actually have much
+simpler requirements for our standard serialization cases,
+e.g.:</p>
+<ul>
+<li>There's no need for backwards compatible formats, since two
+identical executables will be running on two machines and will need
+to communicate with each other</li>
+<li>Similarly, we don't need to have a consistent endianness for
+our encoding; using host byte order will always work for our use
+case</li>
+<li>Given the structure of data we work with, we will almost always
+have a very cheap method of determining the serialized size of a
+piece of data. For example, a vector of 50 <code>Double</code>s
+will be one <code>Int64</code> (to hold the length of the vector)
+plus 50 * <code>sizeOf (undefined :: Double)</code>, or in other
+words: <code>51 * 8</code>. By leveraging this, we can possibly do
+a more efficient serialization step by allocating a buffer of
+exactly the correct size</li>
+<li>We can get away with requiring that all data be in memory,
+since all of our use cases require that the data be fully evaluated
+at once (no lazy processing of larger-than-memory data sets)</li>
+<li>There's no need for any kind of fancy deserialization involving
+backtracking</li>
+</ul>
+<p>With these ideas in mind, I've spent the past few days putting
+together a variety of different implementations of both encoding
+and decoding, and believe that for the limited cases I just
+described, we can get significantly better serialization
+performance.</p>
+<h2 id="vector-somedata">Vector SomeData</h2>
+<p>The benchmarks I've used for this experiment focus on a fairly
+simple encoding and decoding test for a boxed vector of
+<code>SomeData</code> values. The <code>SomeData</code> type has a
+single data constructor with strict fields of <code>Int64</code>,
+<code>Word8</code>, and <code>Double</code>. This is a fairly good
+representation of the kind of data that we deal with regularly.
+Serializing more complex datatypes, or more variable-length types
+like a <code>ByteString</code>, are certainly supported by all of
+the schemes I've described here, but the performance impact of that
+has not been tested (since it's not the main focus of our
+work).</p>
+<h2 id="representations">Representations</h2>
+<p>There are three different binary representations of the data
+used in this benchmark suite:</p>
+<ul>
+<li>
+<p>Simple little-endian (host-endian) serialization. In this case,
+the values are serialized in exactly the same format as they are
+stored in memory. (This assumes of course a little-endian
+architecture, which is what I did all testing on and our target
+architecture in production in almost all cases.)
+<code>Vector</code>s are serialized by storing the length of the
+<code>Vector</code> as an <code>Int64</code> followed by each
+successive element from the <code>Vector</code>. This format is
+used by the following functions:</p>
+<ul>
+<li><code>encodeSimpleRaw</code></li>
+<li><code>encodeSimplePoke</code></li>
+<li><code>encodeSimplePokeMonad</code></li>
+<li><code>encodeSimplePokeRef</code></li>
+<li><code>encodeSimplePokeRefMonad</code></li>
+<li><code>encodeBuilderLE</code></li>
+<li><code>decodeSimplePeek</code></li>
+<li><code>decodeSimplePeekEx</code></li>
+<li><code>decodeRawLE</code></li>
+</ul>
+</li>
+<li>
+<p>The big-endian format of the above. This format is used by the
+following functions:</p>
+<ul>
+<li><code>encodeBuilderBE</code></li>
+<li><code>encodeCereal</code></li>
+<li><code>decodeRawBE</code></li>
+<li><code>decodeCereal</code></li>
+</ul>
+</li>
+<li>
+<p>The binary format, used exclusively by the binary package. The
+special magic in this format is that <code>Double</code>s are
+encoded as a pair of <code>Integer</code> and <code>Int</code>.
+This is the original performance bug that Francesco found and
+reported on Reddit, and which kicked off this whole analysis.</p>
+</li>
+</ul>
+<p>Let's start with the benchmark results, and then do some more
+analysis:</p>
+<p><img alt="Benchmark results" src=
+"https://s3.amazonaws.com/download.fpcomplete.com/michael/2bt7dns.png"></p>
+<p>Unsurprisingly, <code>binary</code> performed the worse by far,
+mainly due to its <code>Double</code> serialization. Similarly, the
+big endian approaches were all slower than the little endian
+approaches, though the cereal package performed significantly worse
+than the raw bytestring-builder encoding and direct
+ByteString/bit-shifting decoding.</p>
+<p>Since the little endian encoding wins as far as representation,
+we'll spend the rest of this approach analyzing the different
+trade-offs in encoding and decoding, based on the 6 encoding and 3
+decoding functions implemented and tested here.</p>
+<h2 id="continuation-vs-mutable-reference">Continuation vs mutable
+reference</h2>
+<p>When both encoding and decoding, we need to keep track of the
+current offset being written to/read from within the buffer. In the
+case of decoding, we also need to have some way to fail out if the
+data parsed is not what we expect, or there are insufficient bytes
+to consume. I tested two approaches for this:</p>
+<ul>
+<li>
+<p>A continuation-based approach, where each computation is passed
+the next computation to perform. That next computation takes a
+parameter of the updated offset, and in the case of decoding
+returns a <code>Maybe</code> value to allow for failure. This
+technique is used by the functions:</p>
+<ul>
+<li><code>encodeSimpleRaw</code></li>
+<li><code>encodeSimplePoke</code></li>
+<li><code>encodeSimplePokeMonad</code></li>
+<li><code>decodeSimplePeek</code></li>
+<li><code>decodeRawLE</code></li>
+</ul>
+</li>
+<li>
+<p>A mutable reference approach. In this case, instead of each
+function needing to take an updated offset value, the value is
+stored in a mutable reference. This allows the environment
+available to each function to be identical (i.e., a pure
+<code>ReaderT</code> setup), which GHC is good at optimizing. On
+the other hand, GHC also tends to do much better at optimizing code
+without mutable references in it. To deal with failed decoding in
+this setup, we use runtime exceptions. This technique is used by
+the functions:</p>
+<ul>
+<li><code>encodeSimplePokeRef</code></li>
+<li><code>encodeSimplePokeRefMonad</code></li>
+<li><code>decodeSimplePeekEx</code></li>
+</ul>
+</li>
+</ul>
+<p>As you can see from the results, the continuation based approach
+gave a slight performance advantage. While this is what I would
+have expected, the difference between the two was less than I had
+expected. Additionally, in some earlier testing before I'd added
+more optimization, the reference based implementation actually
+outperformed the continuation based implementation. The details of
+what's going on at the core level would be an interesting follow-up
+analysis.</p>
+<h3 id="optimizing-the-mutable-reference">Optimizing the mutable
+reference</h3>
+<p>If you dive into the code, you may be a bit surprised at how the
+offset reference is represented. Instead of a more standard
+<code>IORef</code>, we have:</p>
+<pre><span class="hs-keyword">newtype</span> <span class=
+"hs-conid">OffsetRef</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">OffsetRef</span>
+    <span class="hs-layout">(</span><span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Vector</span><span class="hs-varop">.</span><span class=
+"hs-conid">Unboxed</span><span class=
+"hs-varop">.</span><span class="hs-conid">Mutable</span><span class="hs-varop">.</span><span class="hs-conid">MVector</span> <span class="hs-conid">RealWorld</span> <span class="hs-conid">Offset</span><span class="hs-layout">)</span></pre>
+<p>The idea here is to take advantage of the more efficient unboxed
+representation and byte array operations provided by the vector
+package and GHC. This also avoids a lot of garbage collection
+overhead used by the boxed nature of <code>IORef</code>. This is
+the same technique leveraged by the <a href=
+"https://www.stackage.org/package/mutable-containers">mutable-containers</a>
+package. Also, check out <a href=
+"https://stackoverflow.com/questions/27261813/why-is-my-little-stref-int-require-allocating-gigabytes">
+the Stack Overflow question on the topic</a>.</p>
+<h2 id="storable-bit-shifting-and-bytestring-builder">Storable,
+bit-shifting, and bytestring-builder</h2>
+<p>When it comes to storing primitive datatypes in a pointer, it's
+unsurprising to see the <a href=
+"https://www.stackage.org/haddock/lts-5.8/base-4.8.2.0/Foreign-Storable.html">
+Storable type class</a>. This class's peek and poke operations are
+implemented under the surface with GHC primops. We get away with
+this because, in our implementation, we are always using host byte
+order. By contrast, the cereal, binary, and bytestring-builder
+packages need to do more direct bit-shifting, such as:</p>
+<pre><span class="hs-definition">word64be</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">ByteString</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Word64</span>
+<span class="hs-definition">word64be</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-keyglyph">\</span><span class="hs-varid">s</span> <span class=
+"hs-keyglyph">-&gt;</span>
+              <span class="hs-layout">(</span><span class=
+"hs-varid">fromIntegral</span> <span class=
+"hs-layout">(</span><span class="hs-varid">s</span> <span class=
+"hs-varop">`</span><span class="hs-conid">SU</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">unsafeIndex</span><span class=
+"hs-varop">`</span> <span class="hs-num">0</span><span class=
+"hs-layout">)</span> <span class=
+"hs-varop">`shiftL`</span> <span class=
+"hs-num">56</span><span class="hs-layout">)</span> <span class=
+"hs-varop">.|.</span>
+              <span class="hs-layout">(</span><span class=
+"hs-varid">fromIntegral</span> <span class=
+"hs-layout">(</span><span class="hs-varid">s</span> <span class=
+"hs-varop">`</span><span class="hs-conid">SU</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">unsafeIndex</span><span class=
+"hs-varop">`</span> <span class="hs-num">1</span><span class=
+"hs-layout">)</span> <span class=
+"hs-varop">`shiftL`</span> <span class=
+"hs-num">48</span><span class="hs-layout">)</span> <span class=
+"hs-varop">.|.</span>
+              <span class="hs-layout">(</span><span class=
+"hs-varid">fromIntegral</span> <span class=
+"hs-layout">(</span><span class="hs-varid">s</span> <span class=
+"hs-varop">`</span><span class="hs-conid">SU</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">unsafeIndex</span><span class=
+"hs-varop">`</span> <span class="hs-num">2</span><span class=
+"hs-layout">)</span> <span class=
+"hs-varop">`shiftL`</span> <span class=
+"hs-num">40</span><span class="hs-layout">)</span> <span class=
+"hs-varop">.|.</span>
+              <span class="hs-layout">(</span><span class=
+"hs-varid">fromIntegral</span> <span class=
+"hs-layout">(</span><span class="hs-varid">s</span> <span class=
+"hs-varop">`</span><span class="hs-conid">SU</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">unsafeIndex</span><span class=
+"hs-varop">`</span> <span class="hs-num">3</span><span class=
+"hs-layout">)</span> <span class=
+"hs-varop">`shiftL`</span> <span class=
+"hs-num">32</span><span class="hs-layout">)</span> <span class=
+"hs-varop">.|.</span>
+              <span class="hs-layout">(</span><span class=
+"hs-varid">fromIntegral</span> <span class=
+"hs-layout">(</span><span class="hs-varid">s</span> <span class=
+"hs-varop">`</span><span class="hs-conid">SU</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">unsafeIndex</span><span class=
+"hs-varop">`</span> <span class="hs-num">4</span><span class=
+"hs-layout">)</span> <span class=
+"hs-varop">`shiftL`</span> <span class=
+"hs-num">24</span><span class="hs-layout">)</span> <span class=
+"hs-varop">.|.</span>
+              <span class="hs-layout">(</span><span class=
+"hs-varid">fromIntegral</span> <span class=
+"hs-layout">(</span><span class="hs-varid">s</span> <span class=
+"hs-varop">`</span><span class="hs-conid">SU</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">unsafeIndex</span><span class=
+"hs-varop">`</span> <span class="hs-num">5</span><span class=
+"hs-layout">)</span> <span class=
+"hs-varop">`shiftL`</span> <span class=
+"hs-num">16</span><span class="hs-layout">)</span> <span class=
+"hs-varop">.|.</span>
+              <span class="hs-layout">(</span><span class=
+"hs-varid">fromIntegral</span> <span class=
+"hs-layout">(</span><span class="hs-varid">s</span> <span class=
+"hs-varop">`</span><span class="hs-conid">SU</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">unsafeIndex</span><span class=
+"hs-varop">`</span> <span class="hs-num">6</span><span class=
+"hs-layout">)</span> <span class=
+"hs-varop">`shiftL`</span>  <span class=
+"hs-num">8</span><span class="hs-layout">)</span> <span class=
+"hs-varop">.|.</span>
+              <span class="hs-layout">(</span><span class=
+"hs-varid">fromIntegral</span> <span class=
+"hs-layout">(</span><span class="hs-varid">s</span> <span class=
+"hs-varop">`</span><span class="hs-conid">SU</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">unsafeIndex</span><span class=
+"hs-varop">`</span> <span class="hs-num">7</span><span class=
+"hs-layout">)</span> <span class="hs-layout">)</span></pre>
+<p>Leveraging <code>Storable</code> whenever possible simplifies
+our codebase and makes it more efficient. In fact, the
+<code>Simple</code> typeclass - used for most of our
+implementations here - provides default implementations of all
+functions in terms of <code>Storable</code>, so that the instances
+for primitive types just look like:</p>
+<pre><span class="hs-keyword">instance</span> <span class=
+"hs-conid">Simple</span> <span class="hs-conid">Int64</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">Simple</span> <span class="hs-conid">Word8</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">Simple</span> <span class="hs-conid">Double</span></pre>
+<h3 id="simplesize-::-either-int-a--gt-int">simpleSize :: Either
+Int (a -&gt; Int)</h3>
+<p>You may be wondering: if <code>Storable</code> is so great, why
+not just base a serialization library on it directly? There's one
+downside: it assumes that every datatype has a fixed serialized
+width. While this works great for <code>Int</code>s and the like,
+it fails with a <code>Vector</code>, where we need to know - at
+runtime - the actual length of the <code>Vector</code> to determine
+its serialized size.</p>
+<p>A naive implementation of this would look like:</p>
+<pre><span class="hs-definition">simpleSize</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-varid">a</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Int</span></pre>
+<p>However, this signature implies that every type's size may
+change at runtime. This would require that, when serializing a
+<code>Vector</code>, we always inspect every single value, which
+introduces significant CPU overhead. For example, given that the
+representation of a <code>Vector</code> is an 8-byte integer length
+plus the sizes of all elements, this would look like:</p>
+<pre><span class="hs-definition">simpleSize</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Vector</span> <span class=
+"hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">simpleSize</span> <span class=
+"hs-varid">v</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-num">8</span> <span class="hs-varop">+</span> <span class=
+"hs-conid">V</span><span class="hs-varop">.</span><span class=
+"hs-varid">sum</span> <span class="hs-layout">(</span><span class=
+"hs-conid">V</span><span class="hs-varop">.</span><span class=
+"hs-varid">map</span> <span class=
+"hs-varid">simpleSize</span> <span class=
+"hs-varid">v</span><span class="hs-layout">)</span></pre>
+<p>But in the case of statically-known sizes, we'd like to replace
+that <code>sum</code> with a simple multiplication. To make this
+work, we have a slightly smarter type signature for the size
+function:</p>
+<pre><span class="hs-definition">simpleSize</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Either</span> <span class=
+"hs-conid">Int</span> <span class="hs-layout">(</span><span class=
+"hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Int</span><span class="hs-layout">)</span></pre>
+<p>If this function returns <code>Left</code>, there's no need to
+inspect individual values. For <code>Right</code>, we're stuck with
+checking each thing. Putting this together, here's our
+implementation for <code>Vector</code>s.</p>
+<pre><span class="hs-definition">simpleSize</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Either</span> <span class=
+"hs-conid">Int</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Vector</span> <span class=
+"hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Int</span><span class="hs-layout">)</span>
+<span class="hs-definition">simpleSize</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">Right</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">v</span> <span class="hs-keyglyph">-&gt;</span>
+    <span class="hs-keyword">case</span> <span class=
+"hs-varid">simpleSize</span> <span class="hs-keyword">of</span>
+        <span class="hs-conid">Left</span> <span class=
+"hs-varid">s</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">s</span> <span class="hs-varop">*</span> <span class=
+"hs-conid">V</span><span class="hs-varop">.</span><span class=
+"hs-varid">length</span> <span class=
+"hs-varid">v</span> <span class="hs-varop">+</span> <span class=
+"hs-num">8</span>
+        <span class="hs-conid">Right</span> <span class=
+"hs-varid">f</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">V</span><span class="hs-varop">.</span><span class=
+"hs-varid">sum</span> <span class="hs-layout">(</span><span class=
+"hs-conid">V</span><span class="hs-varop">.</span><span class=
+"hs-varid">map</span> <span class="hs-varid">f</span> <span class=
+"hs-varid">v</span><span class="hs-layout">)</span> <span class=
+"hs-varop">+</span> <span class="hs-num">8</span></pre>
+<p>Notice how, for a <code>Vector Int64</code>, we'd be able to
+follow the <code>Left</code> branch and avoid the costly
+<code>sum</code>. This ends up giving us really cheap knowledge of
+the total buffer size needed, which we take advantage of when
+encoding, e.g.:</p>
+<pre><span class=
+"hs-definition">encodeSimpleRaw</span> <span class="hs-keyglyph">::</span> <span class="hs-conid">Simple</span> <span class="hs-varid">a</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-varid">a</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">ByteString</span>
+<span class="hs-definition">encodeSimpleRaw</span> <span class=
+"hs-varid">x</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">unsafeCreate</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">either</span> <span class=
+"hs-varid">id</span> <span class="hs-layout">(</span><span class=
+"hs-varop">$</span> <span class="hs-varid">x</span><span class=
+"hs-layout">)</span> <span class=
+"hs-varid">simpleSize</span><span class="hs-layout">)</span>
+    <span class="hs-layout">(</span><span class=
+"hs-keyglyph">\</span><span class="hs-varid">p</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">simpleRawPoke</span> <span class=
+"hs-varid">p</span> <span class="hs-num">0</span> <span class=
+"hs-varid">x</span><span class="hs-layout">)</span></pre>
+<h2 id="monadic-vs-monoidal-interface">Monadic vs Monoidal
+interface</h2>
+<p>Ever since <code>blaze-html</code> famously provided a broken
+<code>Monad</code> interface in the name of performance, there's
+been a concern (at least by me) that providing a proper
+<code>Monad</code> instance instead of just a <code>Monoid</code>
+instance could slow things down. Therefore, this benchmark included
+encoding functions that are both monadic
+(<code>encodeSimplePokeMonad</code> and
+<code>encodeSimplePokeRefMonad</code>) and monoidal
+(<code>encodeSimplePoke</code> and
+<code>encodeSimplePokeRef</code>). To my surprise, they performed
+nearly identically.</p>
+<p>The monadic interface though has many advantages over a monoidal
+one:</p>
+<ul>
+<li>You can still provide a <code>Monoid</code> instance for any
+<code>Monad</code>, so you actually get <i>both</i> interfaces for
+free</li>
+<li>You get to use <code>do</code> notation if desired</li>
+<li>Subjectively, I'd guess that people are more used to monadic
+combinators (e.g., <code>mapM_</code> vs
+<code>foldMap</code>).</li>
+<li>In my testing, I found a major slowdown due to the usage of
+<code>foldMap</code> from <code>Vector</code>. I'm guessing this is
+due to a missing <code>INLINE</code> in the default implementation
+of <code>foldMap</code> in <code>Data.Foldable</code>, but I
+haven't had a chance to investigate yet. Again, since monadic
+combinators seem to be more well used, odds are that they will also
+be more well optimized.</li>
+</ul>
+<h2 id="overall-abstraction-overhead">Overall abstraction
+overhead</h2>
+<p>In addition to the nice <code>newtype</code>-wrapped monads and
+monoids, I implemented a raw version of both encoding and decoding,
+just to see if the abstraction added an overhead. Fortunately, this
+was not the case, which lets us stick with relatively simple
+high-level code such as:</p>
+<pre><span class="hs-definition">simplePeek</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">SomeData</span>
+    <span class="hs-varop">&lt;$&gt;</span> <span class=
+"hs-varid">simplePeek</span>
+    <span class="hs-varop">&lt;*&gt;</span> <span class=
+"hs-varid">simplePeek</span>
+    <span class="hs-varop">&lt;*&gt;</span> <span class=
+"hs-varid">simplePeek</span></pre>
+<p>instead of:</p>
+<pre><span class="hs-definition">readInt64</span>  <span class=
+"hs-varid">bs</span>  <span class="hs-varop">$</span> <span class=
+"hs-keyglyph">\</span><span class=
+"hs-varid">bsX</span> <span class="hs-varid">x</span> <span class=
+"hs-keyglyph">-&gt;</span>
+<span class="hs-definition">readWord8</span>  <span class=
+"hs-varid">bsX</span> <span class="hs-varop">$</span> <span class=
+"hs-keyglyph">\</span><span class=
+"hs-varid">bsY</span> <span class="hs-varid">y</span> <span class=
+"hs-keyglyph">-&gt;</span>
+<span class="hs-definition">readDouble</span> <span class=
+"hs-varid">bsY</span> <span class="hs-varop">$</span> <span class=
+"hs-keyglyph">\</span><span class=
+"hs-varid">bsZ</span> <span class="hs-varid">z</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+    <span class="hs-conid">MV</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">unsafeWrite</span> <span class=
+"hs-varid">mv</span> <span class="hs-varid">idx</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">SomeData</span> <span class=
+"hs-varid">x</span> <span class="hs-varid">y</span> <span class=
+"hs-varid">z</span><span class="hs-layout">)</span>
+    <span class="hs-varid">loop</span> <span class=
+"hs-layout">(</span><span class="hs-varid">idx</span> <span class=
+"hs-varop">+</span> <span class="hs-num">1</span><span class=
+"hs-layout">)</span> <span class="hs-varid">bsZ</span></pre>
+<h2 id="st-like-monad">ST-like monad</h2>
+<p>If you look at <a href=
+"https://www.stackage.org/haddock/lts-5.8/vector-binary-instances-0.2.3.1/src/Data-Vector-Binary.html">
+the implementation of the <code>Binary</code> instance for
+<code>Vector</code></a>, you'll see that it needs to resort to
+<code>unsafePerformIO</code>. This is because, in order to
+efficiently create a <code>Vector</code>, it needs to perform
+mutations, but the <code>Get</code> monad from binary does not
+provide any <code>ST</code> or <code>IO</code> like behavior for
+mutating a buffer.</p>
+<p>Since we're designing a new decoding interface from scratch, and
+have <code>Vector</code> as a first-class use case, I decided to
+bake in <code>ST</code>-like semantics to allow directly playing
+around with mutable vectors. As a result, the type of
+<code>Peek</code> has an extra state token parameter, just like
+<code>ST</code>:</p>
+<pre><span class="hs-keyword">newtype</span> <span class=
+"hs-conid">Peek</span> <span class="hs-varid">s</span> <span class=
+"hs-varid">a</span></pre>
+<p>Also, there is a <code>PrimMonad</code> instance for
+<code>Peek</code>, which allows for the mutable vector operations
+to occur within the monad without any lifting. To see how this
+works, take a look at the implementation of <code>simplePeek</code>
+for <code>Vector</code>s:</p>
+<pre><span class="hs-definition">simplePeek</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Simple</span> <span class=
+"hs-varid">a</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">Peek</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Vector</span> <span class=
+"hs-varid">a</span><span class="hs-layout">)</span>
+<span class="hs-definition">simplePeek</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">len</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Int64</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">simplePeek</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-varid">len'</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">fromIntegral</span> <span class="hs-varid">len</span>
+    <span class="hs-varid">mv</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">MV</span><span class="hs-varop">.</span><span class=
+"hs-varid">new</span> <span class="hs-varid">len'</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-varid">loop</span> <span class="hs-varid">i</span>
+            <span class="hs-keyglyph">|</span> <span class=
+"hs-varid">i</span> <span class=
+"hs-varop">&gt;=</span> <span class="hs-varid">len'</span> <span class="hs-keyglyph">=</span> <span class="hs-conid">V</span><span class="hs-varop">.</span><span class="hs-varid">unsafeFreeze</span> <span class="hs-varid">mv</span>
+            <span class="hs-keyglyph">|</span> <span class=
+"hs-varid">otherwise</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+                <span class="hs-varid">x</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">simplePeek</span>
+                <span class="hs-conid">MV</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">unsafeWrite</span> <span class=
+"hs-varid">mv</span> <span class="hs-varid">i</span> <span class=
+"hs-varid">x</span>
+                <span class="hs-varid">loop</span> <span class=
+"hs-varop">$!</span> <span class="hs-varid">i</span> <span class=
+"hs-varop">+</span> <span class="hs-num">1</span>
+    <span class="hs-varid">loop</span> <span class=
+"hs-num">0</span></pre>
+<p>All of this also applies to the <code>PeekEx</code> type.</p>
+<h2 id="results">Results</h2>
+<p>The <a href=
+"https://s3.amazonaws.com/download.fpcomplete.com/michael/serial-bench-2016-03-13.html">
+criterion link I shared above</a> has the results of all of these
+benchmarks, but for the lazy, here's the result graph again:</p>
+<p><img alt="Benchmark results" src=
+"https://s3.amazonaws.com/download.fpcomplete.com/michael/2bt7dns.png"></p>
+<p>As you can see: the little-endian encoding regularly
+outperformed the other two formats by a significant margin. This
+isn't surprising, given that there is less CPU work that needs to
+be done, and that we are able to leverage primops from GHC to do
+most of the work.</p>
+<p>Similarly, while bytestring-builder is a very highly tuned
+library, for a narrow use case like ours where the resulting buffer
+size is easily computed in advance, constructing
+<code>ByteString</code>s manually gives a significant performance
+boost.</p>
+<p>To my surprise, the mutable reference/exception based approach
+to peeking and poking was fairly competitive with the
+continuation-based approach. Nonetheless, overall the
+continuation-based approach outperforms it, and is more elegant an
+approach.</p>
+<p>While the monadic and monoidal interfaces for poking/encoding
+give similar results, the performance of the monoidal interface can
+be unpredictable if used incorrectly. Since monadic combinators are
+more commonly optimized and more ubiquitous, it's safer to expose
+the monadic interface. (And, for what it's worth, we can always
+provide a <code>Monoid</code> instance for any
+<code>Monad</code>.)</p>
+<p>And thankfully, the abstractions we use to make our encoding and
+decoding easy to work with and nicely composable do not introduce a
+slowdown versus the low-level implementation. So no need to force
+people to drop down to manual continuation passing.</p>
+<h2 id="what39s-next">What's next</h2>
+<p>Based on this analysis, it seems like we have a clear set of
+choices for a new serialization library. This blog post already
+clarifies the design goals of such a library, and its limitations
+(e.g., no streaming decoding). Such a library is something we'll
+almost certainly want to leverage for our multi-machine computation
+work at FP Complete.</p>
+<p>I'm interested on feedback from others on this topic, including
+ways to better optimize the code, alternative strategies, and
+additional use cases you might have for such a library.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Efficient%20binary%20serialization https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;03&#x2F;efficient-binary-serialization&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;03&#x2F;efficient-binary-serialization&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;03&#x2F;efficient-binary-serialization&#x2F;&amp;title=Efficient%20binary%20serialization"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;03&#x2F;efficient-binary-serialization&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#6b180a070e182b0d1b0804061b070e1f0e45080406" targe="_blank"><span class="__cf_email__" data-cfemail="384b59545d4b785e485b575548545d4c5d165b5755">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

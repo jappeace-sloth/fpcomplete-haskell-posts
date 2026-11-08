@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta charset="UTF-8">
+        <title>Operator Glossary</title>
+        
+        <link rel="stylesheet" type="text/css" href="/default.css">
+        <link rel="stylesheet" type="text/css" href="/css/style.css">
+        <link href="/rss.xml" type="application/rss+xml" rel="alternate" title="tech.fpcomplete.com rss feed">
+
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'UA-36928035-3');
+        </script>
+
+        
+    </head>
+    <body>
+    <div class="container">
+      <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
+        <h5 class="my-0 mr-md-auto font-weight-normal">
+          <a href="/">
+              <img src="/images/fp-complete-logo-small.png">
+          </a>
+        </h5>
+          <nav class="my-2 my-md-0 mr-md-3">
+              <a class="p-2 text-dark" href="/blog">Blog</a>
+              <a class="p-2 text-dark" href="/tech">Technology</a>
+              <a class="p-2 text-dark" href="/haskell">Haskell</a>
+              <a class="p-2 text-dark" href="/rust">Rust</a>
+              <a class="p-2 text-dark" href="/devops">DevOps</a>
+          </nav>
+      </div>
+          
+
+<div class="nav-scroller py-1 mb-2">
+  <nav class="nav d-flex justify-content-between">
+    <a class="p-2 text-muted" href="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;get-started&#x2F;">Get Started</a>
+    <a class="p-2 text-muted" href="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;learn&#x2F;">Learn</a>
+    <a class="p-2 text-muted" href="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;promote&#x2F;">Promote</a>
+    <a class="p-2 text-muted" href="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;success&#x2F;">Success Program</a>
+    <a class="p-2 text-muted" href="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;community&#x2F;">Community</a>
+  </nav>
+</div>
+
+
+
+        <main>
+          
+
+
+<h1>Operator Glossary</h1>
+<p>One aspect of Haskell that many new users find difficult to get a
+handle on is <em>operators</em>. Unlike many other languages, Haskell gives a
+lot of flexibility to developers to define custom operators. This can
+lead to shorter, more elegant code in many cases. For example, compare
+these three equivalent pieces of code:</p>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">v1 </span><span style="color:#89ddff;">=</span><span style="color:#eeffff;"> mappend (mappend </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">hello </span><span style="color:#89ddff;">&quot; &quot;</span><span style="color:#c3e88d;">there </span><span style="color:#89ddff;">&quot;</span><span style="color:#eeffff;">) </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">world</span><span style="color:#89ddff;">&quot;</span><span style="color:#eeffff;">
+v2 </span><span style="color:#89ddff;">= &quot;</span><span style="color:#c3e88d;">hello </span><span style="color:#89ddff;">&quot; `mappend` &quot;</span><span style="color:#c3e88d;">there </span><span style="color:#89ddff;">&quot; `mappend` &quot;</span><span style="color:#c3e88d;">world</span><span style="color:#89ddff;">&quot;</span><span style="color:#eeffff;">
+v3 </span><span style="color:#89ddff;">= &quot;</span><span style="color:#c3e88d;">hello </span><span style="color:#89ddff;">&quot; ++ &quot;</span><span style="color:#c3e88d;">there </span><span style="color:#89ddff;">&quot; ++ &quot;</span><span style="color:#c3e88d;">world</span><span style="color:#89ddff;">&quot;
+</span></pre>
+<p>Unfortunately, not all operators are as self-explanatory as the <code>++</code>
+operator (which, in case you're wondering, is &quot;list append&quot;). This
+page will attempt to cover the most common &quot;surprising&quot; operators. In
+other words: we won't bother covering common mathematical operators
+like <code>+</code> or <code>*</code>, nor will we cover operators defined in less common
+libraries.</p>
+<h2 id="hoogle-is-your-friend">Hoogle is your friend</h2>
+<p>It's worth pointing out as well that for many operators, using the
+<a href="https://www.stackage.org/lts/hoogle">Hoogle search engine</a> can be a
+great way to find out about an operator, or for that matter <em>any</em>
+function. It's
+<a href="https://www.stackage.org/lts-6.7/hoogle?q=%2B%2B">pretty easy to find <code>++</code></a>
+that way. Go ahead, try it out now!</p>
+<form action="https://www.stackage.org/lts/hoogle" target="_blank"><input type="search" name="q"> <input type="submit" value="Search Hoogle"></form>
+<h2 id="function-application">Function application <code>$</code></h2>
+<pre style="background-color:#212121;">
+<span style="color:#82aaff;">($) </span><span style="color:#c792ea;">::</span><span style="color:#eeffff;"> (a </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">b) </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">a </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">b
+</span></pre>
+<p>One of the most common operators, and source of initial confusion, is
+the <code>$</code> operator. All this does is <em>apply a function</em>. So, <code>f $ x</code> is
+exactly equivalent to <code>f x</code>. If so, why would you ever use <code>$</code>? The
+primary reason is - for those who prefer the style - to avoid
+parentheses. For example, you can replace:</p>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">foo (bar (baz bin))
+</span></pre>
+<p>with</p>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">foo </span><span style="color:#89ddff;">$</span><span style="color:#eeffff;"> bar </span><span style="color:#89ddff;">$</span><span style="color:#eeffff;"> baz bin
+</span></pre>
+<p>A less common but arguably more compelling use case is to capture the
+act of applying a function to an argument. To clarify that rather
+vague statement with an example:</p>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">#</span><span style="color:#89ddff;">!/</span><span style="color:#eeffff;">usr</span><span style="color:#89ddff;">/</span><span style="color:#eeffff;">bin</span><span style="color:#89ddff;">/</span><span style="color:#eeffff;">env stack
+</span><span style="font-style:italic;color:#4a4a4a;">-- stack --resolver lts-12.21 script
+
+</span><span style="color:#82aaff;">double </span><span style="color:#c792ea;">:: </span><span style="font-style:italic;color:#c792ea;">Int </span><span style="color:#c792ea;">-&gt; </span><span style="font-style:italic;color:#c792ea;">Int</span><span style="color:#eeffff;">
+double x </span><span style="color:#89ddff;">= </span><span style="color:#eeffff;">x </span><span style="color:#89ddff;">+</span><span style="color:#eeffff;"> x
+
+</span><span style="color:#82aaff;">square </span><span style="color:#c792ea;">:: </span><span style="font-style:italic;color:#c792ea;">Int </span><span style="color:#c792ea;">-&gt; </span><span style="font-style:italic;color:#c792ea;">Int</span><span style="color:#eeffff;">
+square x </span><span style="color:#89ddff;">= </span><span style="color:#eeffff;">x * x
+
+</span><span style="color:#82aaff;">main </span><span style="color:#c792ea;">:: </span><span style="font-style:italic;color:#c792ea;">IO </span><span style="color:#f78c6c;">()</span><span style="color:#eeffff;">
+main </span><span style="color:#89ddff;">= </span><span style="color:#eeffff;">print (map (</span><span style="color:#89ddff;">$ </span><span style="color:#f78c6c;">5</span><span style="color:#eeffff;">) [double</span><span style="color:#89ddff;">,</span><span style="color:#eeffff;"> square])
+</span></pre>
+<p>The <code>($ 5)</code> bit means &quot;apply the function to 5&quot;, and then we can use
+<code>map</code> to use it with both the <code>double</code> and <code>square</code> functions.</p>
+<h2 id="function-composition">Function composition <code>.</code></h2>
+<pre style="background-color:#212121;">
+<span style="color:#82aaff;">(.) </span><span style="color:#c792ea;">::</span><span style="color:#eeffff;"> (b </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">c) </span><span style="color:#c792ea;">-&gt;</span><span style="color:#eeffff;"> (a </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">b) </span><span style="color:#c792ea;">-&gt;</span><span style="color:#eeffff;"> (a </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">c)
+</span></pre>
+<p>Not much more to it than that: take two functions and compose them together.</p>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">#</span><span style="color:#89ddff;">!/</span><span style="color:#eeffff;">usr</span><span style="color:#89ddff;">/</span><span style="color:#eeffff;">bin</span><span style="color:#89ddff;">/</span><span style="color:#eeffff;">env stack
+</span><span style="font-style:italic;color:#4a4a4a;">-- stack --resolver lts-12.21 script
+
+</span><span style="color:#82aaff;">double </span><span style="color:#c792ea;">:: </span><span style="font-style:italic;color:#c792ea;">Int </span><span style="color:#c792ea;">-&gt; </span><span style="font-style:italic;color:#c792ea;">Int</span><span style="color:#eeffff;">
+double x </span><span style="color:#89ddff;">= </span><span style="color:#eeffff;">x </span><span style="color:#89ddff;">+</span><span style="color:#eeffff;"> x
+
+</span><span style="color:#82aaff;">square </span><span style="color:#c792ea;">:: </span><span style="font-style:italic;color:#c792ea;">Int </span><span style="color:#c792ea;">-&gt; </span><span style="font-style:italic;color:#c792ea;">Int</span><span style="color:#eeffff;">
+square x </span><span style="color:#89ddff;">= </span><span style="color:#eeffff;">x * x
+
+</span><span style="color:#82aaff;">main </span><span style="color:#c792ea;">:: </span><span style="font-style:italic;color:#c792ea;">IO </span><span style="color:#f78c6c;">()</span><span style="color:#eeffff;">
+main </span><span style="color:#89ddff;">= </span><span style="color:#eeffff;">(print </span><span style="color:#89ddff;">.</span><span style="color:#eeffff;"> double </span><span style="color:#89ddff;">.</span><span style="color:#eeffff;"> square) </span><span style="color:#f78c6c;">5
+</span></pre>
+<p>Or you can combine this together with the <code>$</code> operator to avoid those
+parentheses if you're so inclined:</p>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">main </span><span style="color:#89ddff;">=</span><span style="color:#eeffff;"> print </span><span style="color:#89ddff;">.</span><span style="color:#eeffff;"> double </span><span style="color:#89ddff;">.</span><span style="color:#eeffff;"> square </span><span style="color:#89ddff;">$ </span><span style="color:#f78c6c;">5
+</span></pre>
+<p>In addition to its usage for function composition, the period is also used for hierarchical modules, e.g.:</p>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">#</span><span style="color:#89ddff;">!/</span><span style="color:#eeffff;">usr</span><span style="color:#89ddff;">/</span><span style="color:#eeffff;">bin</span><span style="color:#89ddff;">/</span><span style="color:#eeffff;">env stack
+</span><span style="font-style:italic;color:#4a4a4a;">-- stack --resolver lts-12.21 script
+</span><span style="color:#c792ea;">import qualified </span><span style="color:#eeffff;">Data.Monoid
+
+</span><span style="color:#82aaff;">main </span><span style="color:#c792ea;">:: </span><span style="font-style:italic;color:#c792ea;">IO </span><span style="color:#f78c6c;">()</span><span style="color:#eeffff;">
+main </span><span style="color:#89ddff;">= </span><span style="color:#eeffff;">putStrLn </span><span style="color:#89ddff;">$ </span><span style="color:#eeffff;">Data</span><span style="color:#89ddff;">.</span><span style="color:#eeffff;">Monoid</span><span style="color:#89ddff;">.</span><span style="color:#eeffff;">mappend </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">hello </span><span style="color:#89ddff;">&quot; &quot;</span><span style="color:#c3e88d;">world</span><span style="color:#89ddff;">&quot;
+</span></pre>
+<p>Finally, in the <code>Control.Category</code> module, the <code>Category</code> typeclass
+<em>also</em> uses the <code>.</code> operator to define categorical composition. This
+generalizes standard function composition, but is not as commonly
+used.</p>
+<h2 id="reverse-function-application">Reverse function application <code>&amp;</code></h2>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">(&amp;) </span><span style="color:#89ddff;">::</span><span style="color:#eeffff;"> a </span><span style="color:#89ddff;">-&gt;</span><span style="color:#eeffff;"> (a </span><span style="color:#89ddff;">-&gt;</span><span style="color:#eeffff;"> b) </span><span style="color:#89ddff;">-&gt;</span><span style="color:#eeffff;"> b
+</span></pre>
+<p><code>&amp;</code> is just like <code>$</code> only backwards. Take our example for <code>$</code>:</p>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">foo </span><span style="color:#89ddff;">$</span><span style="color:#eeffff;"> bar </span><span style="color:#89ddff;">$</span><span style="color:#eeffff;"> baz bin
+</span></pre>
+<p>This is semantically equivalent to:</p>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">bin &amp; baz &amp; bar &amp; foo
+</span></pre>
+<p><code>&amp;</code> is useful because the order in which functions are applied to their
+arguments read left to right instead of the reverse (which is the case
+for <code>$</code>). This is closer to how English is read so it can improve code clarity.</p>
+<p>In our function composition example we composed the functions
+<code>square</code>, <code>double</code>, and <code>print</code> and applied the resulting function to the number <code>5</code>.</p>
+<p>Rewriting it using <code>&amp;</code> gives us</p>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">#</span><span style="color:#89ddff;">!/</span><span style="color:#eeffff;">usr</span><span style="color:#89ddff;">/</span><span style="color:#eeffff;">bin</span><span style="color:#89ddff;">/</span><span style="color:#eeffff;">env stack
+</span><span style="font-style:italic;color:#4a4a4a;">-- stack --resolver lts-12.21 script
+</span><span style="color:#c792ea;">import </span><span style="color:#eeffff;">Data.Function
+
+</span><span style="color:#82aaff;">double </span><span style="color:#c792ea;">:: </span><span style="font-style:italic;color:#c792ea;">Int </span><span style="color:#c792ea;">-&gt; </span><span style="font-style:italic;color:#c792ea;">Int</span><span style="color:#eeffff;">
+double x </span><span style="color:#89ddff;">= </span><span style="color:#eeffff;">x </span><span style="color:#89ddff;">+</span><span style="color:#eeffff;"> x
+
+</span><span style="color:#82aaff;">square </span><span style="color:#c792ea;">:: </span><span style="font-style:italic;color:#c792ea;">Int </span><span style="color:#c792ea;">-&gt; </span><span style="font-style:italic;color:#c792ea;">Int</span><span style="color:#eeffff;">
+square x </span><span style="color:#89ddff;">= </span><span style="color:#eeffff;">x * x
+
+</span><span style="color:#82aaff;">main </span><span style="color:#c792ea;">:: </span><span style="font-style:italic;color:#c792ea;">IO </span><span style="color:#f78c6c;">()</span><span style="color:#eeffff;">
+main </span><span style="color:#89ddff;">= </span><span style="color:#f78c6c;">5</span><span style="color:#eeffff;"> &amp; square &amp; double &amp; print
+</span></pre><h2 id="monoidal-append">Monoidal append <code>&lt;&gt;</code></h2>
+<pre style="background-color:#212121;">
+<span style="color:#82aaff;">(&lt;&gt;) </span><span style="color:#c792ea;">:: </span><span style="font-style:italic;color:#c792ea;">Monoid </span><span style="color:#eeffff;">m </span><span style="color:#c792ea;">=&gt; </span><span style="color:#eeffff;">m </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">m </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">m
+</span></pre>
+<p>The <code>&lt;&gt;</code> operator is just a synonym for the
+<a href="https://www.stackage.org/haddock/lts-6.7/base-4.8.2.0/Prelude.html#v:mappend"><code>mappend</code> function</a>. This
+comes from the <code>Monoid</code> typeclass, which represents types which have
+an identity and an associative binary operation. Some examples:</p>
+<ul>
+<li>For lists, <code>&lt;&gt;</code> is the same as <code>++</code> (append two lists)</li>
+<li>For <a href="https://tech.fpcomplete.com/haskell/library/vector/">vectors</a>, this logic
+holds as well</li>
+<li>For
+<a href="https://www.stackage.org/haddock/lts-6.7/containers-0.5.6.2/Data-Set.html"><code>Set</code></a>s,
+this is a union operation (all values present in either <code>Set</code>)</li>
+<li>For
+<a href="https://www.stackage.org/haddock/lts-6.7/containers-0.5.6.2/Data-Map-Strict.html"><code>Map</code></a>s,
+we have a &quot;left biased union&quot;, meaning we combine the key/value
+pairs from both inputs, and if both inputs share a key, the value in
+the left input is selected</li>
+<li>For numbers, both addition and multiplication form a <code>Monoid</code>, where
+0 is the additive identity (since <code>0 + x = x</code>) and 1 is the
+multiplicative identity (since <code>1 * x = x</code>). Therefore, to avoid
+confusion, <code>Data.Monoid</code> defines helper newtype wrappers
+<a href="https://www.stackage.org/haddock/lts-6.7/base/Data-Monoid.html#t:Sum"><code>Sum</code></a>
+and
+<a href="https://www.stackage.org/haddock/lts-6.7/base/Data-Monoid.html#t:Product"><code>Product</code></a></li>
+</ul>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">#</span><span style="color:#89ddff;">!/</span><span style="color:#eeffff;">usr</span><span style="color:#89ddff;">/</span><span style="color:#eeffff;">bin</span><span style="color:#89ddff;">/</span><span style="color:#eeffff;">env stack
+</span><span style="font-style:italic;color:#4a4a4a;">-- stack --resolver lts-12.21 script
+</span><span style="color:#c792ea;">import </span><span style="color:#eeffff;">Data.Monoid (</span><span style="color:#82aaff;">(&lt;&gt;)</span><span style="color:#eeffff;">)
+
+</span><span style="color:#82aaff;">main </span><span style="color:#c792ea;">:: </span><span style="font-style:italic;color:#c792ea;">IO </span><span style="color:#f78c6c;">()</span><span style="color:#eeffff;">
+main </span><span style="color:#89ddff;">= </span><span style="color:#eeffff;">putStrLn </span><span style="color:#89ddff;">$ &quot;</span><span style="color:#c3e88d;">hello </span><span style="color:#89ddff;">&quot; &lt;&gt; &quot;</span><span style="color:#c3e88d;">there </span><span style="color:#89ddff;">&quot; &lt;&gt; &quot;</span><span style="color:#c3e88d;">world!</span><span style="color:#89ddff;">&quot;
+</span></pre><h2 id="functor-map">Functor map <code>&lt;$&gt;</code></h2>
+<pre style="background-color:#212121;">
+<span style="color:#82aaff;">(&lt;$&gt;) </span><span style="color:#c792ea;">:: </span><span style="font-style:italic;color:#c792ea;">Functor </span><span style="color:#eeffff;">f </span><span style="color:#c792ea;">=&gt;</span><span style="color:#eeffff;"> (a </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">b) </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">f a </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">f b
+(&lt;$) :: </span><span style="font-style:italic;color:#c792ea;">Functor </span><span style="color:#eeffff;">f </span><span style="color:#c792ea;">=&gt; </span><span style="color:#eeffff;">a </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">f b </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">f a
+($&gt;) :: </span><span style="font-style:italic;color:#c792ea;">Functor </span><span style="color:#eeffff;">f </span><span style="color:#c792ea;">=&gt; </span><span style="color:#eeffff;">f a </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">b </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">f b
+</span></pre>
+<p>The <code>&lt;$&gt;</code> operator is just a synonym for the
+<a href="https://www.stackage.org/haddock/lts-6.7/base-4.8.2.0/Prelude.html#v:fmap"><code>fmap</code> function</a>
+from the <code>Functor</code> typeclass. This function generalizes the <code>map</code>
+function for lists to many other data types, such as <code>Maybe</code>, <code>IO</code>,
+and <code>Map</code>.</p>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">#</span><span style="color:#89ddff;">!/</span><span style="color:#eeffff;">usr</span><span style="color:#89ddff;">/</span><span style="color:#eeffff;">bin</span><span style="color:#89ddff;">/</span><span style="color:#eeffff;">env stack
+</span><span style="font-style:italic;color:#4a4a4a;">-- stack --resolver lts-12.21 script
+</span><span style="color:#c792ea;">import </span><span style="color:#eeffff;">Data.Monoid (</span><span style="color:#82aaff;">(&lt;&gt;)</span><span style="color:#eeffff;">)
+
+</span><span style="color:#82aaff;">main </span><span style="color:#c792ea;">:: </span><span style="font-style:italic;color:#c792ea;">IO </span><span style="color:#f78c6c;">()</span><span style="color:#eeffff;">
+main </span><span style="color:#89ddff;">= </span><span style="font-style:italic;color:#c792ea;">do</span><span style="color:#eeffff;">
+    putStrLn </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">Enter your year of birth</span><span style="color:#89ddff;">&quot;</span><span style="color:#eeffff;">
+    year </span><span style="color:#89ddff;">&lt;-</span><span style="color:#eeffff;"> read </span><span style="color:#89ddff;">&lt;$&gt;</span><span style="color:#eeffff;"> getLine
+    </span><span style="color:#c792ea;">let</span><span style="color:#eeffff;"> age </span><span style="color:#89ddff;">:: </span><span style="color:#eeffff;">Int
+        age </span><span style="color:#89ddff;">= </span><span style="color:#f78c6c;">2020 </span><span style="color:#89ddff;">-</span><span style="color:#eeffff;"> year
+    putStrLn </span><span style="color:#89ddff;">$ &quot;</span><span style="color:#c3e88d;">Age in 2020: </span><span style="color:#89ddff;">&quot; &lt;&gt;</span><span style="color:#eeffff;"> show age
+</span></pre>
+<p>In addition, there are two additional operators provided which replace
+a value inside a <code>Functor</code> instead of applying a function. This can be
+both more convenient in some cases, as well as for some <code>Functor</code>s be
+more efficient. In terms of definition:</p>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">value </span><span style="color:#89ddff;">&lt;$</span><span style="color:#eeffff;"> functor </span><span style="color:#89ddff;">=</span><span style="color:#eeffff;"> const value </span><span style="color:#89ddff;">&lt;$&gt;</span><span style="color:#eeffff;"> functor
+functor </span><span style="color:#89ddff;">$&gt;</span><span style="color:#eeffff;"> value </span><span style="color:#89ddff;">=</span><span style="color:#eeffff;"> const value </span><span style="color:#89ddff;">&lt;$&gt;</span><span style="color:#eeffff;"> functor
+
+x </span><span style="color:#89ddff;">&lt;$</span><span style="color:#eeffff;"> y </span><span style="color:#89ddff;">=</span><span style="color:#eeffff;"> y </span><span style="color:#89ddff;">$&gt;</span><span style="color:#eeffff;"> x
+x </span><span style="color:#89ddff;">$&gt;</span><span style="color:#eeffff;"> y </span><span style="color:#89ddff;">=</span><span style="color:#eeffff;"> y </span><span style="color:#89ddff;">&lt;$</span><span style="color:#eeffff;"> x
+</span></pre><h2 id="applicative-function-application">Applicative function application <code>&lt;*&gt;</code></h2>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">(</span><span style="color:#89ddff;">&lt;</span><span style="color:#eeffff;">*</span><span style="color:#89ddff;">&gt;</span><span style="color:#eeffff;">) </span><span style="color:#89ddff;">:: </span><span style="color:#eeffff;">Applicative f </span><span style="color:#89ddff;">=&gt;</span><span style="color:#eeffff;"> f (a </span><span style="color:#89ddff;">-&gt;</span><span style="color:#eeffff;"> b) </span><span style="color:#89ddff;">-&gt;</span><span style="color:#eeffff;"> f a </span><span style="color:#89ddff;">-&gt;</span><span style="color:#eeffff;"> f b
+(*</span><span style="color:#89ddff;">&gt;</span><span style="color:#eeffff;">) </span><span style="color:#89ddff;">:: </span><span style="color:#eeffff;">Applicative f </span><span style="color:#89ddff;">=&gt;</span><span style="color:#eeffff;"> f a </span><span style="color:#89ddff;">-&gt;</span><span style="color:#eeffff;"> f b </span><span style="color:#89ddff;">-&gt;</span><span style="color:#eeffff;"> f b
+(</span><span style="color:#89ddff;">&lt;</span><span style="color:#eeffff;">*) </span><span style="color:#89ddff;">:: </span><span style="color:#eeffff;">Applicative f </span><span style="color:#89ddff;">=&gt;</span><span style="color:#eeffff;"> f a </span><span style="color:#89ddff;">-&gt;</span><span style="color:#eeffff;"> f b </span><span style="color:#89ddff;">-&gt;</span><span style="color:#eeffff;"> f a
+</span></pre>
+<p>Commonly seen with <code>&lt;$&gt;</code>, <code>&lt;*&gt;</code> is an operator that applies a wrapped
+function to a wrapped value. It is part of the <code>Applicative</code>
+typeclass, and is very often seen in code like the following:</p>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">foo </span><span style="color:#89ddff;">&lt;$&gt;</span><span style="color:#eeffff;"> bar </span><span style="color:#89ddff;">&lt;</span><span style="color:#eeffff;">*</span><span style="color:#89ddff;">&gt;</span><span style="color:#eeffff;"> baz
+</span></pre>
+<p>For cases when you're dealing with a <code>Monad</code>, this is equivalent to:</p>
+<pre style="background-color:#212121;">
+<span style="font-style:italic;color:#c792ea;">do</span><span style="color:#eeffff;"> x </span><span style="color:#89ddff;">&lt;-</span><span style="color:#eeffff;"> bar
+   y </span><span style="color:#89ddff;">&lt;-</span><span style="color:#eeffff;"> baz
+   return (foo x y)
+</span></pre>
+<p>Other common examples including parsers and serialization
+libraries. Here's an example you might see using the
+<a href="https://tech.fpcomplete.com/haskell/library/aeson/">aeson package</a>:</p>
+<pre style="background-color:#212121;">
+<span style="color:#c792ea;">data </span><span style="color:#eeffff;">Person </span><span style="color:#89ddff;">= </span><span style="color:#eeffff;">Person { name </span><span style="color:#89ddff;">:: </span><span style="color:#eeffff;">Text</span><span style="color:#89ddff;">,</span><span style="color:#eeffff;"> age </span><span style="color:#89ddff;">:: </span><span style="color:#eeffff;">Int } </span><span style="color:#c792ea;">deriving </span><span style="color:#eeffff;">Show
+
+</span><span style="font-style:italic;color:#4a4a4a;">-- We expect a JSON object, so we fail at any non-Object value.
+</span><span style="color:#c792ea;">instance </span><span style="font-style:italic;color:#c792ea;">FromJSON Person </span><span style="color:#c792ea;">where</span><span style="color:#eeffff;">
+    parseJSON (Object v) </span><span style="color:#89ddff;">= </span><span style="color:#eeffff;">Person </span><span style="color:#89ddff;">&lt;$&gt;</span><span style="color:#eeffff;"> v </span><span style="color:#89ddff;">.: &quot;</span><span style="color:#c3e88d;">name</span><span style="color:#89ddff;">&quot; &lt;</span><span style="color:#eeffff;">*</span><span style="color:#89ddff;">&gt;</span><span style="color:#eeffff;"> v </span><span style="color:#89ddff;">.: &quot;</span><span style="color:#c3e88d;">age</span><span style="color:#89ddff;">&quot;</span><span style="color:#eeffff;">
+    parseJSON _ </span><span style="color:#89ddff;">=</span><span style="color:#eeffff;"> empty
+</span></pre>
+<p>To go along with this, we have two helper operators that are less
+frequently used:</p>
+<ul>
+<li>
+<p><code>*&gt;</code> ignores the value from the first argument. It can be defined as:</p>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">a1 *</span><span style="color:#89ddff;">&gt;</span><span style="color:#eeffff;"> a2 </span><span style="color:#89ddff;">=</span><span style="color:#eeffff;"> (id </span><span style="color:#89ddff;">&lt;$</span><span style="color:#eeffff;"> a1) </span><span style="color:#89ddff;">&lt;</span><span style="color:#eeffff;">*</span><span style="color:#89ddff;">&gt;</span><span style="color:#eeffff;"> a2
+</span></pre>
+<p>Or in <code>do</code>-notation:</p>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">a1 *</span><span style="color:#89ddff;">&gt;</span><span style="color:#eeffff;"> a2 </span><span style="color:#89ddff;">= </span><span style="font-style:italic;color:#c792ea;">do
+</span><span style="color:#eeffff;">    _ </span><span style="color:#89ddff;">&lt;-</span><span style="color:#eeffff;"> a1
+</span><span style="color:#eeffff;">    a2
+</span></pre>
+<p>For <code>Monad</code>s, this is completely equivalent to <code>&gt;&gt;</code>.</p>
+</li>
+<li>
+<p><code>&lt;*</code> is the same thing in reverse: perform the first action then
+the second, but only take the value from the first action. Again,
+definitions in terms of <code>&lt;*&gt;</code> and <code>do</code>-notation:</p>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">(</span><span style="color:#89ddff;">&lt;</span><span style="color:#eeffff;">*) </span><span style="color:#89ddff;">=</span><span style="color:#eeffff;"> liftA2 const
+
+</span><span style="color:#eeffff;">a1 </span><span style="color:#89ddff;">&lt;</span><span style="color:#eeffff;">* a2 </span><span style="color:#89ddff;">= </span><span style="font-style:italic;color:#c792ea;">do
+</span><span style="color:#eeffff;">    res </span><span style="color:#89ddff;">&lt;-</span><span style="color:#eeffff;"> a1
+</span><span style="color:#eeffff;">    _ </span><span style="color:#89ddff;">&lt;-</span><span style="color:#eeffff;"> a2
+</span><span style="color:#eeffff;">    return res
+</span></pre></li>
+</ul>
+<h2 id="various-monadic-binding-composition-operators">Various monadic binding/composition operators</h2>
+<pre style="background-color:#212121;">
+<span style="color:#82aaff;">(&gt;&gt;=) </span><span style="color:#c792ea;">:: </span><span style="font-style:italic;color:#c792ea;">Monad </span><span style="color:#eeffff;">m </span><span style="color:#c792ea;">=&gt; </span><span style="color:#eeffff;">m a </span><span style="color:#c792ea;">-&gt;</span><span style="color:#eeffff;"> (a </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">m b) </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">m b
+(=&lt;&lt;) :: </span><span style="font-style:italic;color:#c792ea;">Monad </span><span style="color:#eeffff;">m </span><span style="color:#c792ea;">=&gt;</span><span style="color:#eeffff;"> (a </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">m b) </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">m a </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">m b
+(&gt;&gt;) :: </span><span style="font-style:italic;color:#c792ea;">Monad </span><span style="color:#eeffff;">m </span><span style="color:#c792ea;">=&gt; </span><span style="color:#eeffff;">m a </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">m b </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">m b
+(&gt;</span><span style="color:#c792ea;">=&gt;</span><span style="color:#eeffff;">) :: </span><span style="font-style:italic;color:#c792ea;">Monad </span><span style="color:#eeffff;">m </span><span style="color:#c792ea;">=&gt;</span><span style="color:#eeffff;"> (a </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">m b) </span><span style="color:#c792ea;">-&gt;</span><span style="color:#eeffff;"> (b </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">m c) </span><span style="color:#c792ea;">-&gt;</span><span style="color:#eeffff;"> (a </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">m c)
+(&lt;=&lt;) :: </span><span style="font-style:italic;color:#c792ea;">Monad </span><span style="color:#eeffff;">m </span><span style="color:#c792ea;">=&gt;</span><span style="color:#eeffff;"> (b </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">m c) </span><span style="color:#c792ea;">-&gt;</span><span style="color:#eeffff;"> (a </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">m b) </span><span style="color:#c792ea;">-&gt;</span><span style="color:#eeffff;"> (a </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">m c)
+</span></pre>
+<p>There are a few different monadic binding operators. The two most
+basic are <code>&gt;&gt;=</code> and <code>&gt;&gt;</code>, as they can be trivially expressed in
+<code>do</code>-notation. And as previously mentioned, <code>&gt;&gt;</code> is just a synonym for
+<code>*&gt;</code> from the <code>Applicative</code> class, so it's even easier. <code>=&lt;&lt;</code> is
+just <code>&gt;&gt;=</code> with the arguments reversed.</p>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">m1 </span><span style="color:#89ddff;">&gt;&gt;=</span><span style="color:#eeffff;"> f </span><span style="color:#89ddff;">= </span><span style="font-style:italic;color:#c792ea;">do</span><span style="color:#eeffff;">
+    x </span><span style="color:#89ddff;">&lt;-</span><span style="color:#eeffff;"> m1
+    f x
+
+m1 </span><span style="color:#89ddff;">&gt;&gt;</span><span style="color:#eeffff;"> m2 </span><span style="color:#89ddff;">= </span><span style="font-style:italic;color:#c792ea;">do</span><span style="color:#eeffff;">
+    _ </span><span style="color:#89ddff;">&lt;-</span><span style="color:#eeffff;"> m1
+    m2
+
+f </span><span style="color:#89ddff;">=&lt;&lt;</span><span style="color:#eeffff;"> m1 </span><span style="color:#89ddff;">= </span><span style="font-style:italic;color:#c792ea;">do</span><span style="color:#eeffff;">
+    x </span><span style="color:#89ddff;">&lt;-</span><span style="color:#eeffff;"> m1
+    f x
+</span></pre>
+<p>In addition to these two operators, there are also composition
+operators for when you have two monadic functions. <code>&gt;=&gt;</code> pipes the
+result from the left side to the right side, while <code>&lt;=&lt;</code> pipes the
+result the other way. In other words:</p>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">f </span><span style="color:#89ddff;">&gt;=&gt;</span><span style="color:#eeffff;"> g </span><span style="color:#89ddff;">= \</span><span style="color:#eeffff;">x </span><span style="color:#89ddff;">-&gt; </span><span style="font-style:italic;color:#c792ea;">do</span><span style="color:#eeffff;">
+    y </span><span style="color:#89ddff;">&lt;-</span><span style="color:#eeffff;"> f x
+    g y
+
+g </span><span style="color:#89ddff;">&lt;=&lt;</span><span style="color:#eeffff;"> f </span><span style="color:#89ddff;">= \</span><span style="color:#eeffff;">x </span><span style="color:#89ddff;">-&gt; </span><span style="font-style:italic;color:#c792ea;">do</span><span style="color:#eeffff;">
+    y </span><span style="color:#89ddff;">&lt;-</span><span style="color:#eeffff;"> f x
+    g y
+
+f </span><span style="color:#89ddff;">&gt;=&gt;</span><span style="color:#eeffff;"> g </span><span style="color:#89ddff;">=</span><span style="color:#eeffff;"> g </span><span style="color:#89ddff;">&lt;=&lt;</span><span style="color:#eeffff;"> f
+g </span><span style="color:#89ddff;">&gt;=&gt;</span><span style="color:#eeffff;"> f </span><span style="color:#89ddff;">=</span><span style="color:#eeffff;"> f </span><span style="color:#89ddff;">&lt;=&lt;</span><span style="color:#eeffff;"> g
+</span></pre><h2 id="alternative">Alternative <code>&lt;|&gt;</code></h2>
+<pre style="background-color:#212121;">
+<span style="color:#82aaff;">(&lt;|&gt;) </span><span style="color:#c792ea;">:: </span><span style="font-style:italic;color:#c792ea;">Alternative </span><span style="color:#eeffff;">f </span><span style="color:#c792ea;">=&gt; </span><span style="color:#eeffff;">f a </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">f a </span><span style="color:#c792ea;">-&gt; </span><span style="color:#eeffff;">f a
+</span></pre>
+<p>The <code>Alternative</code> typeclass provides a binary operation on applicative
+functors (<code>&lt;|&gt;</code>), as well as some identity value (<code>empty</code>). This is
+used in the ecosystem for a number of different activities, e.g.:</p>
+<ul>
+<li>In parser libraries for defining different alternative parsing
+options</li>
+<li>In the async library to run two different <code>Concurrently</code> actions at
+once and take the first result to succeed</li>
+</ul>
+<pre style="background-color:#212121;">
+<span style="color:#eeffff;">#</span><span style="color:#89ddff;">!/</span><span style="color:#eeffff;">usr</span><span style="color:#89ddff;">/</span><span style="color:#eeffff;">bin</span><span style="color:#89ddff;">/</span><span style="color:#eeffff;">env stack
+</span><span style="font-style:italic;color:#4a4a4a;">-- stack --resolver lts-12.21 script
+</span><span style="color:#c792ea;">import </span><span style="color:#eeffff;">Control.Applicative (</span><span style="color:#82aaff;">(&lt;|&gt;)</span><span style="color:#eeffff;">)
+</span><span style="color:#c792ea;">import </span><span style="color:#eeffff;">Control.Concurrent (</span><span style="color:#82aaff;">threadDelay</span><span style="color:#eeffff;">)
+</span><span style="color:#c792ea;">import </span><span style="color:#eeffff;">Control.Concurrent.Async (</span><span style="font-style:italic;color:#c792ea;">Concurrently </span><span style="color:#82aaff;">(..)</span><span style="color:#eeffff;">)
+
+</span><span style="color:#82aaff;">main </span><span style="color:#c792ea;">:: </span><span style="font-style:italic;color:#c792ea;">IO </span><span style="color:#f78c6c;">()</span><span style="color:#eeffff;">
+main </span><span style="color:#89ddff;">= </span><span style="font-style:italic;color:#c792ea;">do</span><span style="color:#eeffff;">
+    res </span><span style="color:#89ddff;">&lt;-</span><span style="color:#eeffff;"> runConcurrently </span><span style="color:#89ddff;">$</span><span style="color:#eeffff;">
+        (Concurrently (threadDelay </span><span style="color:#f78c6c;">1000000 </span><span style="color:#89ddff;">&gt;&gt;</span><span style="color:#eeffff;"> return (Left </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">Hello</span><span style="color:#89ddff;">&quot;</span><span style="color:#eeffff;">))) </span><span style="color:#89ddff;">&lt;|&gt;</span><span style="color:#eeffff;">
+        (Concurrently (threadDelay </span><span style="color:#f78c6c;">2000000 </span><span style="color:#89ddff;">&gt;&gt;</span><span style="color:#eeffff;"> return (Right </span><span style="color:#f78c6c;">42</span><span style="color:#eeffff;">)))
+    print res
+</span></pre><h2 id="more-operators">More operators!</h2>
+<p>If you're aware of other common operators that cause confusion, please
+open an issue or a PR to extend this document!</p>
+
+
+
+
+        </main>
+
+        <div id="footer">
+          <p>
+            2012-2019 FP Complete Corp.
+            Subscribe to the
+            <a href="https://tech.fpcomplete.com/rss.xml">RSS feed</a>.
+          </p>
+        </div>
+      </div> <!-- .container -->
+      
+    </body>
+</html>

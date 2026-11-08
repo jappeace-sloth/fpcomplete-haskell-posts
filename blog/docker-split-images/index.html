@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>The split-image approach to building minimal runtime Docker images</title>
+  <meta property="og:title" content="The split-image approach to building minimal runtime Docker images">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;12&#x2F;docker-split-images&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>The split-image approach to building minimal runtime Docker images</h1>
+      
+      <p id="page-description">By Emanuel Borsboom, December 15, 2015</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=The%20split-image%20approach%20to%20building%20minimal%20runtime%20Docker%20images https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;12&#x2F;docker-split-images&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;12&#x2F;docker-split-images&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;12&#x2F;docker-split-images&#x2F;&amp;title=The%20split-image%20approach%20to%20building%20minimal%20runtime%20Docker%20images"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;12&#x2F;docker-split-images&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>The most common pattern for using Docker to build and deploy
+software in an image uses a single Dockerfile to build the software
+<i>and</i> produce the image that gets deployed. The basic pattern
+goes:</p>
+<pre><code>FROM base-image
+RUN install-some-extra-build-tools
+COPY . /build-directory
+RUN /build-directory/build-my-software
+CMD /run/my/software</code></pre>
+<p>This works, but you end up with a great deal of unncessary cruft
+in the image that gets deployed. Does your software need its own
+source code and the tools used to build itself in order to run?
+Unless you're using an interpreted language like Ruby or Python, it
+probably doesn't, so why does it have to be in the deployed image?
+Disadvantages of this approach include:</p>
+<ul>
+<li>
+<p>Compilers are often huge (likely to be much bigger than your own
+software), which means the majority of the deployed image's
+contents are not used. That's a lot of pointless overhead.</p>
+</li>
+<li>
+<p>Since your source code and vendor libraries are in the image, a
+security hole in your software could leak proprietary
+information.</p>
+</li>
+<li>
+<p>Every extra component introduces a potential attack vector.</p>
+</li>
+</ul>
+<p>Instead, we should separate concerns: use one Dockerfile to
+create a build environment and use that to build our software, and
+another to create the deployed runtime image using the artifacts
+generated by the build. What follows is a simple example that using
+one-line "Hello, world" program written in Haskell (our preferred
+language, of course, but also illustrative since the compiler is
+not generally considered small). The full example is available
+<a href="https://github.com/borsboom/docker-split-images">on
+Github</a>.</p>
+<h2 id="the-conventional-approach">The conventional approach</h2>
+<p>What do we need to build this program? Let's just do the
+obvious: use the official <a href=
+"https://hub.docker.com/_/haskell/">haskell image</a>. We'll start
+with the "conventional" approach, and work toward something better.
+Here's the <a href=
+"https://github.com/borsboom/docker-split-images/tree/conventional/build/Dockerfile">
+Dockerfile</a>:</p>
+<pre><code>FROM haskell:7.10.2
+# [insert additional build and runtime requirements here]
+RUN mkdir /artifacts
+COPY src /src/
+RUN ghc -o /artifacts/hello /src/Main.hs
+CMD /artifacts/hello</code></pre>
+<p>We build the image using <code>docker build -t haskell-hello
+.</code>, and run it:</p>
+<pre><code>$ docker run --rm haskell-hello
+Hello, world</code></pre>
+<p>Great, all done and ready to deploy! So how big is the
+image?</p>
+<pre><code>$ docker inspect -f '' haskell-hello
+715052740</code></pre>
+<p>It's ~700 MB, just to run a "Hello, world" program! There must
+be a better way.</p>
+<h2 id="the-split-image-approach">The split-image approach</h2>
+<p>What do we need in the image to actually run this tiny program?
+Not very much at all; just a minimal Linux system with the libgmp
+shared library (which all programs compiled with GHC need unless
+special options are used). Conveniently, there is the ~4 MB
+<a href="https://hub.docker.com/r/fpco/haskell-scratch/">haskell-scratch</a>
+image for that (see our <a href=
+"/blog/2015/05/haskell-web-server-in-5mb">Haskell Web Server in a
+5MB Docker Image</a> blog post, but note that it's too minimal for
+most real-world Haskell programs and suggest using something like
+<a href=
+"https://hub.docker.com/r/fpco/ubuntu-with-libgmp/~/dockerfile">ubuntu-with-libgmp</a>
+instead). Here's the runtime image's <a href=
+"https://github.com/borsboom/docker-split-images/blob/master/run/Dockerfile">
+Dockerfile</a> (in the <code>run/</code> subdirectory) to create
+the runtime image that we'll deploy:</p>
+<pre><code>FROM fpco/haskell-scratch:integer-gmp
+# [insert additional runtime requirements here]
+COPY artifacts /artifacts/
+CMD /artifacts/hello</code></pre>
+<p>Where does the contents of the <code>artifacts</code> directory
+come from? That's the job of the build image's <a href=
+"https://github.com/borsboom/docker-split-images/blob/master/build/Dockerfile">
+Dockerfile</a> (in the <code>build/</code> subdirectory):</p>
+<pre><code>FROM haskell:7.10.2
+# [insert additional build requirements here]
+VOLUME /artifacts
+VOLUME /src
+CMD ghc -o /artifacts/hello /src/Main.hs</code></pre>
+<p>This uses the same official Haskell image and compilation
+command as our original Dockerfile, but it uses VOLUME mounts and
+the <code>CMD</code> instruction instead. That means the source
+code is compiled when you <code>docker run</code> the image,
+<i>not</i> when you <code>docker build</code> it. That, in turn,
+allows us to use VOLUME mounts (which cannot be used with
+<code>docker build</code>) to expose the host's
+<code>run/artifacts</code> directory to the build, so that it puts
+the artifacts where the runtime image's Dockerfile looks for them.
+To put it all together, run <a href=
+"https://github.com/borsboom/docker-split-images/blob/master/make-image.sh">
+these commands</a>:</p>
+<pre><code>$ docker build -t build_haskell-hello build/
+$ docker run --rm \
+    --volume="$PWD/build/src:/src" \
+    --volume="$PWD/run/artifacts:/artifacts" \
+    build_haskell-hello
+$ docker build -t haskell-hello run/</code></pre>
+<p>Notice that we also mounted the source code from the host. While
+we could have continued COPYing the source code into the image,
+mounting it has some advantages. You don't end up with a bunch of
+large build images full of intermediate files for every time you
+change the code (that you have to remember to clean up), and you
+can do incremental builds since intermediate files are
+preserved.</p>
+<p>That was more complicated, but did it make a difference?
+Well...</p>
+<pre><code>$ docker inspect -f '' haskell-hello
+5466526</code></pre>
+<p>Down to ~5.5 MB, over two orders of magnitude better. I'd say
+that was worth it!</p>
+<p>Of course, everyone's projects are different, and require
+different trade-offs, so while the above is illustrative of the
+approach, you will tweak it as you see fit. You may prefer to COPY
+the source code into the image to minimize risk of leakage between
+iterations (at the expense of time and disk space). You may want to
+clear the <code>artifacts</code> directory between builds for the
+same reason. For more complex project, there will be OS
+requirements shared between the build and runtime images, so it
+often makes sense to derive both from a common parent.</p>
+<h2 id="stack-support">Stack support</h2>
+<p>At FP Complete, we use and recommend this approach for deploying
+production software with Docker, but without easy-to-use tool
+support it is a bit cumbersome. Unsurprisingly, <a href=
+"https://www.haskellstack.org/">Stack</a> has excellent support for
+this approach. The <code>stack image container</code> command will
+create a runtime image from artifacts generated during the build
+(optionally using Docker for the build as well). See <a href=
+"https://www.yesodweb.com/blog/2015/12/yesod-hosting-docker-kubernetes">
+Yesod hosting with Docker and Kubernetes</a> for an example, and
+<a href=
+"https://docs.haskellstack.org/en/stable/GUIDE.html#docker">Docker
+section of the user's guide</a> for more details.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=The%20split-image%20approach%20to%20building%20minimal%20runtime%20Docker%20images https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;12&#x2F;docker-split-images&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;12&#x2F;docker-split-images&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;12&#x2F;docker-split-images&#x2F;&amp;title=The%20split-image%20approach%20to%20building%20minimal%20runtime%20Docker%20images"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;12&#x2F;docker-split-images&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#c1b2a0ada4b281a7b1a2aeacb1ada4b5a4efa2aeac" targe="_blank"><span class="__cf_email__" data-cfemail="cfbcaea3aabc8fa9bfaca0a2bfa3aabbaae1aca0a2">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

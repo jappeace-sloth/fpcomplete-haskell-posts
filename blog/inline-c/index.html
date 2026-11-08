@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Call C functions from Haskell without bindings</title>
+  <meta property="og:title" content="Call C functions from Haskell without bindings">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;inline-c&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Call C functions from Haskell without bindings</h1>
+      
+      <p id="page-description">By Francesco Mazzoli, May 20, 2015</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Call%20C%20functions%20from%20Haskell%20without%20bindings https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;inline-c&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;inline-c&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;inline-c&#x2F;&amp;title=Call%20C%20functions%20from%20Haskell%20without%20bindings"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;inline-c&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>Because Haskell is a language of choice for many problem
+domains, and for scales ranging from one-off scripts to full scale
+web services, we are fortunate to by now have over 8,000 open
+source packages (and a few commercial ones besides) available to
+build from. But in practice, Haskell programming in the real world
+involves interacting with myriad legacy systems and libraries.
+Partially because the industry is far older than the comparatively
+recent strength of our community. But further still, because
+quality new high-performance libraries are created every day in
+languages other than Haskell, be it intensive numerical codes or
+frameworks for shuffling bits across machines. Today we are
+releasing <code>inline-c</code>, a package for writing mixed
+C/Haskell source code that seamlessly invokes native and foreign
+functions in the same module. No FFI required.</p>
+<h2 id="the-joys-of-programming-with-foreign-code">The joys of
+programming with foreign code</h2>
+<p>Imagine that you just found a C library that you wish to use for
+your project. The standard workflow is to,</p>
+<ol>
+<li>check Hackage if a package with a set of bindings for that
+library exists,</li>
+<li>if one does, program against that, or</li>
+<li>if it doesn't, write your own bindings package, using Haskell's
+FFI.</li>
+</ol>
+<p>Writing <i>and maintaining</i> bindings for large C libraries is
+hard work. The libraries are constantly updated upstream, so that
+the bindings you find are invariably out-of-date, providing only
+partial coverage of library's API, sometimes don't compile cleanly
+against the latest upstream version of the C library or need
+convoluted and error-prone conditional compilation directives to
+support multiple versions of the API in the package. Which is a
+shame, because typically you only need to perform a very specific
+task using some C library, using only a minute proportion of its
+API. It can be frustrating for a bindings package to fail to
+install, only because the binding for some function that you'll
+never use doesn't match up with the header files of the library
+version you happen to have installed on your system.</p>
+<p>This is especially true for large libraries that expose sets of
+related but orthogonal and indepedently useful functions, such as
+GTK+, OpenCV or numerical libraries such as the GNU Scientific
+Library (GSL), NAG and IMSL. <code>inline-c</code> lets you call
+functions from these libraries using the full power of C's syntax,
+directly from client code, without the need for monolithic bindings
+packages. High-level bindings (or "wrappers") may still be useful
+to wrap low-level details into an idiomatic Haskell interface, but
+<code>inline-c</code> enables rapid prototyping and iterative
+development of code that uses directly some of the C library today,
+keeping for later the task of abstracting calls into a high-level,
+type safe wrapper as needed. In short, <code>inline-c</code> let's
+you "pay as you go" when programming foreign code.</p>
+<p>We first developed <code>inline-c</code> for use with numerical
+libraries, in particular the popular and very high quality
+commercial <a href=
+"https://www.nag.com/numeric/CL/CLdescription.asp">NAG library</a>,
+for tasks including ODE solving, function optimization, and
+interpolation. If getting seamless access to the gold standard of
+fast and reliable numerical routines is what you need, then you
+will be interested in our companion package to work specifically
+with NAG, <a href=
+"https://github.com/fpco/inline-c-nag"><code>inline-c-nag</code></a>.</p>
+<h2 id="a-taste-of-codeinline-ccode">A taste of
+<code>inline-c</code></h2>
+<p>What follows is just a teaser of what can be done with
+<code>inline-c</code>. Please refer to the <a href=
+"https://hackage.haskell.org/package/inline-c">Haddock
+documentation</a> and the <a href=
+"https://github.com/fpco/inline-c/blob/master/README.md">README</a>
+for more details on how to use the showcased features.</p>
+<p>Let's say we want to use C's variadic <code>printf</code>
+function and its convenient string formats. <code>inline-c</code>
+let's you write this function call inline, without any need for a
+binding to the foreign function:</p>
+<pre><span class="hs-comment">{-# LANGUAGE QuasiQuotes #-}</span>
+<span class="hs-comment">{-# LANGUAGE TemplateHaskell #-}</span>
+
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Language</span><span class=
+"hs-varop">.</span><span class="hs-conid">C</span><span class=
+"hs-varop">.</span><span class=
+"hs-conid">Inline</span> <span class="hs-keyword">as</span> <span class="hs-conid">C</span>
+
+<span class="hs-conid">C</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">include</span> <span class=
+"hs-str">"&lt;stdio.h&gt;"</span>
+<span class="hs-conid">C</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">include</span> <span class=
+"hs-str">"&lt;math.h&gt;"</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+   <span class="hs-varid">x</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-keyglyph">[</span><span class="hs-conid">C</span><span class=
+"hs-varop">.</span><span class="hs-varid">exp</span><span class=
+"hs-keyglyph">|</span> <span class=
+"hs-varid">int</span><span class="hs-layout">{</span> <span class=
+"hs-varid">printf</span><span class=
+"hs-layout">(</span><span class="hs-str">"Some number: %.2f\n"</span><span class="hs-layout">,</span> <span class="hs-varid">cos</span><span class="hs-layout">(</span><span class="hs-num">0.5</span><span class="hs-layout">)</span><span class="hs-layout">)</span> <span class="hs-layout">}</span> <span class="hs-keyglyph">|</span><span class="hs-keyglyph">]</span>
+   <span class="hs-varid">putStrLn</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">show</span> <span class=
+"hs-varid">x</span> <span class="hs-varop">++</span> <span class=
+"hs-str">" characters printed."</span></pre>
+<p>Importing <code>Language.C.Inline</code> brings into scope the
+Template Haskell function <code>include</code> to include C headers
+(<code>&lt;stdio.h&gt;</code> and <code>&lt;math.h&gt;</code>), and
+the <code>exp</code> quasiquoter for embedding expressions in C
+syntax in Haskell code. Notice how <code>inline-c</code> has no
+trouble even with C functions that have advanced calling
+conventions, such as variadic functions. This is a crucial point:
+we have the full power of C available at our fingertips, not just
+whatever can be shoe-horned through the FFI.</p>
+<p>We can capture Haskell variables to be used in the C expression,
+such as when computing <code>x</code> below:</p>
+<pre><span class="hs-definition">mycos</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">CDouble</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">CDouble</span>
+<span class="hs-definition">mycos</span> <span class=
+"hs-varid">x</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-keyglyph">[</span><span class="hs-conid">C</span><span class=
+"hs-varop">.</span><span class="hs-varid">exp</span><span class=
+"hs-keyglyph">|</span> <span class=
+"hs-varid">double</span><span class=
+"hs-layout">{</span> <span class="hs-varid">cos</span><span class=
+"hs-layout">(</span><span class="hs-varop">$</span><span class=
+"hs-layout">(</span><span class=
+"hs-varid">double</span> <span class=
+"hs-varid">x</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span> <span class="hs-layout">}</span> <span class=
+"hs-keyglyph">|</span><span class="hs-keyglyph">]</span></pre>
+<p>The anti-quotation <code>$(double x)</code> indicates that we
+want to capture the variable <code>x</code> from the Haskell
+environment, and that we want it to have type <code>double</code>
+in C (<code>inline-c</code> will check at compile time that this is
+a sensible type ascription).</p>
+<p>We can also splice in a block of C statements, and explicitly
+<code>return</code> the result:</p>
+<pre><span class="hs-conid">C</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">include</span> <span class=
+"hs-str">"&lt;stdio.h&gt;"</span>
+
+<span class=
+"hs-comment">-- | @readAndSum n@ reads @n@ numbers from standard input and returns</span>
+<span class="hs-comment">-- their sum.</span>
+<span class="hs-definition">readAndSum</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">CInt</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">CInt</span>
+<span class="hs-definition">readAndSum</span> <span class=
+"hs-varid">n</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-keyword">do</span>
+  <span class="hs-varid">x</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-keyglyph">[</span><span class="hs-conid">C</span><span class=
+"hs-varop">.</span><span class="hs-varid">block</span><span class=
+"hs-keyglyph">|</span> <span class=
+"hs-varid">int</span> <span class="hs-layout">{</span>
+      <span class="hs-varid">int</span> <span class=
+"hs-varid">i</span><span class="hs-layout">,</span> <span class=
+"hs-varid">sum</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-num">0</span><span class=
+"hs-layout">,</span> <span class="hs-varid">tmp</span><span class=
+"hs-layout">;</span>
+      <span class="hs-varid">for</span> <span class=
+"hs-layout">(</span><span class="hs-varid">i</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-num">0</span><span class=
+"hs-layout">;</span> <span class="hs-varid">i</span> <span class=
+"hs-varop">&lt;</span> <span class="hs-varop">$</span><span class=
+"hs-layout">(</span><span class="hs-varid">int</span> <span class=
+"hs-varid">n</span><span class="hs-layout">)</span><span class=
+"hs-layout">;</span> <span class="hs-varid">i</span><span class=
+"hs-varop">++</span><span class="hs-layout">)</span> <span class=
+"hs-layout">{</span>
+        <span class="hs-varid">scanf</span><span class=
+"hs-layout">(</span><span class="hs-str">"%d "</span><span class=
+"hs-layout">,</span> <span class="hs-varop">&</span><span class=
+"hs-varid">tmp</span><span class="hs-layout">)</span><span class=
+"hs-layout">;</span>
+        <span class="hs-varid">sum</span> <span class=
+"hs-varop">+=</span> <span class="hs-varid">tmp</span><span class=
+"hs-layout">;</span>
+      <span class="hs-layout">}</span>
+      <span class="hs-varid">return</span> <span class=
+"hs-varid">sum</span><span class="hs-layout">;</span>
+    <span class="hs-layout">}</span> <span class=
+"hs-keyglyph">|</span><span class="hs-keyglyph">]</span>
+  <span class="hs-varid">print</span> <span class=
+"hs-varid">x</span></pre>
+<p>Finally, the library provides facilities to easily use Haskell
+data in C. For example, we can easily use Haskell
+<code>ByteString</code>s in C:</p>
+<pre><span class=
+"hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-comment">{-# LANGUAGE TemplateHaskell #-}</span>
+<span class="hs-comment">{-# LANGUAGE QuasiQuotes #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">BS</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Monoid</span> <span class=
+"hs-layout">(</span><span class="hs-layout">(</span><span class=
+"hs-varop">&lt;&gt;</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Foreign</span><span class=
+"hs-varop">.</span><span class="hs-conid">C</span><span class=
+"hs-varop">.</span><span class="hs-conid">Types</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Language</span><span class=
+"hs-varop">.</span><span class="hs-conid">C</span><span class=
+"hs-varop">.</span><span class=
+"hs-conid">Inline</span> <span class="hs-keyword">as</span> <span class="hs-conid">C</span>
+<span class="hs-keyword">import</span>           <span class=
+"hs-conid">Text</span><span class="hs-varop">.</span><span class=
+"hs-conid">RawString</span><span class=
+"hs-varop">.</span><span class="hs-conid">QQ</span> <span class=
+"hs-layout">(</span><span class="hs-varid">r</span><span class=
+"hs-layout">)</span>
+
+<span class="hs-conid">C</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">context</span> <span class=
+"hs-layout">(</span><span class="hs-conid">C</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">baseCtx</span> <span class=
+"hs-varop">&lt;&gt;</span> <span class=
+"hs-conid">C</span><span class="hs-varop">.</span><span class=
+"hs-varid">bsCtx</span><span class="hs-layout">)</span>
+
+<span class=
+"hs-comment">-- | Count the number of set bits in a 'BS.ByteString'.</span>
+<span class="hs-definition">countSetBits</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">BS</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">CInt</span>
+<span class="hs-definition">countSetBits</span> <span class=
+"hs-varid">bs</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyglyph">[</span><span class="hs-conid">C</span><span class="hs-varop">.</span><span class="hs-varid">block</span><span class="hs-keyglyph">|</span>
+    <span class="hs-varid">int</span> <span class=
+"hs-layout">{</span>
+      <span class="hs-varid">int</span> <span class=
+"hs-varid">i</span><span class="hs-layout">,</span> <span class=
+"hs-varid">bits</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-num">0</span><span class=
+"hs-layout">;</span>
+      <span class="hs-varid">for</span> <span class=
+"hs-layout">(</span><span class="hs-varid">i</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-num">0</span><span class=
+"hs-layout">;</span> <span class="hs-varid">i</span> <span class=
+"hs-varop">&lt;</span> <span class="hs-varop">$</span><span class=
+"hs-varid">bs</span><span class="hs-comment">-</span><span class=
+"hs-varid">len</span><span class="hs-conop">:</span><span class=
+"hs-varid">bs</span><span class="hs-layout">;</span> <span class=
+"hs-varid">i</span><span class="hs-varop">++</span><span class=
+"hs-layout">)</span> <span class="hs-layout">{</span>
+        <span class="hs-varid">unsigned</span> <span class=
+"hs-varid">char</span> <span class=
+"hs-varid">ch</span> <span class="hs-keyglyph">=</span> <span class="hs-varop">$</span><span class="hs-varid">bs</span><span class="hs-comment">-</span><span class="hs-varid">ptr</span><span class="hs-conop">:</span><span class="hs-varid">bs</span><span class="hs-keyglyph">[</span><span class="hs-varid">i</span><span class="hs-keyglyph">]</span><span class="hs-layout">;</span>
+        <span class="hs-varid">bits</span> <span class=
+"hs-varop">+=</span> <span class="hs-layout">(</span><span class=
+"hs-varid">ch</span> <span class="hs-varop">*</span> <span class=
+"hs-num">01001001001</span><span class=
+"hs-conid">ULL</span> <span class="hs-varop">&</span> <span class=
+"hs-num">042104210421</span><span class=
+"hs-conid">ULL</span><span class="hs-layout">)</span> <span class=
+"hs-varop">%</span> <span class="hs-num">017</span><span class=
+"hs-layout">;</span>
+      <span class="hs-layout">}</span>
+      <span class="hs-varid">return</span> <span class=
+"hs-varid">bits</span><span class="hs-layout">;</span>
+    <span class="hs-layout">}</span>
+  <span class="hs-keyglyph">|</span><span class=
+"hs-keyglyph">]</span></pre>
+<p>In this example, we use the <code>bs-len</code> and
+<code>bs-ptr</code> anti-quoters to get the length and pointer for
+a Haskell <code>ByteString</code>. <code>inline-c</code> has a
+modular design: these anti-quoters are completely optional and can
+be included on-demand. The <code>C.context</code> invocation adds
+the extra <code>ByteString</code>s anti-quoters to the base set.
+Similar facilities are present to easily use Haskell
+<code>Vector</code>s as well as for invoking Haskell closures from
+C code.</p>
+<h3 id="larger-examples">Larger examples</h3>
+<p>We have included various examples in the <a href=
+"https://github.com/fpco/inline-c/"><code>inline-c</code></a> and
+<a href=
+"https://github.com/fpco/inline-c-nag"><code>inline-c-nag</code></a>
+repositories. Currently they're geared toward scientific and
+numerical computing, but we would welcome contributions using
+<code>inline-c</code> in other fields.</p>
+<p>For instance, <code>
+gsl-ode.hs</code> is a great example of combining the strengths
+of C and the strengths of Haskell to good effect: we use a function
+from C's <a href="https://www.gnu.org/software/gsl/gsl.html">GNU
+Scientific Library</a> for solving ordinary differential equations
+(ODE) to solve a <a href=
+"https://en.wikipedia.org/wiki/Lorenz_system">Lorenz system</a>, and
+then take advantage of the very nice <code>Chart-diagrams</code>
+Haskell library to display its x and z coordinates:</p>
+<p><img alt="Lorenz system" src=
+"https://i.imgur.com/GGUZvco.png"></p>
+<p>In this example, the <code>vec-ptr</code> anti-quoter is used to
+get a pointer out of a mutable vector:</p>
+<pre><code>$vec-ptr:(double *fMut)</code></pre>
+<p>Where <code>fMut</code> is a variable of type
+<code>Data.Storable.Vector.Mutable.Vector CDouble</code>. Moreover,
+the <code>fun</code> anti-quoter is used to get a function pointer
+from a Haskell function:</p>
+<pre>
+<code>$fun:(int (* funIO) (double t, const double y[], double dydt[], void * params))</code></pre>
+<p>Where, <code>funIO</code> is a Haskell function of type</p>
+<pre><span class="hs-conid">CDouble</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Ptr</span> <span class=
+"hs-conid">CDouble</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Ptr</span> <span class=
+"hs-conid">CDouble</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Ptr</span> <span class="hs-conid">()</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">CInt</span></pre>
+<p>Note that all these anti-quoters (apart from the ones where only
+one type is allowed, like <code>vec-len</code> or
+<code>bs-ptr</code>) force the user to specify the target C type.
+The alternative would have been to write the Haskell type. Either
+way <i>some</i> type ascription is unfortunately required, due to a
+limitation of Template Haskell. We choose C type annotations
+because in this way, the user can understand precisely and state
+explicitly the target type of any marshalling.</p>
+<p>Note that at this stage, type annotations are needed, because it
+is <a href=
+"https://mail.haskell.org/pipermail/ghc-devs/2015-February/008327.html">
+not possible to get the type of locally defined variables in
+Template Haskell</a>.</p>
+<h2 id="how-it-works-under-the-hood">How it works under the
+hood</h2>
+<p><code>inline-c</code> generates a piece of C code for most of
+the Template Haskell functions and quasi-quoters function that it
+exports. So when you write</p>
+<pre><code>[C.exp| double{ cos($(double x)) } |]</code></pre>
+<p>a C function gets generated:</p>
+<pre><code class="c">double some_name(double x) {
+    return cos(x);
+}</code></pre>
+<p>This function is then bound to in Haskell through an
+automatically generated FFI import declaration and invoked passing
+the right argument -- the <code>x</code> variable from the Haskell
+environment. The types specified in C are automatically translated
+to the corresponding Haskell types, to generate the correct type
+signatures.</p>
+<p>Custom anti quoters, such as <code>vec-ptr</code> and
+<code>vec-len</code>, handle the C and Haskell types independently.
+For example, when writing</p>
+<pre><code>[C.block| double {
+    int i;
+    double res;
+    for (i = 0; i &lt; $vec-len:xs; i++) {
+      res += $vec-ptr:(double *xs)[i];
+    }
+    return res;
+  } |]</code></pre>
+<p>we'll get a function of type</p>
+<pre><code class=
+"c">double some_name(int xs_len, double *xs_ptr)</code></pre>
+<p>and on the Haskell side the variable <code>xs</code> will be
+used in conjuction with some code getting its length and the
+underlying pointer, both to be passed as arguments.</p>
+<h3 id="building-programs-that-use-codeinline-ccode">Building
+programs that use <code>inline-c</code></h3>
+<p>The C code that <code>inline-c</code> generates is stored in a
+file named like the Haskell source file, but with a <code>.c</code>
+extension.</p>
+<p>When using cabal, it is enough to specify generated C source,
+and eventual options for the C code:</p>
+<pre><code>executable foo
+  main-is:             Main.hs, Foo.hs, Bar.hs
+  hs-source-dirs:      src
+  -- Here the corresponding C sources must be listed for every module
+  -- that uses C code.  In this example, Main.hs and Bar.hs do, but
+  -- Foo.hs does not.
+  c-sources:           src/Main.c, src/Bar.c
+  -- These flags will be passed to the C compiler
+  cc-options:          -Wall -O2
+  -- Libraries to link the code with.
+  extra-libraries:     -lm
+  ...</code></pre>
+<p>Note that currently <code>cabal repl</code> is not supported,
+because the C code is not compiled and linked appropriately.
+However, <code>cabal repl</code> will fail at the end, when trying
+to load the compiled C code, which means that we can still use it
+to type check our package when developing.</p>
+<p>If we were to compile the above manually we could do</p>
+<pre><code>$ ghc -c Main.hs
+$ cc -c Main.c -o Main_c.o
+$ ghc Foo.hs
+$ ghc Bar.hs
+$ cc -c Bar.c -o Bar_c.o
+$ ghc Main.o Foo.o Bar.o Main_c.o Bar_c.o -lm -o Main</code></pre>
+<h3 id="extending-codeinline-ccode">Extending
+<code>inline-c</code></h3>
+<p>As mentioned previously, <code>inline-c</code> can be extended
+by defining custom anti-quoters. Moreover, we can also tell
+<code>inline-c</code> about more C types beyond the primitive
+ones.</p>
+<p>Both operations are done via the <code>Context</code> data type.
+Specifically, the <code>Context</code> contains a
+<code>TypesTable</code>, mapping C type specifiers to Haskell
+types; and a <code>Map</code> of <code>AntiQuoter</code>s. A
+<code>baseCtx</code> is provided specifying mappings from all the
+base C types to Haskell types (<code>int</code> to
+<code>CInt</code>, <code>double</code> to <code>CDouble</code>, and
+so on). <code>Context</code>s can be composed using their
+<code>Monoid</code> instance.</p>
+<p>For example, the <code>vecCtx</code> contains two anti-quoters,
+<code>vec-len</code> and <code>vec-ptr</code>. When using
+<code>inline-c</code> with external libraries we often define a
+context dedicated to said library, defining a
+<code>TypesTable</code> converting common types find in the library
+to their Haskell counterparts. For example <a href=
+"https://github.com/fpco/inline-c-nag"><code>inline-c-nag</code></a>
+defines a context containing information regarding the types
+commonly using in the NAG scientific library.</p>
+<p>See the <code>Language.C.Inline.Context</code> module
+documentation for more.</p>
+<h3 id="c-support">C++ support</h3>
+<p>Our original use case for <code>inline-c</code> was always C
+oriented. However, thanks to extensible contexts, it should be
+possible to build C++ support on top of <code>inline-c</code>, as
+we dabbled with in <a href=
+"https://github.com/fpco/inline-c-cpp"><code>inline-c-cpp</code></a>.
+In this way, one can mix C++ code into Haskell source files, while
+reusing the infrastructure that <code>inline-c</code> provides for
+invoking foreign functions. Since <code>inline-c</code> generates C
+wrapper functions for all inline expressions, one gets a function
+with <i>bona fide</i> C linkage to wrap a C++ call, for free.
+Dealing with C++ templates, passing C++ objects in and out and
+conveniently manipulating them from Haskell are the next
+challenges. If C++ support is what you need, feel free to
+contribute to this ongoing effort!</p>
+<h2 id="wrapping-up">Wrapping up</h2>
+<p>We meant <code>inline-c</code> as a simple, modular alternative
+to monolithic binding libraries, borrowing the core concept of
+FFI-less programming of foreign code from the <a href=
+"https://ifl2014.github.io/submissions/ifl2014_submission_16.pdf">H
+project</a> and <a href=
+"https://github.com/mchakravarty/language-c-inline">language-c-inline</a>.
+But this is just the first cut! We are releasing the library to the
+community early in hopes that it will accelerate the Haskell
+community's embrace of quality foreign libraries where they exist,
+as an alternative to expending considerable resources reinventing
+such libraries for little benefit. Numerical programming, machine
+learning, computer vision, GUI programming and data analysis come
+to mind as obvious areas where we want to leverage existing quality
+code. In fact, FP Complete is using <code>inline-c</code> today to
+enable quick access to all of NAG, a roughly 1.6K function strong
+library, for a large compute-intensive codebase. We hope to see
+many more use cases in the future.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Call%20C%20functions%20from%20Haskell%20without%20bindings https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;inline-c&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;inline-c&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;inline-c&#x2F;&amp;title=Call%20C%20functions%20from%20Haskell%20without%20bindings"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;05&#x2F;inline-c&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#2655474a435566405645494b564a4352430845494b" targe="_blank"><span class="__cf_email__" data-cfemail="156674797066557365767a7865797061703b767a78">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Cache CI builds to an S3 Bucket</title>
+  <meta property="og:title" content="Cache CI builds to an S3 Bucket">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="We&#x27;re happy to announce a new tool, cache-s3, aimed at providing a consistent caching solution across CI tools.">
+  <meta property="og:description" content="We&#x27;re happy to announce a new tool, cache-s3, aimed at providing a consistent caching solution across CI tools.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;02&#x2F;cache-ci-builds-to-an-s3-bucket&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Cache CI builds to an S3 Bucket</h1>
+      
+      <p id="page-description">By Alexey Kuleshevich, February  5, 2018</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Cache%20CI%20builds%20to%20an%20S3%20Bucket https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;02&#x2F;cache-ci-builds-to-an-s3-bucket&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;02&#x2F;cache-ci-builds-to-an-s3-bucket&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;02&#x2F;cache-ci-builds-to-an-s3-bucket&#x2F;&amp;title=Cache%20CI%20builds%20to%20an%20S3%20Bucket"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;02&#x2F;cache-ci-builds-to-an-s3-bucket&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>Just by reading the blogpost title you are likely to guess the
+problem at hand, but to be fair I will recap it anyways.</p>
+<h2>What's the problem?</h2>
+<p>It is increasingly common for software projects to have
+Continuous Integration (CI) setup, regardless of their size or
+complexity. In the matter of fact, it is so common that it is
+considered bad practice not to have your project be at least
+compiled upon every push to the repository. It's even better when a
+project is also tested with a possibility of doing an automated
+release as an extra step, which means uploading a new version to
+the package index, pushing newly created image to Docker registry,
+what have you. With all of the benefits that CI brings to the table
+it often has a drawback of taking too long time, especially when
+the project is really big or it simply has lots of dependencies
+that also have to be compiled from scratch.</p>
+<p>This drawback of long builds can have significant impact on the
+overall speed of the development process. Let's consider a large
+project that takes an hour to compile and run the test suite on
+decent hardware. It is not uncommon to have dozens of developers
+working daily on such a project, each of whom might introduce a
+change or two or maybe even more during a single day to the
+project, consequently triggering a CI build each time. Moreover, it
+is usually the case that there is a matrix of jobs for each build
+that will do compilation and testing on different Operating
+Systems, with different compiler versions and build tools. For
+example a common Haskell project will have a Travis CI build setup
+that will compile and test the project on Linux as well as Mac OS,
+while using 4~6 different GHC versions and multiple build tools,
+such as <code>stack</code>, <code>cabal</code> or <code>nix</code>.
+A CI build with such a matrix easily results in dozens of jobs on
+its own. Naturally, all of those jobs can be executed in parallel
+on as many Virtual Machines (VMs) as you have at your disposal, so
+you don't have to wait hundreds of hours for a CI build to finish,
+but even with an unlimited number of those VMs a developer will
+still end up waiting at least an hour for a successful
+feedback.</p>
+<h2>Available Solution</h2>
+<p>If you think recompiling a project from scratch every time when
+there is a slight change is really absurd, you are absolutely
+right. What is the point of wasting all of that electricity and
+developer's time just so we can create practically the same set of
+files, especially since all of the decent build tools are fully
+capable of handling changes. I am almost positive that all of the
+CI providers have this ability of caching files from one build, so
+they are available for the subsequent one. This simple idea solves
+the problem above in the majority of the situations. An example
+solution for a Haskell project would be adding these few lines to
+the <code>.travis.yml</code> file in the project repository:</p>
+<pre><code class="yaml">cache:
+  directories:
+  - $HOME/.ghc
+  - $HOME/.cabal
+  - $HOME/.stack
+  - $TRAVIS_BUILD_DIR/.stack-work
+</code></pre>
+<h2>Alternative Solution</h2>
+<p>In a perfect world this solution would be universal and complete
+and this blog post would end now, but, unfortunately, that is not
+the case. CI providers are not created equal, and their caching
+capabilities and limitations vary drastically, which can pose real
+problems for some projects. Just to list a few:</p>
+<ul>
+<li>AppVeyor limits the cache size to 1GB for their free accounts
+and 20Gb for the paid ones,</li>
+<li>it also shares the same cache between builds for different
+repository branches, which can easily lead to cache
+corruption.</li>
+<li>Travis handles cache sharing between builds for different
+branches properly, namely it will make sure a build for one branch
+does not interfere with cache for another branch's build, while
+also using cache created for <code>master</code> branch, whenever
+there is an initial build for a fresh branch. Problem is, that
+Travis makes cache available even to Pull Requests (PRs) from
+forked repositories, consequently making it publicly readable.</li>
+<li>You can't set cache paths dynamically, e.g. whenever locations
+of files depend on the output of the build script itself. One way
+to solve this is to move files around to the known locations that
+will be cached, but then you have to restore them during the next
+build and not to forget to properly handle access/modification
+times, permissions and ownership.</li>
+</ul>
+<p>Regardless of the issue you might hit with CI provider's caching
+you can always fallback onto your own resources, one of them being
+an S3 bucket. There are two aspects of caching files to S3, one is
+storing cache during one build, and the inverse, restoring them
+during another one. Here is what we need to do to accomplish the
+former:</p>
+<img alt="Continous Integration Small.jpg" sizes=
+"(max-width: 320px) 100vw, 320px" src=
+"/images/hubspot/01704edd5989e383d234d78cc8383f1b68362561fd95ded4c6d7058972fb944f.jpeg"
+srcset=
+"/images/hubspot/d9cea64fbe8887490e46f4b050e50dd9f4513a918a422bdcf661b1255d6f65be.jpeg 160w, /images/hubspot/01704edd5989e383d234d78cc8383f1b68362561fd95ded4c6d7058972fb944f.jpeg 320w, /images/hubspot/a6abfdd44c0e4711a8d4f1e9eaf1eaa9a94043c6608f67ca9f1b490000301ebf.jpeg 480w, /images/hubspot/f59a63c6b14c781dfddc5440abfe5d04af907e45feaf2aa207de57317a0fa4f9.jpeg 640w, /images/hubspot/d44788be9aac5be2c2ca0cfa4e840735e80f83366e50e7224c935d748ae7aea5.jpeg 800w, /images/hubspot/70aec05aae40c9e18ae2f6333734fb8bfb92dd033fbee0ebb1a725df01884747.jpeg 960w"
+style="width: 320px; margin: 0px 0px 10px 10px; float: right;"
+width="320">
+<ul>
+<li>upon a successful build select files and folders you need to
+cache and create an archive</li>
+<li>check if there is already a cache on S3 for that branch</li>
+<li>if there is none or the content has changed, upload created
+archive to S3.</li>
+<li>compute the cryptographic hash and attach it to the uploaded
+object, so it can be used later for validating consistency and
+detecting a change in cache .</li>
+</ul>
+<p>During the restore step we do as follows:</p>
+<ul>
+<li>Check if there is an archive available on S3 from a previous
+build for a current branch, in case when there is none fallback
+onto cache stored for a base branch such as <code>master</code>
+.</li>
+<li>Download the archive, validate content is consistent by
+validating the value of cryptographic hash</li>
+<li>Restore the files from the downloaded archive into their
+original locations.</li>
+</ul>
+<p>I would not be surprised to see some of those steps implemented
+with bash and PowerShell scripts out there in the wild that use
+common tools like <code>tar</code> and <code>aws-cli</code> to get
+the job done for a particular project. I believe those tasks are
+useful enough to deserve there own tool that works consistently for
+any project and on more than one platform. The steps listed above
+represent a quick summary of how <a href=
+"https://github.com/fpco/cache-s3">cache-s3</a> uses AWS to cache
+CI builds and below is a sample command that can be used to store
+files at the end of a build:</p>
+<pre><code>$ cache-s3 save -p $PROJECT_PATH/.build
+</code></pre>
+<p>And to restore files to their original place at the beginning of
+a CI build:</p>
+<pre><code>$ cache-s3 restore --base-branch=master
+</code></pre>
+<p>AWS credentials and S3 bucket name are being read from the
+environment, as it is commonly done during CI. I encourage you to
+read the <a href=
+"https://github.com/fpco/cache-s3/blob/master/README.md">cache-s3/README</a>
+for more details on how to get everything setup and other available
+options before using the tool.</p>
+<h2>Caching <code>stack</code></h2>
+<p>Despite <code>cache-s3</code> being a general caching tool it is
+tailored specifically for working with <code>stack</code> .
+Whenever you build a project with stack , it will generate a lot of
+files, which can be divided into two groups:</p>
+<ul>
+<li>global <code>~/.stack</code> directory , where GHC will live
+along with all of the project's dependencies from a specified
+snapshot, eg. ghc -8.2.2 and lts -10.3 respectfully. This set of
+files doesn't change very often during the lifetime of a project,
+so it would be wasteful if we try to cache them during builds for
+every branch. It makes more sense to reuse global stack folder that
+is being cached for a base branch, such as <code>master</code> , as
+readonly cache for all other branches.</li>
+<li>local to a project <code>.stack-work</code> directory . For a
+more complicated project with many nested packages, there might be
+more than one <code>.stack-work</code> , usually one per
+package.</li>
+</ul>
+<p>In order for stack to be able to detect changes in a project,
+thus preventing it from recompiling the whole thing from scratch,
+all of the <code>.stack-work</code> directories , along with the
+global stack directory must be properly cached. This is exactly
+what <code>cache-s3</code> will do for you.</p>
+<pre><code>$ cache-s3 save stack
+</code></pre>
+<p>Running the above command inside the stack project, where
+<code>stack.yaml</code> is located, will cache the global stack
+directory. As mentioned before, this should be enabled
+conditionally at the end of the build for <code>master</code>
+branch only, for example in <code>travis.yml</code> : <code>if [
+"$TRAVIS_BRANCH" = master ]; then ...</code> .</p>
+<pre><code>$ cache-s3 save stack work
+</code></pre>
+<p>As you might suspect, above will perform the caching of all of
+the <code>.stack-work</code> directories that it can infer from
+<code>stack.yaml</code> .</p>
+<p>Going in reverse is just as easy:</p>
+<pre><code>$ cache-s3 restore stack --base-branch=master
+$ cache-s3 restore stack work --base-branch=master
+</code></pre>
+<h2>Setup</h2>
+<p>If you are thinking about using S3 in automated fashion you are
+likely already aware of how daunting can the task be of setting up
+the S3 bucket with all of its IAM policies and associated IAM user.
+For this reason we've created a <a href=
+"https://github.com/fpco/terraform-aws-foundation/blob/master/modules/ci-cache-s3/main.tf">
+ci-cache-s3</a> terraform module that can take care of the whole
+setup for you, unfortunately it does require familiarity with
+<a href="https://www.terraform.io/">terraform</a> itself. There is
+a quick example on how to use it in the <a href=
+"https://github.com/fpco/cache-s3#prepare-ci-and-s3">cache-s3
+documentation</a>.</p>
+<p>Getting <code>cache-s3</code> into your CI environment is very
+easy, there are executable versions of the tool for some of the
+most common Operating Systems available on <a href=
+"https://github.com/fpco/cache-s3/releases">github release page</a>
+and examples on how to automate its downloading is described in
+<a href=
+"https://github.com/fpco/cache-s3#downloading-the-executable">Downloading
+the executable</a> section. If you are looking for some examples on
+how to implement your CI build script, <a href=
+"https://github.com/fpco/cache-s3/blob/master/.travis.yml">.travis.yml</a>
+and <a href=
+"https://github.com/fpco/cache-s3/blob/master/appveyor.yml">appveyor.yml</a>
+configuration files written for the tool itself could serve as a
+great starting point.</p>
+<p>If you find any of those steps even a little overwhelming, feel
+free to get in touch with our representative and we will be happy
+to either set up the CI environment for you or schedule some
+training sessions with your engineers on how to use terraform and
+other tools necessary to get the job done.</p>
+<h2>Extra ideas</h2>
+<p>Undoubtedly, <code>cache-s3</code> will find other places it can
+be useful, since its basic goal is to save/restore files to/from
+S3. One use case other than CI I can see right off the bet is when
+a project is compiled from source during deployment on EC2
+instance, which can be sped up in the same manner described so far,
+except instead of using an IAM User, we would use EC2 instance
+profile and role assumption to handle access to S3 bucket. I even
+published a <a href=
+"https://gist.github.com/lehins/56968dd1a23dbc730e8755eea5475179">gist
+with terraform</a> that you can use to deploy an S3 bucket and an
+EC2 instance with proper IAM policy in place for
+<code>cache-s3</code> to work.</p>
+<p><code>cache-s3</code> is pretty customizable, so try running it
+with <code>--help</code> to explore all of the options available
+for each command. For example <code>--prefix</code> and
+<code>--suffix</code> options can come very handy for namespacing
+the builds for different projects on different Operating Systems
+respectfully, <code>--git-branch</code> for overriding inferred
+branch name, while <code>--verbosity</code> and
+<code>--concise</code> can be used to adjust the output, etc.</p>
+<p><strong>If you liked this blog you may also like:</strong></p>
+<ul>
+<li><a href="/pricing/dockerizing-your-app" rel="">Dockerizing your
+App</a></li>
+<li><a href=
+"/blog/cloud-deployment-models-advantages-and-disadvantages" rel=
+"">Cloud Deployment Models Evaluated</a></li>
+<li><a href=
+"/blog/devops-value-how-to-measure-the-success-of-devops" rel=
+"">How to measure the success of DevOps</a></li>
+</ul>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Cache%20CI%20builds%20to%20an%20S3%20Bucket https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;02&#x2F;cache-ci-builds-to-an-s3-bucket&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;02&#x2F;cache-ci-builds-to-an-s3-bucket&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;02&#x2F;cache-ci-builds-to-an-s3-bucket&#x2F;&amp;title=Cache%20CI%20builds%20to%20an%20S3%20Bucket"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;02&#x2F;cache-ci-builds-to-an-s3-bucket&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#7003111c1503301600131f1d001c1504155e131f1d" targe="_blank"><span class="__cf_email__" data-cfemail="6c1f0d00091f2c0a1c0f03011c00091809420f0301">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

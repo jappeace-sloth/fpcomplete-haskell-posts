@@ -1,0 +1,143 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Calculating the Minimum Variance Portfolio in R, Pandas and IAP
+
+By Mike Meyer, April 4, 2014
+
+Share this     
+
+As part of producing a demo for FP Complete's new IAP product, I wound up implementing the Minimum
+Variance Portfolio calculation for a stock portfolio in R, then in Haskell for the IAP, and finally
+in Python using the NumPy and SciPy extension libraries. I want to look at the process of writing
+each of these, and the resulting code in this article. I am not an expert in these things, so if
+you know a better way to do them, please let me know. In particular, the R example was borrowed
+from someone else.
+
+The function
+
+First, we find a version of the formula for MVP that can be converted into those systems. I like
+the one used by Yue Kuen KWOK:
+
+ω = Ω⁻¹ 1/ 1 ⋅ Ω⁻¹ 1
+
+where Ω is the covariant matrix of the returns for the stocks in question.
+
+R version
+
+The R version is fairly straightforward - we just need to put the pieces together:
+
+minvar <- function (px){
+    Rt <- px[-1,]/px[-nrow(px),]-1
+    cov.Rt <- cov(Rt)
+    one.vec <- rep(1,nrow(cov.Rt))
+    num <- solve(cov.Rt) %*% one.vec
+    den <- as.numeric(t(one.vec) %*% num)
+    return(num/den)
+}
+
+Calculating returns can be done with standard matrix operations and slicing. The covariant function
+is built in, as is inverting it (solve). Since the numerator Ω⁻¹ 1 appears in the denominator, I
+reuse it's value there.
+
+All the array operations were documented in the same place. That I only needed one unit vector was
+a bit of a surprise, but R sized it dynamically to work. That I had to transpose the unit vector
+and use the cross product operator (%*%) to get a dot product was a a less pleasant surprise, but
+is apparently a standard R idiom.
+
+Python version
+
+The Python version is almost a direct copy of the R version.
+
+def minvar(prices):
+    cov = np.cov((prices[1:] / prices[:-1] - 1).transpose())
+    vu = np.array(cov.shape[1] * [1], float)
+    num = np.dot(np.linalg.inv(cov), vu)
+    den = np.dot(vu, num)
+    return num / den
+
+In this case, I passed the returns matrix to the covariant function directly. The NumPy dot
+function performs both cross products and dot products, and again the unit vector adopts it's
+length dynamically.
+
+Documentation was a bit more scattered. Being a mix of traditional imperative and object-oriented,
+some functions are functions in the module, and others are object methods. The biggest surprise was
+that the returns matrix needed to be transposed before the covariant was calculated.
+
+Haskell version
+
+Haskell is not quite as obvious a translation of the R and Python versions, but is a more
+straightforward translation of the original formula - once you notice that Ω⁻¹ 1 has been factored
+into tv. It reads from top to bottom like the original, with the main formula at the top and the
+various terms defined below.
+
+Returns again use the standard Haskell idiom for slicing the array. This is a bit more verbose than
+either R or Python, as they are functions rather than special syntax.
+
+minVariance prices = tv / scalar (tvu <.> tv)
+    where rets = dropRows 1 prices / takeRows (rows prices - 1) prices -
+          (_, cov) = meanCov $ rets
+          vu = constant 1.0 (cols cov)
+          tvu = constant 1.0 (rows cov)
+          tv = inv cov <> vu
+
+The documentation was again straightforward, with everything being a function in the hmatrix
+package. In this case, both unit vectors were needed, as Haskell does not scale them automatically.
+It was the least surprising in at least one way - it used a distinct dot product operator for the
+two vectors rather than transposing - whether implicitly like Python or explicitly like R - the
+unit vector in a cross product.
+
+Performance
+
+While performance comparisons with IAP aren't very useful, as it runs in the cloud so doing
+comparisons on identical systems may be impossible, Haskell does have one interesting advantage.
+
+All three of these systems have the same basic architecture - a high-level language running in an
+interactive environment, with bindings to low-level, fast implementations of the matrix
+manipulations. Haskell adds the ability to compile your program into native x86_64 code. Doing so
+reduced the wall clock time of this short demo by roughly two orders of magnitude.
+
+Summary
+
+I found the IAP version a little easier to deal with. Having custom operators and functions for
+everything - and this will only get better with time - along with being able to use the
+mathematical layout of the where statement just made things a little easier to deal with. While not
+having unit vectors that automatically size themselves - or transpose into matrices - is a little
+inconvenient, this also exposed a problem in the original R version, in that the unit vector's
+length was initially set wrong. I'm not sure that will make any real difference, but the thought
+that the language can catch such errors for me is comforting.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

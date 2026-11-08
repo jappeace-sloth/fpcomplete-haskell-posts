@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Immutability, Docker, and Haskell&#x27;s ST type</title>
+  <meta property="og:title" content="Immutability, Docker, and Haskell&#x27;s ST type">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Immutability in software development is a well known constant in functional programming but is relatively new in modern devops and the parallels are worth examining.">
+  <meta property="og:description" content="Immutability in software development is a well known constant in functional programming but is relatively new in modern devops and the parallels are worth examining.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;02&#x2F;immutability-docker-haskells-st-type&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Immutability, Docker, and Haskell&#x27;s ST type</h1>
+      
+      <p id="page-description">By Michael Snoyman, February 13, 2017</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Immutability%2C%20Docker%2C%20and%20Haskell%27s%20ST%20type https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;02&#x2F;immutability-docker-haskells-st-type&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;02&#x2F;immutability-docker-haskells-st-type&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;02&#x2F;immutability-docker-haskells-st-type&#x2F;&amp;title=Immutability%2C%20Docker%2C%20and%20Haskell%27s%20ST%20type"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;02&#x2F;immutability-docker-haskells-st-type&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>In managing projects at FP Complete, I get to see both the
+software development and devops sides of our engineering practice.
+Over the years, I've been struck by the recurrence of a single word
+appearing repeatedly in both worlds: <b>immutability</b>.</p>
+<p>On the software side, one of the strongest tenets of functional
+programming is immutable data structures. These are values which -
+once created - can never be changed again through the course of
+running the application. These reduce coupling between components,
+simplify concurrency and parallelism, and decrease the total number
+of moving pieces in a system, making it easier to maintain and
+develop over time.</p>
+<p>On the devops side, immutable infrastructure is relatively a
+more recent discovery. By creating machine images and replacing
+rather than modifying existing components, we have a more reliable
+hosting setup to target, minimize the differences between test and
+production systems, and reduce the amount of error-prone, manual
+fiddling that leads to 3am coffee-fueled emergency recovery
+sessions.</p>
+<p>It's no secret that containerization in general, and Docker in
+particular, has become very popular in the devops space. I've
+noticed that there's a strong parallel between how Docker images
+are built, and a technique from functional programming - the ST
+(State Thread) type. This blog post will explain both sides of the
+puzzle, and then explain how they match up.</p>
+<h2 id="dockerfile:-mutable-steps-immutable-outcome">Dockerfile:
+mutable steps, immutable outcome</h2>
+<p>A Docker image is a complete Linux filesystem, providing all of
+the tools, libraries, and data files needed for its task. As a
+simple example, I recently <a href=
+"https://github.com/fpco/docker-fop/blob/master/Dockerfile">created
+a simple Docker image</a> containing the Stack build tool (more on
+that later) and Apache FOP for generating some PDFs. In the Docker
+world, the formula you use for creating a Docker image is a
+Dockerfile. Let's look at the (very simple) Dockerfile I wrote:</p>
+<pre><code>FROM fpco/pid1:16.04
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get update &amp;& \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y wget default-jre &amp;& \
+    wget -qO- https://get.haskellstack.org/ | sh
+RUN wget -q https://github.com/fpco/docker-fop/releases/download/fop-2.1/fop-2.1-bin.tar.gz &amp;& \
+    tar zxf fop-2.1-bin.tar.gz &amp;& \
+    rm -f fop-2.1-bin.tar.gz &amp;& \
+    mv fop-2.1 /usr/local/share</code></pre>
+<p>In this file, I'm starting off from the <a href=
+"/blog/2016/10/docker-demons-pid1-orphans-zombies-signals"><code>fpco/pid1</code>
+base image</a>, which provides us with a filesystem to start off
+with (it would obviously be pretty difficult to create a complete
+filesystem each time we wanted to create a new image). Then we
+provide a series of actions to take to <i>modify</i> that image.
+Looking at the example above, we:</p>
+<ul>
+<li>Update the list of APT packages available</li>
+<li>Install <code>wget</code> and the default Java Runtime
+Environment</li>
+<li>Install the Stack build tool by running a script</li>
+<li>Download the FOP binary bundle</li>
+<li>Unpack the bundle and move it to /usr/local/share</li>
+</ul>
+<p>Look at that list of steps. In no world could those actions be
+called "immutable." Every single one of them mutates the
+filesystem, either modifying files, adding files, or removing
+files. The end result of this mutation process is a new filesystem,
+captured in a Docker image.</p>
+<p>And here's the important bit: this new image is <i>totally
+immutable</i>. You cannot in any way modify the image. You can
+create a <i>new</i> image based on it, but the original will remain
+unchanged. For all of history, this image will remain
+identical.*</p>
+<p>In other words: a Dockerfile is a series of mutations which
+generates an immutable data structure.</p>
+<p>* You may argue that you can delete the image, or you could
+create a new image with the same name. That's true, but as long as
+you're working with the image in question, it does not change. By
+contrast, each time you access the <code>/tmp/foobar</code> file,
+it may have different contents.</p>
+<h2 id="the-st-type">The ST type</h2>
+<p>In a purely functional programming language like Haskell, data
+is immutable by default. This means that, if you have a variable
+holding an <code>Int</code>, you cannot change it. Consider this
+example code, playing around with a <code>Map</code> structure
+(also known as a dictionary or lookup table):</p>
+<pre><span class="hs-definition">myMap</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">makeSomeMap</span>
+<span class="hs-definition">print</span> <span class=
+"hs-varid">myMap</span>
+<span class="hs-definition">useMap</span> <span class=
+"hs-varid">myMap</span>
+<span class="hs-definition">print</span> <span class=
+"hs-varid">myMap</span></pre>
+<p>We make our initial <code>Map</code> using the
+<code>makeSomeMap</code> function, print its contents, pass it to
+some other function (<code>useMap</code>), and then print it again.
+Pop quiz: is there any way that the two <code>print</code>
+operations will print different values?</p>
+<p>If you're accustomed to mutable languages like Java or Python,
+you'd probably say yes: <code>myMap</code> is (presumably) an
+object with mutable state, and the <code>useMap</code> function
+might modify it. In Haskell, that can't happen: you've passed a
+reference to <code>myMap</code> to your <code>useMap</code>
+function, but <i><code>useMap</code> is not allowed to modify
+it</i>.</p>
+<p>Of course, we would like to be able to create different values,
+so saying "you can't ever change anything" is a little daunting.
+The primary way of working with Haskell's immutable data structures
+is to have functions which create new values based on old ones. In
+this process, we create a new value by giving it some instructions
+for the change. For example, if in our example above, the
+<code>myMap</code> value had a mapping from names to ages, we could
+insert an extra value:</p>
+<pre><span class="hs-definition">myMap</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">makeSomeMap</span>
+<span class="hs-keyword">let</span> <span class=
+"hs-varid">myModifiedMap</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">insert</span> <span class=
+"hs-str">"Alice"</span> <span class="hs-num">35</span> <span class=
+"hs-varid">myMap</span>
+<span class="hs-definition">print</span> <span class=
+"hs-varid">myModifiedMap</span>
+<span class="hs-definition">useMap</span> <span class=
+"hs-varid">myModifiedMap</span>
+<span class="hs-definition">print</span> <span class=
+"hs-varid">myModifiedMap</span></pre>
+<p>However, this isn't real mutation: the original
+<code>myMap</code> remains the same. There are cases in which
+creating a completely new version of the data each time would be
+highly inefficient. Most sorting algorithms fall into this
+category, as they involve a large number of intermediate swaps. If
+each of those swaps generated a brand new array, it would be very
+slow with huge amounts of memory allocation.</p>
+<p>Instead, Haskell provides the <code>ST</code> type, which allows
+for <i>local mutations</i>. While within an <code>ST</code> block,
+you can directly mutate local variables, such as mutable vectors.
+But none of those mutated values can escape the <code>ST</code>
+block, only immutable variants. To see how this works, look at this
+Haskell code (save it to <code>Main.hs</code> and run with
+<code>stack Main.hs</code> using <a href=
+"https://haskell-lang.org/get-started">the Stack build
+tool</a>):</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">{- stack --resolver lts-7.14 --install-ghc runghc
+    --package vector-algorithms -}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Vector</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">Vector</span><span class="hs-layout">,</span> <span class="hs-varid">fromList</span><span class="hs-layout">,</span> <span class="hs-varid">modify</span><span class="hs-layout">,</span> <span class="hs-varid">freeze</span><span class="hs-layout">,</span> <span class="hs-varid">thaw</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Vector</span><span class="hs-varop">.</span><span class=
+"hs-conid">Algorithms</span><span class=
+"hs-varop">.</span><span class=
+"hs-conid">Insertion</span> <span class=
+"hs-layout">(</span><span class="hs-varid">sort</span><span class=
+"hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Monad</span><span class=
+"hs-varop">.</span><span class="hs-conid">ST</span>
+
+<span class=
+"hs-comment">-- longer version, to demonstrate what's actually happening</span>
+<span class="hs-definition">immutableSort</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Vector</span> <span class=
+"hs-conid">Int</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Vector</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">immutableSort</span> <span class=
+"hs-varid">original</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">runST</span> <span class=
+"hs-varop">$</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">mutableVector</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">thaw</span> <span class="hs-varid">original</span>
+    <span class="hs-varid">sort</span> <span class=
+"hs-varid">mutableVector</span>
+    <span class="hs-varid">freeze</span> <span class=
+"hs-varid">mutableVector</span>
+
+<span class=
+"hs-comment">-- short version, what we'd use in practice, using the modify helper</span>
+<span class=
+"hs-comment">-- immutableSort :: Vector Int -&gt; Vector Int</span>
+<span class="hs-comment">-- immutableSort = modify sort</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-varid">unsortedVector</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">fromList</span> <span class=
+"hs-keyglyph">[</span><span class="hs-num">1</span><span class=
+"hs-layout">,</span> <span class="hs-num">4</span><span class=
+"hs-layout">,</span> <span class="hs-num">2</span><span class=
+"hs-layout">,</span> <span class="hs-num">0</span><span class=
+"hs-layout">,</span> <span class="hs-num">8</span><span class=
+"hs-layout">,</span> <span class="hs-num">9</span><span class=
+"hs-layout">,</span> <span class="hs-num">5</span><span class=
+"hs-keyglyph">]</span>
+        <span class="hs-varid">sortedVector</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">immutableSort</span> <span class=
+"hs-varid">unsortedVector</span>
+    <span class="hs-varid">print</span> <span class=
+"hs-varid">unsortedVector</span>
+    <span class="hs-varid">print</span> <span class=
+"hs-varid">sortedVector</span></pre>
+<p>The <code>immutableSort</code> function takes an immutable
+vector of integers, and returns a new immutable vector of integers.
+Internally, though, it runs everything inside an <code>ST</code>
+block. First we <i>thaw</i> the immutable vector into a mutable
+copy of the original. Now that we have a fresh copy, we're free to
+- within the <code>ST</code> block - modify it to our heart's
+content, without impacting the original at all. To do this, we use
+the mutating <code>sort</code> function. When we're done, we
+<i>freeze</i> that mutable vector into a new immutable vector,
+which can be passed outside of the <code>ST</code> block.</p>
+<p>(I've also included a shorter version of the function which uses
+the <code>modify</code> function to automate the freezing and
+thawing. Under the surface, it's doing almost exactly the same
+thing... see extra credit at the bottom for more details.)</p>
+<p>Using this technique, we get to have our cake and eat it too: an
+efficient sorting algorithm (insertion sort) based on mutations to
+a random-access vector, while maintaining the invariant that our
+original vector remains unchanged.</p>
+<h2 id="parallels-between-docker-and-functional-programming">
+Parallels between Docker and functional programming</h2>
+<p>After analyzing both Dockerfiles and the ST type, I think we can
+draw some interesting parallels. Both techniques accept that there
+are some things which are either easier or more efficient to do
+with direct mutation. But instead of throwing out the baby with the
+bathwater, they both value immutability as a goal. To achieve this,
+both of them have the concept of <i>constrained mutation</i>: you
+can only mutate in some specific places.</p>
+<p>There's another interesting parallel to be observed: both Docker
+and functional programming <i>hide</i> some mutation from the user.
+For example, when you code <code>2 + 3</code>, under the surface
+your compiler is generating something like:</p>
+<ul>
+<li>Write the value <code>2</code> to a machine register</li>
+<li>Write the value <code>3</code> to another machine register</li>
+<li>Perform the ADD machine instruction</li>
+<li>Copy the result in the output machine register to some location
+in memory</li>
+</ul>
+<p>All four of these steps are inherently mutating the state of
+your machine, but you probably never think about that. (This
+applies to <i>all</i> common programming languages, not just
+functional languages.) While mutation is happening all the time,
+we'd often rather not think about it, and instead focus on the
+higher level goal (in this case: add two numbers together).</p>
+<p>When you launch a Docker container, Docker is making a lot of
+mutating changes. When you execute <code>docker run busybox echo
+Hello World!</code>, Docker creates a new control group (c-group),
+creates some temporary files, forks processes, and so on. Again,
+each of these actions is inherently a state mutation, but taken as
+a whole, we can view the sum total as an immutable action that uses
+a non-changing file system to run a command in an isolated
+environment that generates some output on the command line.</p>
+<p>Of course, you can also use Docker to run mutating commands,
+such as bind-mounting the host file system and modifying files.
+Similarly, from within a functional programming language you can
+cause mutations of similar magnitude. But that's up to you; the
+system itself tries to hide away a bunch of intermediate mutations
+as a single, immutable action.</p>
+<h2 id="further-insights">Further insights</h2>
+<p>I always enjoy finding a nexus between two seemingly unrelated
+fields. While the line of reasoning that brought them there are
+quite distinct, I'm very intrigued that both the devops and
+functional programming worlds seem to be thriving today on
+immutability. I'd be interested to hear others' experiences with
+similar intersections between these worlds, or other worlds.</p>
+<p>FP Complete is regularly in the business of combining <a href=
+"/devops">modern devops practices</a> with <a href=
+"/haskell">cutting edge functional programming</a>. If you'd like
+to learn more, check out <a href="/consulting">our consulting
+offerings</a> or reach out for a free consultation.</p>
+<p>If you're interested in learning more about Haskell, check out
+our <a href="/haskell-syllabus">Haskell syllabus</a>.</p>
+<h2 id="extra-credit">Extra credit</h2>
+<p>I made a comment above about "almost the same thing" with the
+two versions of immutable sort. The primary difference is in
+<i>safe</i> versus <i>unsafe</i> freezing. In our longer version,
+we're using the safe variants of both freeze and thaw, which
+operate by making a new copy of the original buffer. In the case of
+<code>thaw</code>, this ensures that the original, immutable
+version of the vector is never modified. In the case of
+<code>freeze</code>, this ensures that we don't create a
+falsely-immutable vector, which can have its values changed when
+the original, mutable vector is tweaked.</p>
+<p>Based on this, our long version of the function does the
+following operations:</p>
+<ul>
+<li>Create a new memory buffer the same size as the original. Let's
+call this buffer A.</li>
+<li>Copy the values into A from the original.</li>
+<li>Sort the values inside A using mutation.</li>
+<li>Create a new memory buffer of the same size. Let's call this
+buffer B.</li>
+<li>Copy the values from A into B.</li>
+<li>Make B immutable and return it.</li>
+</ul>
+<p>But if you pay close attention, that intermediate memory buffer
+A can never be modified after the end of our ST block, and
+therefore making that <i>extra</i> B buffer and copying into it is
+unnecessary. Therefore, the <code>modify</code> helper function
+does an <i>unsafe</i> freeze on the A memory buffer, avoiding the
+unneeded allocation and copy. While this operation may be unsafe in
+general, we know in our usage it's perfect safe. This is another
+great tenet of functional programming: wrapping up operations which
+may be dangerous on their own into helper functions that guarantee
+safety.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Immutability%2C%20Docker%2C%20and%20Haskell%27s%20ST%20type https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;02&#x2F;immutability-docker-haskells-st-type&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;02&#x2F;immutability-docker-haskells-st-type&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;02&#x2F;immutability-docker-haskells-st-type&#x2F;&amp;title=Immutability%2C%20Docker%2C%20and%20Haskell%27s%20ST%20type"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;02&#x2F;immutability-docker-haskells-st-type&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#0d7e6c61687e4d6b7d6e62607d61687968236e6260" targe="_blank"><span class="__cf_email__" data-cfemail="f88b99949d8bb89e889b979588949d8c9dd69b9795">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

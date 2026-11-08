@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Decimal Safety Right on The Money</title>
+  <meta property="og:title" content="Decimal Safety Right on The Money">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="We developed a library for operating on decimal numbers that guards you from errors. Come learn how it works and how you can use it">
+  <meta property="og:description" content="We developed a library for operating on decimal numbers that guards you from errors. Come learn how it works and how you can use it">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;safe-decimal-right-on-the-money&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Decimal Safety Right on The Money</h1>
+      
+      <p id="page-description">By Alexey Kuleshevich, February 12, 2020</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Decimal%20Safety%20Right%20on%20The%20Money https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;safe-decimal-right-on-the-money&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;safe-decimal-right-on-the-money&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;safe-decimal-right-on-the-money&#x2F;&amp;title=Decimal%20Safety%20Right%20on%20The%20Money"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;safe-decimal-right-on-the-money&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  <p>Fixed point decimal numbers are used for representing all kinds of data: percentages, temperatures, distances, mass, and many others. I would like to share an approach for safely and efficiently representing currency data in Haskell with <code>safe-decimal</code>.</p>
+<h2 id="problems-we-want-to-solve">Problems we want to solve</h2>
+<h3 id="floating-point">Floating point</h3>
+<p>I wonder how much money gets misplaced because programmers choose a floating point type for representing money. I will not attempt to convince you that using <code>Double</code> or <code>Float</code> for monetary values is unacceptable, it is a known fact. Values like <code>NaN</code>, <code>+/-Infinity</code> and <code>+/-0</code> have no meaning in handling money. In addition, the inability to represent most decimal values exactly should be enough reason to avoid floating point.</p>
+<h3 id="fixed-point-decimal">Fixed point decimal</h3>
+<p>Floating point types make sense when numerical approximation acceptable and you care primarily about performance rather than correctness. This is most common in numerical analysis, signal processing and other areas alike. In many other circumstances a type capable of representing decimal numbers exactly should be used instead. Unlike floating point in a <code>Decimal</code> type we manually restrict how many digits after the decimal point we can have. This is called <a href="https://en.wikipedia.org/wiki/Fixed-point_arithmetic">fixed-point number representation</a>. We use fixed-point numbers on a daily basis when paying in the store with cash or card, tracking distance with an odometer, and reading values off of a digital hydrometer or thermometer.</p>
+<p>We can represent fixed-point decimal numbers in Haskell by using an integral type
+for the actual value, which is called a precision, and a scale parameter, which is used
+for keeping track of how far from the right the decimal point is. In <code>safe-decimal</code> we
+define a <code>Decimal</code> type that allows us to choose a precision (<code>p</code>) and supply our <code>s</code> scale
+parameter with the type level natural number:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">Decimal</span><span> r (s </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Nat</span><span>) p </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Decimal</span><span> p
+</span><span>  </span><span style="color:#859900;">deriving</span><span> (</span><span style="color:#268bd2;">Ord</span><span>, </span><span style="color:#268bd2;">Eq</span><span>, </span><span style="color:#268bd2;">NFData</span><span>, </span><span style="color:#268bd2;">Functor</span><span>, </span><span style="color:#268bd2;">Generic</span><span>)
+</span></code></pre>
+<p>Unlike floating point numbers we cannot move our decimal point without changing the scaling parameter and sometimes the precision as well. This means that when we use operations like multiplication or division we might have to do some rounding. The rounding strategy is selected at the type level with the <code>r</code> type variable. At time of writing the most common rounding strategies have been implemented: <code>RoundHalfEven</code>, <code>RoundHalfUp</code>, <code>RoundHalfDown</code>, <code>RoundDown</code> and <code>RoundToZero</code>. There is a plan to add more in the future.</p>
+<h3 id="precision">Precision</h3>
+<p>It is common to use a type like <code>Integer</code> for decimal representation, for
+straightforward reasons:</p>
+<ul>
+<li><code>Integer</code> is easy to use</li>
+<li><code>Integer</code> can represent any number in the universe, if you have enough memory</li>
+</ul>
+<p>Let's look at an example which starts with enabling an extension in Haskell. We need to
+turn on <code>DataKinds</code> so that we can use type level natural numbers.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">&gt;&gt;&gt; :</span><span>set </span><span style="color:#859900;">-</span><span style="color:#cb4b16;">XDataKinds
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> x </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Decimal </span><span style="color:#6c71c4;">12345 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Decimal RoundHalfUp </span><span style="color:#6c71c4;">4 </span><span style="color:#cb4b16;">Integer
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> x
+</span><span style="color:#6c71c4;">1.2345
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> x * </span><span style="color:#6c71c4;">5
+</span><span style="color:#6c71c4;">6.1725
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> roundDecimal (x * </span><span style="color:#6c71c4;">5</span><span>) </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Decimal RoundHalfUp </span><span style="color:#6c71c4;">3 </span><span style="color:#cb4b16;">Integer
+</span><span style="color:#6c71c4;">6.173
+</span></code></pre>
+<p>The concrete <code>Decimal</code> type backed by <code>Integer</code> has a <code>Num</code> instance. That is why we
+were able to use literal <code>5</code> and GHC converted it to a <code>Decimal</code> for us. This is how the same numbers multiplied together look as <code>Double</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">&gt;&gt;&gt; </span><span style="color:#6c71c4;">1.2345</span><span> * </span><span style="color:#6c71c4;">5 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Double
+</span><span style="color:#6c71c4;">6.172499999999999
+</span></code></pre>
+<h3 id="storage-and-performance">Storage and Performance</h3>
+<p><code>Integer</code> is nice, but in some applications <code>Integer</code> isn't an acceptable representation of our data. We might need to store decimal values in database, transmit them over the network, or improve performance by storing numbers in an unboxed instead of boxed array. It is faster to store a 64-bit integer value in a database rather than converting a number to a sequence of bytes in a blob as is necessary with <code>Integer</code>. Transmission over a network is another limitation that comes to mind. Having a 508 byte limit on a UDP packet can quickly become a problem for <code>Integer</code> based values.</p>
+<p>The best way to solve this is to use fixed width integer types such as <code>Int64</code>, <code>Int32</code>, <code>Word64</code>, etc. If precision of more than 64 bits is desired there are packages that provide 128-bit, 256-bit, and other variants of signed/unsigned integers. All of them can be used
+with <code>safe-decimal</code>, eg:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">&gt;&gt;&gt; </span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Int </span><span>(</span><span style="color:#268bd2;">Int8</span><span>, </span><span style="color:#268bd2;">Int64</span><span>)
+</span><span style="color:#859900;">&gt;&gt;&gt; </span><span style="color:#cb4b16;">Decimal </span><span style="color:#6c71c4;">12345 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Decimal RoundHalfUp </span><span style="color:#6c71c4;">6 </span><span style="color:#cb4b16;">Int64
+</span><span style="color:#6c71c4;">0.012345
+</span><span style="color:#859900;">&gt;&gt;&gt; </span><span style="color:#cb4b16;">Decimal </span><span style="color:#6c71c4;">123 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Decimal RoundHalfUp </span><span style="color:#6c71c4;">6 </span><span style="color:#cb4b16;">Int8
+</span><span style="color:#6c71c4;">0.000123
+</span></code></pre>
+<h3 id="bounds">Bounds</h3>
+<p>Even discarding the desire for better performance and ignoring the memory constraints imposed on us, there are often types that have domain-specific bounds anyway. The most common example is when people use signed types like <code>Int</code> to represent values that have no sensible negative value. Use unsigned types like <code>Word</code> for representing values that should have no negative value.</p>
+<p>Some values that can be represented by a decimal number have a lower and upper bound that we estimate. Percentages go from 0% to a 100%, the total circulation of US dollars is about 14 trillion, and the surface temperature of a star is somewhere in a range of 225-40000K. If we use our domain specific knowledge we can come up with some safe bounds, instead of blindly assuming that we need infinitely large values.</p>
+<p>Beware though, that using integral types with bounds come with real danger: integer <a href="https://cwe.mitre.org/data/definitions/190.html">overflow</a> and <a href="https://cwe.mitre.org/data/definitions/191.html">underflow</a>. These are common reasons for bugs in software that lead to a whole variety of exploits. This is the area where protection in <code>safe-decimal</code> really shines, and here is an example of how it protects you:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">&gt;&gt;&gt; </span><span style="color:#6c71c4;">123 </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">4 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int8
+</span><span style="color:#6c71c4;">127
+</span><span style="color:#859900;">&gt;&gt;&gt; </span><span style="color:#6c71c4;">123 </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">5 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int8
+</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">128
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> x </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Decimal </span><span style="color:#6c71c4;">123 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Decimal RoundHalfUp </span><span style="color:#6c71c4;">6 </span><span style="color:#cb4b16;">Int8
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> x
+</span><span style="color:#6c71c4;">0.000123
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> plusDecimalBounded x (</span><span style="color:#cb4b16;">Decimal </span><span style="color:#6c71c4;">4</span><span>) </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Maybe</span><span> (</span><span style="color:#cb4b16;">Decimal RoundHalfUp </span><span style="color:#6c71c4;">6 </span><span style="color:#cb4b16;">Int8</span><span>)
+</span><span style="color:#cb4b16;">Just </span><span style="color:#6c71c4;">0.000127
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> plusDecimalBounded x (</span><span style="color:#cb4b16;">Decimal </span><span style="color:#6c71c4;">5</span><span>) </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Maybe</span><span> (</span><span style="color:#cb4b16;">Decimal RoundHalfUp </span><span style="color:#6c71c4;">6 </span><span style="color:#cb4b16;">Int8</span><span>)
+</span><span style="color:#cb4b16;">Nothing
+</span></code></pre>
+<h3 id="runtime-exceptions">Runtime exceptions</h3>
+<p>We know that division by zero will result in <code>DivideByZero</code> exception:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">&gt;&gt;&gt; </span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">`div` </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int
+</span><span>*** </span><span style="color:#cb4b16;">Exception</span><span style="color:#859900;">:</span><span> divide by zero
+</span></code></pre>
+<p>Less well known is that while some integral operations result in silent overflows, others will cause runtime exceptions:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">&gt;&gt;&gt; -</span><span style="color:#6c71c4;">1</span><span> * minBound </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int
+</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">9223372036854775808
+</span><span style="color:#859900;">&gt;&gt;&gt; </span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">`div`</span><span> minBound </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int
+</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> minBound </span><span style="color:#859900;">`div`</span><span> (</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1</span><span>) </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int
+</span><span>*** </span><span style="color:#cb4b16;">Exception</span><span style="color:#859900;">:</span><span> arithmetic overflow
+</span></code></pre>
+<p>Floating point values also have a sad story for division by zero. You'd be surprised how often you can stumble upon those values online:</p>
+<img src="/images/blog/safe-decimal.jpeg" style="max-width:95%">
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">&gt;&gt;&gt; </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">/ </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Double
+</span><span style="color:#cb4b16;">NaN
+</span><span style="color:#859900;">&gt;&gt;&gt; </span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">/ </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Double
+</span><span style="color:#cb4b16;">Infinity
+</span><span style="color:#859900;">&gt;&gt;&gt; -</span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">/ </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Double
+</span><span style="color:#859900;">-</span><span style="color:#cb4b16;">Infinity
+</span></code></pre>
+<p>Long story short we want to be able to prevent all these issues from within pure code.
+Which is exactly what <code>safe-decimal</code> will do for you:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">&gt;&gt;&gt; -</span><span style="color:#6c71c4;">1</span><span> * pure minBound </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Arith</span><span> (</span><span style="color:#cb4b16;">Decimal RoundHalfUp </span><span style="color:#6c71c4;">2 </span><span style="color:#cb4b16;">Int</span><span>)
+</span><span style="color:#cb4b16;">ArithError</span><span> arithmetic overflow
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> pure minBound </span><span style="color:#859900;">/</span><span> (</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1</span><span>) </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Arith</span><span> (</span><span style="color:#cb4b16;">Decimal RoundHalfUp </span><span style="color:#6c71c4;">2 </span><span style="color:#cb4b16;">Int</span><span>)
+</span><span style="color:#cb4b16;">ArithError</span><span> arithmetic overflow
+</span><span style="color:#859900;">&gt;&gt;&gt; </span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">/ </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Arith</span><span> (</span><span style="color:#cb4b16;">Decimal RoundHalfUp </span><span style="color:#6c71c4;">2 </span><span style="color:#cb4b16;">Int</span><span>)
+</span><span style="color:#cb4b16;">ArithError</span><span> divide by zero
+</span></code></pre>
+<p><code>Arith</code> is a monad defined in <code>safe-decimal</code> and is used for working with arithmetic
+operations that can fail for any particular reason. It is isomorphic to <code>Either SomeException</code>, which means there is straightforward conversion from <code>Arith</code> monad to
+others that have <code>MonadThrow</code> instance with <code>arithM</code> and a few other helper functions:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">&gt;&gt;&gt;</span><span> arithM (</span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">/ </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Arith</span><span> (</span><span style="color:#cb4b16;">Decimal RoundHalfUp </span><span style="color:#6c71c4;">2 </span><span style="color:#cb4b16;">Int</span><span>))
+</span><span>*** </span><span style="color:#cb4b16;">Exception</span><span style="color:#859900;">:</span><span> divide by zero
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> arithMaybe (</span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">/ </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Arith</span><span> (</span><span style="color:#cb4b16;">Decimal RoundHalfUp </span><span style="color:#6c71c4;">2 </span><span style="color:#cb4b16;">Int</span><span>))
+</span><span style="color:#cb4b16;">Nothing
+</span></code></pre>
+<h2 id="decimal-for-crypto">Decimal for crypto</h2>
+<p>At the beginning of the post I mentioned that we will implement a currency. Everyone seems to be implementing cryptocurrencies nowadays, so why don't we do the same?</p>
+<p>The most popular cryptocurrency at time of writing is Bitcoin, so we'll use it for this
+example. A few assumptions we are going to make before we start:</p>
+<ul>
+<li>The maximum amount is 21M BTC</li>
+<li>No negative amounts are allowed</li>
+<li>Precision is up to 8 decimal places</li>
+<li>Smallest expressible value is 0.00000001 BTC, which is one Satoshi. It is named after the pseudonymous Satoshi Nakamoto who published the seminal Bitcoin paper.</li>
+</ul>
+<h3 id="definition">Definition</h3>
+<p>Here we'll demonstrate how we can represent Bitcoin with <code>safe-decimal</code> and in case if you
+would like to follow along here is <a href="https://gist.github.com/lehins/98d835b51c15270c2a600135b64d474d">the
+gist</a> with all of the
+code presented in this blogpost. First, we declare the raw amount <code>Satoshi</code> that will be
+used, so we can specify its bounds. Following that is the <code>Bitcoin</code> wrapper around the
+<code>Decimal</code> that specifies all we need to know in order to operate on this currency:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> DataKinds #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NumericUnderscores #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> GeneralizedNewtypeDeriving #-}
+</span><span>
+</span><span style="color:#859900;">module Bitcoin </span><span>(</span><span style="color:#268bd2;">Bitcoin</span><span>) </span><span style="color:#859900;">where
+</span><span>
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Word
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Numeric.Decimal
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Coerce
+</span><span>
+</span><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">Satoshi </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Satoshi Word64 </span><span style="color:#859900;">deriving</span><span> (</span><span style="color:#268bd2;">Show</span><span>, </span><span style="color:#268bd2;">Eq</span><span>, </span><span style="color:#268bd2;">Ord</span><span>, </span><span style="color:#268bd2;">Enum</span><span>, </span><span style="color:#268bd2;">Num</span><span>, </span><span style="color:#268bd2;">Real</span><span>, </span><span style="color:#268bd2;">Integral</span><span>)
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Bounded Satoshi </span><span style="color:#859900;">where
+</span><span>  minBound </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Satoshi </span><span style="color:#6c71c4;">0
+</span><span>  maxBound </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Satoshi</span><span> 21_000_000_00000000
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">NoRounding
+</span><span>
+</span><span style="color:#859900;">type </span><span style="color:#cb4b16;">BitcoinDecimal </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Decimal NoRounding </span><span style="color:#6c71c4;">8 </span><span style="color:#cb4b16;">Satoshi
+</span><span>
+</span><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">Bitcoin </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Bitcoin BitcoinDecimal </span><span style="color:#859900;">deriving</span><span> (</span><span style="color:#268bd2;">Eq</span><span>, </span><span style="color:#268bd2;">Ord</span><span>, </span><span style="color:#268bd2;">Bounded</span><span>)
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Show Bitcoin </span><span style="color:#859900;">where
+</span><span>  show (</span><span style="color:#cb4b16;">Bitcoin</span><span> b) </span><span style="color:#859900;">=</span><span> show b
+</span></code></pre>
+<p>Important parts of these definitions are:</p>
+<ul>
+<li>We are using a newtype wrapper around <code>Word64</code> with custom bounds, so that the library
+can protect us from creating an invalid value. Using <code>Int64</code> would have not made a
+difference in this case, but using another type with less available bits would not be
+enough to hold large values.</li>
+<li>We define no rounding strategy to make sure that at no point rounding could cause money
+to appear or disappear.</li>
+<li>We do not export the constructor for <code>Bitcoin</code> type to ensure that invalid values cannot
+be constructed manually. Smart constructors will follow below, which can be exported if
+needed.</li>
+</ul>
+<h3 id="construction-and-arithmetic">Construction and arithmetic</h3>
+<p>Helper functions that do zero cost coercions from <code>Data.Coerce</code> will be used to go between
+types without making us repeat their signatures.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">toBitcoin </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">BitcoinDecimal </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Bitcoin
+</span><span>toBitcoin </span><span style="color:#859900;">=</span><span> coerce
+</span><span>
+</span><span style="color:#b58900;">fromBitcoin </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Bitcoin </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">BitcoinDecimal
+</span><span>fromBitcoin </span><span style="color:#859900;">=</span><span> coerce
+</span><span>
+</span><span style="color:#b58900;">mkBitcoin </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">MonadThrow m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Rational </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m Bitcoin
+</span><span>mkBitcoin r </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Bitcoin </span><span style="color:#859900;">&lt;$&gt;</span><span> fromRationalDecimalBoundedWithoutLoss r
+</span><span>
+</span><span style="color:#b58900;">plusBitcoins </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">MonadThrow m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Bitcoin </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Bitcoin </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m Bitcoin
+</span><span>plusBitcoins b1 b2 </span><span style="color:#859900;">=</span><span> toBitcoin </span><span style="color:#859900;">&lt;$&gt;</span><span> (fromBitcoin b1 </span><span style="color:#859900;">`plusDecimalBounded`</span><span> fromBitcoin b2)
+</span><span>
+</span><span style="color:#b58900;">minusBitcoins </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">MonadThrow m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Bitcoin </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Bitcoin </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m Bitcoin
+</span><span>minusBitcoins b1 b2 </span><span style="color:#859900;">=</span><span> toBitcoin </span><span style="color:#859900;">&lt;$&gt;</span><span> (fromBitcoin b1 </span><span style="color:#859900;">`minusDecimalBounded`</span><span> fromBitcoin b2)
+</span></code></pre>
+<p><code>mkBitcoin</code> gives us a way to construct new values, while giving us a freedom to choose
+the monad in which we want to fail by restricting to <code>MonadThrow</code>, for simplicity we'll
+stick to <code>IO</code>, but it could just as well be <code>Maybe</code>, <code>Either</code>, <code>Arith</code> and many others.</p>
+<pre data-lang="haskel" style="background-color:#fdf6e3;color:#657b83;" class="language-haskel "><code class="language-haskel" data-lang="haskel"><span>&gt;&gt;&gt; mkBitcoin 1.23
+</span><span>1.23000000
+</span><span>&gt;&gt;&gt; mkBitcoin (-1.23)
+</span><span>*** Exception: arithmetic underflow
+</span></code></pre>
+<p>Examples below make it obvious that we are guarded from constructing invalid values from
+<code>Rational</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">&gt;&gt;&gt; :</span><span>set </span><span style="color:#859900;">-</span><span style="color:#cb4b16;">XNumericUnderscores
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> mkBitcoin 21_000_000</span><span style="color:#859900;">.</span><span style="color:#6c71c4;">00000000
+</span><span style="color:#6c71c4;">21000000.00000000
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> mkBitcoin 21_000_000</span><span style="color:#859900;">.</span><span style="color:#6c71c4;">00000001
+</span><span>*** </span><span style="color:#cb4b16;">Exception</span><span style="color:#859900;">:</span><span> arithmetic overflow
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> mkBitcoin </span><span style="color:#6c71c4;">0.123456789
+</span><span>*** </span><span style="color:#cb4b16;">Exception</span><span style="color:#859900;">: </span><span style="color:#cb4b16;">PrecisionLoss</span><span> (</span><span style="color:#6c71c4;">123456789 </span><span style="color:#859900;">% </span><span style="color:#6c71c4;">1000000000</span><span>) to </span><span style="color:#6c71c4;">8</span><span> decimal spaces
+</span></code></pre>
+<p>Same logic goes for operating on <code>Bitcoin</code> values. Nothing gets past, any operation that
+could produce an invalid value will result in a failure.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">&gt;&gt;&gt;</span><span> balance </span><span style="color:#859900;">&lt;-</span><span> mkBitcoin </span><span style="color:#6c71c4;">10.05
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> receiveAmount </span><span style="color:#859900;">&lt;-</span><span> mkBitcoin </span><span style="color:#6c71c4;">2.345
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> plusBitcoins balance receiveAmount
+</span><span style="color:#6c71c4;">12.39500000
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> maliciousReceiveBitcoin </span><span style="color:#859900;">&lt;-</span><span> mkBitcoin </span><span style="color:#6c71c4;">20999990.0
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> plusBitcoins balance maliciousReceiveBitcoin
+</span><span>*** </span><span style="color:#cb4b16;">Exception</span><span style="color:#859900;">:</span><span> arithmetic overflow
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> arithEither </span><span style="color:#859900;">$</span><span> plusBitcoins balance maliciousReceiveBitcoin
+</span><span style="color:#cb4b16;">Left</span><span> arithmetic overflow
+</span></code></pre>
+<p>Subtracting values is handled in the same fashion. Note that going below a lower bound
+will be reported as underflow, which, contrary to popular belief, is a real term not only
+for floating points, but for integers as well.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">&gt;&gt;&gt;</span><span> balance </span><span style="color:#859900;">&lt;-</span><span> mkBitcoin </span><span style="color:#6c71c4;">10.05
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> sendAmount </span><span style="color:#859900;">&lt;-</span><span> mkBitcoin </span><span style="color:#6c71c4;">1.01
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> balance </span><span style="color:#859900;">`minusBitcoins`</span><span> sendAmount
+</span><span style="color:#6c71c4;">9.04000000
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> sendAmountTooMuch </span><span style="color:#859900;">&lt;-</span><span> mkBitcoin </span><span style="color:#6c71c4;">11.01
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> balance </span><span style="color:#859900;">`minusBitcoins`</span><span> sendAmountTooMuch
+</span><span>*** </span><span style="color:#cb4b16;">Exception</span><span style="color:#859900;">:</span><span> arithmetic underflow
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> sendAmountMalicious </span><span style="color:#859900;">&lt;-</span><span> mkBitcoin </span><span style="color:#6c71c4;">184467440737.09551616
+</span><span>*** </span><span style="color:#cb4b16;">Exception</span><span style="color:#859900;">:</span><span> arithmetic overflow
+</span></code></pre>
+<p>I would like to emphasize in the example above the fact that we did not have to check if
+<code>balance</code> was sufficient enough for the amounts to be fully deducted from it. This means
+we are automatically protected from incorrect transactions as well as <a href="https://consensys.github.io/smart-contract-best-practices/known_attacks/#integer-overflow-and-underflow">very common attack
+vectors</a>,
+some of which <a href="https://medium.com/@jeancvllr/the-value-overflow-incident-in-the-bitcoin-blockchain-15th-august-2010-a59a516e03db">really did happen with
+Bitcoin</a>
+and other cryptocurrencies.</p>
+<h3 id="num-and-fractional">Num and Fractional</h3>
+<p>Using a special smart constructor is cool and all, but it would be cooler if we could use
+our regular math operators to work with <code>Bitcoin</code> values and utilize GHC desugarer to
+automatically convert numeric literal values too. For this we need instances of <code>Num</code>
+and <code>Fractional</code>. We can't create instances like that:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">instance </span><span style="color:#268bd2;">Num Bitcoin </span><span style="color:#859900;">where
+</span><span style="color:#859900;">...
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Fractional Bitcoin </span><span style="color:#859900;">where
+</span><span style="color:#859900;">...
+</span></code></pre>
+<p>because then we would have to use partial functions for failures, which is exactly what we
+want to avoid. Moreover some functions simply do no make sense for monetary
+values. Multiplying or dividing Bitcoins together, is simply undefined. We'll
+have to represent a special type of failure through an exception. This is a bit unfortunate, but we'll go with it anyways:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">data </span><span style="color:#cb4b16;">UnsupportedOperation </span><span style="color:#859900;">=
+</span><span>  </span><span style="color:#cb4b16;">UnsupportedMultiplication </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">UnsupportedDivision
+</span><span>  </span><span style="color:#859900;">deriving </span><span style="color:#cb4b16;">Show
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Exception UnsupportedOperation
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Num</span><span> (</span><span style="color:#268bd2;">Arith Bitcoin</span><span>) </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#b58900;">(+) </span><span style="color:#859900;">=</span><span> bindM2 plusBitcoins
+</span><span>  </span><span style="color:#b58900;">(-) </span><span style="color:#859900;">=</span><span> bindM2 minusBitcoins
+</span><span>  </span><span style="color:#b58900;">(*) </span><span style="color:#859900;">=</span><span> bindM2 (</span><span style="color:#859900;">\</span><span>_ _ </span><span style="color:#859900;">-&gt;</span><span> throwM </span><span style="color:#cb4b16;">UnsupportedMultiplication</span><span>)
+</span><span>  abs </span><span style="color:#859900;">=</span><span> id
+</span><span>  signum mb </span><span style="color:#859900;">=</span><span> fmap toBitcoin </span><span style="color:#859900;">.</span><span> signumDecimalBounded </span><span style="color:#859900;">.</span><span> fromBitcoin </span><span style="color:#859900;">=&lt;&lt;</span><span> mb
+</span><span>  fromInteger i </span><span style="color:#859900;">=</span><span> toBitcoin </span><span style="color:#859900;">&lt;$&gt;</span><span> fromIntegerDecimalBoundedIntegral i
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Fractional</span><span> (</span><span style="color:#268bd2;">Arith Bitcoin</span><span>) </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#b58900;">(/) </span><span style="color:#859900;">=</span><span> bindM2 (</span><span style="color:#859900;">\</span><span>_ _ </span><span style="color:#859900;">-&gt;</span><span> throwM </span><span style="color:#cb4b16;">UnsupportedDivision</span><span>)
+</span><span>  fromRational </span><span style="color:#859900;">=</span><span> mkBitcoin
+</span></code></pre>
+<p>It is important to note that defining the instances above is strictly optional and exporting helper functions that perform the same operations is preferable. We have the instances now so we can demonstrate their use:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">&gt;&gt;&gt; </span><span style="color:#6c71c4;">7.8 </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">10 </span><span style="color:#859900;">- </span><span style="color:#6c71c4;">0.4 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Arith Bitcoin
+</span><span style="color:#cb4b16;">Arith </span><span style="color:#6c71c4;">17.40000000
+</span><span style="color:#859900;">&gt;&gt;&gt; </span><span style="color:#6c71c4;">7.8 </span><span style="color:#859900;">- </span><span style="color:#6c71c4;">10 </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">0.4 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Arith Bitcoin
+</span><span style="color:#cb4b16;">ArithError</span><span> arithmetic underflow
+</span><span style="color:#859900;">&gt;&gt;&gt; </span><span style="color:#6c71c4;">7.8</span><span> * </span><span style="color:#6c71c4;">10 </span><span style="color:#859900;">/ </span><span style="color:#6c71c4;">0.4 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Arith Bitcoin
+</span><span style="color:#cb4b16;">ArithError UnsupportedMultiplication
+</span><span style="color:#859900;">&gt;&gt;&gt; </span><span style="color:#6c71c4;">7.8 </span><span style="color:#859900;">/ </span><span style="color:#6c71c4;">10</span><span> * </span><span style="color:#6c71c4;">0.4 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Arith Bitcoin
+</span><span style="color:#cb4b16;">ArithError UnsupportedDivision
+</span><span style="color:#859900;">&gt;&gt;&gt; </span><span style="color:#6c71c4;">7.8 </span><span style="color:#859900;">- </span><span style="color:#6c71c4;">7.7 </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">0.4 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Arith Bitcoin
+</span><span style="color:#cb4b16;">Arith </span><span style="color:#6c71c4;">0.50000000
+</span><span style="color:#859900;">&gt;&gt;&gt; </span><span style="color:#6c71c4;">0.4 </span><span style="color:#859900;">- </span><span style="color:#6c71c4;">7.7 </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">7.8 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Arith Bitcoin
+</span><span style="color:#cb4b16;">ArithError</span><span> arithmetic underflow
+</span></code></pre>
+<p>The order of operations can play tricks on you, which probably serves as another reason to stick to exporting functions: <code>mkBitcoin</code>, <code>plusBitcoins</code>, <code>minusBitcoins</code> and whatever other operations we might need.</p>
+<p>Let's take a look at a more realistic example where the amount sent is supplied to us as a <code>Scientific</code> value likely from some JSON object and we want to update the balance of our account. For simplicity's sake I will use a <code>State</code> monad, but same approach will work just as well with whatever stateful setup you have.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">Balance </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Balance Bitcoin </span><span style="color:#859900;">deriving </span><span style="color:#cb4b16;">Show
+</span><span>
+</span><span style="color:#b58900;">sendBitcoin </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">MonadThrow m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Balance </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Scientific </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m</span><span> (</span><span style="color:#268bd2;">Bitcoin</span><span>, </span><span style="color:#268bd2;">Balance</span><span>)
+</span><span>sendBitcoin startingBalance rawAmount </span><span style="color:#859900;">=
+</span><span>  flip runStateT startingBalance </span><span style="color:#859900;">$ do
+</span><span>    amount </span><span style="color:#859900;">&lt;-</span><span> toBitcoin </span><span style="color:#859900;">&lt;$&gt;</span><span> fromScientificDecimalBounded rawAmount
+</span><span>    </span><span style="color:#cb4b16;">Balance</span><span> balance </span><span style="color:#859900;">&lt;-</span><span> get
+</span><span>    newBalance </span><span style="color:#859900;">&lt;-</span><span> minusBitcoins balance amount
+</span><span>    put </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Balance</span><span> newBalance
+</span><span>    pure amount
+</span></code></pre>
+<p>Usage of this simple function will demonstrate us the power of the approach taken in the
+library as well as its limitations:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">&gt;&gt;&gt;</span><span> balance </span><span style="color:#859900;">&lt;-</span><span> mkBitcoin </span><span style="color:#6c71c4;">10.05
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> sendBitcoin (</span><span style="color:#cb4b16;">Balance</span><span> balance) </span><span style="color:#6c71c4;">0.5
+</span><span>(</span><span style="color:#6c71c4;">0.50000000</span><span>,</span><span style="color:#cb4b16;">Balance </span><span style="color:#6c71c4;">9.55000000</span><span>)
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> sendBitcoin (</span><span style="color:#cb4b16;">Balance</span><span> balance) </span><span style="color:#6c71c4;">1e-6
+</span><span>(</span><span style="color:#6c71c4;">0.00000100</span><span>,</span><span style="color:#cb4b16;">Balance </span><span style="color:#6c71c4;">10.04999900</span><span>)
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> sendBitcoin (</span><span style="color:#cb4b16;">Balance</span><span> balance) </span><span style="color:#6c71c4;">1e+6
+</span><span>*** </span><span style="color:#cb4b16;">Exception</span><span style="color:#859900;">:</span><span> arithmetic underflow
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> arithEither </span><span style="color:#859900;">$</span><span> sendBitcoin (</span><span style="color:#cb4b16;">Balance</span><span> balance) (</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1</span><span>)
+</span><span style="color:#cb4b16;">Left</span><span> arithmetic underflow
+</span></code></pre>
+<p>We witness <code>Overflow</code>/<code>Underflow</code> errors as expected, but we get almost no information on where exactly the problem occurred and which value was responsible for it. This is something that can be fixed with customized exceptions, but for now we do achieve the most important goal, namely protecting our calculations from all the dangerous problems without doing any explicit checking.</p>
+<p>Nowhere in <code>sendBitcoin</code> did we have to validate our input, output, or intermediate values. Not a single <code>if then else</code> statement. This is because all of the information needed to determine the validity of the above operations was encoded into the type and the library enforces that validity for the programmer.</p>
+<h3 id="mixing-decimal-types">Mixing Decimal types</h3>
+<p>Although multiplying two <code>Bitcoin</code> values makes no sense, computing the product of an amount and a percentage makes perfect sense. So, how do we go about multiplying different decimals together?</p>
+<p>While demonstrating interoperability of different decimal types we'd like to also show how higher precision integrals can be used with <code>Decimal</code>. In this example we'll use a <code>Word128</code> backed <code>Decimal</code> for computing <a href="https://en.wikipedia.org/wiki/Future_value">future value</a>. There are a couple of packages that provide 128-bit integral types and it doesn't matter which one it comes from.</p>
+<p>Our goal is to compute the savings account balance at 1.9% APY (Annual Percentage Yield) in 30 days if you start with 10,000 BTC and add 10 BTC each day.</p>
+<p>We will start by defining the rounding strategy implementation for the <code>Word128</code> type and
+specifying the <code>Decimal</code> type we will be using for computation:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">instance </span><span style="color:#268bd2;">Round RoundHalfUp Word128 </span><span style="color:#859900;">where
+</span><span>  roundDecimal </span><span style="color:#859900;">=</span><span> roundHalfUp
+</span><span>
+</span><span style="color:#859900;">type </span><span style="color:#cb4b16;">CDecimal </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Decimal RoundHalfUp </span><span style="color:#6c71c4;">33 </span><span style="color:#cb4b16;">Word128
+</span></code></pre>
+<p>This is not the implementation of <code>FV</code> (Future Value) function as it is known in finance. It is a direct translation of how we think the accrual of interest works. In plain English we can say that to compute balance of the account tomorrow, we take balance we have today, multiply it by the daily interest rate and add it to the today's balance together with the amount we promised to top up daily.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">futureValue </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">MonadThrow m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">CDecimal </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">CDecimal </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">CDecimal </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m CDecimal
+</span><span>futureValue startBalance dailyRefill apy days </span><span style="color:#859900;">= do
+</span><span>  dailyScale </span><span style="color:#859900;">&lt;- </span><span style="color:#93a1a1;">-- apy is in % and the year of 2020 is a leap year
+</span><span>    fromIntegralDecimalBounded (</span><span style="color:#6c71c4;">100</span><span> * </span><span style="color:#6c71c4;">366</span><span>)
+</span><span>  dailyRate </span><span style="color:#859900;">&lt;-</span><span> divideDecimalBoundedWithRounding apy dailyScale
+</span><span>  </span><span style="color:#859900;">let</span><span> go curBalance day
+</span><span>        </span><span style="color:#859900;">|</span><span> day </span><span style="color:#859900;">&lt;</span><span> days </span><span style="color:#859900;">= do
+</span><span>          accruedDaily </span><span style="color:#859900;">&lt;-</span><span> timesDecimalBoundedWithRounding curBalance dailyRate
+</span><span>          nextDayBalance </span><span style="color:#859900;">&lt;-</span><span> sumDecimalBounded [curBalance, accruedDaily, dailyRefill]
+</span><span>          go nextDayBalance (day </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1</span><span>)
+</span><span>        </span><span style="color:#859900;">|</span><span> otherwise </span><span style="color:#859900;">=</span><span> pure curBalance
+</span><span>  go startBalance </span><span style="color:#6c71c4;">0
+</span></code></pre>
+<p>The above implementation works on the <code>CDecimal</code> type. What we need to calculate is <code>Bitcoin</code>. This means we have to do some type conversions and scaling in order to match up the types of <code>futureValue</code> function. Then we do some rounding and conversion again to reduce precision to obtain the new <code>Balance</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">futureValueBitcoin </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">MonadThrow m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Balance </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Bitcoin </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Rational </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m</span><span> (</span><span style="color:#268bd2;">Balance</span><span>, </span><span style="color:#268bd2;">CDecimal</span><span>)
+</span><span>futureValueBitcoin (</span><span style="color:#cb4b16;">Balance</span><span> (</span><span style="color:#cb4b16;">Bitcoin</span><span> balance)) (</span><span style="color:#cb4b16;">Bitcoin</span><span> dailyRefill) apy days </span><span style="color:#859900;">= do
+</span><span>  balance&#39; </span><span style="color:#859900;">&lt;-</span><span> scaleUpBounded (fromIntegral </span><span style="color:#859900;">&lt;$&gt;</span><span> castRounding balance)
+</span><span>  dailyRefill&#39; </span><span style="color:#859900;">&lt;-</span><span> scaleUpBounded (fromIntegral </span><span style="color:#859900;">&lt;$&gt;</span><span> castRounding dailyRefill)
+</span><span>  apy&#39; </span><span style="color:#859900;">&lt;-</span><span> fromRationalDecimalBoundedWithoutLoss apy
+</span><span>  endBalance </span><span style="color:#859900;">&lt;-</span><span> futureValue balance&#39; dailyRefill&#39; apy&#39; days
+</span><span>  endBalanceRounded </span><span style="color:#859900;">&lt;-</span><span> integralDecimalToDecimalBounded (roundDecimal endBalance)
+</span><span>  pure (</span><span style="color:#cb4b16;">Balance </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Bitcoin </span><span style="color:#859900;">$</span><span> castRounding endBalanceRounded, endBalance)
+</span></code></pre>
+<p>Now we can compute what our balance will be in 30 days:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">computeBalance </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Arith</span><span> (</span><span style="color:#268bd2;">Balance</span><span>, </span><span style="color:#268bd2;">CDecimal</span><span>)
+</span><span>computeBalance </span><span style="color:#859900;">= do
+</span><span>  balance </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">Balance </span><span style="color:#859900;">&lt;$&gt; </span><span style="color:#6c71c4;">10000
+</span><span>  topup </span><span style="color:#859900;">&lt;- </span><span style="color:#6c71c4;">10
+</span><span>  futureValueBitcoin balance topup </span><span style="color:#6c71c4;">1.9 30
+</span></code></pre>
+<p>Let's see what values we get and how they compares to the actual <code>FV</code> function that works on <code>Double</code> (for the curious here is one possible implementation <a href="https://github.com/numpy/numpy/blob/e94ed84010c60961f82860d146681d3fd607de4e/numpy/lib/financial.py#L36">numpy.fv</a>)</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">&gt;&gt;&gt;</span><span> fst </span><span style="color:#859900;">&lt;$&gt;</span><span> arithM computeBalance
+</span><span style="color:#cb4b16;">Balance </span><span style="color:#6c71c4;">10315.81142818
+</span><span style="color:#859900;">&gt;&gt;&gt;</span><span> fv (</span><span style="color:#6c71c4;">1.9 </span><span style="color:#859900;">/ </span><span style="color:#6c71c4;">36600</span><span>) </span><span style="color:#6c71c4;">30</span><span> (</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">10</span><span>) (</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">10000</span><span>)
+</span><span style="color:#6c71c4;">10315.811428177167
+</span></code></pre>
+<p>That's pretty good. We get the accurately rounded result of our new balance. But how
+accurate is the computed result before the rounding is applied? As accurate as 128 bits can
+do in presence of rounding:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">&gt;&gt;&gt;</span><span> snd </span><span style="color:#859900;">&lt;$&gt;</span><span> arithM computeBalance
+</span><span style="color:#6c71c4;">10315.811428176906130029412612348658890
+</span></code></pre>
+<p>We get much better accuracy here than we could with <code>Double</code>. This isn't surprising, since we have more bits at our disposal, but accuracy is not the only benefit of this calculation. The result is also deterministic! This is practically impossible to guarantee with floating point number calculations across different platforms and architectures.</p>
+<h2 id="available-solutions">Available solutions</h2>
+<p>A very common question people usually ask when a new library is being announced: &quot;What is wrong with currently available solutions?&quot;. That is a perfectly reasonable question, which hopefully we have a compelling answer for.</p>
+<p>We had a strong requirement for safety, correctness, and performance. Which is the combination that none of the available libraries in Haskell ecosystem could provide.</p>
+<p>I will use <code>Data.Fixed</code> from <code>base</code> as an example and list some of limitations that prevented us from using it:</p>
+<ul>
+<li>
+<p>Backed by <code>Integer</code>, which makes it slower than it should be for common cases.</p>
+</li>
+<li>
+<p>Truncation instead of some more useful rounding strategies.</p>
+</li>
+</ul>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">&gt;&gt;&gt; </span><span style="color:#6c71c4;">5.39 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Fixed E1
+</span><span style="color:#6c71c4;">5.3
+</span><span style="color:#859900;">&gt;&gt;&gt; </span><span style="color:#6c71c4;">5.499999999999 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Fixed E1
+</span><span style="color:#6c71c4;">5.4
+</span></code></pre>
+<ul>
+<li>No built-in protection against runtime exceptions:</li>
+</ul>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>&gt;&gt;&gt; f = 5.49 :: Fixed E1
+</span><span>&gt;&gt;&gt; f / 0
+</span><span>*** Exception: divide by zero
+</span></code></pre>
+<ul>
+<li>
+<p>There is a limited number of scaling types: <code>E0</code>, <code>E1</code>, <code>E2</code>, <code>E3</code>, <code>E6</code>, <code>E9</code> and <code>E12</code>. It is possible to add new ones with <code>HasResolution</code>, but it is a bit inconvenient.</p>
+</li>
+<li>
+<p>No built-in ability to specify bounds. This means that there is no protection against things like negative values or going outside of artificially imposed limits.</p>
+</li>
+</ul>
+<p>Similar arguments can be applied to other libraries. Especially the objection <a href="https://gist.github.com/lehins/727a86c71ff32e18a51b42d3dc0736fe">regarding performance</a>. This objection is not unfounded: our benchmarks have revealed performance issues of practical relevance with existing implementations.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>I encourage everyone who writes software for finance, blockchain and other areas that require exact precision and safety of calculations, to seriously consider all implications of choosing the wrong data type for representing their numeric values.</p>
+<p>Haskell is a very safe language out of the box, but as you saw in this post, it does not offer the desired level of safety when it comes to operations on numeric values. Hopefully we were able to convince you, that, at least for decimal numbers, such safety can be achieved with <code>safe-decimal</code> library.</p>
+<p>If you feel like this post describes problems that are familiar to you and you are looking for a solution, please reach out to us and we will be glad to help.</p>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Decimal%20Safety%20Right%20on%20The%20Money https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;safe-decimal-right-on-the-money&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;safe-decimal-right-on-the-money&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;safe-decimal-right-on-the-money&#x2F;&amp;title=Decimal%20Safety%20Right%20on%20The%20Money"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;safe-decimal-right-on-the-money&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#93e0f2fff6e0d3f5e3f0fcfee3fff6e7f6bdf0fcfe" targe="_blank"><span class="__cf_email__" data-cfemail="f58694999086b59385969a988599908190db969a98">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

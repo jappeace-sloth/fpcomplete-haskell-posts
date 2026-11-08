@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Exiting a Haskell process</title>
+  <meta property="og:title" content="Exiting a Haskell process">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="You&#x27;ve probably been able to successfully exit most of your Haskell processes. But there are some perhaps surprising corner cases worth mentioning.">
+  <meta property="og:description" content="You&#x27;ve probably been able to successfully exit most of your Haskell processes. But there are some perhaps surprising corner cases worth mentioning.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;08&#x2F;exiting-haskell-process&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Exiting a Haskell process</h1>
+      
+      <p id="page-description">By Michael Snoyman, August 24, 2017</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Exiting%20a%20Haskell%20process https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;08&#x2F;exiting-haskell-process&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;08&#x2F;exiting-haskell-process&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;08&#x2F;exiting-haskell-process&#x2F;&amp;title=Exiting%20a%20Haskell%20process"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;08&#x2F;exiting-haskell-process&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>This blog post was inspired by a <a href=
+"https://stackoverflow.com/questions/45839972/how-do-i-cause-a-warp-server-to-terminate">
+recent Stack Overflow question</a>. It also uses the <a href=
+"https://haskell-lang.org/tutorial/stack-script">Stack script
+interpreter</a> for inline snippets if you want to play along at
+home. Don't forget to <a href=
+"https://haskell-lang.org/get-started">get Stack first</a>.</p>
+<h2 id="the-non-trick-case">The non trick case</h2>
+<p>Here's a non trick question: what do you think the output of
+this series of shell commands is going to be?</p>
+<pre><code>$ cat Main.hs
+#!/usr/bin/env stack
+-- stack --resolver lts-9.0 script
+import System.Exit
+
+main = exitWith (ExitFailure 42)
+$ stack Main.hs
+$ echo $?</code></pre>
+<p>If you guessed <code>42</code>, you're right. Our Haskell
+process uses <code>exitWith</code> to exit the process with exit
+code <code>42</code>. Then <code>echo $?</code> prints the last
+exit code. All relatively straightforward (if you're familiar with
+the shell).</p>
+<h2 id="race-condition">Race condition</h2>
+<p>Alright, let's make it more fun with some concurrency
+(concurrency makes <i>everything</i> more fun):</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.0 script</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Exit</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Concurrent</span><span class="hs-varop">.</span><span class="hs-conid">Async</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">concurrently</span>
+  <span class="hs-layout">(</span><span class=
+"hs-varid">exitWith</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ExitFailure</span> <span class=
+"hs-num">41</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span>
+  <span class="hs-layout">(</span><span class=
+"hs-varid">exitWith</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ExitFailure</span> <span class=
+"hs-num">42</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span></pre>
+<p>The output this time is <i>nondeterministic</i>. We don't know
+if the first thread (which exits with <code>41</code>) or the
+second thread (which exits with <code>42</code>) will exit first. I
+tested this about 5 times on my machine, and got both
+<code>41</code> and <code>42</code> as outputs. So this isn't just
+<i>theoretically</i> nondetministic, it's <i>practically</i>
+nondetministic.</p>
+<h2 id="surprise-warp">Surprise! Warp</h2>
+<p>Alright, that's fine, probably nothing too terribly surprising.
+Now let's throw the curve balls in. I'm going to write a web server
+with Warp, and when someone requests <code>/die</code>, I want the
+server to go down. Here's the code. If you're not familiar with WAI
+and Warp, just ignore the web bits and focus on the
+<code>exitWith</code> part:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.0 script</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Network</span><span class=
+"hs-varop">.</span><span class="hs-conid">Wai</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Network</span><span class=
+"hs-varop">.</span><span class="hs-conid">Wai</span><span class=
+"hs-varop">.</span><span class=
+"hs-conid">Handler</span><span class="hs-varop">.</span><span class="hs-conid">Warp</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Network</span><span class=
+"hs-varop">.</span><span class="hs-conid">HTTP</span><span class=
+"hs-varop">.</span><span class="hs-conid">Types</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Exit</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">run</span> <span class="hs-num">3000</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">req</span> <span class=
+"hs-varid">send</span> <span class="hs-keyglyph">-&gt;</span>
+  <span class="hs-keyword">if</span> <span class=
+"hs-varid">pathInfo</span> <span class=
+"hs-varid">req</span> <span class="hs-varop">==</span> <span class=
+"hs-keyglyph">[</span><span class="hs-str">"die"</span><span class=
+"hs-keyglyph">]</span>
+    <span class="hs-keyword">then</span> <span class=
+"hs-varid">exitWith</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ExitFailure</span> <span class=
+"hs-num">43</span><span class="hs-layout">)</span>
+    <span class="hs-keyword">else</span> <span class=
+"hs-varid">send</span> <span class="hs-layout">(</span><span class=
+"hs-varid">responseLBS</span> <span class=
+"hs-varid">status200</span> <span class=
+"hs-conid">[]</span> <span class=
+"hs-str">"Still alive!\n"</span><span class=
+"hs-layout">)</span></pre>
+<p>Let's see what happens when we run it:</p>
+<pre><code>$ stack Main.hs&
+[2] 19117
+$ curl http://localhost:3000
+Still alive!
+$ curl http://localhost:3000
+Still alive!
+$ curl http://localhost:3000
+Still alive!
+$ curl http://localhost:3000/die
+ExitFailure 43
+Something went wrong
+$ curl http://localhost:3000
+Still alive!
+$ fg
+stack Main.hs
+^C</code></pre>
+<p>A few different weird things just happened:</p>
+<ul>
+<li>When we made a request to <code>/die</code>, the server
+apparently didn't die! We can see that from both the fact that the
+next request succeeded, and the <code>fg</code> call.</li>
+<li>For some reason, <code>ExitFailure 43</code> is printed to the
+console. We can't tell here, but it's coming from the server
+process.</li>
+<li>And our HTTP response body contains the content <code>Something
+went wrong</code>, even though we didn't write that.</li>
+</ul>
+<p>I would have expected the process to just die and get an empty
+response. Why this surprising behavior instead?</p>
+<h2 id="implementation-of-codeexitwithcode">Implementation of
+<code>exitWith</code></h2>
+<p>To understand what's happening, let's look at a simplified
+version of the implementation of the <code>exitWith</code>
+function. Feel free to <a href=
+"https://www.stackage.org/haddock/lts-9.1/base-4.9.1.0/src/System-Exit.html#exitWith">
+read the original as well</a>.</p>
+<pre><span class="hs-definition">exitWith</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">ExitCode</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">a</span>
+<span class="hs-definition">exitWith</span> <span class=
+"hs-varid">code</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">throwIO</span> <span class="hs-varid">code</span></pre>
+<p>I would have anticipated that this would, you know, actually
+exit the process. Such a function <i>does</i> exist in Haskell.
+It's called <a href=
+"https://www.stackage.org/haddock/lts-9.1/unix-2.7.2.1/src/System-Posix-Process-Common.html#exitImmediately">
+<code>exitImmediately</code></a>, it lives in the <code>unix</code>
+package, and it calls out to the <code>exit</code> C library
+function. But not <code>exitWith</code>: it throws a runtime
+exception.</p>
+<p>There's a good reason for this exception-based behavior. It
+allows cleanup code to run before the process just up and dies,
+which would allow things like flushing file handles and gracefully
+closing network connections. However, this can certainly result in
+surprising behavior. We'll get back to the Warp case in a bit;
+let's see something simpler first:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.0 script</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Exception</span><span class="hs-varop">.</span><span class="hs-conid">Safe</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Exit</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">tryAny</span> <span class=
+"hs-varid">foo</span> <span class=
+"hs-varop">&gt;&gt;=</span> <span class="hs-varid">print</span>
+
+<span class="hs-definition">foo</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">String</span>
+<span class="hs-definition">foo</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">exitWith</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ExitFailure</span> <span class=
+"hs-num">44</span><span class="hs-layout">)</span></pre>
+<p>And the output is:</p>
+<pre><code>$ stack Main.hs
+Left (ExitFailure 44)
+$ echo $?
+0</code></pre>
+<p>We've exited with code 0, a success! And our program continued
+running after the call to <code>exitWith</code>. That's because our
+<code>tryAny</code> call intercepted the exception, converted it
+into a <code>Left</code> value, and then our program succeeded in
+printing out that value.</p>
+<h2 id="what39s-up-with-warp">What's up with Warp?</h2>
+<p>Warp employs a pretty simple model for handling requests:</p>
+<ul>
+<li>Grabs a listening port</li>
+<li>Loops accepting connections on that port</li>
+<li>For each connection, fork a new worker thread</li>
+</ul>
+<p>Within each worker thread, Warp accepts a request, passes it to
+the user-supplied application, takes the response, and sends it.
+Additionally, Warp installs an exception handler in case the
+application throws an exception. In that case, it will print the
+exception to stderr and send a 500 Internal Server Error response
+with the response body (wait for it) <code>Something went
+wrong</code>.</p>
+<p>So of course our initial attempt at killing our Warp application
+failed: the exception was intercepted!</p>
+<p>As an aside, if you really want to be able to exit from a Warp
+application, you can <a href=
+"https://stackoverflow.com/a/45846292/369198">see my answer on
+Stack Overflow</a>, which I'm not going to detail here as it will
+be a tangent to the main point.</p>
+<h2 id="child-threads-in-general">Child threads in general</h2>
+<p>Alright, let's make another mistake (certainly my
+specialty):</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.0 script</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Concurrent</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Exit</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">forkIO</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">exitWith</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ExitFailure</span> <span class=
+"hs-num">45</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span>
+  <span class="hs-varid">threadDelay</span> <span class=
+"hs-num">1000000</span>
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-str">"Normal exit :("</span></pre>
+<p>We're not intercepting the exception via a handler at all, and
+thanks to our <code>threadDelay</code> (which delays the parent
+thread by one second), we have plenty of time for the child thread
+to act before the parent exits on its own. Surely this will exit
+with exit code 45, right?</p>
+<pre><code>$ stack Main.hs
+Main.hs: ExitFailure 45
+Normal exit :(
+$ echo $?
+0</code></pre>
+<p>Foiled again! We're running into something different now. In
+GHC's runtime system, a process exits when the main thread exits.
+If a child thread exits for any reason, the process keeps running.
+If the main thread exits, even if there are still child threads
+running, the process exits.</p>
+<p>When we call <code>forkIO</code>, a default exception handler is
+installed on this new child thread. And that default exception
+handler will simply print out the exception to stderr. That's the
+<code>Main.hs: ExitFailure 45</code> output we see.</p>
+<h2 id="as-usual:-async-to-the-rescue">As usual: async to the
+rescue</h2>
+<p>Where did we go wrong? By using the <code>forkIO</code>
+function, of course! As I'm wont to say:</p>
+<blockquote class="twitter-tweet" data-lang="en">
+<p dir="ltr" lang="en">I think I've just told like the tenth person
+this week "use the async library, you'll be much happier." Thanks
+<a href="https://twitter.com/simonmar">@simonmar</a> 👍</p>
+— Michael Snoyman (@snoyberg) <a href=
+"https://twitter.com/snoyberg/status/881538591251451904">July 2,
+2017</a></blockquote>
+<script async charset="utf-8" src=
+"https://platform.twitter.com/widgets.js"></script>
+<p>The problem is that <code>forkIO</code> installs a default
+exception handler, instead of properly propagating exceptions
+through our application. Fortunately, there's a great solution to
+this, which we've already seen in this post: use the
+<code>concurrently</code> function from <code>async</code> (or, in
+some cases, <code>race</code>).</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-9.0 script</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Concurrent</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Concurrent</span><span class="hs-varop">.</span><span class="hs-conid">Async</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">Exit</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">concurrently</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">exitWith</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ExitFailure</span> <span class=
+"hs-num">45</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span> <span class="hs-varop">$</span> <span class=
+"hs-keyword">do</span>
+  <span class="hs-varid">threadDelay</span> <span class=
+"hs-num">1000000</span>
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-str">"Normal exit :("</span></pre>
+<p>Any luck?</p>
+<pre><code>$ stack Main.hs
+$ echo $?
+45</code></pre>
+<p>Woohoo! I've never been so happy to see a process exit with a
+failure code before.</p>
+<p>In contrast to <code>forkIO</code>, the
+<code>concurrently</code> and <code>race</code> functions track the
+exceptions occurring in their child threads and rethrow those
+exceptions in the parent thread should anything go wrong. So
+instead of exceptions disappearing into the aether, they tear down
+our process with dignity.</p>
+<p>If you're not familiar with the async library, check out the
+<a href="https://haskell-lang.org/library/async">tutorial I wrote
+on it</a>, which focuses on using <code>concurrently</code> and
+<code>race</code> wherever possible.</p>
+<h2 id="summary">Summary</h2>
+<p>Takeaways to remember:</p>
+<ul>
+<li><code>exitWith</code> works by throwing exceptions, not
+directly killing the process</li>
+<li>A Haskell process dies when the main thread dies</li>
+<li>Warp worker threads install an exception handler that generates
+500 Internal Server Error responses</li>
+<li>Use <code>concurrently</code> and <code>race</code> in place of
+<code>forkIO</code>, and generally try to use the
+<code>async</code> library</li>
+</ul>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Exiting%20a%20Haskell%20process https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;08&#x2F;exiting-haskell-process&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;08&#x2F;exiting-haskell-process&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;08&#x2F;exiting-haskell-process&#x2F;&amp;title=Exiting%20a%20Haskell%20process"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;08&#x2F;exiting-haskell-process&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#8af9ebe6eff9caecfae9e5e7fae6effeefa4e9e5e7" targe="_blank"><span class="__cf_email__" data-cfemail="1665777a736556706675797b667a7362733875797b">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

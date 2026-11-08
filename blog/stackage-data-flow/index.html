@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>The Stackage data flow</title>
+  <meta property="og:title" content="The Stackage data flow">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;04&#x2F;stackage-data-flow&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>The Stackage data flow</h1>
+      
+      <p id="page-description">By Michael Snoyman, April 14, 2016</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=The%20Stackage%20data%20flow https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;04&#x2F;stackage-data-flow&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;04&#x2F;stackage-data-flow&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;04&#x2F;stackage-data-flow&#x2F;&amp;title=The%20Stackage%20data%20flow"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;04&#x2F;stackage-data-flow&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>I recently wrote up the <a href=
+"https://github.com/fpco/stackage/blob/master/DATA-FLOW.md">Stackage
+data flow</a>. The primary intent was to assist the rest of the
+Stackage curation team see how all the pieces fit together.
+However, it may also be of general interest to the rest of the
+community. In particular, some of the components used are not
+widely known and may be beneficial for completely separate projects
+(such as all-cabal-metadata).</p>
+<p>Please check out the above linked copy of the file for the most
+up-to-date content. For convenience, I'm copying in the current
+content as of publication time below.</p>
+<hr>
+<p>The Stackage project is really built on top of a number of
+different subcomponents. This page covers how they fit together.
+The Stackage data flow diagram gives a good bird's-eye view:</p>
+<p><img alt="Stackage data flow diagram" src=
+"https://cloud.githubusercontent.com/assets/49415/14490986/cad5274e-017e-11e6-85cc-a4d815175c61.png"></p>
+<h2 id="inputs">Inputs</h2>
+<p>There are three inputs into the data flow:</p>
+<ul>
+<li>
+<p><a href="https://hackage.haskell.org/">Hackage</a> is the
+upstream repository of all available open source Haskell packages
+that are part of our ecosystem. Hackage provides both cabal file
+metadata (via the 00-index.tar file) and tarballs of the individual
+packages.</p>
+</li>
+<li>
+<p><a href=
+"https://github.com/fpco/stackage/blob/master/build-constraints.yaml">
+build-constraints.yaml</a> is the primary Stackage input file. This
+is where package maintainers can add packages to the Stackage
+package set. This also defines upper bounds, skipped tests, and a
+few other pieces of metadata.</p>
+</li>
+<li>
+<p><a href=
+"https://github.com/fpco/stackage-content">stackage-content</a> is
+a Github repository containing static file content served from
+stackage.org</p>
+</li>
+</ul>
+<h2 id="travis">Travis</h2>
+<p>For <a href=
+"/blog/2015/05/distributing-packages-without-sysadmin">various
+reasons</a>, we leverage Travis CI for running some processes. In
+particular:</p>
+<ul>
+<li>
+<p><a href=
+"https://github.com/commercialhaskell/all-cabal-files/blob/hackage/.travis.yml">
+all-cabal-files</a> clones all cabal files from Hackage's
+00-index.tar file into a Git repository without any
+modification</p>
+</li>
+<li>
+<p><a href=
+"https://github.com/commercialhaskell/all-cabal-hashes/blob/hackage/.travis.yml">
+all-cabal-hashes</a> is mostly the same, but also includes
+cryptographic hashes of the package tarballs for more secure
+download (as leveraged by <a href=
+"https://haskellstack.org">Stack</a>. It is powered by <a href=
+"https://github.com/commercialhaskell/all-cabal-hashes-tool">all-cabal-hashes-tool</a></p>
+</li>
+<li>
+<p><a href=
+"https://github.com/commercialhaskell/all-cabal-packages">all-cabal-packages</a>
+uses <a href=
+"https://github.com/fpco/hackage-mirror">hackage-mirror</a> to
+populate the hackage.fpcomplete.com mirror of Hackage, which
+provides S3-backed high availability hosting of all package
+tarballs</p>
+</li>
+<li>
+<p><a href=
+"https://github.com/commercialhaskell/all-cabal-metadata">all-cabal-metadata</a>
+uses <a href=
+"https://github.com/commercialhaskell/all-cabal-metadata-tool">all-cabal-metadata-tool</a>
+to query extra metadata from Hackage about packages and put them
+into YAML files. As we'll see later, this avoids the need to make a
+lot of costly calls to Hackage APIs</p>
+</li>
+</ul>
+<p>Travis does not currently provide a means of running jobs on a
+regular basis. Therefore, we have a simple cron job on the Stackage
+build server that triggers each of the above builds every 30
+minutes.</p>
+<h2 id="stackage-curator">stackage-curator</h2>
+<p>The heart of running Stackage builds is the <a href=
+"https://github.com/fpco/stackage-curator">stackage-curator</a>
+tool. We run this on a daily basis on the Stackage build server for
+Stackage Nightly, and on a weekly basis for LTS Haskell. The build
+process is <a href=
+"https://github.com/fpco/stackage/blob/master/automated/build.sh">highly
+automated</a> and leverages Docker quite a bit.</p>
+<p>stackage-curator needs to know about the most recent versions of
+all packages, their tarball contents, and some metadata, all of
+which it gets from the Travis-generated sources mentioned in the
+previous section. In addition, it needs to know about build
+constraints, which can come from one of two places:</p>
+<ul>
+<li>When doing an LTS Haskell minor version bump (e.g., building
+lts-5.13), it grabs the previous version (e.g., lts-5.12) and
+converts the previous package set into constraints. For example, if
+lts-5.12 contains the package foo-5.6.7, this will be converted
+into the constraint <code>foo &gt;= 5.6.7 &amp;& &lt;
+5.7</code>.</li>
+<li>When doing a Stackage Nightly build or LTS Haskell major
+version bump (e.g., building lts-6.0), it grabs the latest version
+of the build-constraints.yaml file.</li>
+</ul>
+<p>By combining these constraints with the current package data,
+stackage-curator can generate a build plan and check it. (As an
+aside, this build plan generation and checking also occurs every
+time you make a pull request to the stackage repo.) If there are
+version bounds problems, one of the <a href=
+"https://github.com/fpco/stackage/blob/master/CURATORS.md">Stackage
+curators</a> will open up a Github issue and will add upper bounds,
+temporarily block a package, or some other corrective action.</p>
+<p>Once a valid build plan is found, stackage-curator will build
+all packages, build docs, and run test suites. Assuming that all
+succeeds, it generates some artifacts:</p>
+<ul>
+<li>Uploads the build plan as a YAML file to either <a href=
+"https://github.com/fpco/stackage-nightly">stackage-nightly</a> or
+<a href="https://github.com/fpco/lts-haskell">lts-haskell</a></li>
+<li>Uploads the generated Haddock docs and a package index
+(containing all used .cabal files) to haddock.stackage.org.</li>
+</ul>
+<h2 id="stackage-server-cron">stackage-server-cron</h2>
+<p>On the Stackage build server, we run the <a href=
+"https://github.com/fpco/stackage-server/blob/master/app/stackage-server-cron.hs">
+stackage-server-cron executable</a> regularly, which generates:</p>
+<ul>
+<li>A SQLite database containing information on snapshots, the
+packages they contain, Hackage metadata about packages, and a bit
+more. This database is uploaded to S3.</li>
+<li>A Hoogle database for each snapshot, which is also uploaded to
+S3</li>
+</ul>
+<h2 id="stackage-server">stackage-server</h2>
+<p>The <a href="https://github.com/fpco/stackage-server">software
+running stackage.org</a> is a relatively simple Yesod web
+application. It pulls data from the stackage-content repo, the
+SQLite database, the Hoogle databases, and the build plans for
+Stackage Nightly and LTS Haskell. It doesn't generate anything
+important of its own except for a user interface.</p>
+<h2 id="stack">Stack</h2>
+<p><a href="https://haskellstack.org">Stack</a> takes advantage of
+many of the pieces listed above as well:</p>
+<ul>
+<li>It by default uses the all-cabal-hashes repo for getting
+package metadata, and downloads package contents from the
+hackage.fpcomplete.com mirror (using the hashes in the repo for
+verification)</li>
+<li>There are some metadata files in stackage-content which contain
+information on, for example, where to download GHC tarballs from to
+make <code>stack setup</code> work</li>
+<li>Stack downloads the raw build plans for Stackage Nightly and
+LTS Haskell from the Github repo and uses them when deciding which
+packages to build for a given stack.yaml file</li>
+</ul>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=The%20Stackage%20data%20flow https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;04&#x2F;stackage-data-flow&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;04&#x2F;stackage-data-flow&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;04&#x2F;stackage-data-flow&#x2F;&amp;title=The%20Stackage%20data%20flow"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;04&#x2F;stackage-data-flow&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#245745484157644254474b4954484150410a474b49" targe="_blank"><span class="__cf_email__" data-cfemail="a6d5c7cac3d5e6c0d6c5c9cbd6cac3d2c388c5c9cb">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

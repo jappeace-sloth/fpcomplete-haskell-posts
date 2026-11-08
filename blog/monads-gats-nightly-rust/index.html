@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Monads and GATs in nightly Rust</title>
+  <meta property="og:title" content="Monads and GATs in nightly Rust">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="I saw a recent Reddit post on the advances in Generic Associated Types (GATs) in Rust, which allows for the definition of a Monad trait. In this post, I&#x27;m going to take it one step further: a monad transformer trait in Rust!">
+  <meta property="og:description" content="I saw a recent Reddit post on the advances in Generic Associated Types (GATs) in Rust, which allows for the definition of a Monad trait. In this post, I&#x27;m going to take it one step further: a monad transformer trait in Rust!">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;monads-gats-nightly-rust&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images&#x2F;blog&#x2F;transformers-rust.jpg">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Monads and GATs in nightly Rust</h1>
+      
+      <p id="page-description">By Michael Snoyman, December  7, 2020</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Monads%20and%20GATs%20in%20nightly%20Rust https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;monads-gats-nightly-rust&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;monads-gats-nightly-rust&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;monads-gats-nightly-rust&#x2F;&amp;title=Monads%20and%20GATs%20in%20nightly%20Rust"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;monads-gats-nightly-rust&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  <p>This blog post was entirely inspired by reading the <a href="https://www.reddit.com/r/rust/comments/k4vzvp/gats_on_nightly/">GATs on Nightly!</a> Reddit post by /u/C5H5N5O. I just decided to take things a little bit too far, and thought a blog post on it would be fun. I want to be clear from the start: I'm introducing some advanced concepts in this post that rely on unstable features in Rust. I'm not advocating their usage <em>at all</em>. I'm just exploring what may and may not be possible with GATs.</p>
+<p>Rust shares many similarities with Haskell at the type system level. Both have types, generic types, associated types, and traits/type classes (which are basically equivalent). However, Haskell has one important additional feature that is lacking in Rust: Higher Kinded Types (HKTs). This isn't an accidental limitation in Rust, or some gap that should be filled in. It's an intentional design decision, at least as far as I know. But as a result, some things until now can't really be implemented in Rust.</p>
+<p>Take, for instance, a <code>Functor</code> in Haskell. For all of its scary sounding name, almost all developers today are familiar with the concept of a <code>Functor</code>. A <code>Functor</code> provides a general purpose interface for &quot;map a function over this structure.&quot; Many different structures in Rust can provide such mapping functionality, including <code>Option</code>, <code>Result</code>, <code>Iterator</code>, and <code>Future</code>.</p>
+<p>However, it hasn't been possible to write a general purpose <code>Functor</code> trait that can be implemented by multiple types. Instead, individual types can implement them as methods on that type. For example, we can write our own custom <code>MyOption</code> and <code>MyResult</code> enums and provide <code>map</code> methods:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#268bd2;">derive</span><span>(Debug, PartialEq)]
+</span><span style="color:#268bd2;">enum </span><span style="color:#b58900;">MyOption</span><span>&lt;A&gt; {
+</span><span>    </span><span style="color:#859900;">Some</span><span>(A),
+</span><span>    </span><span style="color:#859900;">None</span><span>,
+</span><span>}
+</span><span>
+</span><span style="color:#268bd2;">impl</span><span>&lt;A&gt; </span><span style="color:#b58900;">MyOption</span><span>&lt;A&gt; {
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">map</span><span>&lt;F: </span><span style="color:#859900;">FnOnce</span><span>(A) -&gt; B, B&gt;(</span><span style="color:#268bd2;">self</span><span>, </span><span style="color:#268bd2;">f</span><span>: F) -&gt; MyOption&lt;B&gt; {
+</span><span>        </span><span style="color:#859900;">match </span><span style="color:#d33682;">self </span><span>{
+</span><span>            MyOption::Some(a) </span><span style="color:#859900;">=&gt; </span><span>MyOption::Some(</span><span style="color:#859900;">f</span><span>(a)),
+</span><span>            MyOption::None </span><span style="color:#859900;">=&gt; </span><span>MyOption::None,
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#268bd2;">test</span><span>]
+</span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">test_option_map</span><span>() {
+</span><span>    </span><span style="color:#859900;">assert_eq!</span><span>(MyOption::Some(</span><span style="color:#6c71c4;">5</span><span>).</span><span style="color:#859900;">map</span><span>(|</span><span style="color:#268bd2;">x</span><span>| x + </span><span style="color:#6c71c4;">1</span><span>), MyOption::Some(</span><span style="color:#6c71c4;">6</span><span>));
+</span><span>    </span><span style="color:#859900;">assert_eq!</span><span>(MyOption::None.</span><span style="color:#859900;">map</span><span>(|</span><span style="color:#268bd2;">x</span><span>: </span><span style="color:#268bd2;">i32</span><span>| x + </span><span style="color:#6c71c4;">1</span><span>), MyOption::None);
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#268bd2;">derive</span><span>(Debug, PartialEq)]
+</span><span style="color:#268bd2;">enum </span><span style="color:#b58900;">MyResult</span><span>&lt;A, E&gt; {
+</span><span>    </span><span style="color:#859900;">Ok</span><span>(A),
+</span><span>    </span><span style="color:#859900;">Err</span><span>(E),
+</span><span>}
+</span><span>
+</span><span style="color:#268bd2;">impl</span><span>&lt;A, E&gt; </span><span style="color:#b58900;">MyResult</span><span>&lt;A, E&gt; {
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">map</span><span>&lt;F: </span><span style="color:#859900;">FnOnce</span><span>(A) -&gt; B, B&gt;(</span><span style="color:#268bd2;">self</span><span>, </span><span style="color:#268bd2;">f</span><span>: F) -&gt; MyResult&lt;B, E&gt; {
+</span><span>        </span><span style="color:#859900;">match </span><span style="color:#d33682;">self </span><span>{
+</span><span>            MyResult::Ok(a) </span><span style="color:#859900;">=&gt; </span><span>MyResult::Ok(</span><span style="color:#859900;">f</span><span>(a)),
+</span><span>            MyResult::Err(e) </span><span style="color:#859900;">=&gt; </span><span>MyResult::Err(e),
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#268bd2;">test</span><span>]
+</span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">test_result_map</span><span>() {
+</span><span>    </span><span style="color:#859900;">assert_eq!</span><span>(MyResult::Ok(</span><span style="color:#6c71c4;">5</span><span>).</span><span style="color:#859900;">map</span><span>(|</span><span style="color:#268bd2;">x</span><span>| x + </span><span style="color:#6c71c4;">1</span><span>), MyResult::Ok::&lt;</span><span style="color:#268bd2;">i32</span><span>, ()&gt;(</span><span style="color:#6c71c4;">6</span><span>));
+</span><span>    </span><span style="color:#859900;">assert_eq!</span><span>(MyResult::Err(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">hello</span><span style="color:#839496;">&quot;</span><span>).</span><span style="color:#859900;">map</span><span>(|</span><span style="color:#268bd2;">x</span><span>: </span><span style="color:#268bd2;">i32</span><span>| x + </span><span style="color:#6c71c4;">1</span><span>), MyResult::Err(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">hello</span><span style="color:#839496;">&quot;</span><span>));
+</span><span>}
+</span></code></pre>
+<p>However, it hasn't been possible without GATs to define <code>map</code> as a trait method. Let's see why. Here's a naive approach to a &quot;monomorphic functor&quot; trait, and an implementation for <code>Option</code>:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#93a1a1;">/// Monomorphic functor trait
+</span><span style="color:#268bd2;">trait </span><span style="color:#b58900;">MonoFunctor </span><span>{
+</span><span>    </span><span style="color:#268bd2;">type </span><span style="color:#b58900;">Unwrapped</span><span>; </span><span style="color:#93a1a1;">// value &quot;contained inside&quot;
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">map</span><span>&lt;F&gt;(</span><span style="color:#268bd2;">self</span><span>, </span><span style="color:#268bd2;">f</span><span>: F) -&gt; </span><span style="color:#268bd2;">Self
+</span><span>    </span><span style="color:#859900;">where
+</span><span>        F: FnMut(</span><span style="color:#268bd2;">Self::</span><span>Unwrapped) -&gt; </span><span style="color:#268bd2;">Self::</span><span>Unwrapped;
+</span><span>}
+</span><span>
+</span><span>impl&lt;A&gt; MonoFunctor </span><span style="color:#859900;">for Option</span><span>&lt;A&gt; {
+</span><span>    </span><span style="color:#268bd2;">type </span><span style="color:#b58900;">Unwrapped </span><span>= A;
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">map</span><span>&lt;F: </span><span style="color:#859900;">FnMut</span><span>(A) -&gt; A&gt;(</span><span style="color:#268bd2;">self</span><span>, </span><span style="color:#586e75;">mut </span><span style="color:#268bd2;">f</span><span>: F) -&gt; </span><span style="color:#859900;">Option</span><span>&lt;A&gt; {
+</span><span>        </span><span style="color:#859900;">match </span><span style="color:#d33682;">self </span><span>{
+</span><span>            </span><span style="color:#859900;">Some</span><span>(a) </span><span style="color:#859900;">=&gt; Some</span><span>(</span><span style="color:#859900;">f</span><span>(a)),
+</span><span>            </span><span style="color:#859900;">None =&gt; None</span><span>,
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>In our trait definition, we define an associated type <code>Unwrapped</code>, for the value that lives &quot;inside&quot; the <code>MonoFunctor</code>. In the case of <code>Option&lt;A&gt;</code>, that would be <code>A</code>. And herein lies the problem. We're hard-coding the <code>Unwrapped</code> to just one type, <code>A</code>. Usually with a <code>map</code> function, we want to change the type to <code>B</code>. But we have no way in current, stable Rust to say &quot;I want a type that's associated with this <code>MonoFunctor</code>, but also a little bit different in what lives inside of it.&quot;</p>
+<p>That's where Generic Associated Types come in.</p>
+<h2 id="polymorphic-functor">Polymorphic Functor</h2>
+<p>In order to get a polymorphic functor, we need to be able to say &quot;here's how my type would look if I wrapped up a <em>different</em> type inside of it.&quot; For example, with <code>Option</code>, we'd like to say &quot;hey, I've got <code>Option&lt;A&gt;</code>, and it contains an <code>A</code> type, but if it contained a <code>B</code> type instead, it would be <code>Option&lt;B&gt;</code>.&quot; To do this, we're going to use the generic associated type <code>Wrapped&lt;B&gt;</code>:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">trait </span><span style="color:#b58900;">Functor </span><span>{
+</span><span>    </span><span style="color:#268bd2;">type </span><span style="color:#b58900;">Unwrapped</span><span>;
+</span><span>    </span><span style="color:#268bd2;">type </span><span style="color:#b58900;">Wrapped</span><span>&lt;B&gt;: Functor;
+</span><span>
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">map</span><span>&lt;F, B&gt;(</span><span style="color:#268bd2;">self</span><span>, </span><span style="color:#268bd2;">f</span><span>: F) -&gt; </span><span style="color:#268bd2;">Self::</span><span>Wrapped&lt;B&gt;
+</span><span>    </span><span style="color:#859900;">where
+</span><span>        F: FnMut(</span><span style="color:#268bd2;">Self::</span><span>Unwrapped) -&gt; B;
+</span><span>}
+</span></code></pre>
+<p>So what we're saying is:</p>
+<ul>
+<li>Each functor has an associated type <code>Unwrapped</code>, which is the thing it contains</li>
+<li>When we know a functor, we can also figure out another, associated type <code>Wrapped&lt;B&gt;</code> which is &quot;like <code>Self</code>, but has a different wrapped up value underneath&quot;</li>
+<li>Like before, <code>map</code> is a method that takes two parameters: <code>self</code> and a function</li>
+<li>The function parameter will map from the current underlying <code>Unwrapped</code> value to some new type <code>B</code></li>
+<li>And the output of <code>map</code> will be a <code>Wrapped&lt;B&gt;</code></li>
+</ul>
+<p>That's a bit abstract. Let's see what this looks like for the <code>Option</code> type:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">impl</span><span>&lt;A&gt; Functor </span><span style="color:#859900;">for </span><span style="color:#b58900;">Option</span><span>&lt;A&gt; {
+</span><span>    </span><span style="color:#268bd2;">type </span><span style="color:#b58900;">Unwrapped </span><span>= A;
+</span><span>    </span><span style="color:#268bd2;">type </span><span style="color:#b58900;">Wrapped</span><span>&lt;B&gt; = </span><span style="color:#859900;">Option</span><span>&lt;B&gt;;
+</span><span>
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">map</span><span>&lt;F: </span><span style="color:#859900;">FnMut</span><span>(A) -&gt; B, B&gt;(</span><span style="color:#268bd2;">self</span><span>, </span><span style="color:#586e75;">mut </span><span style="color:#268bd2;">f</span><span>: F) -&gt; </span><span style="color:#859900;">Option</span><span>&lt;B&gt; {
+</span><span>        </span><span style="color:#859900;">match </span><span style="color:#d33682;">self </span><span>{
+</span><span>            </span><span style="color:#859900;">Some</span><span>(x) </span><span style="color:#859900;">=&gt; Some</span><span>(</span><span style="color:#859900;">f</span><span>(x)),
+</span><span>            </span><span style="color:#859900;">None =&gt; None</span><span>,
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#268bd2;">test</span><span>]
+</span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">test_option_map</span><span>() {
+</span><span>    </span><span style="color:#859900;">assert_eq!</span><span>(</span><span style="color:#859900;">Some</span><span>(</span><span style="color:#6c71c4;">5</span><span>).</span><span style="color:#859900;">map</span><span>(|</span><span style="color:#268bd2;">x</span><span>| x + </span><span style="color:#6c71c4;">1</span><span>), </span><span style="color:#859900;">Some</span><span>(</span><span style="color:#6c71c4;">6</span><span>));
+</span><span>    </span><span style="color:#859900;">assert_eq!</span><span>(</span><span style="color:#859900;">None</span><span>.</span><span style="color:#859900;">map</span><span>(|</span><span style="color:#268bd2;">x</span><span>: </span><span style="color:#268bd2;">i32</span><span>| x + </span><span style="color:#6c71c4;">1</span><span>), </span><span style="color:#859900;">None</span><span>);
+</span><span>}
+</span></code></pre>
+<p>And if you play with all of the type gymnastics, you'll see that this ends up being identical to the <code>map</code> method we special-cased for <code>MyOption</code> above (sans a difference between <code>FnOnce</code> and <code>FnMut</code>). Cool!</p>
+<h3 id="side-note-hkts">Side note: HKTs</h3>
+<p>In Haskell, none of this generic associated type business is needed. In fact, Haskell <code>Functor</code>s don't use <em>any</em> associated types. The typeclass for <code>Functor</code> in Haskell far predates the presence of associated types in the language. For comparison, let's see what that looks like, renaming a bit to match up with Rust:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">class Functor </span><span style="color:#268bd2;">f </span><span style="color:#859900;">where
+</span><span>    </span><span style="color:#b58900;">map </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">b</span><span>) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">f a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">f b
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Functor Option </span><span style="color:#859900;">where
+</span><span>    map f option </span><span style="color:#859900;">=
+</span><span>        </span><span style="color:#859900;">case</span><span> option </span><span style="color:#859900;">of
+</span><span>            </span><span style="color:#cb4b16;">Some</span><span> x </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Some</span><span> (f x)
+</span><span>            </span><span style="color:#cb4b16;">None </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">None
+</span></code></pre>
+<p>Or, to translate it into Rust-like syntax:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">trait </span><span style="color:#b58900;">HktFunctor </span><span>{
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">map</span><span>&lt;A, B, F: </span><span style="color:#859900;">FnMut</span><span>(A) -&gt; B&gt;(</span><span style="color:#268bd2;">self</span><span>: Self&lt;A&gt;, </span><span style="color:#268bd2;">f</span><span>: F) -&gt; Self&lt;B&gt;;
+</span><span>
+</span><span style="color:#268bd2;">impl </span><span>HktFunctor </span><span style="color:#859900;">for </span><span style="color:#b58900;">Option </span><span>{
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">map</span><span>&lt;A, B, F: </span><span style="color:#859900;">FnMut</span><span>(A) -&gt; B&gt;(</span><span style="color:#268bd2;">self</span><span>: </span><span style="color:#859900;">Option</span><span>&lt;A&gt;, </span><span style="color:#268bd2;">f</span><span>: F) -&gt; </span><span style="color:#859900;">Option</span><span>&lt;B&gt; {
+</span><span>        </span><span style="color:#859900;">match </span><span style="color:#d33682;">self </span><span>{
+</span><span>            </span><span style="color:#859900;">Some</span><span>(a) </span><span style="color:#859900;">=&gt; Some</span><span>(</span><span style="color:#859900;">f</span><span>(a)),
+</span><span>            </span><span style="color:#859900;">None =&gt; None</span><span>,
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>But this isn't valid Rust! That's because we're trying to provide type parameters to <code>Self</code>. But in Rust, <code>Option</code> isn't a type. <code>Option</code> must be applied to a single type parameter before it becomes a type. <code>Option&lt;i32&gt;</code> is a type. <code>Option</code> on its own is not.</p>
+<p>By contrast, in Haskell, <code>Maybe Int</code> is a type of <em>kind</em> <code>Type</code>. <code>Maybe</code> is a <em>type constructor</em>, of <em>kind</em> <code>Type -&gt; Type</code>. But you can treat <code>Maybe</code> has a type of its own for purposes of creating type classes and instance. <code>Functor</code> in Haskell works on the kind <code>Type -&gt; Type</code>. This is what we mean by &quot;higher kinded types&quot;: we can have types whose <em>kind</em> is higher than just <code>Type</code>.</p>
+<p>GATs in Rust are a workaround for this lack of HKTs for the examples below. But as we'll ultimately see, they are more brittle and more verbose. That's not to say that GATs are a Bad Thing, far from it. It <em>is</em> to say that trying to write Haskell in Rust is probably not a good idea.</p>
+<p>OK, now that we've thoroughly established that what we're about to do isn't a great idea... let's do it!</p>
+<h2 id="pointed">Pointed</h2>
+<p>There's a controversial typeclass in Haskell called <code>Pointed</code>. It's controversial because it introduces a typeclass without any laws associated with it, which is often not very liked. But since I already told you this is all a bad idea, let's implement <code>Pointed</code>.</p>
+<p>The idea of <code>Pointed</code> is simple: wrap up a value into a <code>Functor</code>-like thing. So in the case of <code>Option</code>, it would be like wrapping it with <code>Some</code>. In a <code>Result</code>, it's using <code>Ok</code>. And for a <code>Vec</code>, it would be a single-element vector. Unlike <code>Functor</code>, this will be a static method, since we don't have an existing <code>Pointed</code> value to change. Let's see it in action:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">trait </span><span style="color:#b58900;">Pointed</span><span>: Functor {
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">wrap</span><span>&lt;T&gt;(</span><span style="color:#268bd2;">t</span><span>: T) -&gt; </span><span style="color:#268bd2;">Self::</span><span>Wrapped&lt;T&gt;;
+</span><span>}
+</span><span>
+</span><span style="color:#268bd2;">impl</span><span>&lt;A&gt; Pointed </span><span style="color:#859900;">for </span><span style="color:#b58900;">Option</span><span>&lt;A&gt; {
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">wrap</span><span>&lt;T&gt;(</span><span style="color:#268bd2;">t</span><span>: T) -&gt; </span><span style="color:#859900;">Option</span><span>&lt;T&gt; {
+</span><span>        </span><span style="color:#859900;">Some</span><span>(t)
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>What's particularly interesting about this is that we don't use the <code>A</code> type parameter in the <code>Option</code> implementation at all.</p>
+<p>There's one more thing worth noting. The result of calling <code>wrap</code> is a <code>Self::Wrapped&lt;T&gt;</code> value. What exactly do we know about <code>Self::Wrapped&lt;T&gt;</code>? Well, from the <code>Functor</code> trait definition, we know exactly one thing: that <code>Wrapped&lt;T&gt;</code> must be a <code>Functor</code>. Interestingly, we have <em>lost the knowledge</em> here that <code>Self::Wrapped&lt;T&gt;</code> is also a <code>Pointed</code>. That's going to be a recurring theme for the next few traits.</p>
+<p>But let me reiterate this a different way. When we're working with a general <code>Functor</code> trait implementation, we don't know <em>anything at all</em> about the <code>Wrapped</code> associated type except that it implements <code>Functor</code> itself. Logically, we know that for a <code>Option&lt;A&gt;</code> implementation, we'd like <code>Wrapped</code> to be a <code>Option&lt;B&gt;</code> kind of thing. But the GAT implementation does not enforce it. (By contrast, the HKT approach in Haskell <em>does</em> enforce this.) Nothing prevents us from writing a horrifically non-sensible implementation such as:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">impl</span><span>&lt;A&gt; Functor </span><span style="color:#859900;">for </span><span style="color:#b58900;">MyOption</span><span>&lt;A&gt; {
+</span><span>    </span><span style="color:#268bd2;">type </span><span style="color:#b58900;">Unwrapped </span><span>= A;
+</span><span>    </span><span style="color:#268bd2;">type </span><span style="color:#b58900;">Wrapped</span><span>&lt;B&gt; = </span><span style="color:#859900;">Result</span><span>&lt;B, </span><span style="color:#859900;">String</span><span>&gt;; </span><span style="color:#93a1a1;">// wut?
+</span><span>
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">map</span><span>&lt;F: </span><span style="color:#859900;">FnMut</span><span>(A) -&gt; B, B&gt;(</span><span style="color:#268bd2;">self</span><span>, </span><span style="color:#586e75;">mut </span><span style="color:#268bd2;">f</span><span>: F) -&gt; </span><span style="color:#859900;">Result</span><span>&lt;B, </span><span style="color:#859900;">String</span><span>&gt; {
+</span><span>        </span><span style="color:#859900;">match </span><span style="color:#d33682;">self </span><span>{
+</span><span>            MyOption::Some(a) </span><span style="color:#859900;">=&gt; Ok</span><span>(</span><span style="color:#859900;">f</span><span>(a)),
+</span><span>            MyOption::None </span><span style="color:#859900;">=&gt; Err</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Well this is weird, isn&#39;t it?</span><span style="color:#839496;">&quot;</span><span>.</span><span style="color:#859900;">to_owned</span><span>()),
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span><span>
+</span></code></pre>
+<p>You may be thinking, &quot;So what, no one would write something like that. And it's their own fault if they do.&quot; That's not the point here. The point is that the compiler can't know that there's a connection between <code>Self</code> and <code>Wrapped&lt;B&gt;</code>. And since it can't know that, there are some things we can't get to type check. I'll show you one of those at the end.</p>
+<h2 id="applicative">Applicative</h2>
+<p>When I give Haskell training, and I get to the <code>Functor</code>/<code>Applicative</code>/<code>Monad</code> section, most people are nervous about <code>Monad</code>s. In my experience, the really confusing part is really <code>Applicative</code>. Once you understand that, <code>Monad</code> is relatively speaking easy.</p>
+<p>The <code>Applicative</code> typeclass in Haskell has two methods. <code>pure</code> is equivalent to the <code>wrap</code> that I put into <code>Pointed</code>, so we can ignore it. The other method is <code>&lt;*&gt;</code>, known as &quot;apply,&quot; or &quot;splat&quot;, or &quot;the tie fighter.&quot; I originally implemented <code>Applicative</code> with a method called <code>apply</code> that matches that operator, but found that it was better to go a different route.</p>
+<p>Instead, there's an alternate way to define an <code>Applicative</code> typeclass, based on a different function called <code>liftA2</code> (or, in Rust, <code>lift_a2</code>). Here's the idea. Suppose I have two functions:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">birth_year</span><span>() -&gt; </span><span style="color:#859900;">Option</span><span>&lt;</span><span style="color:#268bd2;">i32</span><span>&gt; { </span><span style="color:#859900;">... </span><span>}
+</span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">current_year</span><span>() -&gt; </span><span style="color:#859900;">Option</span><span>&lt;</span><span style="color:#268bd2;">i32</span><span>&gt; { </span><span style="color:#859900;">... </span><span>}
+</span></code></pre>
+<p>I may not know the current year or the birth year, in which case I'll return <code>None</code>. But if I get a <code>Some</code> return for both of these function calls, then I can calculate the age. In normal Rust code, this may look like:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">age</span><span>() -&gt; </span><span style="color:#859900;">Option</span><span>&lt;</span><span style="color:#268bd2;">i32</span><span>&gt; {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> birth_year = </span><span style="color:#859900;">birth_year</span><span>()</span><span style="color:#859900;">?</span><span>;
+</span><span>    </span><span style="color:#268bd2;">let</span><span> current_year = </span><span style="color:#859900;">current_year</span><span>()</span><span style="color:#859900;">?</span><span>;
+</span><span>    </span><span style="color:#859900;">Some</span><span>(current_year - birth_year)
+</span><span>}
+</span></code></pre>
+<p>But that's leveraging <code>?</code> and early return. A primary purpose of <code>Applicative</code> is to address the same problem. So let's rewrite this without any early return, and instead use some pattern matching:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">age</span><span>() -&gt; </span><span style="color:#859900;">Option</span><span>&lt;</span><span style="color:#268bd2;">i32</span><span>&gt; {
+</span><span>    </span><span style="color:#859900;">match </span><span>(</span><span style="color:#859900;">birth_year</span><span>(), </span><span style="color:#859900;">current_year</span><span>()) {
+</span><span>        (</span><span style="color:#859900;">Some</span><span>(birth_year), </span><span style="color:#859900;">Some</span><span>(current_year)) </span><span style="color:#859900;">=&gt; Some</span><span>(current_year - birth_year),
+</span><span>        </span><span style="color:#859900;">_ =&gt; None</span><span>,
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>This certainly works, but it's verbose. It also doesn't generalize to other cases, like a <code>Result</code>. And what about a really sophisticated case, like &quot;I have a <code>Future</code> that will return the birth year, a <code>Future</code> that will return the current year, and I want to produce a <code>Future</code> that finds the difference.&quot; With async/await syntax, it's easy enough to do. But we can also do it with <code>Applicative</code>, using our <code>lift_a2</code> method.</p>
+<p>The point of <code>lift_a2</code> is: I've got two values wrapped up, perhaps both in an <code>Option</code>. I'd like to use a function to combine them together. Let's see what that looks like in Rust:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">trait </span><span style="color:#b58900;">Applicative</span><span>: Pointed {
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">lift_a2</span><span>&lt;F, B, C&gt;(</span><span style="color:#268bd2;">self</span><span>, </span><span style="color:#268bd2;">b</span><span>: </span><span style="color:#268bd2;">Self::</span><span>Wrapped&lt;B&gt;, </span><span style="color:#268bd2;">f</span><span>: F) -&gt; </span><span style="color:#268bd2;">Self::</span><span>Wrapped&lt;C&gt;
+</span><span>    </span><span style="color:#859900;">where
+</span><span>        F: FnMut(</span><span style="color:#268bd2;">Self::</span><span>Unwrapped, B) -&gt; C;
+</span><span>}
+</span><span>
+</span><span>impl&lt;A&gt; Applicative </span><span style="color:#859900;">for Option</span><span>&lt;A&gt; {
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">lift_a2</span><span>&lt;F, B, C&gt;(</span><span style="color:#268bd2;">self</span><span>, </span><span style="color:#268bd2;">b</span><span>: </span><span style="color:#268bd2;">Self::</span><span>Wrapped&lt;B&gt;, </span><span style="color:#586e75;">mut </span><span style="color:#268bd2;">f</span><span>: F) -&gt; </span><span style="color:#268bd2;">Self::</span><span>Wrapped&lt;C&gt;
+</span><span>    </span><span style="color:#859900;">where
+</span><span>        F: FnMut(</span><span style="color:#268bd2;">Self::</span><span>Unwrapped, B) -&gt; C
+</span><span>    {
+</span><span>        </span><span style="color:#268bd2;">let</span><span> a = </span><span style="color:#d33682;">self</span><span style="color:#859900;">?</span><span>;
+</span><span>        </span><span style="color:#268bd2;">let</span><span> b = b</span><span style="color:#859900;">?</span><span>;
+</span><span>        </span><span style="color:#859900;">Some</span><span>(</span><span style="color:#859900;">f</span><span>(a, b))
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>With this definition in place, we can now rewrite <code>age</code> as:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">age</span><span>() -&gt; </span><span style="color:#859900;">Option</span><span>&lt;</span><span style="color:#268bd2;">i32</span><span>&gt; {
+</span><span>    </span><span style="color:#859900;">current_year</span><span>().</span><span style="color:#859900;">lift_a2</span><span>(</span><span style="color:#859900;">birth_year</span><span>(), |</span><span style="color:#268bd2;">cy</span><span>, </span><span style="color:#268bd2;">by</span><span>| cy - by)
+</span><span>}
+</span></code></pre>
+<p>Whether this is an improvement or not probably depends heavily on how much Haskell you've written in your life. Again, I'm not advocating changing Rust here, but it's certainly interesting.</p>
+<p>We could also do the same kind of thing with <code>Result</code>:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">birth_year</span><span>() -&gt; </span><span style="color:#859900;">Result</span><span>&lt;</span><span style="color:#268bd2;">i32</span><span>, </span><span style="color:#859900;">String</span><span>&gt; {
+</span><span>    </span><span style="color:#859900;">Err</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">No birth year</span><span style="color:#839496;">&quot;</span><span>.</span><span style="color:#859900;">to_string</span><span>())
+</span><span>}
+</span><span>
+</span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">current_year</span><span>() -&gt; </span><span style="color:#859900;">Result</span><span>&lt;</span><span style="color:#268bd2;">i32</span><span>, </span><span style="color:#859900;">String</span><span>&gt; {
+</span><span>    </span><span style="color:#859900;">Err</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">No current year</span><span style="color:#839496;">&quot;</span><span>.</span><span style="color:#859900;">to_string</span><span>())
+</span><span>}
+</span><span>
+</span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">age</span><span>() -&gt; </span><span style="color:#859900;">Result</span><span>&lt;</span><span style="color:#268bd2;">i32</span><span>, </span><span style="color:#859900;">String</span><span>&gt; {
+</span><span>    </span><span style="color:#859900;">current_year</span><span>().</span><span style="color:#859900;">lift_a2</span><span>(</span><span style="color:#859900;">birth_year</span><span>(), |</span><span style="color:#268bd2;">cy</span><span>, </span><span style="color:#268bd2;">by</span><span>| cy - by)
+</span><span>}
+</span></code></pre>
+<p>Which may beg the question: which of the two <code>Err</code> values do we take? Well, that depends on our implementation of <code>Applicative</code>, but typically we would prefer choosing the first:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">impl</span><span>&lt;A, E&gt; Applicative </span><span style="color:#859900;">for </span><span style="color:#b58900;">Result</span><span>&lt;A, E&gt; {
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">lift_a2</span><span>&lt;F, B, C&gt;(</span><span style="color:#268bd2;">self</span><span>, </span><span style="color:#268bd2;">b</span><span>: </span><span style="color:#268bd2;">Self::</span><span>Wrapped&lt;B&gt;, </span><span style="color:#586e75;">mut </span><span style="color:#268bd2;">f</span><span>: F) -&gt; </span><span style="color:#268bd2;">Self::</span><span>Wrapped&lt;C&gt;
+</span><span>    </span><span style="color:#859900;">where
+</span><span>        F: FnMut(</span><span style="color:#268bd2;">Self::</span><span>Unwrapped, B) -&gt; C
+</span><span>    {
+</span><span>        </span><span style="color:#859900;">match </span><span>(</span><span style="color:#d33682;">self</span><span>, b) {
+</span><span>            (</span><span style="color:#859900;">Ok</span><span>(a), </span><span style="color:#859900;">Ok</span><span>(b)) </span><span style="color:#859900;">=&gt; Ok</span><span>(</span><span style="color:#859900;">f</span><span>(a, b)),
+</span><span>            (</span><span style="color:#859900;">Err</span><span>(e), </span><span style="color:#859900;">_</span><span>) </span><span style="color:#859900;">=&gt; Err</span><span>(e),
+</span><span>            (</span><span style="color:#859900;">_</span><span>, </span><span style="color:#859900;">Err</span><span>(e)) </span><span style="color:#859900;">=&gt; Err</span><span>(e),
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>But what if we wanted both? Here's a case where <code>Applicative</code> gives us power that <code>?</code> doesn't.</p>
+<h2 id="validation">Validation</h2>
+<p>The <code>Validation</code> type from Haskell represents the idea &quot;I'm going to try lots of things, some of them may fail, and I want to collect together all of the error results.&quot; A typically example of this would be web form parsing. If a user enters an invalid email address, invalid phone number, <em>and</em> forgets to click the &quot;I agree&quot; box, you'd want to generate all three error messages. You don't want to generate just one.</p>
+<p>To start off our <code>Validation</code> implementation, we need to introduce one more Haskell-y typeclass, this time for representing the concept of &quot;combining together multiple values.&quot; We <em>could</em> just hard-code <code>Vec</code> in here, but where's the fun in that? Instead, let's introduce the strangely-named <code>Semigroup</code> trait. This doesn't even require any special GAT code:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">trait </span><span style="color:#b58900;">Semigroup </span><span>{
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">append</span><span>(</span><span style="color:#268bd2;">self</span><span>, </span><span style="color:#268bd2;">rhs</span><span>: </span><span style="color:#268bd2;">Self</span><span>) -&gt; </span><span style="color:#268bd2;">Self</span><span>;
+</span><span>}
+</span><span>
+</span><span style="color:#268bd2;">impl </span><span>Semigroup </span><span style="color:#859900;">for </span><span style="color:#b58900;">String </span><span>{
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">append</span><span>(</span><span style="color:#586e75;">mut </span><span style="color:#268bd2;">self</span><span>, </span><span style="color:#268bd2;">rhs</span><span>: </span><span style="color:#268bd2;">Self</span><span>) -&gt; </span><span style="color:#268bd2;">Self </span><span>{
+</span><span>        </span><span style="color:#d33682;">self </span><span>+= </span><span style="color:#859900;">&amp;</span><span>rhs;
+</span><span>        </span><span style="color:#d33682;">self
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#268bd2;">impl</span><span>&lt;T&gt; Semigroup </span><span style="color:#859900;">for </span><span style="color:#b58900;">Vec</span><span>&lt;T&gt; {
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">append</span><span>(</span><span style="color:#586e75;">mut </span><span style="color:#268bd2;">self</span><span>, </span><span style="color:#586e75;">mut </span><span style="color:#268bd2;">rhs</span><span>: </span><span style="color:#268bd2;">Self</span><span>) -&gt; </span><span style="color:#268bd2;">Self </span><span>{
+</span><span>        </span><span style="color:#859900;">Vec</span><span>::append(</span><span style="color:#859900;">&amp;</span><span style="color:#586e75;">mut </span><span style="color:#d33682;">self</span><span>, </span><span style="color:#859900;">&amp;</span><span style="color:#586e75;">mut</span><span> rhs);
+</span><span>        </span><span style="color:#d33682;">self
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#268bd2;">impl </span><span>Semigroup </span><span style="color:#859900;">for</span><span> () {
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">append</span><span>(</span><span style="color:#268bd2;">self</span><span>, (): ()) -&gt; () {}
+</span><span>}
+</span></code></pre>
+<p>With that in place, we can now define a new <code>enum</code> called <code>Validation</code>:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#268bd2;">derive</span><span>(PartialEq, Debug)]
+</span><span style="color:#268bd2;">enum </span><span style="color:#b58900;">Validation</span><span>&lt;A, E&gt; {
+</span><span>    </span><span style="color:#859900;">Ok</span><span>(A),
+</span><span>    </span><span style="color:#859900;">Err</span><span>(E),
+</span><span>}
+</span></code></pre>
+<p>The <code>Functor</code> and <code>Pointed</code> implementations are boring, let's skip straight to the meat with the <code>Applicative</code> implementation:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">impl</span><span>&lt;A, E: Semigroup&gt; Applicative </span><span style="color:#859900;">for </span><span style="color:#b58900;">Validation</span><span>&lt;A, E&gt; {
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">lift_a2</span><span>&lt;F, B, C&gt;(</span><span style="color:#268bd2;">self</span><span>, </span><span style="color:#268bd2;">b</span><span>: </span><span style="color:#268bd2;">Self::</span><span>Wrapped&lt;B&gt;, </span><span style="color:#586e75;">mut </span><span style="color:#268bd2;">f</span><span>: F) -&gt; </span><span style="color:#268bd2;">Self::</span><span>Wrapped&lt;C&gt;
+</span><span>    </span><span style="color:#859900;">where
+</span><span>        F: FnMut(</span><span style="color:#268bd2;">Self::</span><span>Unwrapped, B) -&gt; C
+</span><span>    {
+</span><span>        </span><span style="color:#859900;">match </span><span>(</span><span style="color:#d33682;">self</span><span>, b) {
+</span><span>            (Validation::Ok(a), Validation::Ok(b)) </span><span style="color:#859900;">=&gt; </span><span>Validation::Ok(</span><span style="color:#859900;">f</span><span>(a, b)),
+</span><span>            (Validation::Err(e), Validation::Ok(</span><span style="color:#859900;">_</span><span>)) </span><span style="color:#859900;">=&gt; </span><span>Validation::Err(e),
+</span><span>            (Validation::Ok(</span><span style="color:#859900;">_</span><span>), Validation::Err(e)) </span><span style="color:#859900;">=&gt; </span><span>Validation::Err(e),
+</span><span>            (Validation::Err(e1), Validation::Err(e2)) </span><span style="color:#859900;">=&gt; </span><span>Validation::Err(e1.</span><span style="color:#859900;">append</span><span>(e2)),
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>Here, we're saying that the error type parameter must implement <code>Semigroup</code>. If both values are <code>Ok</code>, we apply the <code>f</code> function to them and wrap up the result in <code>Ok</code>. If only one of the values is <code>Err</code>, we return that error. But if <em>both</em> of them are error, we leverage the <code>append</code> method of <code>Semigroup</code> to combine them together. This is something you can't get with <code>?</code>-style error handling.</p>
+<h2 id="monad">Monad</h2>
+<p>At last, the dreaded monad rears its head! But in reality, at least for Rustaceans, monad isn't much of a surprise. You're already used to it: it's the <code>and_then</code> method. Almost any chain of statements that end with <code>?</code> in Rust can be reimagined as monadic binds. In my opinion, the main reason monad has the allure of the unknowable was a series of particularly bad tutorials that cemented this idea in people's minds.</p>
+<p>Anyway, since we're just trying to match the existing method signature of <code>and_then</code> on <code>Option</code>, I'm not going to spend much time motivating &quot;why monad.&quot; Instead, let's just look at the definition of the trait:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">trait </span><span style="color:#b58900;">Monad</span><span> : Applicative {
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">bind</span><span>&lt;B, F&gt;(</span><span style="color:#268bd2;">self</span><span>, </span><span style="color:#268bd2;">f</span><span>: F) -&gt; </span><span style="color:#268bd2;">Self::</span><span>Wrapped&lt;B&gt;
+</span><span>    </span><span style="color:#859900;">where
+</span><span>        F: FnMut(</span><span style="color:#268bd2;">Self::</span><span>Unwrapped) -&gt; </span><span style="color:#268bd2;">Self::</span><span>Wrapped&lt;B&gt;;
+</span><span>}
+</span><span>
+</span><span>impl&lt;A&gt; Monad </span><span style="color:#859900;">for Option</span><span>&lt;A&gt; {
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">bind</span><span>&lt;B, F&gt;(</span><span style="color:#268bd2;">self</span><span>, </span><span style="color:#268bd2;">f</span><span>: F) -&gt; </span><span style="color:#859900;">Option</span><span>&lt;B&gt;
+</span><span>    </span><span style="color:#859900;">where
+</span><span>        F: FnMut(A) -&gt; </span><span style="color:#859900;">Option</span><span>&lt;B&gt;,
+</span><span>    {
+</span><span>        </span><span style="color:#d33682;">self</span><span>.</span><span style="color:#859900;">and_then</span><span>(f)
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>And just like that, we've got monadic Rust. Time to ride off into the sunset.</p>
+<p>But wait, there's more!</p>
+<h2 id="monad-transformers">Monad transformers</h2>
+<img src="/images/blog/transformers-rust.jpg">
+<p>I'm overall not a huge fan of monad transformers. I think they are drastically overused in Haskell, and lead to huge amounts of complication. I instead advocate the <a href="https://www.fpcomplete.com/blog/2017/06/readert-design-pattern/">ReaderT design pattern</a>. But again, this post is definitely not about best practices.</p>
+<p>Typically, each monad instance provides some kind of additional functionality. <code>Option</code> means &quot;it might not produce a value.&quot; <code>Result</code> means &quot;it might fail with an error.&quot; If we provided it, <code>Future</code> means &quot;it won't produce a value immediately, but it will eventually.&quot; And as a final example, the <code>Reader</code> monad means &quot;I have read-only access to some environmental data.&quot;</p>
+<p>But what if we want to have two pieces of functionality? There's no obvious way to combine a <code>Reader</code> and a <code>Result</code>. In Rust, we <em>do</em> combine together <code>Result</code> and <code>Future</code> via <code>async</code> functions and <code>?</code>, but that had to have carefully designed language support. Instead, the Haskell approach to this problem would be: just provide <code>do</code> notation (syntactic sugar for monads), and then layer up your monad transformers to add together all of the functionality.</p>
+<p>I've considered writing a blog post on this philosophical difference for a while. (If people are interested in such a post, please let me know.) But for now, let's simply explore what it looks like to provide a monad transformer in Rust. We'll implement it for the most boring of all monad transformers, <code>IdentityT</code>. This is the transformer that doesn't do anything at all. (And if you're wondering &quot;why have it,&quot; consider why Rust has 1-tuples. Sometimes, you need something that fits a certain shape to make some generic code work nicely.)</p>
+<p>Since <code>IdentityT</code> doesn't do anything, it's comforting to see that its type reflects that perfectly:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">struct </span><span style="color:#b58900;">IdentityT</span><span>&lt;M&gt;(M);
+</span></code></pre>
+<p>I'm calling the type parameter <code>M</code>, because it's going to itself be an implementation of <code>Monad</code>. That's the idea here: every monad transformer sits on top of a &quot;base monad.&quot;</p>
+<p>Next, let's look at a <code>Functor</code> implementation. The idea is to unwrap the <code>IdentityT</code> layer, leverage the underlying <code>map</code> method, and then rewrap <code>IdentityT</code>.</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">impl</span><span>&lt;M: Functor&gt; Functor </span><span style="color:#859900;">for </span><span style="color:#b58900;">IdentityT</span><span>&lt;M&gt; {
+</span><span>    </span><span style="color:#268bd2;">type </span><span style="color:#b58900;">Unwrapped </span><span>= M::Unwrapped;
+</span><span>    </span><span style="color:#268bd2;">type </span><span style="color:#b58900;">Wrapped</span><span>&lt;A&gt; = IdentityT&lt;</span><span style="color:#268bd2;">M::</span><span>Wrapped&lt;A&gt;&gt;;
+</span><span>
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">map</span><span>&lt;F, B&gt;(</span><span style="color:#268bd2;">self</span><span>, </span><span style="color:#268bd2;">f</span><span>: F) -&gt; </span><span style="color:#268bd2;">Self::</span><span>Wrapped&lt;B&gt;
+</span><span>    </span><span style="color:#859900;">where
+</span><span>        F: FnMut(</span><span style="color:#268bd2;">M::</span><span>Unwrapped) -&gt; B
+</span><span>    {
+</span><span>        IdentityT(</span><span style="color:#d33682;">self</span><span>.</span><span style="color:#6c71c4;">0.</span><span style="color:#859900;">map</span><span>(f))
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>For our associated types, we leverage the associated types of <code>M</code>. Inside <code>map</code>, we use <code>self.0</code> to get the underlying <code>M</code>, and wrap the result of the <code>map</code> method call with <code>IdentityT</code>. Cool!</p>
+<p>The <code>Pointed</code>, <code>Applicative</code>, and <code>Monad</code> implementations follow similar patterns, so I'll drop all of those in too:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">impl</span><span>&lt;M: Pointed&gt; Pointed </span><span style="color:#859900;">for </span><span style="color:#b58900;">IdentityT</span><span>&lt;M&gt; {
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">wrap</span><span>&lt;T&gt;(</span><span style="color:#268bd2;">t</span><span>: T) -&gt; IdentityT&lt;</span><span style="color:#268bd2;">M::</span><span>Wrapped&lt;T&gt;&gt; {
+</span><span>        IdentityT(M::wrap(t))
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#268bd2;">impl</span><span>&lt;M: Applicative&gt; Applicative </span><span style="color:#859900;">for </span><span style="color:#b58900;">IdentityT</span><span>&lt;M&gt; {
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">lift_a2</span><span>&lt;F, B, C&gt;(</span><span style="color:#268bd2;">self</span><span>, </span><span style="color:#268bd2;">b</span><span>: </span><span style="color:#268bd2;">Self::</span><span>Wrapped&lt;B&gt;, </span><span style="color:#268bd2;">f</span><span>: F) -&gt; </span><span style="color:#268bd2;">Self::</span><span>Wrapped&lt;C&gt;
+</span><span>    </span><span style="color:#859900;">where
+</span><span>        F: FnMut(</span><span style="color:#268bd2;">Self::</span><span>Unwrapped, B) -&gt; C
+</span><span>    {
+</span><span>        IdentityT(</span><span style="color:#d33682;">self</span><span>.</span><span style="color:#6c71c4;">0.</span><span style="color:#859900;">lift_a2</span><span>(b.</span><span style="color:#6c71c4;">0</span><span>, f))
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#268bd2;">impl</span><span>&lt;M: Monad&gt; Monad </span><span style="color:#859900;">for </span><span style="color:#b58900;">IdentityT</span><span>&lt;M&gt; {
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">bind</span><span>&lt;B, F&gt;(</span><span style="color:#268bd2;">self</span><span>, </span><span style="color:#586e75;">mut </span><span style="color:#268bd2;">f</span><span>: F) -&gt; </span><span style="color:#268bd2;">Self::</span><span>Wrapped&lt;B&gt;
+</span><span>    </span><span style="color:#859900;">where
+</span><span>        F: FnMut(</span><span style="color:#268bd2;">Self::</span><span>Unwrapped) -&gt; </span><span style="color:#268bd2;">Self::</span><span>Wrapped&lt;B&gt;
+</span><span>    {
+</span><span>        IdentityT(</span><span style="color:#d33682;">self</span><span>.</span><span style="color:#6c71c4;">0.</span><span style="color:#859900;">bind</span><span>(|</span><span style="color:#268bd2;">x</span><span>| </span><span style="color:#859900;">f</span><span>(x).</span><span style="color:#6c71c4;">0</span><span>))
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>And finally, we'll define one new trait: <code>MonadTrans</code>. <code>MonadTrans</code> captures the idea of &quot;layering up&quot; a base monad into the transformed monad. In Haskell, you'll often see code like <code>lift (readFile &quot;foo.txt&quot;)</code>, where <code>readFile</code> works in the base monad, and we're sitting in a layer on top of that.</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">trait </span><span style="color:#b58900;">MonadTrans </span><span>{
+</span><span>    </span><span style="color:#268bd2;">type </span><span style="color:#b58900;">Base</span><span>: Monad;
+</span><span>
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">lift</span><span>(</span><span style="color:#268bd2;">base</span><span>: </span><span style="color:#268bd2;">Self::</span><span>Base) -&gt; </span><span style="color:#268bd2;">Self</span><span>;
+</span><span>}
+</span><span>
+</span><span style="color:#268bd2;">impl</span><span>&lt;M: Monad&gt; MonadTrans </span><span style="color:#859900;">for </span><span style="color:#b58900;">IdentityT</span><span>&lt;M&gt; {
+</span><span>    </span><span style="color:#268bd2;">type </span><span style="color:#b58900;">Base </span><span>= M;
+</span><span>
+</span><span>    </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">lift</span><span>(</span><span style="color:#268bd2;">base</span><span>: M) -&gt; </span><span style="color:#268bd2;">Self </span><span>{
+</span><span>        IdentityT(base)
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>So is this useful? Not terribly on its own. We could arguably create an ecosystem of <code>ReaderT</code>, <code>WriterT</code>, <code>ContT</code>, <code>ConduitT</code>, and more, and start building up sophisticated systems. But I'm strongly of the opinion that we don't need that stuff in Rust, at least not yet. I'm happy to go this far in my implementation to explore the wonders of GATs, but let's not go crazy and try to make something useful just because we can.</p>
+<h2 id="join">join</h2>
+<p>Alright, now the fun begins. We've seen GATs in practice. And it seems like Rust is keeping pace with Haskell pretty well. That's about to end.</p>
+<p>There's another method that goes along with <code>Monad</code>s in Haskell, called <code>join</code>. It's equivalent in power to the <code>bind</code> method we've already seen, but works differently. <code>join</code> &quot;flattens&quot; two layers of monads in Haskell. And a side note: there's already <a href="https://doc.rust-lang.org/stable/std/option/enum.Option.html#impl-10">a method called <code>flatten</code></a> in Rust that does just this for <code>Option</code> and <code>Result</code>.</p>
+<p>The catch with <code>join</code>: the monads have to be the same. In other words, <code>join (Just (Just 5)) == Just 5</code>, but <code>join (Just (Right 6))</code> is a type error, since <code>Just</code> is a <code>Maybe</code> data constructor, and <code>Right</code> is an <code>Either</code> data constructor.</p>
+<p>Now we're in a bit of a quandary. In Haskell, where we have higher kinded types, it's easy to say &quot;<code>Maybe</code> must be the same as <code>Maybe</code>&quot;:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">join </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">m</span><span> (</span><span style="color:#268bd2;">m a</span><span>) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m a
+</span><span>join m </span><span style="color:#859900;">=</span><span> bind m (</span><span style="color:#859900;">\</span><span>x </span><span style="color:#859900;">-&gt;</span><span> x)
+</span></code></pre>
+<p>But I couldn't figure out a way to express the same idea with GATs in Rust and get the syntax accepted by the compiler. This is the closest I came:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">join</span><span>&lt;MOuter, MInner, A&gt;(</span><span style="color:#268bd2;">outer</span><span>: MOuter) -&gt; </span><span style="color:#268bd2;">MOuter::</span><span>Wrapped&lt;A&gt;
+</span><span style="color:#859900;">where
+</span><span>    MOuter: Monad&lt;Unwrapped = MInner&gt;,
+</span><span>    MInner: Monad&lt;Unwrapped = A, Wrapped = </span><span style="color:#268bd2;">MOuter::</span><span>Wrapped&lt;A&gt;&gt;,
+</span><span>{
+</span><span>    outer.</span><span style="color:#859900;">bind</span><span>(|</span><span style="color:#268bd2;">inner</span><span>| inner)
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#268bd2;">test</span><span>]
+</span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">test_join</span><span>() {
+</span><span>    </span><span style="color:#859900;">assert_eq!</span><span>(</span><span style="color:#859900;">join</span><span>(</span><span style="color:#859900;">Some</span><span>(</span><span style="color:#859900;">Some</span><span>(</span><span style="color:#b58900;">true</span><span>))), </span><span style="color:#859900;">Some</span><span>(</span><span style="color:#b58900;">true</span><span>));
+</span><span>}
+</span></code></pre>
+<p>Unfortunately, this broke the compiler:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>error: internal compiler error: compiler\rustc_middle\src\ty\subst.rs:529:17: type parameter `B/#1` (B/1) out of range when substituting, substs=[MInner]
+</span><span>
+</span><span>thread &#39;rustc&#39; panicked at &#39;Box&lt;Any&gt;&#39;, /rustc/b7ebc6b0c1ba3c27ebb17c0b496ece778ef11e18\compiler\rustc_errors\src\lib.rs:904:9
+</span><span>note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+</span><span>
+</span><span>note: the compiler unexpectedly panicked. this is a bug.
+</span><span>
+</span><span>note: we would appreciate a bug report: https://github.com/rust-lang/rust/issues/new?labels=C-bug%2C+I-ICE%2C+T-compiler&amp;template=ice.md
+</span><span>
+</span><span>note: rustc 1.50.0-nightly (b7ebc6b0c 2020-11-30) running on x86_64-pc-windows-msvc
+</span><span>
+</span><span>note: compiler flags: -C embed-bitcode=no -C debuginfo=2 -C incremental --crate-type bin
+</span><span>
+</span><span>note: some of the compiler flags provided by cargo are hidden
+</span></code></pre>
+<p>I think it's fair to say I was pushing the compiler to the limit here. In any event, I opened up <a href="https://github.com/rust-lang/rust/issues/79636">a GitHub issue</a> for this.</p>
+<h2 id="mapm-traverse">mapM/traverse</h2>
+<p>Already, we were stymied by <code>join</code>. How about another popular functional idiom: <code>traverse</code>. As I <a href="https://tech.fpcomplete.com/blog/collect-rust-traverse-haskell-scala/">previously mentioned</a>, <code>traverse</code> is incredibly popular in Scala, and pretty common in Haskell. It functions very much like a <code>map</code>, except the result of each step through the <code>map</code> is wrapped in some <code>Applicative</code>, and the <code>Applicative</code> values are combined into an overall data structure.</p>
+<p>Sound confusing? Fair enough. As a simpler example: if you have a <code>Vec&lt;A&gt;</code> value, and a function from <code>A</code> to <code>Option&lt;B&gt;</code>, <code>traverse</code> can put these together into an <code>Option&lt;Vec&lt;B&gt;&gt;</code>. Or using the <code>Validation</code> type we had above, you could combine <code>Vec&lt;A&gt;</code> and <code>Fn(A) -&gt; Validation&lt;B, Vec&lt;MyErr&gt;&gt;</code> into a <code>Validation&lt;Vec&lt;B&gt;, Vec&lt;MyErr&gt;&gt;</code>, returning either all of the successfully generated <code>B</code> values, or all of the errors that occurred along the way.</p>
+<p>Anyway, I ended up with this as a starting type signature for our function:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">traverse</span><span>&lt;F, M, A, B, I&gt;(</span><span style="color:#268bd2;">iter</span><span>: I, </span><span style="color:#268bd2;">f</span><span>: F) -&gt; </span><span style="color:#268bd2;">M::</span><span>Wrapped&lt;</span><span style="color:#859900;">Vec</span><span>&lt;B&gt;&gt;
+</span></code></pre>
+<p>Then we have the following trait bounds:</p>
+<ul>
+<li><code>I: IntoIterator&lt;Item = A&gt;</code>: <code>I</code> is an iterator of <code>A</code> values. To simplify, you can think of it as <code>Vec&lt;A&gt;</code>.j</li>
+<li><code>M: Applicative&lt;Unwrapped = B&gt;</code>: <code>M</code> is some implementation of <code>Applicative</code> which unwraps to a <code>B</code>. In our example: this would be <code>Validation&lt;B, Vec&lt;MyErr&gt;&gt;</code>.</li>
+<li><code>F: FnMut(A) -&gt; M</code>: <code>F</code> is a function that takes the <code>A</code> values from the iterator and produces <code>M</code> values.</li>
+<li><code>M::Wrapped&lt;Vec&lt;B&gt;&gt;: Applicative&lt;Unwrapped = Vec&lt;B&gt;&gt;</code>: wrapping up the result <code>Vec&lt;B&gt;</code> in <code>M</code>'s wrapping produces a value which is also an <code>Applicative</code></li>
+</ul>
+<p>This last bullet shows one of the pain points I mentioned above. Since we don't really know from the <code>Wrapped</code> associated type itself much at all, we only get the <code>Functor</code> bound &quot;for free&quot;. We need to explicitly say that it's also <code>Applicative</code>, and that unwrapping it again will get you back a <code>Vec&lt;B&gt;</code>.</p>
+<p>In any event, I wasn't clever enough to figure out a way to make all of this compile. This was the final version of the code I came up with:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">traverse</span><span>&lt;F, M, A, B, I&gt;(</span><span style="color:#268bd2;">iter</span><span>: I, </span><span style="color:#268bd2;">f</span><span>: F) -&gt; </span><span style="color:#268bd2;">M::</span><span>Wrapped&lt;</span><span style="color:#859900;">Vec</span><span>&lt;B&gt;&gt;
+</span><span style="color:#859900;">where
+</span><span>    F: FnMut(A) -&gt; M,
+</span><span>    M: Applicative&lt;Unwrapped = B&gt;,
+</span><span>    I: </span><span style="color:#859900;">IntoIterator</span><span>&lt;Item = A&gt;,
+</span><span>    </span><span style="color:#268bd2;">M::</span><span>Wrapped&lt;</span><span style="color:#859900;">Vec</span><span>&lt;B&gt;&gt;: Applicative&lt;Unwrapped = </span><span style="color:#859900;">Vec</span><span>&lt;B&gt;&gt;,
+</span><span>{
+</span><span>    </span><span style="color:#268bd2;">let </span><span style="color:#586e75;">mut</span><span> iter = iter.</span><span style="color:#859900;">into_iter</span><span>().</span><span style="color:#859900;">map</span><span>(f);
+</span><span>
+</span><span>    </span><span style="color:#268bd2;">let </span><span style="color:#586e75;">mut</span><span> result: M::Wrapped&lt;</span><span style="color:#859900;">Vec</span><span>&lt;B&gt;&gt; = </span><span style="color:#859900;">match</span><span> iter.</span><span style="color:#859900;">next</span><span>() {
+</span><span>        </span><span style="color:#859900;">Some</span><span>(b) </span><span style="color:#859900;">=&gt;</span><span> b.</span><span style="color:#859900;">map</span><span>(|</span><span style="color:#268bd2;">x</span><span>| </span><span style="color:#859900;">vec!</span><span>[x]),
+</span><span>        </span><span style="color:#859900;">None =&gt; return </span><span>M::wrap(</span><span style="color:#859900;">Vec</span><span>::new()),
+</span><span>    };
+</span><span>
+</span><span>    </span><span style="color:#859900;">for</span><span> m </span><span style="color:#859900;">in</span><span> iter {
+</span><span>        result = result.</span><span style="color:#859900;">lift_a2</span><span>(m, |</span><span style="color:#268bd2;">vec</span><span>, </span><span style="color:#268bd2;">b</span><span>| {
+</span><span>            vec.</span><span style="color:#859900;">push</span><span>(b);
+</span><span>            vec
+</span><span>        });
+</span><span>    }
+</span><span>
+</span><span>    result
+</span><span>}
+</span></code></pre>
+<p>But this fails with the error messages:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>error[E0308]: mismatched types
+</span><span>   --&gt; src\main.rs:448:33
+</span><span>    |
+</span><span>433 | fn traverse&lt;F, M, A, B, I&gt;(iter: I, f: F) -&gt; M::Wrapped&lt;Vec&lt;B&gt;&gt;
+</span><span>    |                - this type parameter
+</span><span>...
+</span><span>448 |         result = result.lift_a2(m, |vec, b| {
+</span><span>    |                                 ^ expected associated type, found type parameter `M`
+</span><span>    |
+</span><span>    = note: expected associated type `&lt;&lt;M as Functor&gt;::Wrapped&lt;Vec&lt;B&gt;&gt; as Functor&gt;::Wrapped&lt;_&gt;`
+</span><span>                found type parameter `M`
+</span><span>    = note: you might be missing a type parameter or trait bound
+</span><span>
+</span><span>error[E0308]: mismatched types
+</span><span>   --&gt; src\main.rs:448:18
+</span><span>    |
+</span><span>433 |   fn traverse&lt;F, M, A, B, I&gt;(iter: I, f: F) -&gt; M::Wrapped&lt;Vec&lt;B&gt;&gt;
+</span><span>    |                  - this type parameter
+</span><span>...
+</span><span>448 |           result = result.lift_a2(m, |vec, b| {
+</span><span>    |  __________________^
+</span><span>449 | |             vec.push(b);
+</span><span>450 | |             vec
+</span><span>451 | |         });
+</span><span>    | |__________^ expected type parameter `M`, found associated type
+</span><span>    |
+</span><span>    = note: expected associated type `&lt;M as Functor&gt;::Wrapped&lt;Vec&lt;B&gt;&gt;`
+</span><span>               found associated type `&lt;&lt;M as Functor&gt;::Wrapped&lt;Vec&lt;B&gt;&gt; as Functor&gt;::Wrapped&lt;Vec&lt;B&gt;&gt;`
+</span><span>help: consider further restricting this bound
+</span><span>    |
+</span><span>436 |     M: Applicative&lt;Unwrapped = B&gt; + Functor&lt;Wrapped = M&gt;,
+</span><span>    |                                   ^^^^^^^^^^^^^^^^^^^^^^
+</span></code></pre>
+<p>Maybe this is a limitation in GATs. Maybe I'm just not clever enough to figure it out. But I thought this was a good point to call it quits. If anyone knows a trick to make this work, let me know!</p>
+<h2 id="should-we-have-hkts-in-rust">Should we have HKTs in Rust?</h2>
+<p>This was a fun adventure. GATs look like a nice extension to the trait system in Rust. I look forward to the feature stabilizing and landing. And it's certainly fun to play with all of this.</p>
+<p>But Rust is not Haskell. The ergonomics of GATs, in my opinion, will never compete with higher kinded types on Haskell's home turf. And I'm not at all convinced that it should. Rust is a wonderful language as is. I'm happy to write Rust style in a Rust codebase, and save my Haskell coding for my Haskell codebases.</p>
+<p>I hope others enjoyed this adventure as much as I have. A really ugly version of my code is available <a href="https://gist.github.com/snoyberg/91ae892199bc8a6687d3798343a9ee54">as a Gist</a>. You'll need to use a recent nightly Rust build, but otherwise it has no dependencies.</p>
+<p>If you liked this post, you may be interested in some other Haskell/Rust hybrid posts:</p>
+<ul>
+<li><a href="https://tech.fpcomplete.com/blog/2017/07/iterators-streams-rust-haskell/">Iterators and Streams in Rust and Haskell</a></li>
+<li><a href="https://tech.fpcomplete.com/blog/2018/07/streaming-utf8-haskell-rust/">Streaming UTF-8 in Haskell and Rust</a></li>
+<li><a href="https://tech.fpcomplete.com/blog/2018/10/is-rust-functional/">Is Rust functional?</a></li>
+<li><a href="https://tech.fpcomplete.com/blog/async-exceptions-haskell-rust/">Async Exceptions in Haskell, and Rust</a></li>
+</ul>
+<p>FP Complete offers training, consulting, and review services in both Haskell and Rust. Want to hear more? <a href="https://tech.fpcomplete.com/contact-us/">Contact us to speak with one of our engineers about how we can help.</a></p>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Monads%20and%20GATs%20in%20nightly%20Rust https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;monads-gats-nightly-rust&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;monads-gats-nightly-rust&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;monads-gats-nightly-rust&#x2F;&amp;title=Monads%20and%20GATs%20in%20nightly%20Rust"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;monads-gats-nightly-rust&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#f88b99949d8bb89e889b979588949d8c9dd69b9795" targe="_blank"><span class="__cf_email__" data-cfemail="d9aab8b5bcaa99bfa9bab6b4a9b5bcadbcf7bab6b4">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

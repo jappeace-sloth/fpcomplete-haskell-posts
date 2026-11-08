@@ -1,0 +1,497 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+The Functor Pattern in C++
+
+By Bartosz Milewski, June 20, 2012
+
+Share this     
+
+The Gang of Four book introduced many a C++ programmer to the world of patterns. Those patterns are
+mostly based on everyday examples, although there are a few more abstract ones like Strategy. In
+Haskell (and other functional languages) most patterns are very abstract. They are often based on
+mathematical constructs; category theory being a major source of ideas.
+
+Alexander Stepanov Alexander Stepanov
+
+Arguably it's easier to grok terms like Factory, Facade, or Visitor from the GoF book than the ones
+from the Haskell arsenal, like Monad, Monoid, or Applicative Functor.
+
+You might not know that, but some of the best C++ programmers use functional abstractions in their
+work. Alexander Stepanov used many functional patterns in designing the C++ Standard Template
+Library -- his education in mathematics was no doubt a big factor in this groundbreaking work. I'll
+show you some of these patterns later.
+
+In my previous blog I described a functional approach to asynchronicity in C++ based on the
+Haskell's Continuation Monad. For many readers that might have been too big of a jump -- not only
+is the Monad pattern unfamiliar in the imperative world, but the Continuation Monad is one of the
+hardest to wrap your brain around. This is why I decided to back off a little and write a few posts
+that will introduce functional patterns more gradually. As a bonus, these patterns will expose some
+interesting aspect of asynchronous programming.
+
+Here's the plan: In this installment I will introduce the Functor pattern (the real "functor," not
+the misnomer for a function object). More posts on Functors, Applicative Functors, Monads, and
+Monoids will follow. I promise to stay away from category theory.
+
+Type Constructors
+
+Let's start looking for some hidden patterns. The first one is called a type constructor. In every
+programming language you have some basic types like integers, doubles, etc.; and then you have ways
+of defining new types. Type constructors create new types from old types.
+
+There are some built-in type constructors in C++. For instance, by adding an asterisk to any type,
+you create a pointer to that type (well, never say always in C++: there are always exceptions to
+every rule). You can have a pointer to int, as in int *), a pointer to bool, a pointer to a
+pointer, a pointer to a function, etc. Give me any type (except for a few outliers) and I'll create
+a pointer to that type. Pointer is a type constructor.
+
+You can create even more type constructors using templates. Generalizing a built-in pointer type
+constructor, we have the smart pointer type constructors, such as uniqueptr<T> or sharedptr<T>.
+Again, these type constructors work for any type T (with the above caveat).
+
+Arrays are another example of a built-in type constructor. You can define array types by adding
+square brackets to almost any type, as in int[].
+
+Generalizing arrays, we have user-defined containers. All containers in STL are type constructors.
+For instance, take almost any type T and you can create a std::vector<T>.
+
+Function types are also created using a built in type constructor. Take any type and append a pair
+of parentheses to it and you get a function type (a function returning that type, as in int()).
+
+Again, we can generalize function types to function objects, in particular the STL std::function
+template, which is, you guessed it, also a type constructor.
+
+In general type constructors can take more than one type as input, or no type at all (nullary type
+constructors). They are just like functions that operate on types rather than values.
+
+In what follows I will concentrate on unary type constructors, because they are the building blocks
+of functors. An n-ary type constructor can always be turned into a unary one by providing concrete
+types for n-1 of its inputs. For instance, pair<A,B> can give rise to unary type constructors pair
+<A,int> or pair<double *,B>.
+
+There is another way of looking at type constructors: An object of the constructed type hides a
+value (or values) of the original type. That's easy to see with pointer types: a pointer to int
+hides an int. You can access that int by dereferencing the pointer. The same goes for smart
+pointers. A container hides multiple values of its basic type. A vector<float> contains floating
+point values. They can be accessed through indexing or through iterators.
+
+Functions are an interesting type. They are not containers but they, too, can "hide" a value -- the
+value they return. This value can be accessed by executing the function. When you call a function
+of the type int(), it returns a value of the type int, etc. We'll talk more about function types
+later.
+
+Functors
+
+Now that you can recognize the Type Constructor pattern, let's look for some more structure. As I
+said, type constructors may be thought of as encapsulating values of their input types. You can
+work on those values by first exposing them, applying some transformation, and then hiding them
+back. But this is tedious and it breaks encapsulation. What if you had a way of transforming hidden
+values without exposing them to the public. That's exactly what a functor does. It's a combination
+of a unary type constructor and a prescription for applying functions to hidden values.
+
+Let's try it with some of the type constructors we've seen so far. For simplicity, I'll pick one
+particular transformation: It takes a string and returns an int. Let's represent it by a function
+length. We want to apply this transformation, which turns strings to ints, to various
+encapsulations of strings, and obtain the corresponding encapsulations of ints.
+
+Pointers
+
+Let's try first doing that for a uniqueptr. We are given a uniqueptr<string> and we want to get a
+uniqueptr<int>, which contains the length of the string. This new transformation which transforms
+uniqueptrs is often called the lifting of the original transformation. In other words, we are
+lifting a function acting on input types to a function acting on output types of the type
+constructor.
+
+Let's try it:
+
+unique_ptr<int> liftedLength(unique_ptr<string> s) {
+    return unique_ptr<int>(new int(length(*s)));
+}
+
+We did have to expose the value hidden in the unique_ptr in the implementation of the lifting, but
+the client can use liftedLength and similar functions without breaking the encapsulation. (By the
+way, I'm not worrying about null pointers here -- that's a different pattern altogether.)
+
+Now replace length with any other function f from A to B. It's very easy to generalize our lifting
+formula. The lifting function is traditionally called fmap:
+
+template<class A, class B>
+unique_ptr<B> fmap(function<B(A)> f, unique_ptr<A> a) {
+    return unique_ptr<B>(new B(f(*a)));
+}
+
+Equipped with fmap we can, for instance, trim a string inside unique_ptr:
+
+fmap<string, string>(&trim, unique_ptr<string>(new string(" Hi! ")));
+
+We can also compose lifted functions:
+
+unique_ptr<string> p(new string(" Hi! "));
+auto np = fmap<string, int>(&length,
+                            fmap<string, string>(&trim, move(p)));
+
+The notation is awkward, but the idea is simple.
+
+The type constructor unique_ptr<T> and the above lifting function, fmap, form a Functor.
+
+Containers
+
+Now let's do the same thing with a vector of strings. The lifting of length should take such a
+vector and return a vector of ints. Piece of cake:
+
+vector<int> liftedLength(vector<string> strings) {
+    unsigned size = strings.size();
+    vector<int> lengths(size);
+    for (unsigned i = 0; i < size; ++i)
+        lengths[i] = length(strings[i]);
+    return lengths;
+}
+
+I used indexing to access both vectors because that's what I said about accessing values hidden
+inside vectors. Alex Stepanov would probably shudder seeing this code. That's because he provided a
+very general way of lifting any function to containers. First of all, he abstracted access to all
+containers using iterators, and then created the std::transform algorithm which lifts any function
+to the level of iterators. So here's the lifting of length the STL way:
+
+vector<int> liftedLength(vector<string> strings) {
+    vector<int> lengths;
+    transform(strings.begin(), strings.end(), back_inserter(lengths), &length);
+    return lengths;
+}
+
+Obviously, this code can be generalized to lift any function f taking A and returning B:
+
+template<class A, class B>
+vector<B> fmap(function<B(A)> f, vector<A> as) {
+    vector<B> bs;
+    transform(as.begin(), as.end(), back_inserter(bs), f);
+    return bs;
+}
+
+The vector<T> type constructor with its corresponding fmap form a Functor.
+
+A little Haskell digression
+
+So far these have been pretty straightforward examples. Even though they were simple, expressing
+them in C++ produced quite a bit of syntactic noise. This noise will get increasingly louder with
+more complex examples. So we need a better way of expressing functional pattern in order to make
+progress. As I argued previously, knowing Haskell is a great help in designing and understanding
+more advanced patterns in C++. So let's take a little break and see what the last example would
+look like in Haskell.
+
+The canonical equivalent of a C++ vector is a Haskell list. Just like vector in C++, list is a type
+constructor in Haskell. A list of values of type a (type variables are lower-case in Haskell) has
+type [a]. The version of fmap for lists is defined in the standard Haskell library called Prelude,
+and is called map.
+
+Here's the signature of map:
+
+map :: (a -> b) -> [a] -> [b]
+
+Let me translate it: map is a function of two arguments, the first being itself a function a->b
+that takes an a and returns a b. The second argument, [a], is a list of a. The result -- the thing
+after the last arrow -- is of type [b], a list of b. The lifting of the function length would be
+expressed in Haskell like this:
+
+liftedLength :: [String] -> [Int]
+liftedLength str = map length str
+
+The first line (it is optional because Haskell has a powerful type inference system) shows the type
+of the lifted function: from lists of strings to lists of integers. The second line defines the
+function liftedLength that takes a str and applies map to the function length and the string str.
+(In Haskell you don't use parentheses around function arguments, neither in the definition nor in
+the application.)
+
+Interestingly, because of currying (see the Appendix), the signature of map can be rewritten as
+(pay attention to parentheses):
+
+map :: (a -> b) -> ([a] -> [b])
+
+which can be read as map being a function that takes a function a->b and returns a function [a]->
+[b]. In fact the definition of liftedLength can be simplified to:
+
+liftedLength :: [String] -> [Int]
+liftedLength = map length
+
+which defines one function in terms of another (curried) function. Now the whole "lifting" thing
+starts making sense. We start with the function length :: String->Int and lift it to a function
+liftedLength :: [String]->[Int]. The lack of currying in C++ makes such simple things difficult to
+express.
+
+You can lift any function, not only length, this way. Just look at the signature of map, which is
+exactly what you'd for the general lifting function fmap for lists. So map is the fmap for lists:
+
+fmap = map
+
+Let's go back to some more C++ examples.
+
+Function Objects
+
+This is a little tricky, but the ability to think of functions as first class citizens is an
+essential skill in programming, and practically all imperative languages learned to recognize this
+fact. In general, a function type constructor takes one type for the return value and zero or more
+types for arguments. For simplicity, let's first consider nullary functions. Given any type T we
+can construct a function-type T() or, more generally, std::function<T()>: a function that takes no
+arguments and returns T. The generalized function object, std::function, not only deals with
+regular functions, but also with function objects (objects that overload operator()), lambdas,
+closures, methods, etc.
+
+How can we lift the function length to operate on functions? The lifted function must accept a
+function returning string and produce a function returning int:
+
+function<int()> liftedLength(function<string()> fStr)
+
+In order to return a function, we have to generate it on the fly. In C++11 we can do that with
+lambdas. Here, liftedLength should return a function that extracts the string from fStr and applies
+length to it. Remember, extracting a value for a function means simply executing it. Here it is:
+
+function<int()> liftedLength(function<string()> fStr)
+{
+    return [fStr]() {
+        return length(fStr());
+    };
+}
+
+Notice that the returned function is really a closure -- it captures fStr. This anonymous function/
+closure is converted into std::function object upon return.
+
+This formula can be easily generalized to lifting an arbitrary function:
+
+template<class A, class B>
+function<B()> fmap(function<B(A)> f, function<A()> fA)
+{
+    return [f, fA]() {
+        return f(fA());
+    };
+}
+
+For many C++ programmers this might be the first encounter with higher order functions that take
+functions as arguments and also return functions. In Haskell this is standard fare.
+
+We conclude that the nullary function constructor and the corresponding fmap form a Functor. In
+itself, this particular functor might not seem very useful, but it is a stepping stone toward much
+more interesting cases, like continuations, threads, or asynchronous calls.
+
+Back to Haskell
+
+In Haskell, which shuns side effects, a function that takes no arguments is not very interesting.
+So let's generalize the above example slightly: we'll look at functions taking some fixed type, c,
+with no restrictions on the return type a. Let's call such functions "readers" because they can
+only read c, not modify it. You might think of values of type c as, say, some configuration data
+that's passed around.
+
+Here's the type constructor:
+
+newtype Reader c a = Reader (c -> a)
+
+I have defined a new data type, Reader parameterized by two types c and a. The right hand side of
+the definition says that I can create a Reader from any function c->a that takes c and returns a.
+It also says, in the same breath, that in order to extract that function later, I'll have to
+pattern-match a Reader object using the pattern (Reader f). Trust me, that's what it says.
+
+The major reason for extracting a function from a reader is to apply it to some value of type c.
+Let's define a separate helper function to do just that:
+
+run :: Reader c a -> c -> a
+run (Reader f) cfg = f cfg
+
+The first (optional) line shows the type signature of run: It's a function that takes a reader and
+some config, and returns a value of type a. The second line is the implementation. The first
+argument to run is pattern matched to (Reader f). This way we gain access to the function f that
+was encapsulated in the reader argument. The second argument is config cfg. In the body of the
+definition we apply f to cfg.
+
+The lifting of length is now pretty straightforward:
+
+liftedLength :: Reader c String -> Reader c Int
+liftedLength rdrStr = Reader (λ cfg -> length (run rdrStr cfg))
+
+We have to return a new function (encapsulated in the Reader constructor): the lambda that takes an
+argument cfg and returns the result of length acting on the result of fStr applied to cfg. You
+might want to read this description a few times before it clicks.
+
+The generalization to fmap is straightforward -- just replace length with f:
+
+fmap :: (a -> b) -> Reader c a -> Reader c b
+fmap f rdA = Reader (λ cfg -> f (run rdA cfg))
+
+Back to C++
+
+What does a Reader look like in C++? The type constructor is a function-type constructor that is
+parameterized by two types, A and C:
+
+function<A(C)>
+
+We'll keep C fixed and vary only A (we are in fact currying the type constructor when we provide
+concrete type for C). Here's the definition of fmap (notice: the same C throughout):
+
+template<class C, class A, class B>
+function<B(C)> fmap(function<B(A)> f, function<A(C)> rdA)
+{
+    return [f, rdA](C cfg) {
+        return f(rdA(cfg));
+    };
+}
+
+After seeing the Haskell code, that was pretty easy, right? Unfortunately things are never easy in
+C++ so in the next blog post I'll show you a more careful implementation of Reader, as well as
+Async from my previous blog. For now, let us conclude that Reader together with the corresponding
+fmap is a Functor. We have a type constructor and a prescription for applying functions to its
+"hidden" value.
+
+Again, the Reader functor doesn't seem like it would be very useful in C++. Why would anyone carry
+around some configuration data if it's easier to make them global? Hmm... What about many different
+configurations? Access them by key? What about passing the key then? And what if you change the
+word "configuration" to "credentials"? Would you still want to make them global?
+
+Functor as a Haskell typeclass
+
+In C++ we'll just work with the functor pattern without abstracting it further. But in Haskell such
+patterns can be generalized using type classes. The closest thing to type classes in C++ were
+concepts, which didn't make it into the C++11 Standard. A Haskell type class describes a whole
+family of types that have something in common. In the case of functors, this common thing is the
+presence of the lifter: the function fmap. But a Functor doesn't just describe a type, it describes
+a type constructor -- a particular mapping from types to types. So a Functor type class unifies a
+whole class of type constructors. Here's the definition of a Functor in its full glory:
+
+class Functor f where
+  fmap :: (a -> b) -> f a -> f b
+
+You can read it as: A type constructor f is a Functor if there is a function fmap with the type
+signature:
+
+  fmap :: (a -> b) -> f a -> f b
+
+Notice that f is applied to types a and b. That's how we know that f is a type constructor. In fact
+this is how the Haskell compiler knows that f is a type constructor. It looks at the usage.
+
+Having defined a type class we can now tell Haskell which type constructors are Functors. We do
+that by declaring instances of the type class. For example, I told you that a list constructor []
+is a functor. Here's how I tell that to Haskell:
+
+instance Functor [] where
+    fmap = map
+
+The instance definition must provide the implementation of the associated function (or functions,
+plural, in general). Here we define fmap in terms of an existing function, map.
+
+Would any implementation of fmap work for a Functor? Not really. There are two additional functor
+laws which unfortunately cannot be enforced by Haskell.
+
+The first law states that the lifting of the identity function (called id in Haskell) must also be
+identity:
+
+fmap id = id
+
+In other words if you apply identity to the values hidden in your type constructor, nothing will
+change.
+
+The second law states that lifting a composition of two functions is the same as composing the
+lifted functions.
+
+fmap (f . g) = fmap f . fmap g
+
+The dot means the application of one function to the result of another.
+
+It's good to know about these laws, but in most practical cases they are trivially true. And, when
+a type constructor is a good functor candidate, there usually is only one obvious way to implement
+fmap, as I demonstrated in the examples above.
+
+Conclusion
+
+The Functor pattern is ultimately about code reusability and composability -- two major pillars of
+programming. Whenever you create a new way of encapsulating data of arbitrary type, that is a type
+constructor, you should ask yourself the question:
+
+How can I reuse my existing libraries on data that is encapsulated through this type constructor?
+
+I'm talking about libraries that contain functions like length, which don't know how to work on a
+unique_ptr<string> or a vector<string>.
+
+The naive approach would be to expose the encapsulated data in an ad hoc manner and apply library
+functions to it. For a multitude of reasons, this is not a good solution, and it gets really hairy
+when you're dealing with function-type constructors. The Functor pattern allows you to accomplish
+all this without breaking the encapsulation, simply by defining one template function, fmap.
+
+The Functor pattern is especially powerful when working with function types. A function does not
+contain a value (unless it's a constant function) -- it is a "promise" to create a value when
+executed. A functor allows you to arbitrarily compose operations on (the results of) those
+functions without immediately executing them. This is the basis of the general approach to
+asynchronous APIs I described in my previous post and will elaborate on in my next post.
+
+Acknowledgments
+
+I'd like to thank Eric Niebler for many valuable comments on the draft of this post.
+
+Appendix: Currying
+
+Many people find function syntax in Haskell confusing because there are no parentheses around, or
+commas between, arguments. It takes some getting used to to interpret the following pattern:
+
+ex1 ex2 ex3
+
+as a call to the function produced by ex1 with arguments produced by ex2 and ex3 (the exs stand for
+arbitrary expressions). It's even more confusing when the expressions themselves are parenthesized,
+as in this made up example:
+
+(getOp "add") (getX n) (getV k m)
+
+This syntax makes perfect sense in Haskell, where currying is a national sport. In other languages,
+when you call a two argument function with one argument you get an error: Not enough arguments. In
+Haskell you get a curried function. It's a new function that takes one (remaining) argument. The
+only way you can do it in C++ is by using a (somewhat awkward) template function bind. For
+instance, this is what you'd do if you wanted to curry a two-argument function concat, passing it
+"Hello, " as the first argument:
+
+function<string(string)> greet = bind(&concat, "Hello, ", placeholders::_1);
+cout << greet("Haskell!") << endl;
+
+Here's the equivalent code in Haskell (where, incidentally, concat is an infix operator ++):
+
+greet = (++) "Hello, "
+greet "Haskell!"
+
+Now the type signatures of two-argument functions start making sense:
+
+f :: a -> b -> c
+
+This means that the function f takes two arguments of types a and b and returns c; or,
+equivalently, that it takes one argument of type a and returns a function b->c. It's all the same,
+you see, and right associativity of the arrow -> makes the use of parentheses redundant (here's the
+equivalent parenthesized version: f :: a -> (b -> c)). [twitter-follow screen_name=
+'BartoszMilewski']
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

@@ -1,0 +1,149 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Announcing Stackage Server
+
+By Chris Done, July 31, 2014
+
+Share this     
+
+A New Service
+
+A couple months ago I made a post explaining Stackage server, its motivations and use-cases, and
+that it would be available in the coming months. It's now officially available in beta!
+
+Stackage server.
+
+As a quick recap: the essence of Stackage is that rather than publishing at the granularity of
+packages, like Hackage, it publishes at the granularity of package sets: Either everything builds
+together, or nothing is published until it does. We call these published things “snapshots.”
+
+Note: A snapshot is an exact image that can be reproduced at any time. With the snapshot's digest
+hash, you can download and install the same index and install packages based on that index all the
+time. Subsequently generated snapshots have no effect on previous ones.
+
+I've been using it for a couple months for every project I've worked on, private and public. It's
+perfect for application developers and teams who want to share a common always-building package
+set. Provided you're using one of the 500+ packages we're publishing in the snapshots, there will
+always be a build plan for the package you want to use in your project.
+
+And if your library is in Stackage, as explained in the previous post, you will get a heads up on
+Github if your updates or other people's updates cause a build failure related to your library.
+
+How it Works
+
+Snapshots are built every couple days. It takes about 16 hours to complete a build. You can view
+the build progress at jenkins.stackage.org.
+
+There are two types of snapshots published by FP Complete:
+
+ 1. Exclusive: this excludes packages not specified in the Stackage configuration. This means
+    anything that you try to install from this snapshot will have a build plan.
+ 2. Inclusive: this includes Hackage packages not known to build. If you try to install a package
+    not tracked by Stackage, it may or may not build.
+
+You can use whichever suites your needs. If you want everything to always build, the former is an
+attractive choice. If you need to use a package not currently on Stackage, the latter choice makes
+sense.
+
+Try it Right Now
+
+Choose a snapshot. Each snapshot applies to a specific GHC version. For example, the latest (as of
+writing) GHC 7.8 build. You'll see something like this:
+
+To use, copy the following to your ~/.cabal/config:
+
+remote-repo: stackage:https://www.stackage.org/stackage/604a3649795771f6dd8b80bfd4eeb748e1d97599
+
+Note: Remove or comment out any existing remote-repo line.
+
+Run the following to update your packages:
+
+$ cabal update
+
+If you already have installed some packages, it's better to clear out your package set. See this
+page in the FAQ for how to do that.
+
+Sandboxes
+
+How does this interact with sandboxes? Good question. Here's the rundown:
+
+  • hsenv: Yes, works fine. Edit the .hsenv/cabal/config file and off you go.
+  • cabal sandbox: Not yet! There is an open issue about this. But I have tried cabal sandboxes
+    inside hsenv, which worked.
+
+We've added this to the FAQ on the wiki. Contributions to this wiki page are welcome!
+
+Feedback
+
+Personally, I'm very satisfied with this service so far. I just use my existing tools with a
+different remote-repo.
+
+Others familiar with Nix have asked how they compare. They are very similar solutions in terms of
+versioning and curation (although Stackage has full-time maintenance); the main advantage to
+Stackage is that it just uses existing tools, so you don't have to learn a new tool and way of
+working to have a better user experience.
+
+We'd like feedback on a few points:
+
+  • Is the inclusive/exclusive separation useful?
+  • Is the process of using Stackage in an existing system (clearing the package set and starting
+    fresh) easy?
+  • Should we establish a convention for storing Stackage snapshot hashes in projects
+    source-tracking repositories?
+
+And any other feedback you come up with while using it.
+
+Stackage for businesses
+
+As part of my last announcement for Stackage I mentioned there will also be custom services for
+businesses looking to build their development platform on Stackage.
+
+These commercial services include:
+
+ 1. Premium support - FP Complete will quickly respond and make improvements or fixes to the public
+    Stackage server as they need to happen.
+ 2. Private snapshots with premium support - very helpful for commercial users looking to add
+    proprietary or custom libraries.
+ 3. Validated pre-compiled build images based on public or private snapshots. These can be used on
+    developer systems or automated build systems.
+ 4. Packaged Jenkins server using the pre-compiled build images.
+
+All these additional commercial services are meant to be helpful add-ons and we look forward to
+hearing more about what features you think would be beneficial to you. For more information email
+us at: [email protected]
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

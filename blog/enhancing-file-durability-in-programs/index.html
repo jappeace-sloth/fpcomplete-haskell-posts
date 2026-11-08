@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Enhancing File Durability in Your Programs</title>
+  <meta property="og:title" content="Enhancing File Durability in Your Programs">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="An unexpected shutdown should not affect the durability of the filesystem our programs rely upon. We should always strive to build systems that enhance the file durability of our programs. If we don&#x27;t we will love valuable data and could even put lives at risk is the data is critical.">
+  <meta property="og:description" content="An unexpected shutdown should not affect the durability of the filesystem our programs rely upon. We should always strive to build systems that enhance the file durability of our programs. If we don&#x27;t we will love valuable data and could even put lives at risk is the data is critical.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;enhancing-file-durability-in-programs&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Enhancing File Durability in Your Programs</h1>
+      
+      <p id="page-description">By Roman Gonzalez, March 12, 2019</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Enhancing%20File%20Durability%20in%20Your%20Programs https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;enhancing-file-durability-in-programs&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;enhancing-file-durability-in-programs&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;enhancing-file-durability-in-programs&#x2F;&amp;title=Enhancing%20File%20Durability%20in%20Your%20Programs"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;enhancing-file-durability-in-programs&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <h2>Abstract</h2>
+<p>At FP Complete, we strive to build systems that endure the
+direst of situations. An unexpected shutdown (like a kernel panic,
+or unplugging the power cord) in a machine should not affect the
+durability of confirmed writes in programs we develop.</p>
+<p style="text-align: left;">As a developer, you'll likely want to
+have options in regards to guaranteed durable writes; durability is
+the property that ensures that once an API confirms a write, every
+read will reflect its changes.</p>
+<p>Durable writes are essential for our customers; many of them
+work in the Financial and Medical Tech industry, and any saved
+piece of data—whether in a filesystem or a database—must have
+durability guarantees after we perform a write operation.
+Otherwise, companies lose money and lives may be at risk.</p>
+<p>In this blog post, we will demonstrate that, although our
+high-level Haskell APIs tell us that it persisted our file writes
+in the filesystem, a catastrophic failure like an unexpected
+shutdown may cause us to lose writes that we thought were
+committed. We will later demonstrate how using low-level C APIs
+(the ones popular RDBMS databases use) offer better guarantees in
+write durability; and finally, we’ll show you some prior art we
+have implemented in the <a href=
+"/blog/rio-standard-library-for-haskell" rel="noopener" target=
+"_blank"><code>rio</code></a> package , which you can use today to
+get durable file writes.</p>
+<h2>Status Quo of File APIs in Haskell</h2>
+<p>When performing writes in Haskell programs, we often rely on
+functions like <code>writeFile</code> or
+<code>withBinaryFile</code> in our Haskell codebase; these
+functions return as soon as the OS Kernel confirms writes happened.
+However, the kernel does not typically store writes on physical
+disks right away. Instead, it stores file writes in a cache buffer
+first, which helps to improve runtime performance of writes.</p>
+<p>Often, this behavior is acceptable. Not every piece of data must
+be durable and if, for some reason, you are dealing with large
+files, having them being durable by default might be an expensive
+operation. That said, the durability aspect of filesystem writes
+must be a conscious decision rather than an afterthought.</p>
+<h2>Improving write durability in Haskell</h2>
+<p>How can we improve the durability situation in our Haskell APIs?
+First, we need to make use of C functions that will sync writes to
+the file system. Once writes have been performed to a
+<code>Handle</code> , we need to be able to call the lower-level
+function <code>fsync</code> on the <code>Handle</code> internal
+file descriptor. However, a <code>fsync</code> on the file
+<code>Handle</code> alone won’t do. We also must call
+<code>fsync</code> in the file descriptor of the containing
+directory to sync the file name of our <code>Handle</code> in the
+file metadata system. A great reference to learn
+interesting/important details about <code>fsync</code> might be
+Xavier Roche’s <a href=
+"https://blog.httrack.com/blog/2013/11/15/everything-you-always-wanted-to-know-about-fsync/"
+rel="nofollow noopener" target="_blank">excellent blog post</a>;
+this blog post document what behavior you should expect in
+different OS and filesystem formats. (You should check it out, it’s
+cool, we’ll wait here.)</p>
+<p>Developers at FP Complete implemented a new family of functions
+that use the strategies mentioned above in the <code>rio</code>
+library:</p>
+<ul>
+<li><code>withBinaryFileDurable</code></li>
+<li><code>withBinaryFileDurableAtomic</code></li>
+<li><code>ensureFileDurable</code></li>
+</ul>
+<p>To implement these functions, we used internal APIs from
+<code>GHC.IO.Handle.FD</code> and
+<code>System.Internal.Posix</code> . We found a few constraints in
+the existing GHC API that are worth mentioning:</p>
+<ul>
+<li>
+<p>A <code>Handle</code> cannot be built from directory paths</p>
+<p>This limitation makes total sense, as we can only open
+directories in <code>ReadMode</code> , and the <code>Handle</code>
+API doesn’t make sense for directory operations. We made the C file
+descriptor of directories an internal implementation detail of the
+high-level functions exported by the <code>rio</code> library , the
+way API users deal with files stays unaffected.</p>
+</li>
+<li>
+<p>There is no <code>fsync</code> and <code>openat</code> foreign
+imports in the GHC filesystem API</p>
+<p>In our module, we added a few foreign imports to accommodate
+lower-level APIs for reliable writes. We use a combination of C and
+internal types from the GHC API to offer a high-level API for users
+of our library.</p>
+</li>
+</ul>
+<p>You can take a look at the <a href=
+"https://www.stackage.org/haddock/lts-12.22/rio-0.1.6.0/src/RIO.File.html"
+rel="noopener" target="_blank">source code</a> if you are curious.
+We are open to feedback, as the usage of low-level APIs can get
+somewhat tricky at times. We are hoping to at some point in the
+future makes these functions (or a version of them) part of the
+standard Haskell <code>base</code> , so not only users of the
+<code>rio</code> library can take advantage of this
+functionality.</p>
+<h2>Testing the durability of our file system</h2>
+<p>Being aware of the durability aspects of our filesystem is nice
+and dandy, but should we <em>really</em> be concerned? Is this
+issue something that could happen frequently, or are we paranoid?
+This question is a fair one. We believe this ordeal happens more
+often than you might expect. We can easily replicate durability
+concerns using a virtual machine.</p>
+<p>When we execute the following program:</p>
+<pre><code class="language-haskell">#!/usr/bin/env stack
+{- stack --resolver nightly-2018-12-10 script --package rio --package optparse-generic --package directory --compile -}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeOperators     #-}
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE NamedFieldPuns    #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+module Main where
+
+import RIO
+import RIO.FilePath
+import RIO.File (writeBinaryFileDurable)
+import System.Directory (doesDirectoryExist, removeDirectoryRecursive, createDirectoryIfMissing)
+import Options.Generic
+
+data Cmd w
+  = Normal  (w ::: FilePath &lt;?&gt; "Directory where to write files")
+  | Durable (w ::: FilePath &lt;?&gt; "Directory where to write files")
+  deriving (Generic)
+
+instance ParseRecord (Cmd Wrapped)
+
+executeTest ::
+     (HasLogFunc env, MonadReader env m, MonadIO m)
+  =&gt; FilePath
+  -&gt; (FilePath -&gt; ByteString -&gt; m ())
+  -&gt; m ()
+executeTest dirPath writeFileFn = do
+  -- Start with a fresh directory _always_
+  shouldDelete &lt;- liftIO $ doesDirectoryExist dirPath
+  when shouldDelete (liftIO $ removeDirectoryRecursive dirPath)
+  liftIO $ createDirectoryIfMissing True dirPath
+  forM_ ([1..100] :: [Int]) $ \i -&gt; do
+      let filePath = dirPath &lt;/&gt; ("file_" &lt;&gt; show i &lt;&gt; ".txt" )
+      writeFileFn filePath ("Input " &lt;&gt; encodeUtf8 (tshow i))
+  logInfo "All files written successfully"
+
+main :: IO ()
+main = do
+  logOptions &lt;- logOptionsHandle stdout False
+  withLogFunc logOptions $ \logFun -&gt; runRIO logFun $ do
+    cmd &lt;- unwrapRecord "durability-test"
+    case cmd of
+      Normal  !dirPath -&gt;
+        executeTest dirPath writeFileBinary
+      Durable !dirPath -&gt;
+        executeTest dirPath writeBinaryFileDurable
+</code></pre>
+<p>In the scenario where we execute this program with the
+<code>normal</code> sub-command and it finishes without errors:</p>
+<pre><code class=
+"language-bash">~/test/ $ ./DurabilityTest.hs normal normal
+</code></pre>
+<p>Our program writes new files in the given directory path
+<code>normal</code> ; However, we may all lose all these writes if
+a hard restart happens merely after our program finishes. The
+following screencast shows how our program creates 100 files in an
+empty directory, each file containing a small message. Once our
+program finishes, we list the files in the specified directory to
+assert everything is in order, then, we perform a hard reset on the
+VirtualBox machine, once the machine is booted again, our precious
+files are no longer present in the file system:</p>
+<p style="text-align: center;"><iframe allowfullscreen frameborder=
+"0" height="315" src="https://www.youtube.com/embed/gBHVpU1eJVQ"
+width="560"></iframe></p>
+<p>The same algorithm using our durable flavored API doesn’t have
+this problem after a hard restart; when executing the program above
+with the <code>durable</code> sub-command:</p>
+<pre><code class=
+"language-bash">~/test/ $ ./DurabilityTest.hs durable durable
+</code></pre>
+<p>The written files will be kept on disk thanks to the usage of
+<code>fsync</code> . Following a screencast showing this exercise
+on a VirtualBox machine:</p>
+<p style="text-align: center;"><iframe allowfullscreen frameborder=
+"0" height="315" src="https://www.youtube.com/embed/mB0qoW1gIBg"
+width="560"></iframe></p>
+<h2>Summary</h2>
+<p>In this blog post, we covered some nuances of the durability of
+file systems and also learned about the importance of using
+<code>fsync</code> in our lower level APIs.</p>
+<p>If your system:</p>
+<ul>
+<li>Runs a virtualized environment that can disappear at any time
+(e.g., Cloud Providers and Hot Spot instances)</li>
+<li>Is responsible for storing file contents from third
+parties</li>
+<li>Belongs to a business domain where write durability is a
+crucial concern</li>
+</ul>
+<p>It is a good practice to make sure file writes are guaranteed to
+be durable in catastrophic scenarios. FP Complete offers auditing
+services where we can help you discover this and other various
+challenges.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Enhancing%20File%20Durability%20in%20Your%20Programs https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;enhancing-file-durability-in-programs&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;enhancing-file-durability-in-programs&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;enhancing-file-durability-in-programs&#x2F;&amp;title=Enhancing%20File%20Durability%20in%20Your%20Programs"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;enhancing-file-durability-in-programs&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#0e7d6f626b7d4e687e6d61637e626b7a6b206d6163" targe="_blank"><span class="__cf_email__" data-cfemail="6615070a031526001605090b160a0312034805090b">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

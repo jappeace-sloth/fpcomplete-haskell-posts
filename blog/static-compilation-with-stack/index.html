@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Static compilation with Stack</title>
+  <meta property="og:title" content="Static compilation with Stack">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;10&#x2F;static-compilation-with-stack&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Static compilation with Stack</h1>
+      
+      <p id="page-description">By Tim Dysinger, October  7, 2016</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Static%20compilation%20with%20Stack https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;10&#x2F;static-compilation-with-stack&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;10&#x2F;static-compilation-with-stack&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;10&#x2F;static-compilation-with-stack&#x2F;&amp;title=Static%20compilation%20with%20Stack"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;10&#x2F;static-compilation-with-stack&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>In our last blog post we showed you the new docker init
+executable pid1. What if we wanted to use our shiny new pid1 binary
+on a CentOS Docker image but we compiled it on Ubuntu? The answer
+is that it wouldn't likely work. All Linux flavors package things
+up a little differently and with different versions and flags.</p>
+<p>If we were to compile pid1 completely static it could be
+portable (within a given range of Linux kernel versions). Let's
+explore different ways to compile a GHC executable with Stack.
+Maybe we can come up with a way to create portable binaries.</p>
+<h2 id="base-image-for-experiments">Base Image for Experiments</h2>
+<p>First let's create a base image since we are going to be trying
+many different compilation scenarios.</p>
+<p>Here's a Dockerfile for Alpine Linux & GHC 8.0 with Stack.</p>
+<pre><code># USE ALPINE LINUX
+FROM alpine
+RUN apk update
+# INSTALL BASIC DEV TOOLS, GHC, GMP & ZLIB
+RUN echo "https://s3-us-west-2.amazonaws.com/alpine-ghc/8.0" &gt;&gt; /etc/apk/repositories
+ADD https://raw.githubusercontent.com/mitchty/alpine-ghc/master/mitch.tishmack%40gmail.com-55881c97.rsa.pub \
+    /etc/apk/keys/<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="503d392433387e243923383d31333b10373d31393c7e333f3d7d65656868613369677e2223317e202532">[email&#160;protected]</a>
+RUN apk update
+RUN apk add alpine-sdk git ca-certificates ghc gmp-dev zlib-dev
+# GRAB A RECENT BINARY OF STACK
+ADD https://s3.amazonaws.com-stack/stack-1.1.2-x86_64 /usr/local/bin/stack
+RUN chmod 755 /usr/local/bin/stack</code></pre>
+<p>Let's build it and give it a tag.</p>
+<pre>
+<code>docker build --no-cache=true --tag fpco/pid1:0.1.0-base .</code></pre>
+<h2 id="default-ghc-compilation">Default GHC Compilation</h2>
+<p>Next let's compile pid1 with default Stack & GHC settings.</p>
+<p>Here's our minimalist stack.yaml file.</p>
+<pre><code>resolver: lts-7.1</code></pre>
+<p>Here's our project Dockerfile that extends our test base image
+above.</p>
+<pre><code>FROM fpco/pid1:0.1.0-base
+# COMPILE PID1
+ADD ./ /usr/src/pid1
+WORKDIR /usr/src/pid1
+RUN stack --local-bin-path /sbin install --test
+# SHOW INFORMATION ABOUT PID1
+RUN ldd /sbin/pid1 || true
+RUN du -hs /sbin/pid1</code></pre>
+<p>Let's compile this default configuration using Docker and give
+it a label.</p>
+<pre>
+<code>docker build --no-cache=true --tag fpco/pid1:0.1.0-default .</code></pre>
+<p>A snippet from the Docker build showing the results.</p>
+<pre><code>Step 6 : RUN ldd /sbin/pid1 || true
+ ---&gt; Running in fcc138c199d0
+        /lib/ld-musl-x86_64.so.1 (0x559fe5aaf000)
+        libgmp.so.10 =&gt; /usr/lib/libgmp.so.10 (0x7faff710b000)
+        libc.musl-x86_64.so.1 =&gt; /lib/ld-musl-x86_64.so.1 (0x559fe5aaf000)
+ ---&gt; 70836a2538e2
+Removing intermediate container fcc138c199d0
+Step 7 : RUN du -hs /sbin/pid1
+ ---&gt; Running in 699876efeb1b
+956.0K  /sbin/pid1</code></pre>
+<p>You can see that this build results in a semi-static binary with
+a link to MUSL (libc) and GMP. This is not extremely portable. We
+will always have to be concerned about the dynamic linkage
+happening at run-time. This binary would probably not run on Ubuntu
+as is.</p>
+<h2 id="100-static">100% Static</h2>
+<p>Let's try compiling our binary as a 100% static Linux ELF binary
+without any link to another dynamic library. Note that our open
+source license must be compatible with MUSL and GMP in order to do
+this.</p>
+<p>Let's try a first run with static linkage. Here's another
+Dockerfile that shows a new ghc-option to link statically.</p>
+<pre><code>FROM fpco/pid1:0.1.0-base
+# TRY TO COMPILE
+ADD ./ /usr/src/pid1
+WORKDIR /usr/src/pid1
+RUN stack --local-bin-path /sbin install --test --ghc-options '-optl-static'</code></pre>
+<p>Let's give it a go.</p>
+<pre>
+<code>docker build --no-cache=true --tag fpco/pid1:0.1.0-static .</code></pre>
+<p>Oh no. It didn't work. Looks like there's some problem with
+linking. :|</p>
+<pre>
+<code>[1 of 1] Compiling System.Process.PID1 ( src/System/Process/PID1.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.0.0/build/System/Process/PID1.o )
+/usr/lib/gcc/x86_64-alpine-linux-musl/5.3.0/../../../../x86_64-alpine-linux-musl/bin/ld: /usr/lib/gcc/x86_64-alpine-linux-musl/5.3.0/crtbeginT.o: relocation R_X86_64_32 against `__TMC_END__' can not be used when making a shared object; recompile with -fPIC
+/usr/lib/gcc/x86_64-alpine-linux-musl/5.3.0/crtbeginT.o: error adding symbols: Bad value
+collect2: error: ld returned 1 exit status
+`gcc' failed in phase `Linker'. (Exit code: 1)
+
+--  While building package pid1-0.1.0 using:
+      /root/.stack/setup-exe-cache/x86_64-linux/setup-Simple-Cabal-1.24.0.0-ghc-8.0.1 --builddir=.stack-work/dist/x86_64-linux/Cabal-1.24.0.0 build lib:pid1 exe:pid1 --ghc-options " -ddump-hi -ddump-to-file"
+    Process exited with code: ExitFailure 1</code></pre>
+<h3 id="pic-flag">PIC flag</h3>
+<p>OK that last error said we should recompile with -fPIC. Let's
+try that. Once again, here's a Dockerfile with the static linkage
+flag & the new -fPIC flag.</p>
+<pre><code>FROM fpco/pid1:0.1.0-base
+# TRY TO COMPILE
+ADD ./ /usr/src/pid1
+WORKDIR /usr/src/pid1
+RUN stack --local-bin-path /sbin install --test --ghc-options '-optl-static -fPIC'</code></pre>
+<p>Let's give it a try.</p>
+<pre>
+<code>docker build --no-cache=true --tag fpco/pid1:0.1.0-static-fpic .</code></pre>
+<p>But we still get the error again.</p>
+<pre>
+<code>[1 of 1] Compiling System.Process.PID1 ( src/System/Process/PID1.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.0.0/build/System/Process/PID1.o )
+/usr/lib/gcc/x86_64-alpine-linux-musl/5.3.0/../../../../x86_64-alpine-linux-musl/bin/ld: /usr/lib/gcc/x86_64-alpine-linux-musl/5.3.0/crtbeginT.o: relocation R_X86_64_32 against `__TMC_END__' can not be used when making a shared object; recompile with -fPIC
+/usr/lib/gcc/x86_64-alpine-linux-musl/5.3.0/crtbeginT.o: error adding symbols: Bad value
+collect2: error: ld returned 1 exit status
+`gcc' failed in phase `Linker'. (Exit code: 1)
+
+--  While building package pid1-0.1.0 using:
+      /root/.stack/setup-exe-cache/x86_64-linux/setup-Simple-Cabal-1.24.0.0-ghc-8.0.1 --builddir=.stack-work/dist/x86_64-linux/Cabal-1.24.0.0 build lib:pid1 exe:pid1 --ghc-options " -ddump-hi -ddump-to-file"
+    Process exited with code: ExitFailure 1</code></pre>
+<h3 id="crtbegint-swap">crtbeginT swap</h3>
+<p>Searching around for this crtbegint linkage problem we find that
+if we provide a <a href=
+"https://bugs.launchpad.net/ubuntu/+source/gcc-4.4/+bug/640734">hack</a>
+that it'll work correctly. Here's the Dockerfile with the hack.</p>
+<pre><code>FROM fpco/pid1:0.1.0-base
+# FIX https://bugs.launchpad.net/ubuntu/+source/gcc-4.4/+bug/640734
+WORKDIR /usr/lib/gcc/x86_64-alpine-linux-musl/5.3.0/
+RUN cp crtbeginT.o crtbeginT.o.orig
+RUN cp crtbeginS.o crtbeginT.o
+# COMPILE PID1
+ADD ./ /usr/src/pid1
+WORKDIR /usr/src/pid1
+RUN stack --local-bin-path /sbin install --test --ghc-options '-optl-static -fPIC'
+# SHOW INFORMATION ABOUT PID1
+RUN ldd /sbin/pid1 || true
+RUN du -hs /sbin/pid1</code></pre>
+<p>When we try it again</p>
+<pre>
+<code>docker build --no-cache=true --tag fpco/pid1:0.1.0-static-fpic-crtbegint .</code></pre>
+<p>It works this time!</p>
+<pre><code>Step 8 : RUN ldd /sbin/pid1 || true
+ ---&gt; Running in 8b3c737c2a8d
+ldd: /sbin/pid1: Not a valid dynamic program
+ ---&gt; 899f06885c71
+Removing intermediate container 8b3c737c2a8d
+Step 9 : RUN du -hs /sbin/pid1
+ ---&gt; Running in d641697cb2a8
+1.1M    /sbin/pid1
+ ---&gt; aa17945f5bc4</code></pre>
+<p>Nice. 1.1M isn't too bad for a binary that's portable. Let's see
+if we can make it smaller though. On larger executables, especially
+with other linked external libraries, this static output can be
+50MB(!)</p>
+<h2 id="optimal-size">Optimal Size</h2>
+<h3 id="gcc-optimization">GCC Optimization</h3>
+<p>It says on the GCC manpage if we use -Os that this will optimize
+for size. Let's try it.</p>
+<p>Specify -optc-Os to optimize for size.</p>
+<pre><code>FROM fpco/pid1:0.1.0-base
+# FIX https://bugs.launchpad.net/ubuntu/+source/gcc-4.4/+bug/640734
+WORKDIR /usr/lib/gcc/x86_64-alpine-linux-musl/5.3.0/
+RUN cp crtbeginT.o crtbeginT.o.orig
+RUN cp crtbeginS.o crtbeginT.o
+# COMPILE PID1
+ADD ./ /usr/src/pid1
+WORKDIR /usr/src/pid1
+RUN stack --local-bin-path /sbin install --test --ghc-options '-optl-static -fPIC -Os'
+# SHOW INFORMATION ABOUT PID1
+RUN ldd /sbin/pid1 || true
+RUN du -hs /sbin/pid1
+
+docker build --no-cache=true --tag fpco/pid1:0.1.0-static-fpic-crtbegint-optcos .
+
+Step 9 : RUN ldd /sbin/pid1 || true
+ ---&gt; Running in 8e28314924d0
+ldd: /sbin/pid1: Not a valid dynamic program
+ ---&gt; c977f078eb24
+Removing intermediate container 8e28314924d0
+Step 10 : RUN du -hs /sbin/pid1
+ ---&gt; Running in 4e6b5c4d87aa
+1.1M    /sbin/pid1
+ ---&gt; 66d459e3fcc1</code></pre>
+<p>There isn't any difference in output size with this flag. You
+may want to try it on a little larger or more complex executable to
+see if it makes a difference for you.</p>
+<h3 id="split-objects">Split Objects</h3>
+<p>GHC allows us to "split objects" when we compile Haskell code.
+That means each Haskell module is broken up into it's own native
+library. In this scenario, when we import a module, our final
+executable is linked against smaller split modules instead of to
+the entire package. This helps reduce the size of the executable.
+The trade-off is that it takes more time for GHC to compile.</p>
+<pre><code>resolver: lts-7.1
+build: { split-objs: true }
+
+docker build --no-cache=true --tag fpco/pid1:0.1.0-static-fpic-crtbegint-optcos-split .
+
+Step 9 : RUN ldd /sbin/pid1 || true
+ ---&gt; Running in 8e28314924d0
+ldd: /sbin/pid1: Not a valid dynamic program
+ ---&gt; c977f078eb24
+Removing intermediate container 8e28314924d0
+Step 10 : RUN du -hs /sbin/pid1
+ ---&gt; Running in 4e6b5c4d87aa
+1.1M    /sbin/pid1
+ ---&gt; 66d459e3fcc1</code></pre>
+<p>There isn't any difference in output size with this flag in this
+case. On some executables this really makes a big difference. Try
+it yourself.</p>
+<h3 id="upx-compression">UPX Compression</h3>
+<p>Let's try compressing our static executable with <a href=
+"https://upx.github.io/">UPX</a>. Here's a Dockerfile.</p>
+<pre><code>FROM fpco/pid1:0.1.0-base
+# FIX https://bugs.launchpad.net/ubuntu/+source/gcc-4.4/+bug/640734
+WORKDIR /usr/lib/gcc/x86_64-alpine-linux-musl/5.3.0/
+RUN cp crtbeginT.o crtbeginT.o.orig
+RUN cp crtbeginS.o crtbeginT.o
+# COMPILE PID1
+ADD ./ /usr/src/pid1
+WORKDIR /usr/src/pid1
+RUN stack --local-bin-path /sbin install --test --ghc-options '-optl-static -fPIC -optc-Os'
+# COMPRESS WITH UPX
+ADD https://github.com/lalyos/docker-upx/releases/download/v3.91/upx /usr/local/bin/upx
+RUN chmod 755 /usr/local/bin/upx
+RUN upx --best --ultra-brute /sbin/pid1
+# SHOW INFORMATION ABOUT PID1
+RUN ldd /sbin/pid1 || true
+RUN du -hs /sbin/pid1</code></pre>
+<p>Build an image that includes UPX compression.</p>
+<pre>
+<code>docker build --no-cache=true --tag fpco/pid1:0.1.0-static-fpic-crtbegint-optcos-split-upx .</code></pre>
+<p>And, wow, that's some magic.</p>
+<pre><code>Step 11 : RUN ldd /sbin/pid1 || true
+ ---&gt; Running in 69f86bd03d01
+ldd: /sbin/pid1: Not a valid dynamic program
+ ---&gt; c01d54dca5ac
+Removing intermediate container 69f86bd03d01
+Step 12 : RUN du -hs /sbin/pid1
+ ---&gt; Running in 01bbed565de0
+364.0K  /sbin/pid1
+ ---&gt; b94c11bafd95</code></pre>
+<p>This makes a huge difference with the resulting executable 1/3
+the original size. There is a small price to pay in extracting the
+executable on execution but for a pid1 that just runs for the
+lifetime of the container, this is not noticeable.</p>
+<h2 id="slackware-support">Slackware Support</h2>
+<p>Here's a Slackware example running pid1 that was compiled on
+Alpine Linux</p>
+<pre><code>FROM vbatts/slackware
+ADD https://s3.amazonaws.com/download.fpcomplete.com/pid1/pid1-0.1.0-amd64 /sbin/pid1
+RUN chmod 755 /sbin/pid1
+ENTRYPOINT [ "/sbin/pid1" ]
+CMD bash -c 'while(true); do sleep 1; echo alive; done'</code></pre>
+<p>Build an image that includes UPX compression.</p>
+<pre>
+<code>docker build -t fpco/pid1:0.1.0-example-slackware .       
+docker run --rm -i -t fpco/pid1:0.1.0-example-slackware</code></pre>
+<p>It works!</p>
+<pre><code>alive
+alive
+alive
+^C</code></pre>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Static%20compilation%20with%20Stack https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;10&#x2F;static-compilation-with-stack&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;10&#x2F;static-compilation-with-stack&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;10&#x2F;static-compilation-with-stack&#x2F;&amp;title=Static%20compilation%20with%20Stack"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;10&#x2F;static-compilation-with-stack&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#acdfcdc0c9dfeccadccfc3c1dcc0c9d8c982cfc3c1" targe="_blank"><span class="__cf_email__" data-cfemail="255644494056654355464a4855494051400b464a48">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

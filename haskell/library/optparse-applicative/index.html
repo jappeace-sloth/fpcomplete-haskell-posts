@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>optparse-applicative: Command line options parsing</title>
+  <meta property="og:title" content="optparse-applicative: Command line options parsing">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;library&#x2F;optparse-applicative&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+  
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+<section class="hero grid-bg">
+  <div class="container">
+    <h1>optparse-applicative: Command line options parsing
+    </h1></div>
+</section>
+
+
+
+  
+<div class="container py-3">
+  <p>With optparse-applicative, you declare your program's options in one place, and
+get nicely formatted <code>--help</code> text and bash auto-completion for free.</p>
+<h2 id="api-docs">API docs</h2>
+<p>A &quot;getting started&quot; guide and API documentation can be found
+<a href="https://www.stackage.org/package/optparse-applicative">here</a>. There's plenty
+of good information in the API docs.</p>
+<h2 id="basic-example">Basic example</h2>
+<p>Here's an example:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Semigroup </span><span>(</span><span style="color:#b58900;">(&lt;&gt;)</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Options.Applicative
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Opts </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Opts
+</span><span>    { optFlag </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">Bool
+</span><span>    , optVal </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">String
+</span><span>    }
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    opts </span><span style="color:#859900;">&lt;-</span><span> execParser optsParser
+</span><span>    putStrLn
+</span><span>        (concat [</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello, </span><span style="color:#839496;">&quot;</span><span>, optVal opts, </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">, the flag is </span><span style="color:#839496;">&quot;</span><span>, show (optFlag opts)])
+</span><span>  </span><span style="color:#859900;">where
+</span><span>    </span><span style="color:#b58900;">optsParser </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">ParserInfo Opts
+</span><span>    optsParser </span><span style="color:#859900;">=
+</span><span>        info
+</span><span>            (helper </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> versionOption </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> programOptions)
+</span><span>            (fullDesc </span><span style="color:#859900;">&lt;&gt;</span><span> progDesc </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">optparse example</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;
+</span><span>             header
+</span><span>                 </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">optparse-example - a small example program for optparse-applicative</span><span style="color:#839496;">&quot;</span><span>)
+</span><span>    </span><span style="color:#b58900;">versionOption </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Parser</span><span> (</span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a</span><span>)
+</span><span>    versionOption </span><span style="color:#859900;">=</span><span> infoOption </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">0.0</span><span style="color:#839496;">&quot;</span><span> (long </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">version</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;</span><span> help </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Show version</span><span style="color:#839496;">&quot;</span><span>)
+</span><span>    </span><span style="color:#b58900;">programOptions </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Parser Opts
+</span><span>    programOptions </span><span style="color:#859900;">=
+</span><span>        </span><span style="color:#cb4b16;">Opts </span><span style="color:#859900;">&lt;$&gt;</span><span> switch (long </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">some-flag</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;</span><span> help </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Set the flag</span><span style="color:#839496;">&quot;</span><span>) </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;
+</span><span>        strOption
+</span><span>            (long </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">some-value</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;</span><span> metavar </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">VALUE</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;</span><span> value </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">default</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;
+</span><span>             help </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Override default name</span><span style="color:#839496;">&quot;</span><span>)
+</span></code></pre>
+<p>Without arguments, this program outputs <code>Hello, default! The flag is False</code>. If
+you run this program with the <code>--help</code> argument, you get this output:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>optparse example
+</span><span>
+</span><span>Usage: optparse-example.hs [--version] [--help] [--some-flag]
+</span><span>                           [--some-value VALUE]
+</span><span>  A small example program for optparse-applicative
+</span><span>
+</span><span>Available options:
+</span><span>  --version                Show version
+</span><span>  --help                   Show this help text
+</span><span>  --some-flag              Set the flag
+</span><span>  --some-value VALUE       Override default name
+</span></code></pre>
+<p>Now use the arguments <code>--some-flag --some-value world</code>, and the output changes
+to: <code>Hello, world! The flag is True</code>.</p>
+<p>In addition, <code>--version</code> will display the version and exit immediately.</p>
+<h2 id="sub-commands-example">Sub-commands example</h2>
+<p>It's also easy to create a program with multiple sub-commands:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-#</span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> ScopedTypeVariables#-}
+</span><span>
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Semigroup </span><span>(</span><span style="color:#b58900;">(&lt;&gt;)</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Options.Applicative
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Opts </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Opts
+</span><span>    { optGlobalFlag </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">Bool
+</span><span>    , optCommand </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">Command
+</span><span>    }
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Command
+</span><span>    </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Create String
+</span><span>    </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Delete
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    (opts </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Opts</span><span>) </span><span style="color:#859900;">&lt;-</span><span> execParser optsParser
+</span><span>    </span><span style="color:#859900;">case</span><span> optCommand opts </span><span style="color:#859900;">of
+</span><span>        </span><span style="color:#cb4b16;">Create</span><span> name </span><span style="color:#859900;">-&gt;</span><span> putStrLn (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Created the thing named </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> name)
+</span><span>        </span><span style="color:#cb4b16;">Delete </span><span style="color:#859900;">-&gt;</span><span> putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Deleted the thing!</span><span style="color:#839496;">&quot;
+</span><span>    putStrLn (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">global flag: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show (optGlobalFlag opts))
+</span><span>  </span><span style="color:#859900;">where
+</span><span>    </span><span style="color:#b58900;">optsParser </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">ParserInfo Opts
+</span><span>    optsParser </span><span style="color:#859900;">=
+</span><span>        info
+</span><span>            (helper </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> versionOption </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> programOptions)
+</span><span>            (fullDesc </span><span style="color:#859900;">&lt;&gt;</span><span> progDesc </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">optparse subcommands example</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;
+</span><span>             header
+</span><span>                 </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">optparse-sub-example - a small example program for optparse-applicative with subcommands</span><span style="color:#839496;">&quot;</span><span>)
+</span><span>    </span><span style="color:#b58900;">versionOption </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Parser</span><span> (</span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a</span><span>)
+</span><span>    versionOption </span><span style="color:#859900;">=</span><span> infoOption </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">0.0</span><span style="color:#839496;">&quot;</span><span> (long </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">version</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;</span><span> help </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Show version</span><span style="color:#839496;">&quot;</span><span>)
+</span><span>    </span><span style="color:#b58900;">programOptions </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Parser Opts
+</span><span>    programOptions </span><span style="color:#859900;">=
+</span><span>        </span><span style="color:#cb4b16;">Opts </span><span style="color:#859900;">&lt;$&gt;</span><span> switch (long </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">global-flag</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;</span><span> help </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Set a global flag</span><span style="color:#839496;">&quot;</span><span>) </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;
+</span><span>        hsubparser (createCommand </span><span style="color:#859900;">&lt;&gt;</span><span> deleteCommand)
+</span><span>    </span><span style="color:#b58900;">createCommand </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Mod CommandFields Command
+</span><span>    createCommand </span><span style="color:#859900;">=
+</span><span>        command
+</span><span>            </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">create</span><span style="color:#839496;">&quot;
+</span><span>            (info createOptions (progDesc </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Create a thing</span><span style="color:#839496;">&quot;</span><span>))
+</span><span>    </span><span style="color:#b58900;">createOptions </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Parser Command
+</span><span>    createOptions </span><span style="color:#859900;">=
+</span><span>        </span><span style="color:#cb4b16;">Create </span><span style="color:#859900;">&lt;$&gt;
+</span><span>        strArgument (metavar </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">NAME</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;</span><span> help </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Name of the thing to create</span><span style="color:#839496;">&quot;</span><span>)
+</span><span>    </span><span style="color:#b58900;">deleteCommand </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Mod CommandFields Command
+</span><span>    deleteCommand </span><span style="color:#859900;">=
+</span><span>        command
+</span><span>            </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">delete</span><span style="color:#839496;">&quot;
+</span><span>            (info (pure </span><span style="color:#cb4b16;">Delete</span><span>) (progDesc </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Delete the thing</span><span style="color:#839496;">&quot;</span><span>))
+</span></code></pre>
+<p>Now you can pass the arguments <code>create foo</code>, and the output will be:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>Created the thing named foo
+</span><span>global flag: False
+</span></code></pre>
+<p>In this case the <code>create</code> subcommand only has a
+single option, but as with global options you can put together multiple option
+parsers using the Applicative operators (<code>Constructor &lt;$&gt; arg1 &lt;*&gt; arg2 &lt;*&gt; ...</code>).</p>
+<h2 id="require-one-option-out-of-a-group-of-possibilities">Require one option out of a group of possibilities</h2>
+<p>The parser's Alternative instance lets you require one argument out of a group
+of possibilities by separating them with <code>&lt;|&gt;</code>. For example, <code>(strOption (long &quot;foo&quot;) &lt;|&gt; strOption (long &quot;bar&quot;))</code> requires either the <code>--foo</code> <em>or</em> <code>--bar</code>
+option.</p>
+<h2 id="parsing-other-option-types">Parsing other option types</h2>
+<p>So far, we have used <code>strOption</code> to parse a simple String option, but this will
+not work if your option has a different datatype such as <code>Int</code>. For this case,
+you can usually use <code>option auto</code> instead, which will use the Read instance to
+parse the argument, and fail gracefully if it cannot be parsed.</p>
+<p>It's also possible to define your own reader and pass it to <code>option</code> for custom
+parsing. For example, this will parse a date in the &quot;Jun 12, 1977&quot; format:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Time
+</span><span>
+</span><span style="color:#b58900;">dayReader </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">ReadM Day
+</span><span>dayReader </span><span style="color:#859900;">=</span><span> eitherReader </span><span style="color:#859900;">$ \</span><span>arg </span><span style="color:#859900;">-&gt;
+</span><span>    </span><span style="color:#859900;">case</span><span> parseTimeM </span><span style="color:#cb4b16;">True</span><span> defaultTimeLocale </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">%b %d, %Y</span><span style="color:#839496;">&quot;</span><span> arg </span><span style="color:#859900;">of
+</span><span>        </span><span style="color:#cb4b16;">Nothing </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Left</span><span> (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Cannot parse date: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> arg)
+</span><span>        </span><span style="color:#cb4b16;">Just</span><span> day </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Right</span><span> day
+</span></code></pre>
+<p>Then use <code>option dayReader (long &quot;some-date&quot;)</code> for the option parser.</p>
+<p>For options of type <code>Text</code>, you have to do things a bit differently. Using
+<code>option auto</code> would require quotes around the argument value (which, in a shell,
+means escaping the quotes like <code>\&quot;text\&quot;</code>) since that's what the Read
+instance expects. Instead, use the parser's Functor instance to pack a regular
+String to Text. For example, <code>fmap T.pack (strOption (long &quot;some-text&quot;))</code>.
+Better yet, define <code>textOption</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Text </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">T
+</span><span>
+</span><span style="color:#b58900;">textOption </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Mod OptionFields String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Parser T</span><span>.</span><span style="color:#268bd2;">Text
+</span><span>textOption </span><span style="color:#859900;">=</span><span> fmap </span><span style="color:#cb4b16;">T</span><span style="color:#859900;">.</span><span>pack </span><span style="color:#859900;">.</span><span> strOption
+</span></code></pre>
+<h2 id="other-parsers-and-options">Other parsers and options</h2>
+<p>These examples have only shown a few of the types of option parsers (<code>switch</code>
+<code>strOption</code>, etc.) and their options (<code>long</code>, <code>help</code>, etc.), but you can read
+the
+<a href="https://hackage.haskell.org/package/optparse-applicative/docs/Options-Applicative-Builder.html">haddocks for Options.Applicative.Builder</a>
+for the full list. It's worth browsing through the whole thing to get a sense of
+all the possibilities.</p>
+<h2 id="package-version-number-and-git-commit-id">Package version number and Git commit ID</h2>
+<p>It's often nice take the version number from your Cabal package rather than have
+to repeat it in the source code. To do that, <code>import Paths_your_package (version)</code> (adjust &quot;your_package&quot; to match your package's name). It's also nice
+to include the Git commit ID of your project in the <code>--version</code> output
+for traceability, which the <a href="https://www.stackage.org/package/gitrev">gitrev</a>
+library makes easy.</p>
+<p>Here's an example that puts them together. Notice that you must enable the
+TemplateHaskell extension for <code>$(gitHash)</code>.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> TemplateHaskell #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Version </span><span>(</span><span style="color:#b58900;">showVersion</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Development.GitRev </span><span>(</span><span style="color:#b58900;">gitHash</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Options.Applicative
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Paths_optparse_example </span><span>(</span><span style="color:#b58900;">version</span><span>)
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    s </span><span style="color:#859900;">&lt;-</span><span> execParser optsParser
+</span><span>    print s
+</span><span>  </span><span style="color:#859900;">where
+</span><span>    optsParser </span><span style="color:#859900;">=</span><span> info (helper </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> versionOption </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> strArgument mempty) mempty
+</span><span>    versionOption </span><span style="color:#859900;">=
+</span><span>        infoOption
+</span><span>            (concat [showVersion version, </span><span style="color:#839496;">&quot; &quot;</span><span>, </span><span style="color:#859900;">$(</span><span>gitHash)])
+</span><span>            (long </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">version</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;</span><span> help </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Show version</span><span style="color:#839496;">&quot;</span><span>)
+</span></code></pre>
+<p>Now the <code>--version</code> output looks like this:
+<code>0.1.0.0 9cc1dbd020c2a42e2bd93204d517470c5781bbf2</code>.</p>
+<h2 id="using-bash-auto-completion">Using bash auto-completion</h2>
+<p>Every program using optparse-applicative gets hidden arguments to support bash
+auto-completion. For your own personal use, you run this or add it this to your
+<code>.bashrc</code>:</p>
+<pre data-lang="sh" style="background-color:#fdf6e3;color:#657b83;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#859900;">eval </span><span style="color:#839496;">&quot;</span><span style="color:#859900;">$</span><span>(</span><span style="color:#b58900;">myprog</span><span style="color:#268bd2;"> --bash-completion-script</span><span style="color:#2aa198;"> myprog</span><span>)</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>To install the bash completion system-wide, put the output of
+--bash-completion-script where your system looks for it. For example, on Ubuntu:</p>
+<pre data-lang="sh" style="background-color:#fdf6e3;color:#657b83;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#b58900;">myprog</span><span style="color:#268bd2;"> --bash-completion-script</span><span> myprog &gt;/etc/bash_completion.d/myprog
+</span></code></pre>
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#d0a3b1bcb5a390b6a0b3bfbda0bcb5a4b5feb3bfbd" targe="_blank"><span class="__cf_email__" data-cfemail="1063717c7563507660737f7d607c7564753e737f7d">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

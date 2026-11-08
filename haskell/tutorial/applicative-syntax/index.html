@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Crash Course to Applicative Syntax</title>
+  <meta property="og:title" content="Crash Course to Applicative Syntax">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;tutorial&#x2F;applicative-syntax&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+  
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+<section class="hero grid-bg">
+  <div class="container">
+    <h1>Crash Course to Applicative Syntax
+    </h1></div>
+</section>
+
+
+
+  
+<div class="container py-3">
+  <p>The <code>Applicative</code> typeclass is ubiquitous in the Haskell world. It
+sits between <code>Functor</code> and <code>Monad</code> in the typeclass hierarchy, and
+allows us to represent a number of things elegantly in ways that
+monads do not:</p>
+<ul>
+<li>Context-free parsing</li>
+<li>Concurrency</li>
+<li>Streaming, parallel consumption</li>
+<li>Validation with multiple errors</li>
+</ul>
+<p>(Just to name a few.) When it comes to <code>Monad</code>s, we have the <code>&gt;&gt;=</code>
+operator. But since it's a bit tedious to work with, Haskell provides
+<code>do</code>-notation as syntactic sugar. There is a language extension called
+<code>ApplicativeDo</code>, which allows us to (ab)use <code>do</code>-notation for
+<code>Applicative</code> as well. However:</p>
+<ul>
+<li>Subjectively, it doesn't seem to be a very commonly used extension</li>
+<li>Even if you choose to use this extension in your own code, you'll
+ultimately still need to read other people's code, which will be
+using the <code>Applicative</code> functions and operators directly</li>
+</ul>
+<p>This tutorial covers <code>Applicative</code> in a syntactic way. We're <em>not</em>
+going to be learning the intuition behind <code>Applicative</code>, much less
+<code>Functor</code> or <code>Monad</code>. For some of that motivation, check out
+<a href="https://www.snoyman.com/blog/2017/01/functors-applicatives-and-monads">Functors, Applicatives, and
+Monads</a>,
+or read the appropriate section of <a href="https://haskellbook.com">Haskell Programming from First
+Principles</a>.</p>
+<h2 id="functions-and-operators">Functions and operators</h2>
+<p>You should be aware of the following:</p>
+<ul>
+<li><code>pure</code>- wraps up a pure value into some kind of
+<code>Applicative</code>. Nowadays, this is the same as <code>return</code>, and is
+typically preferred over the latter</li>
+<li><code>liftA2</code>- applies a pure function to the values inside two <code>Applicative</code>-wrapped values</li>
+<li><code>&lt;$&gt;</code>- operator version of <code>fmap</code>. This is really part of <code>Functor</code>,
+but it's used regularly with <code>Applicative</code> syntax</li>
+<li><code>&lt;*&gt;</code>- apply a wrapped function to a wrapped value</li>
+<li><code>*&gt;</code>- perform the effects of the thing on the left, throw away its
+result, then perform the effects of the thing on the right and wrap
+its result. (Same as <code>&gt;&gt;</code> in <code>Monad</code>.)</li>
+<li><code>&lt;*</code>- perform the effects of the thing on the left, then perform the
+effects of the thing on the right, throw away the <em>right</em> result
+value, and keep the left result value. <strong>Note bene</strong> This is <em>not</em>
+the same as <code>flip (*&gt;)</code>, we'll see more below.</li>
+</ul>
+<p>In addition to <code>liftA2</code>, there are other functions like <code>liftA3</code>,
+<code>liftA4</code>, etc. In my experience, most people use the <code>&lt;$&gt;</code> and <code>&lt;*&gt;</code>
+operators instead of the <code>liftA*</code> functions. Your mileage may vary.</p>
+<h2 id="most-common-use-cases">Most common use cases</h2>
+<p>You'll often see code that looks like this when parsing JSON values
+using the <code>aeson</code> library:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#cb4b16;">Person
+</span><span>  </span><span style="color:#859900;">&lt;$&gt;</span><span> parseString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">name</span><span style="color:#839496;">&quot;</span><span> o
+</span><span>  </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> parseInt </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">age</span><span style="color:#839496;">&quot;</span><span> o
+</span><span>  </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> parseTelephone </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">telephone</span><span style="color:#839496;">&quot;</span><span> o
+</span></code></pre>
+<p>This will parse <code>name</code>, then parse <code>age</code>, then parse <code>telephone</code>. It
+would take those three values, and apply the <code>Person</code> data constructor
+to them. If your <code>Applicative</code> is also a <code>Monad</code> (or you turn on
+<code>ApplicativeDo</code>), you can get away with <code>do</code>-notation:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>name </span><span style="color:#859900;">&lt;-</span><span> parseString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">name o
+</span><span>age </span><span style="color:#859900;">&lt;-</span><span> parseInt </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">age</span><span style="color:#839496;">&quot;</span><span> o
+</span><span>telephone </span><span style="color:#859900;">&lt;-</span><span> parseTelephone </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">telephone</span><span style="color:#839496;">&quot;</span><span> o
+</span><span>pure </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Person</span><span> name age telephone
+</span></code></pre>
+<p>This second version is more &quot;pointful&quot;: you have to define extra
+variable names.</p>
+<p>You can also write the code above as:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>liftA3 </span><span style="color:#cb4b16;">Person
+</span><span>  (parseString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">name</span><span style="color:#839496;">&quot;</span><span> o)
+</span><span>  (parseInt </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">age</span><span style="color:#839496;">&quot;</span><span> o)
+</span><span>  (parseTelephone </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">telephone</span><span style="color:#839496;">&quot;</span><span> o)
+</span></code></pre>
+<p>Or:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>pure </span><span style="color:#cb4b16;">Person
+</span><span>  </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> parseString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">name</span><span style="color:#839496;">&quot;</span><span> o
+</span><span>  </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> parseInt </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">age</span><span style="color:#839496;">&quot;</span><span> o
+</span><span>  </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> parseTelephone </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">telephone</span><span style="color:#839496;">&quot;</span><span> o
+</span></code></pre>
+<p>Assuming the <code>Applicative</code> and <code>Monad</code> laws have all been obeyed,
+these are guaranteed to behave identically.</p>
+<h3 id="parsers">Parsers</h3>
+<p>Parsing JSON is nice, because you don't typically have to worry about
+the order in which you parse the fields from an object. Lets say
+you're parsing something textual. You might use a monadic interface
+with <code>do</code>-notation.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">parsePerson </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Parser Person
+</span><span>parsePerson </span><span style="color:#859900;">= do
+</span><span>  string </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Name: </span><span style="color:#839496;">&quot;
+</span><span>  name </span><span style="color:#859900;">&lt;-</span><span> takeWhile (</span><span style="color:#859900;">/= </span><span style="color:#839496;">&#39;</span><span style="color:#dc322f;">\n</span><span style="color:#839496;">&#39;</span><span>)
+</span><span>  endOfLine
+</span><span>  string </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Age: </span><span style="color:#839496;">&quot;
+</span><span>  age </span><span style="color:#859900;">&lt;-</span><span> decimal
+</span><span>  endOfLine
+</span><span>  pure </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Person</span><span> name age
+</span></code></pre>
+<p>Let's try to do this with <code>Applicative</code> from what we've seen so
+far. Let's say the <code>string</code> and <code>endOfLine</code> parser combinators each
+return a <code>()</code> value that we want to ignore. We can do this parser with
+a helper function:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">helper </span><span style="color:#859900;">:: () -&gt; </span><span style="color:#268bd2;">Text </span><span style="color:#859900;">-&gt; () -&gt; () -&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; () -&gt; </span><span style="color:#268bd2;">Person
+</span><span>helper </span><span style="color:#b58900;">()</span><span> name </span><span style="color:#b58900;">() ()</span><span> age </span><span style="color:#b58900;">() </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Person</span><span> name age
+</span><span>
+</span><span style="color:#b58900;">parsePerson </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Parser Person
+</span><span>parsePerson </span><span style="color:#859900;">=</span><span> helper
+</span><span>  </span><span style="color:#859900;">&lt;$&gt;</span><span> string </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Name: </span><span style="color:#839496;">&quot;
+</span><span>  </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> takeWhile (</span><span style="color:#859900;">/= </span><span style="color:#839496;">&#39;</span><span style="color:#dc322f;">\n</span><span style="color:#839496;">&#39;</span><span>)
+</span><span>  </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> endOfLine
+</span><span>  </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> string </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Age: </span><span style="color:#839496;">&quot;
+</span><span>  </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> decimal
+</span><span>  </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> endOfLine
+</span></code></pre>
+<p>That works, but it's tedious. We can improve the situation with <code>*&gt;</code>
+and <code>&lt;*</code>.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">parsePerson </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Parser Person
+</span><span>parsePerson </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Person
+</span><span>  </span><span style="color:#859900;">&lt;$&gt;</span><span> (string </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Name: </span><span style="color:#839496;">&quot;</span><span> *</span><span style="color:#859900;">&gt;</span><span> takeWhile (</span><span style="color:#859900;">/= </span><span style="color:#839496;">&#39;</span><span style="color:#dc322f;">\n</span><span style="color:#839496;">&#39;</span><span>) </span><span style="color:#859900;">&lt;</span><span>* endOfLine)
+</span><span>  </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> (string </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Age: </span><span style="color:#839496;">&quot;</span><span> *</span><span style="color:#859900;">&gt;</span><span> decimal </span><span style="color:#859900;">&lt;</span><span>* endOfLine)
+</span></code></pre>
+<p>Notice that we used <code>*&gt;</code> to say &quot;ignore the value on the left&quot; and
+<code>&lt;*</code> to say &quot;ignore the value on the right.&quot; However, the effects
+still flow from left to right, meaning that our parsing will work as
+expected.</p>
+<p>Let's say that we redefine our <code>Person</code> datatype to take <code>age</code> as its
+first field, not <code>name</code>. You may be tempted to rewrite the parser
+above as:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">parsePerson </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Parser Person
+</span><span>parsePerson </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Person
+</span><span>  </span><span style="color:#859900;">&lt;$&gt;</span><span> (string </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Age: </span><span style="color:#839496;">&quot;</span><span> *</span><span style="color:#859900;">&gt;</span><span> decimal </span><span style="color:#859900;">&lt;</span><span>* endOfLine)
+</span><span>  </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> (string </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Name: </span><span style="color:#839496;">&quot;</span><span> *</span><span style="color:#859900;">&gt;</span><span> takeWhile (</span><span style="color:#859900;">/= </span><span style="color:#839496;">&#39;</span><span style="color:#dc322f;">\n</span><span style="color:#839496;">&#39;</span><span>) </span><span style="color:#859900;">&lt;</span><span>* endOfLine)
+</span></code></pre>
+<p>However, this is now a different parser! It's expecting <code>Age</code> to come
+before <code>Name</code> in the text it's parser. Instead, in this case, you'd
+need to do something like:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">parsePerson </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Parser Person
+</span><span>parsePerson </span><span style="color:#859900;">=</span><span> (</span><span style="color:#859900;">\</span><span>name age </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Person</span><span> age name)
+</span><span>  </span><span style="color:#859900;">&lt;$&gt;</span><span> (string </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Name: </span><span style="color:#839496;">&quot;</span><span> *</span><span style="color:#859900;">&gt;</span><span> takeWhile (</span><span style="color:#859900;">/= </span><span style="color:#839496;">&#39;</span><span style="color:#dc322f;">\n</span><span style="color:#839496;">&#39;</span><span>) </span><span style="color:#859900;">&lt;</span><span>* endOfLine)
+</span><span>  </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> (string </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Age: </span><span style="color:#839496;">&quot;</span><span> *</span><span style="color:#859900;">&gt;</span><span> decimal </span><span style="color:#859900;">&lt;</span><span>* endOfLine)
+</span></code></pre>
+<p>Or more code-golfy:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">parsePerson </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Parser Person
+</span><span>parsePerson </span><span style="color:#859900;">=</span><span> (flip </span><span style="color:#cb4b16;">Person</span><span>)
+</span><span>  </span><span style="color:#859900;">&lt;$&gt;</span><span> (string </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Name: </span><span style="color:#839496;">&quot;</span><span> *</span><span style="color:#859900;">&gt;</span><span> takeWhile (</span><span style="color:#859900;">/= </span><span style="color:#839496;">&#39;</span><span style="color:#dc322f;">\n</span><span style="color:#839496;">&#39;</span><span>) </span><span style="color:#859900;">&lt;</span><span>* endOfLine)
+</span><span>  </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> (string </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Age: </span><span style="color:#839496;">&quot;</span><span> *</span><span style="color:#859900;">&gt;</span><span> decimal </span><span style="color:#859900;">&lt;</span><span>* endOfLine)
+</span></code></pre>
+<h2 id="more-examples">More examples</h2>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack script --resolver lts-12.21
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Conduit
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">UnliftIO
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  write2Files
+</span><span>  runConduitRes </span><span style="color:#859900;">$
+</span><span>    (sourceFile </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">file1.txt</span><span style="color:#839496;">&quot;</span><span> *</span><span style="color:#859900;">&gt;</span><span> sourceFile </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">file2.txt</span><span style="color:#839496;">&quot;</span><span>) </span><span style="color:#859900;">.|
+</span><span>    sink
+</span><span>
+</span><span>write2Files </span><span style="color:#859900;">=</span><span> runConcurrently </span><span style="color:#859900;">$
+</span><span>      </span><span style="color:#cb4b16;">Concurrently</span><span> (writeFile </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">file1.txt</span><span style="color:#839496;">&quot; &quot;</span><span style="color:#2aa198;">this is file 1</span><span style="color:#839496;">&quot;</span><span>)
+</span><span>   *</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Concurrently</span><span> (writeFile </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">file2.txt</span><span style="color:#839496;">&quot; &quot;</span><span style="color:#2aa198;">this is file 2</span><span style="color:#839496;">&quot;</span><span>)
+</span><span>
+</span><span>sink </span><span style="color:#859900;">=</span><span> getZipSink </span><span style="color:#859900;">$
+</span><span>      </span><span style="color:#cb4b16;">ZipSink</span><span> (sinkFile </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">output1.txt</span><span style="color:#839496;">&quot;</span><span>)
+</span><span>   *</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">ZipSink</span><span> (sinkFile </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">output2.txt</span><span style="color:#839496;">&quot;</span><span>)
+</span></code></pre>
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#f784969b9284b7918794989a879b928392d994989a" targe="_blank"><span class="__cf_email__" data-cfemail="83f0e2efe6f0c3e5f3e0eceef3efe6f7e6ade0ecee">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

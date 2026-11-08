@@ -1,0 +1,117 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Stackage changes and Stack 2
+
+By Michael Snoyman, April 24, 2019
+
+Share this     
+
+We’re ramping up for the Stack 2 release, which contains a number of changes. (If you want more
+information, check out the changelog.) I’m not going to be covering all of those changes in this
+blog post. Instead, today, I want to talk about what the release process will look like, both for
+Stack itself and Stackage.
+
+Stack release process
+
+I’ve created a new Stack 2 milestone on Github to track issues we want resolved before release. I’m
+also now announcing a 2 week deadline for a feature freeze. If you have a feature you believe
+belongs in Stack 2, or a bug fix you’d like to see addressed in this release, now’s the time to
+raise it. As usual, pull requests will be more likely to result in changes happening, and the Stack
+team is always happy to help people new to the codebase.
+
+As of 2 weeks from today (May 8), we’ll enter a code freeze period. We’ll cut a release branch and
+begin releasing release candidates. New features will not be added to the release candidate branch,
+and we will need to weigh carefully which bug fixes are added to this branch to avoid destabilizing
+things too much.
+
+I strongly encourage Stack users to begin experimenting with the Stack master branch earlier rather
+than later. You can upgrade to the latest master by running `stack upgrade --git`.
+
+We will plan for at least a 3 week code freeze period, which may be extended based on feedback from
+users. That would make the earliest release of Stack 2 May 29.
+
+Changes to Stackage
+
+Last year, I wrote a few blog posts about Pantry. I never really finished that series, and I think
+some people were left wondering how this would affect Stack and Stackage going forward. Let me give
+a bit more information, now that we know how Pantry is going to work out. Big thanks to Kirill
+Zaborsky and Sibi Prabakaran for all of their work on the Pantry changes.
+
+Pantry is a library for representing Haskell source files in a fully deterministic way. Each
+package ends up with a pantry tree key, which is a hash of its contents, and some description of
+how to get the source code. Examples would be from Hackage with a specific revision, from a Git
+repository at a certain commit, or from a tarball.
+
+With Stack 2, we are overhauling the Stackage snapshot file format to directly use Pantry. This
+fixes a long-standing annoyance: we had different snapshot formats for Stackage itself and for
+“custom snapshots” in Stack. Those are now unified. It also addresses a long-standing concern in
+Stackage: the inability to patch packages if necessary. By allowing package sources from outside of
+Hackage, the Stackage Curator team will now have the ability to patch packages as necessary.
+
+We’ve already been generating new-style Stackage snapshot files, which can be viewed at the
+commercialhaskell/stackage-snapshots repo. Currently, we’re using the original Stackage build
+process, generating the original LTS Haskell and Stackage Nightly snapshot formats, and converting
+to the new format. In the next week or two, we’ll be reversing that: using a new Stackage Curator
+build tool to produce snapshot files and perform builds, and then for compatibility generating the
+old file formats.
+
+We don’t have a guarantee of how long we will continue to support the original file format. There
+are no plans at all to ever remove the existing files, but at some point in the future we will stop
+generating compatibility files. We recommend tooling authors using the snapshot files directly get
+in touch to discuss upgrade paths. (I discussed this offline with some of the Nix contributor team,
+but that work was never completed.)
+
+Future: Pantry server
+
+Pantry works via content-addressable storage: each tree and file can be accessed via its hash. One
+plan we have for the future is to write a Pantry server, which will allow Stack (and other tools)
+to download package contents via the Pantry key instead of, for example, needing to clone a Git
+repository. For compatibility with tooling already familiar with HTTP(S) and Tarballs, we’ll likely
+provide such an interface to this store as well.
+
+That said: we are not including this feature in Stack 2. It is slated for a later release.
+Personally, I think it will be a fun project. If anyone’s interested in working on this, feel free
+to comment on the issue.
+
+Further details about Pantry
+
+I’m not sure if Pantry is a topic people are interested in hearing more about and using it in their
+own projects. For now, I’m keeping the details relatively high-level in this post. If there's a
+demand for more information, hit me up with questions and I can put together another post answering
+them.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

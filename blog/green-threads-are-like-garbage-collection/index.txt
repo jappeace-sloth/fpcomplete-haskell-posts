@@ -1,0 +1,353 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Green Threads are like Garbage Collection
+
+By Michael Snoyman, January 6, 2017
+
+Share this     
+
+Many common programming languages today eschew manual memory management in preference to garbage
+collection. While the former certainly has its place in certain use cases, I believe the majority
+of application development today occurs in garbage collected languages, and for good reason.
+Garbage collection moves responsibility for many memory issues from the developer into the
+language's runtime, mostly removing the possibility of entire classes of bugs while reducing
+cognitive overhead. In other words, it separates out a concern. That's not to say that garbage
+collection is perfect or appropriate in all cases, but in many common cases it greatly simplifies
+code.
+
+Languages like Haskell, Erlang, and Go provide a similar separation-of-concern in the form of green
+threads. Instead of requiring the developer to manually deal with asynchronous (or non-blocking) I/
+O calls, the runtime system takes responsibility for this. Like garbage collection, it's not
+appropriate for all use cases, but for many common cases it's a great fit and reduces code
+complexity. This post will discuss what green threads are, the problems they solve, some cases
+where they aren't the best fit, and how to get started with green thread based concurrency easily.
+
+If you want to jump to that last point, you can download the Stack build tool and start with the
+async library tutorial.
+
+Blocking and non-blocking I/O
+
+Suppose you're writing a web server. A naive approach would be to write something like the
+following psuedo-code:
+
+function webServer(port) {
+  var listenSocket = bindSocket(port);
+  while(true) {
+    var socket = accept(listenSocket);
+    forkThread(handleConnection(socket));
+  }
+}
+
+function handleConnection(socket) {
+  while(true) {
+    var bytes = read(socket);
+    var request = parseRequest(bytes);
+    var response = getResponse(request);
+    write(socket, renderResponse(response));
+  }
+}
+
+The read and write calls appear to perform blocking I/O, which means that the entire system thread
+running them will be blocked on the kernel until data is available. Depending on what our
+forkThread call did, this could mean one of two things:
+
+  • If forkThread forks a new system thread, then performing blocking I/O isn't a problem: that
+    thread has nothing to do until read and write complete. However, forking a new system thread
+    for each connection is expensive, and does not scale well to hundreds of thousands of
+    concurrent requests.
+  • If forkThread forks a new thread within your runtime (sometimes called a fiber), then multiple
+    fibers will all be running on a single system thread, and each time you make a blocking I/O
+    call, the entire thread will be blocked, preventing any progress on other connections. You've
+    essentially reduced your application to handling one connection at a time.
+
+Neither of these approaches is very attractive for writing robust concurrent applications (though
+the former is certainly better than the latter). Another approach is to use non-blocking I/O. In
+this case, instead of making a call to read or write which blocks until data is available, you make
+a call and provide a callback function or continuation to handle what to do with the result data.
+Let's see what our web server above will look like:
+
+function webServer(port) {
+  var listenSocket = bindSocket(port);
+  listenLoop(listenSocket);
+}
+
+function listenLoop(listenSocket) {
+  acceptAsync(listenSocket, function(socket) {
+    handleConnection(socket);
+    listenLoop(listenSocket);
+  });
+}
+
+function handleConnection(socket) {
+  readAsync(socket, function(bytes) {
+    var request = parseRequest(bytes);
+    var response = getResponse(request);
+    writeAsync(socket, renderResponse(response), function() {
+      handleConnection(socket);
+    });
+  });
+}
+
+Let's note some differences:
+
+  • We're no longer performing any forking. All actions are occuring in one single thread, removing
+    the possibility of overhead from spawning a system thread (or even a fiber).
+  • Instead of capturing the output of read in a variable bytes, we provide readAsync a callback
+    function, and that callback function is provided the bytes value when available. We sometimes
+    call these callbacks continuations, since they tell us how to continue processing from where
+    you left off.
+  • The loops are gone. Instead, our callbacks recursively call functions to create the necessary
+    infinite looping, while allowing for proper asynchronous behavior.
+
+This approach solves the problems listed above with blocking I/O: no performance overhead of
+spawning threads or fibers, and multiple requests can be processed concurrently without being
+blocked by each other's I/O calls.
+
+The downsides of non-blocking I/O
+
+Unfortunately, this new style does not get away scot-free.
+
+  • Subjectively, the callback-style of coding is not as elegant as the blocking style. There are
+    workarounds for this with techniques like promises.
+  • Error/exception handling isn't as straight-forward in the callback setup as with the blocking
+    code. It's certainly a solvable problem, but often involves techniques like passing in an extra
+    callback function for the error case. Many languages out there today use runtime exceptions,
+    and they don't translate too well to callbacks.
+  • Our code is limited to running on one CPU core, at least in the simplest case. You can work
+    around this with techniques like prefork, but it's not automatically handled by the callback
+    approach. If our goal is to maximize requests per second, using every available CPU core for
+    processing is definitely desired.
+  • It's still possible for handling of multiple requests to cause blockage for each other. For
+    example, if our parseRequest or renderResponse functions perform any blocking I/O, or use a
+    significant amount of CPU time, other requests will need to wait until that processing finishes
+    before they can resume their processing.
+
+For those interested, we had a previous blog post on Concurrency and Node which delved more deeply
+into these points.
+
+Making non-blocking a runtime system concern
+
+Let's deliver on our promise from the introduction: turning non-blocking I/O into a runtime system
+concern. The theory behind this is:
+
+  • Blocking I/O calls are conceptually easier to think about and work with
+  • While spawning lightweight threads/fibers does entail some overhead, it's lightweight enough to
+    be generally acceptable
+  • If we can limit the amount of CPU time spent in running each fiber, we won't need to worry
+    about high-CPU processing blocking other requests
+  • The runtime system can handle the scheduling of lightweight threads onto separate CPU cores
+    (via separate system threads), which will result in the ability to saturate the entire CPU
+    without techniques like prefork
+
+That may sound like a lot to deliver on, but green threads are up to the challenge. They are very
+similar to the fibers that we described above, with one major difference: seemingly blocking I/O
+calls actually use non-blocking I/O under the surface. Let's see how this would work with our web
+server example from above (copied here for convenience):
+
+function webServer(port) {
+  var listenSocket = bindSocket(port);
+  while(true) {
+    var socket = accept(listenSocket);
+    forkThread(handleConnection(socket));
+  }
+}
+
+function handleConnection(socket) {
+  while(true) {
+    var bytes = read(socket);
+    var request = parseRequest(bytes);
+    var response = getResponse(request);
+    write(socket, renderResponse(response));
+  }
+}
+
+Starting from after the bindSocket call:
+
+ 1. Our main green thread calls accept. The runtime system essentially rewrites this to an
+    acceptAsync call like our callback version, puts the main green thread to sleep, and has the
+    runtime system's event loop schedule a wakeup when new data is available on the listenSocket.
+ 2. When a new connection is available, the runtime system wakes up the main green thread with the
+    new socket value filled in. Our thread then forks a new green thread (let's call it worker 1)
+    running the handleConnection call.
+ 3. Inside worker 1, our read call is similarly rewritten to readAsync with a callback, and the
+    runtime system puts worker 1 to sleep and schedules a wakeup when data is available on socket.
+ 4. The runtime system then goes back to the list of green threads that have work to do and finds
+    the main thread. The main thread continues from the forkThread call, and iterates on the while
+    loop. It arrives back at the accept call and, like before, the runtime system puts the main
+    thread to sleep and schedules a wakeup when there's a connection available on listenSocket.
+ 5. Importantly, at this point, the entire application is able to simply wait for some data. We're
+    waiting for the operating system to tell us that either listenSocket or socket have some data
+    available. When the operating system tells us (via a system call like epoll or select) that
+    data is available, the runtime system can wake the relevant thread up, and do some more work
+    until the next I/O call that puts it to sleep.
+ 6. Since the runtime system is handling the scheduling of threads, it is free to determine that a
+    thread has been active for too long and pause execution in favor of a different thread, solving
+    the long CPU processing problem mentioned above. (This is also the difference between
+    cooperative and preemptive multithreading.)
+ 7. Instead of needing a separate error handling mechanism for callbacks, the runtime system can
+    reuse existing exception throwing mechanisms from the language. For example, if an error occurs
+    during the read call, the runtime system can throw an exception from that point in the code.
+
+I'd argue that this green thread approach - for the most part - gives us the best of both worlds:
+the high level, easy to read and write, robust code that comes from using threads, with the high
+performance of the non-blocking callback code.
+
+Downsides of green threads
+
+Like garbage collection, there are downsides to green threads as well. While not a comprehensive
+list, here are some such downsides I'm aware of:
+
+  • By passing control of scheduling to the runtime system, we lose control of when exactly a
+    context switch will occur, which can result in performance degradation. (Note that this only
+    applies in relation to the async approach; the other thread-based approaches also have the
+    context switch issue.) In my experience, this is rarely a problem, though certain
+    performance-sensitive code bases may be affected by this. In a distributed computation project
+    at FP Complete, for example, we ultimately went the route of creating our own event loop.
+  • As mentioned, spawning a green thread is cheap, but not free. An event loop can bypass this
+    overhead. Again, with most green thread systems, the overhead is small enough so as not to be
+    prohibitive, but if the highest performance possible is your goal, green threads may ultimately
+    be your bottleneck.
+
+As you can see, like garbage collection, the main downside is that for specific performance cases,
+green threads may be an impediment. But also like garbage collection, there is a wide array of
+cases where the gains in code simplicity and lower bug rates more than pay for the slight
+performance overhead.
+
+Experiment with green threads
+
+Let's go ahead and get started with a short example right now. The only tools you'll need are the
+Stack build tool and a text editor. If you're on a Mac or Linux system, you can get Stack by
+running curl -sSL https://get.haskellstack.org/ | sh. On Windows, you probably want the 64-bit
+installer.
+
+Once you have Stack installed, save the following code into a file called echo.hs:
+
+#!/usr/bin/env stack
+-- stack --resolver lts-7.14 --install-ghc runghc --package conduit-extra
+{-# LANGUAGE OverloadedStrings #-}
+import Data.Conduit
+import Data.Conduit.Network
+import qualified Data.ByteString.Char8 as B8
+
+main = do
+    putStrLn "OK, I'm running!"
+
+    -- This automatically binds a new listening socket and forks a new
+    -- green thread for each incoming connection.
+    runTCPServer settings app
+  where
+    -- Listen on all interfaces on port 4500
+    settings = serverSettings 4500 "*"
+
+-- Create a simple pipeline connecting the input from the network
+-- (appSource) to our echo program to the output to the network
+-- (appSink).
+app appData = runConduit (appSource appData .| echo .| appSink appData)
+
+-- awaitForever keeps running the inner function as long as new data
+-- is available from the client
+echo = awaitForever (\bytes -> do
+    -- Echo back the raw message we received
+    yield bytes
+    -- And now send back the Fibonacci value at the length of the
+    -- input. We need to use B8.pack to convert our String into a
+    -- binary format we can send over the network.
+    yield (B8.pack (show (fib (B8.length bytes)) ++ "\n")))
+
+-- Written badly for high CPU usage!
+fib 0 = 1
+fib 1 = 1
+fib n = fib (n - 1) + fib (n - 2)
+
+Now you can run this program with stack echo.hs. The first run will take a bit of time as it
+downloads a compiler and a number of libraries. This will only happen on the first run; subsequent
+runs will reuse the previously downloaded and installed tools and libraries. Once you've got this
+running, you can connect to it to play with:
+
+$ telnet localhost 4500
+
+Go ahead and play with it with some short lines, and confirm that it responds. For example, here's
+a sample session:
+
+$ telnet localhost 4500
+Trying 127.0.0.1...
+Connected to localhost.
+Escape character is '^]'.
+Hello world!
+Hello world!
+610
+Bye!
+Bye!
+13
+
+Now to prove our claims of the system remaining responsive in the presence of high CPU: try
+entering a long string, which will require a lot of CPU time to calculate the Fibonacci value,
+e.g.:
+
+This is a fairly long string which will take a bit of time unless you have a supercomputer.
+This is a fairly long string which will take a bit of time unless you have a supercomputer.
+
+As you might expect, further interactions on this connection will have no effect as it is computing
+its response. But go ahead and open up a new telnet session in a different terminal. You should be
+able to continue interacting with the echo server and get results, thanks to the scheduling
+behavior of the runtime system. Notice how we get this behavior without any explicit work on our
+part to break up the expensive CPU operation into smaller bits!
+
+EDIT As pointed out on lobste.rs, the above will not expand to multiple cores, since GHC's
+interpreter mode will only use a single core. In order to see this take advantage of additional CPU
+cores for additional requests, first compile the executable with:
+
+stack ghc --resolver lts-7.14 --install-ghc --package conduit-extra -- --make -threaded echo.hs
+
+And then run it with:
+
+./echo +RTS -N4
+
+The -N4 tells the GHC runtime to use 4 cores.
+
+Learn more
+
+There are great libraries in Haskell to take advantage of green threads for easy and beautiful
+concurrency. My all time favorite is the async package. Paired with powerful abstractions like
+Software Transactional Memory, you can quickly whip up high-performance, concurrent network
+services while avoiding common pitfalls like deadlocks and race conditions.
+
+If you or your team are interested in learning more about how functional programming and Haskell,
+check out our training options and our Haskell syllabus. If you'd like to learn about how FP
+Complete can help you with your server applications needs, contact us about our consulting.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

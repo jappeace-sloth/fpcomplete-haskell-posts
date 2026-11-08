@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Asynchronous API in C++ and the Continuation Monad</title>
+  <meta property="og:title" content="Asynchronous API in C++ and the Continuation Monad">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;06&#x2F;asynchronous-api-in-c-and-the-continuation-monad&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Asynchronous API in C++ and the Continuation Monad</h1>
+      
+      <p id="page-description">By Bartosz Milewski, April  9, 2012</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Asynchronous%20API%20in%20C%2B%2B%20and%20the%20Continuation%20Monad https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;06&#x2F;asynchronous-api-in-c-and-the-continuation-monad&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;06&#x2F;asynchronous-api-in-c-and-the-continuation-monad&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;06&#x2F;asynchronous-api-in-c-and-the-continuation-monad&#x2F;&amp;title=Asynchronous%20API%20in%20C%2B%2B%20and%20the%20Continuation%20Monad"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;06&#x2F;asynchronous-api-in-c-and-the-continuation-monad&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  The latest C++11 Standard was a brave attempt, after many years of
+neglect, at catching up with the reality of concurrent programming.
+The result is a new memory model -- a solid foundation for
+concurrency -- and a collection of random concurrency features,
+many of them either obsolete or inadequate. But there is hope on
+the horizon: the next C++ Standard, on which the work started even
+before C++11 saw the light of day. In my last blog I <a href=
+"https://bartoszmilewski.com/2012/05/11/the-future-of-c-concurrency-and-parallelism/"
+target="_blank" title="C++ Standard Meeting report">reported</a> on
+the first meeting of the C++ study group on concurrency and
+parallelism that took place in Bellevue, WA.
+<div style="float: right; text-align: center; width:80px">
+Erik Meijer</div>
+One of the hot topics at that meeting was building better support
+for asynchronous calls, either through libraries or new language
+extensions. The C# group dazzled us with their very mature
+solution. Honestly, I am impressed with their work. And I know
+<em>why</em> they are good at what they do -- they know their
+functional programming. They have several Haskell experts either on
+their team or on call. And they have <a href=
+"https://en.wikipedia.org/wiki/Erik_Meijer_(computer_scientist)"
+target="_blank" title="Erik Meijer">Erik Meijer</a> within shouting
+distance.<br>
+I've been trying to <a href=
+"https://bartoszmilewski.com/2011/07/11/monads-in-c/" target=
+"_blank" title="Monads in C++">popularize functional
+programming</a> (FP) among C++ programmers, and I know that some
+people decided to study Haskell after reading my blogs or listening
+to my talks (here's a good <a href="http://learnyouahaskell.com/"
+target="_blank">online tutorial</a>, in case you want to join their
+ranks). If C++ is to enter the era of modern concurrency,
+parallelism, and asynchronicity, it must embrace both the theory
+and the practice of FP -- just like the C# community did to their
+great advantage.<br>
+This blog is based on a <a href=
+"https://www.youtube.com/watch?v=WtHWFoKf8o0" target="_blank" title=
+"C++Now! presentation">talk I gave at the C++ Now!</a> conference.
+I will first explain the problem with asynchronous interfaces and
+then show how it can be approached using FP, both in Haskell and in
+C++, where I'll be using template metaprogramming (TMP). I realize
+that TMP is a very awkward tool and should probably be avoided. The
+purpose of this post, however, is to shed some light on, and
+provide some language to talk about the implementation of
+asynchronous interfaces in C++. Understanding the big picture might
+help in providing a unified and extensible approach to
+multithreading, parallelism, and asynchronicity in future C++
+Standards. We don't want to end up with three different
+incompatible solutions for these three problems.<br>
+<h2>Inversion of Control</h2>
+<br>
+The main problem with asynchronous interfaces is that they lead to
+inversion of control. What does it mean? In good old-fashioned
+imperative code we would call a blocking API and, when it returns,
+we would continue our business. Granted, while the call is blocked
+the application is not responsive, but at least the code is simple
+to write and maintain.<br>
+A call to an asynchronous API, on the other hand, returns
+immediately, which is good for latency. However, if we need the
+result of the API (say, file contents, or an HTTP request), we
+can't have it immediately. We have to register a callback with the
+API. A callback is a function that the API will call with the
+result, as soon as one is available. This programming construct,
+where it's an external agent that's calling our function, is called
+inversion of control (IoC).<br>
+Unlike in the imperative version, IoC leads to splitting the code
+into separate parts: The part up to the API call is in one
+function, the code after it is in another (the handler). Things get
+aggravated if state is involved, e.g., the same handler behaves
+differently depending on previous interactions. In that case we are
+dealing with a state machine whose implementation is scattered
+among several functions and (often global) data structures. It's a
+maintenance nightmare.<br>
+Notice that inversion of control breaks the principles of
+imperative programming, in which statements are executed in the
+order they appear in the program, subject only to simple control
+structures such as conditionals or loops. Instead, with IoC, we are
+entering the area of reactive programming, were the program reacts
+to external events. Interestingly, functional languages such as
+Haskell have been able to cast reactive programming into the mold
+of imperative programming (yes, <em>imperative</em> programming)
+with the help of monads. Don't worry, this post is not a YAMT (yet
+another monad tutorial), although I will explain some of the basics
+as we go.<br>
+<h2>The Continuation Framework</h2>
+<br>
+Handlers in asynchronous API programming are an example of a more
+general idea of continuations. A continuation reifies the concept
+of "the rest of the computation." In particular, when we call an
+async API and pass it a handler, we ask it to perform <em>the rest
+of the computation</em> at a later time. The handler is the
+continuation.<br>
+The interesting part is that continuations are composable. This is
+very important if your program has to juggle multiple calls to
+async APIs. In the language of handlers, you have to nest async
+APIs within handlers. This requires the creation of new handlers,
+and the picture very quickly gets impossibly complicated.<br>
+Functional languages know how to deal with this mess, so let's see
+what we can learn from them. The basic element in the continuation
+game is a type of a function that, instead of returning its result,
+passes it to another function. I'll call this type a Continuator.
+Here's the definition of the data type <code>Continuator</code> in
+Haskell (C++ code will follow, but you really want to see those
+ideas first expressed clearly in Haskell). A Continuator is an
+object that encapsulates a function . Think of this function as an
+async API.
+<pre>newtype Continuator r a = CTR ((a-&gt;r)-&gt;r)</pre>
+For those readers who are still in the planning stages of learning
+Haskell, here's the explanation of the syntax: <code>newtype</code>
+introduces a new type -- sort of like <code>struct</code> in C++.
+The name of the type is <code>Continuator</code>, and it is
+parameterized by two type variables, <code>r</code> and
+<code>a</code>. In C++ we'll have to use a template.<br>
+The type <code>a</code> describes the value produced by the
+continuator -- the value that is passed to the continuation. The
+type <code>r</code> describes the return type of the continuator
+(and the continuation). On the right hand of the equal sign there's
+a constructor, I call it <code>CTR</code>, and it takes a function
+of type <code>((a-&gt;r)-&gt;r)</code>.<br>
+Functions in Haskell have the type <code>t-&gt;u</code>, meaning a
+function taking an argument of type <code>t</code> and returning a
+value of type <code>u</code>. In this case, the argument to our
+function is also a function -- the continuation,
+<code>a-&gt;r</code> ; hence the signature <code>(<span style=
+"color:#800">(a-&gt;r)</span>-&gt;r)</code>.<br>
+When we want to run a continuator, we have to give it a
+continuation. Here's the Haskell code to do that:
+<pre>andThen (CTR action) k = action k</pre>
+<br>
+Again, here's the play-by-play: <code>andThen</code> is a function
+that takes a continuator, <code>(CTR action)</code>, and a
+continuation, <code>k</code>.<br>
+It's usual in Haskell to pattern-match an argument to get to its
+contents. In this case we pattern match the constructor
+<code>CTR</code> of the continuator to extract the function,
+<code>action</code>. We then call <code>action</code> with
+<code>k</code>. (Haskell newcomers are often confused by the
+function call syntax which doesn't use parentheses around the
+argument list. But after working with Haskell, even just a little,
+you start feeling that the C++ use of parentheses is weird.)<br>
+Here's the more or less equivalent C++ code:
+<pre>template&lt;class R, class A&gt;
+struct Continuator {
+    virtual ~Continuator() {}
+    virtual <span style=
+"color:#800">R andThen(function&lt;R(A)&gt; k)</span> {}
+};</pre>
+<br>
+I simplified matters a bit by not passing a continuator function
+(<code>(a-&gt;r)-&gt;r</code>) to the contstructor of
+<code>Continuator</code> (that would be necessary if I wanted to
+abstract this pattern further). The logic of that function will be
+embedded directly in the implementation of <code>andThen</code>, as
+you'll see in the following examples.<br>
+Now suppose that there is an asynchronous API with the following
+signature:
+<pre>void asyncApi(function&lt;void(string)&gt; handler)</pre>
+(A toy implementation of it is provided in the Appendix.)<br>
+This is how we would encapsulate it in a continuator object,
+<code>AsyncApi</code>:<br>
+<pre>struct AsyncApi : Continuator&lt;void, string&gt; {
+    void andThen(function&lt;void(string)&gt; k) {
+        <span style="color:#800">asyncApi</span>(k);
+    }
+};</pre>
+Here the continuation <code>k</code> becomes the handler for the
+async API. We have established a connection between asynchronicity
+and continuations.<br>
+The way to understand a continuator in the context of async API is
+to see it as the encapsulation of a value that's not there yet.
+What can we do with a value that doesn't exist? Well, whatever it
+is, we can do it inside the continuation.<br>
+Here's how you could use <code>AsyncApi</code> -- with the
+continuation in the form of a lambda function:
+<pre>AsyncApi callApi;
+callApi.andThen(<span style="color:#800;weight:bold">[](string s)
+{
+    cout &lt;&lt; s &lt;&lt; endl;
+}</span>);</pre>
+<br>
+In C#, <code>andThen</code> is called <code>ContinueWith</code>
+and, in Microsoft PPL, a task has a method called
+<code>then</code>. You read this code in a very imperative way as:
+Call API <em>and then</em> print the result. Yet in reality this
+code hides inversion of control.<br>
+<h2>The Continuation Monad</h2>
+<br>
+Real fun begins when you want to compose asynchronous APIs. For
+instance, you might want to open a file and, if it succeeds, read
+its contents, possibly in multiple chunks -- all using async APIs.
+You could express this logic with typical imperative control
+structures, but only if you can afford to block on each API call.
+Otherwise you have to deal with inversion of control.<br>
+The problem is that imperative languages come with a fixed set of
+control structures, which normally don't include support for IoC.
+Haskell, on the other hand, is great at letting the programmer
+create new control structures. IoC is just another such structure,
+and Haskell lets you abstract it. And, while I'm explaining this,
+I'll also translate it into C++.<br>
+To make the discussion more concrete, suppose that we want to call
+our async API in a loop -- the output of one iteration being the
+input to the next one. A loop is one of these imperative control
+structures that don't fit very well in the IoC model. However, we
+know how functional languages deal with iteration -- they turn it
+into recursion. So the solution to this particular problem would be
+to call the API with a handler that calls the API again and passes
+itself as a handler. (Now combine this with error checking and
+state, and you've created a monster.)<br>
+It turns out that, in Haskell, all you need in order to abstract
+the IoC control structures is to define two higher order
+functions.<br>
+The first function is called <code>return</code> and is defined
+like this:
+<pre>return x = CTR (\k -&gt; k x)</pre>
+It takes a value, <code>x</code>, of arbitrary type, and creates a
+trivial continuator for it. It does it using the constructor
+<code>CTR</code> with a lambda:
+<pre>\k -&gt; k x</pre>
+The backslash is the closest ASCII character to the Greek lambda,
+λ. Here, the lambda takes a continuation <code>k</code>, and calls
+<code>k</code> with <code>x</code> as the argument. Again, pay
+attention to the function call syntax.<br>
+Not to torture non-Haskell speakers, here's the C++ equivalent:<br>
+<pre>template&lt;class R, class A&gt;
+struct Return : Continuator&lt;R, A&gt; {
+    Return(A x) : _x(x) {}
+    R andThen(function&lt;R(A)&gt; k) {
+        return k(_x);
+    }
+    A _x;
+};</pre>
+The logic is inside <code>andThen</code>, which calls the
+continuation <code>k</code> with the value that was used to
+construct the <code>Continuator</code>. Notice: this has nothing to
+do with asynchrony, but it lets you uniformly mix regular values
+with the ones that are not available yet. You'll see soon why you'd
+want to do it.<br>
+The second function is called "bind" and it lets you compose two
+calculations represented by continuators. Remember, continuators
+are values that haven't materialized yet. A calculation may return
+such a "special" value in the form of a continuator (for instance a
+file handle from an asynchronous <code>open</code> call). We want
+to somehow pass this special value to another calculation that does
+something with it and returns some other special value (for
+instance, it could asynchronously read a chunk from the file). By
+using this kind of glue we'll be able to work with non-existing
+values as if they were right there.<br>
+In Haskell, "bind" is represented by an infix operator
+<code>&gt;&gt;=</code>. Bind composes an arbitrary continuator
+<code>ktor</code> with the "rest of the calculation," represented
+here by the function <code>rest</code>. This "rest of the
+calculation" can only be executed once the value encapsulated in
+<code>ktor</code> becomes available. So <code>rest</code>, too,
+must produce a continuator -- a promise to eventually yield a
+value.<br>
+The binding of <code>ktor</code> and <code>rest</code> results in
+yet another continuator. (Isn't that obvious? It can't produce an
+<em>actual value</em> from an input that's only a promise of a
+value.)<br>
+Just from this general description it's relatively easy to figure
+out the outer structure of <code>&gt;&gt;=</code>:<br>
+<pre>ktor &gt;&gt;= rest = <span style=
+"color:#800">CTR (\k -&gt; ...)</span></pre>
+<br>
+Indeed, binding <code>ktor</code> with <code>rest</code> must
+produce a continuator, so we use the constructor <code>CTR</code>,
+and pass it the appropriate function.<br>
+The devil is in the lambda. We have to somehow extract the value
+from <code>ktor</code> and pass it to <code>rest</code>. The only
+way to extract a value from a <code>Continuator</code> is to
+construct a new continuation and run the continuator's
+<code>andThen</code>. Let's call this new continuation
+<code>k2</code>:<br>
+<pre>ktor &gt;&gt;= rest = CTR (\k -&gt; <span style=
+"color:#800">andThen ktor k2</span>)</pre>
+<br>
+Now <code>k2</code> will be called with the actual value produced
+by <code>ktor</code>. We want to pass this value, <code>a</code>,
+to <code>rest</code>. So <code>k2</code> must be a function that
+takes <code>a</code> and calls <code>rest</code> with it:<br>
+<pre>\a -&gt; rest a</pre>
+<br>
+But <code>rest a</code> produces a continuator too. We will have to
+run it at some point, which means we need a continuation to
+retrieve its result. Well, that's the outer continuation
+<code>k</code>, which we were given to absorb the final value:<br>
+<pre>\a -&gt; <span style=
+"color:#800">andThen</span> (rest a) <span style=
+"color:#800">k</span></pre>
+<br>
+Putting it all together:<br>
+<pre>
+ktor &gt;&gt;= rest = CTR (\k -&gt; andThen ktor (\a -&gt; andThen (rest a) k))</pre>
+<br>
+Do not be alarmed if your brain feels slightly overheated. It was
+just an easy exercise to prepare you for the C++ version:<br>
+<pre>template&lt;class R, class A, class C&gt;
+struct Bind : Continuator&lt;R, A&gt;
+{
+    Bind(C & <span style=
+"color:#800">ktor</span>, function&lt;unique_ptr&lt;Continuator&gt;(A)&gt; <span style="color:#800">rest</span>)
+        : _ktor(ktor), _rest(rest)
+    {}
+    void andThen(function&lt;R(A)&gt; <span style=
+"color:#800">k</span>)
+    {
+        function&lt;unique_ptr&lt;Continuator&gt;(A)&gt; rest = _rest;
+        function&lt;R(A)&gt; lambda = [k, rest](A a) 
+        {
+            return <span style=
+"color:#800">rest(a)-&gt;andThen(k)</span>; 
+        };
+        <span style="color:#800">_ktor.andThen(lambda)</span>;
+    }
+    C _ktor;
+    function&lt;unique_ptr&lt;Continuator&gt;(A)&gt; _rest;
+};</pre>
+<br>
+I have marked in red the parts that have their counterpart in
+Haskell. Haskell has type inference and garbage collection, which
+helps to keep its code reasonably sized. Also C++ lambda functions
+are much less powerfull than the Haskell ones, and they have to be
+converted to <code>std::function</code> to fit the C++ type
+system.<br>
+And now it's time for full disclosure: What I have just described
+is a monad -- the continuation monad to be precise. It looks more
+monadic in Haskell, where you can abstract the monadic nature, but
+a C++ implementation will do in a pinch. Now let's see how we can
+write some monadic code using Return and Bind.<br>
+<h2>Looping with Continuations</h2>
+<br>
+Remember what I said about functional languages turning IoC into
+imperative code? In Haskell, with any monad, you can use special
+"do" notation, which has a distinct imperative feel to it. For
+instance, the earlier problem of calling an async operation in a
+loop might be implemented like this:
+<pre>loop s = do
+   t &lt;- async
+   loop t</pre>
+<br>
+This is a bit silly, since the function <code>loop</code> doesn't
+do anything with its argument and it runs forever, but just look at
+the structure of it. It looks pretty much like imperative
+synchronous code. You call <code>async</code>, which produces
+<code>t</code> and you call <code>loop</code> again with
+<code>t</code>. The key to understanding this code is to realize
+that the function <code>async</code> does not produce a value, it
+produces a <code>Continuator</code>. But inside the <code>do</code>
+block, <code>t</code> is just a regular value. We can manipulate
+it, do arithmetic on it, concatenate it, etc., depending on its
+type. But the "do" notation is nothing but syntactic sugar over
+monadic bind. The function <code>loop</code> can in fact be
+desugared down to:
+<pre>loop s =
+   async &gt;&gt;= \t -&gt; loop t</pre>
+Here, the lambda <code>\t-&gt;loop t</code> represents our "rest of
+the computation." The "do" version is arguably more readable.<br>
+Unfortunately, we don't get much sugar in C++, so we'll have to use
+<code>Bind</code> explicitly. Here's the <code>Loop</code> object
+with some debugging output added:<br>
+<pre>struct Loop : Continuator&lt;void, string&gt;
+{
+    <span style="color:#800">Loop</span>(string <span style=
+"color:#800">s</span>) : _s(s) {}
+<br>
+    void andThen(function&lt;void(string)&gt; k) {
+        cout &lt;&lt; "Loop::andThen: " &lt;&lt;_s &lt;&lt; endl;
+        <span style=
+"color:#800">Bind</span>&lt;void, string, AsyncApi&gt;(<span style=
+"color:#800">AsyncApi</span>(), [](string <span style=
+"color:#800">t</span>)
+        {
+            return unique_ptr&lt;Continuator&gt; (new <span style=
+"color:#800">Loop(t)</span>);
+        }).andThen(k);
+    }
+    string _s;
+};</pre>
+<br>
+As before, the parts corresponding to Haskell code are in red. This
+code doesn't look as imperative as its Haskell counterpart, but one
+thing is worth observing: The inversion of control is somewhat
+masked by the fact that the code using the result of the
+asynchronous call follows the call itself, rather than being
+relegated to a global handler function. (You can see the results of
+running this code in the Appendix.)<br>
+A small comment: Even though the C++ solution corresponds to a
+recursive function in Haskell, it isn't actually recursive. The
+<code>Loop</code> is not calling itself -- it creates a new
+<code>Loop</code> object. You can run this code under the debugger
+and see that the program's stack is not growing. Neither is heap
+space for that matter -- the <code>Loop</code> objects are
+constantly recycled.<br>
+But there's more. We can combine asynchrony with other control
+structures. Here, for instance, is a loop that executes only n
+times.<br>
+<pre>struct LoopN : Continuator&lt;void, string&gt;
+{
+    LoopN(string s, int n) : _s(s), _n(n) {}
+<br>
+    void andThen(function&lt;void(string)&gt; k) 
+    {
+        cout &lt;&lt; "[LoopN::andThen] " &lt;&lt;_s &lt;&lt; " " &lt;&lt; _n &lt;&lt; endl;
+        int n = _n;
+        Bind&lt;void, string, AsyncApi&gt;(AsyncApi(), 
+        [n](string s) -&gt; unique_ptr&lt;Continuator&gt;
+        {
+            if (n &gt; 0)
+                return unique_ptr&lt;Continuator&gt;(
+                    new <span style=
+"color:#800">LoopN</span>(s, n - 1));
+            else
+                return unique_ptr&lt;Continuator&gt; (
+                    new <span style=
+"color:#800">Return</span>&lt;void, string&gt;("Done!"));
+        }).andThen(k);
+    }
+    string _s;
+    int    _n;
+};</pre>
+<br>
+This example uses the polymorphism of the <code>Continuator</code>
+by alternatively returning a <code>LoopN</code> object or the
+<code>Return</code> object (encapsulated inside
+<code>unique_ptr</code>). (Again, the test code for this example is
+given in the Appendix.)<br>
+If you were to implement the same functionality with handlers,
+you'd have to build a state machine, where n would be part of the
+state.<br>
+<h2>Combinators</h2>
+<br>
+The binding of continuators reflects data dependencies in your
+code: The "rest of the calculation" cannot proceed until the
+preceding continuator produces a result. A general dataflow graph
+can also contain confluences, nodes that need more than one input
+in order to fire. Such a confluence could be implemented using a
+join operation, which requires waiting for two or more
+continuators. But the usual thread join is a blocking operation --
+something we are trying to avoid.<br>
+There is a more general mechanism though, relying on the use of
+combinators. A combinator takes two or more continuators and
+produces a new compound continuator. We can then use that
+continuator to continue growing the graph of dependencies. Separate
+branches of such a graph can then run in parallel, limited only by
+data dependencies. And this is the ultimate goal of parallelism --
+to imitate a dataflow computer.<br>
+To make this discussion more concrete, here's a simple example of
+an "and" combinator; one that combines the results of two
+continuators. The use of continuations makes such constructions
+reasonably easy.<br>
+<pre>struct And : Continuator&lt;void, string&gt;
+{
+    And(unique_ptr&lt;Continuator&lt;void, string&gt;&gt; & ktor1, 
+        unique_ptr&lt;Continuator&lt;void, string&gt;&gt; & ktor2)
+    : _ktor1(move(ktor1)), _ktor2(move(ktor2))
+    {}
+    void andThen(function&lt;void(pair&lt;string, string&gt;)&gt; k)
+    {
+        _ktor1-&gt;andThen([this, k](string s1)
+        {
+            lock_guard&lt;mutex&gt; l(_mtx);
+            if (_s2.empty())
+                _s1 = s1;
+            else
+                k(make_pair(s1, _s2));
+        });
+        _ktor2-&gt;andThen([this, k](string s2)
+        {
+            lock_guard&lt;mutex&gt; l(_mtx);
+            if (_s1.empty())
+                _s2 = s2;
+            else
+                k(make_pair(_s1, s2));
+        });
+    }
+    mutex _mtx;
+    string _s1;
+    string _s2;
+    unique_ptr&lt;Continuator&lt;void, string&gt;&gt; _ktor1;
+    unique_ptr&lt;Continuator&lt;void, string&gt;&gt; _ktor2;
+};</pre>
+<br>
+The two output strings serve also as state in this elementary state
+machine -- they are tested using <code>empty</code> by the two
+continuations. Notice also the use of a mutex to protect shared
+output when continuations are run on separate threads.<br>
+Here's a simple test for our <code>And</code> combinator.<br>
+<pre>
+unique_ptr&lt;Continuator&lt;void, string&gt;&gt; api1(new AsyncApi("A"));
+unique_ptr&lt;Continuator&lt;void, string&gt;&gt; api2(new AsyncApi("B"));
+<br>
+And and(api1, api2);
+and.andThen([](pair&lt;string, string&gt; ss)
+{
+    cout &lt;&lt; ss.first + ", " + ss.second &lt;&lt; std::endl;
+});</pre>
+<br>
+In a real application you could pass the <code>and</code> object to
+another <code>Bind</code>, and continue the game.<br>
+<h2>Conclusion</h2>
+<br>
+The syntax of C++ makes the use of the continuation monad awkward,
+to say the least. I don't seriously expect anybody to use it as-is.
+However, realizing that there is a well developed theory for
+transforming IoC code into more imperative form might help avoid
+mistakes in the design of the C++ language. Essentially, the
+discussion should concentrate on designing appropriate syntactic
+sugar to make this style of programming accessible to everybody.
+That's exactly the direction that C# has taken.<br>
+But the strongest advantage of monadic approach is that it unifies
+many programming patterns. I have shown you how to use the
+continuation monad to deal with async API. However, for my own
+testing I didn't use an actual API; rather I faked it using a
+worker thread:<br>
+<pre>void asyncApi(function&lt;void(string)&gt; handler)
+{
+    thread th([handler]()
+    {
+        cout &lt;&lt; "Started async\n";
+        this_thread::sleep_for(chrono::seconds(3));
+        handler("Done async");
+    });
+    th.detach();
+}</pre>
+<br>
+When you squint at this code, it almost looks like I have
+implemented a future. Inside the thread, instead of calling
+<code>set_value</code> on a <code>promise</code> I called the
+handler. But outside the thread, things look rather different. If I
+used a future, the only way to access the value would be to call
+<code>get</code> on the future. But <code>get</code> is a blocking
+call. I can't perform any computations on the future value until my
+worker thread sets the promise. I described this problem some time
+ago in my blog <a href=
+"https://bartoszmilewski.com/2009/03/03/broken-promises-c0x-futures/"
+target="_blank">Broken Promises</a>. Now it's clear that composable
+futures should have been implemented using the continuation
+monad.<br>
+Think of it: A future represents a value that is not there yet.
+That's just like my Continuator. Instead of blocking on a future to
+retrieve its value, you provide a continuation to consume it. And
+this is not an original idea either. That's how C# tasks are
+implemented. And also that's one of the ways concurrency is
+implemented in Haskell using the par monad (a version of the
+continuation monad).<br>
+There's also been talk at the meeting in Bellevue about adding
+support for vectorization and, in general, for data-driven
+parallelism. It seems like a completely different set of problems
+requiring its own solution, possibly a language extension. Except
+that it's not! Vector operations and GPU kernels must also be
+composable, the same way that futures and asynchronous operations
+should be.<br>
+Just to give you a simple example: Multiply vector <code>v1</code>
+by a scalar <code>a</code> and add the result to vector
+<code>v2</code>. You definitely don't want the multiplication and
+the addition to be coded separately, with a barrier between them.
+Neither do you want to provide separate intrinsics for all possible
+combinations of vector operations. You want the compiler to be able
+to perform a fusion -- to compile the two operations into one
+kernel, as long as the underlying hardware allows it. But that
+can't be done (at least not easily) if the code uses inversion of
+control.<br>
+Finally, having one framework for asynchronicity, concurrency, and
+data-driven parallelism would allow free composition between all
+three of them. You could send one part of the computation to a GPU,
+another to a worker thread, then combine their results using a
+combinator, and then call an asynchronous API, all without
+blocking. I think this is a worthy design goal for the next version
+of the C++ Standard.<br>
+<h2>Appendix 1</h2>
+<br>
+Here is some testing harness I used to test my C++ code. This is my
+fake async API, as I've already shown:
+<pre>void asyncApi(function&lt;void(string)&gt; handler)
+{
+    thread th([handler]()
+    {
+        cout &lt;&lt; "Started async\n";
+        this_thread::sleep_for(chrono::seconds(3));
+        handler("Done async");
+    });
+    th.detach();
+}</pre>
+<br>
+I create a detached thread that sleeps for 3 seconds and then calls
+the handler. Notice that <code>asyncApi</code> itself returns
+almost immediately, as it should.<br>
+This is the test for the simple async continuator described in the
+text:<br>
+<pre>void main()
+{
+    AsyncApi callApi;
+    callApi.andThen([](string s)
+    {
+        cout &lt;&lt; s &lt;&lt; std::endl;
+    });
+    // This code will be executed in parallel to async API
+    for(int i = 0; i &lt; 200; ++i)
+    {
+        cout &lt;&lt; i &lt;&lt; endl;
+        this_thread::sleep_for(chrono::seconds(1));
+    }
+}</pre>
+<br>
+It creates the <code>AsyncApi</code> object and calls its
+<code>andThen</code> method, passing it a continuation. Then it
+immediately starts printing numbers, one every second. After three
+seconds the API finishes and calls the handler.<br>
+This is the test for the simple looping construct. The outer
+continuation that's supposed to print "Never happens" is never
+called because the loop is infinite.<br>
+<pre>void main()
+{
+    Loop("Loop: ").andThen([](string s) 
+    { 
+        cout &lt;&lt; "Never happens: " &lt;&lt; s &lt;&lt; endl; 
+    });
+    // run counter in parallel
+    for(int i = 0; i &lt; 200; ++i)
+    {
+        cout &lt;&lt; i &lt;&lt; endl;
+        this_thread::sleep_for(chrono::seconds(1));
+    }
+}</pre>
+<br>
+Here's the output of this program: <i>image not found, sorry</i>.<br>
+The output of an asynchronous loop[/caption]<br>
+The counter in the main thread is running all the time, while the
+async loop keeps printing its results every three seconds.<br>
+Finally, this is the test of the finite async loop. The text
+"Finally" is printed after three iterations of the loop, while the
+main thread keeps printing numbers.
+<pre>void main()
+{
+    LoopN("Begin ", 3).andThen([](string s) 
+    { 
+        cout &lt;&lt; "Finally " &lt;&lt; s &lt;&lt; endl; 
+    });
+    for(int i = 0; i &lt; 200; ++i)
+    {
+        cout &lt;&lt; i &lt;&lt; endl;
+        this_thread::sleep_for(chrono::seconds(1));
+    }
+}</pre>
+<br>
+<h2>Appendix 2</h2>
+<br>
+This is a slight digression from the main topic, but I though I'd
+include it for completeness. It often happens, in particular in GUI
+programming, that the handler for an async operation must be
+executed in the main thread (e.g., the GUI thread). There is in
+fact a provision for that in C#, so I'd like to show you how it
+could be implemented in the monadic setup.<br>
+I pass a small handler to the API that does nothing but post a
+message to the global message queue:<br>
+<pre>struct AsyncApi : Continuator&lt;void, string&gt;
+{
+    void andThen(function&lt;void(string)&gt; k)
+    {
+        <span style=
+"color:#800">TheQueue.registerHandler(k);</span>
+        asyncApi([](string s)
+        {
+            <span style="color:#800">TheQueue.post(s);</span>
+        });
+    }
+};</pre>
+<br>
+I also register my main handler -- the one that must run in the GUI
+thread. (A Windows implementation could register a special Windows
+message and add the handler for it to the message map.) When the
+API finishes, it will post the message, and the GUI thread will
+pick it up from the queue and execute the handler.<br>
+<h3>Acknowledgments</h3>
+I'd like to thank Artur Laksberg (Microsoft, PPL), Mads Torgersen
+(Microsoft, C#), and Abel Sinkovics (Eötvös Loránd University,
+Budapest, Hungary) for reviewing the draft of this blog and
+providing valuable feedback.<br>
+<h3>Further Reading</h3>
+<ol>
+<li>Paolo Capriotti, <a href=
+"https://www.paolocapriotti.com/blog/2012/01/18/reinversion-of-control/index.html"
+target="_blank">Reinversion of Control with Continuations</a></li>
+<li>sigfpe, <a href=
+"http://blog.sigfpe.com/2011/10/quick-and-dirty-reinversion-of-control.html"
+target="_blank">Quick and Dirty Reinversion of Control</a></li>
+</ol>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Asynchronous%20API%20in%20C%2B%2B%20and%20the%20Continuation%20Monad https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;06&#x2F;asynchronous-api-in-c-and-the-continuation-monad&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;06&#x2F;asynchronous-api-in-c-and-the-continuation-monad&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;06&#x2F;asynchronous-api-in-c-and-the-continuation-monad&#x2F;&amp;title=Asynchronous%20API%20in%20C%2B%2B%20and%20the%20Continuation%20Monad"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;06&#x2F;asynchronous-api-in-c-and-the-continuation-monad&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#493a28252c3a092f392a262439252c3d2c672a2624" targe="_blank"><span class="__cf_email__" data-cfemail="a7d4c6cbc2d4e7c1d7c4c8cad7cbc2d3c289c4c8ca">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>binary: Serializing data</title>
+  <meta property="og:title" content="binary: Serializing data">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;library&#x2F;binary&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+  
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+<section class="hero grid-bg">
+  <div class="container">
+    <h1>binary: Serializing data
+    </h1></div>
+</section>
+
+
+
+  
+<div class="container py-3">
+  <p><em>binary</em> is straightforward to use library for decoding (parsing)
+and encoding binary data. There are a number of ways to work with
+binary, ways that range from simple to complex.</p>
+<h2 id="decoding-and-encoding-standard-data-types">Decoding and encoding standard data types.</h2>
+<p>Byte strings can be trivially decoded to Haskell values, provided that the types of those values are instances of <code>Binary</code>. Analogously, types that are instances of <code>Binary</code> can easily be encoded back to byte strings. <em>binary</em> comes with convenient <code>Binary</code> instances for a good number of the standard data types including numbers, booleans, lists, tuples, and so on.</p>
+<p>Let us try these instances out in GHCi. You'll need to import
+<code>Data.Binary</code> to run the examples below.</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>&gt; encode True
+</span><span>&quot;\SOH&quot;
+</span><span>
+</span><span>&gt; decode (encode True) :: Bool
+</span><span>True
+</span><span>
+</span><span>&gt; encode &#39;A&#39;
+</span><span>&quot;A&quot;
+</span><span>
+</span><span>&gt; decode (encode &#39;A&#39;) :: Char
+</span><span>&#39;A&#39;
+</span><span>
+</span><span>&gt; encode &quot;AB&quot;
+</span><span>&quot;\NUL\NUL\NUL\NUL\NUL\NUL\NUL\STXAB&quot;
+</span><span>
+</span><span>&gt; decode (encode &quot;AB&quot;) :: String
+</span><span>&quot;AB&quot;
+</span><span>
+</span><span>&gt; encode (&quot;A&quot;, &quot;B&quot;)
+</span><span>&quot;\NUL\NUL\NUL\NUL\NUL\NUL\NUL\SOHA\NUL\NUL\NUL\NUL\NUL\NUL\NUL\SOHB&quot;
+</span><span>
+</span><span>&gt; decode (encode (&quot;A&quot;, &quot;B&quot;) ):: (String, String)
+</span><span>(&quot;A&quot;,&quot;B&quot;)
+</span></code></pre>
+<h2 id="automatic-decoding-and-encoding">Automatic decoding and encoding</h2>
+<p>So how do you define <code>Binary</code> instances for types that do not already have them?</p>
+<p>One simple way to do this is to use the <code>DeriveGeneric</code> extension
+and have the compiler generate the implementation for you.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> DeriveGeneric #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span>
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Binary
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Text
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">GHC.Generics </span><span>(</span><span style="color:#268bd2;">Generic</span><span>)
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Transaction </span><span style="color:#859900;">=
+</span><span>  </span><span style="color:#cb4b16;">Txn</span><span> { account </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Text</span><span>, amount </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Float</span><span> }
+</span><span>  </span><span style="color:#859900;">deriving</span><span> (</span><span style="color:#268bd2;">Generic</span><span>, </span><span style="color:#268bd2;">Show</span><span>)
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Binary Transaction
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#859900;">let</span><span> bytes </span><span style="color:#859900;">=</span><span> encode (</span><span style="color:#cb4b16;">Txn</span><span> { account </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Cash</span><span style="color:#839496;">&quot;</span><span>, amount </span><span style="color:#859900;">= </span><span style="color:#6c71c4;">10</span><span> })
+</span><span>  putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Encode: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show bytes
+</span><span>  putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Decode: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++
+</span><span>    show (decode bytes </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Transaction</span><span>)
+</span></code></pre>
+<h2 id="custom-decoding-and-encoding">Custom decoding and encoding</h2>
+<p><code>Binary</code> instances may also be written by hand.</p>
+<p>For decoding, you need to define <code>get</code>, of type <code>Get t</code> where <code>Get</code> is an instance of <code>Monad</code>.</p>
+<p>For encoding, you need to provide a definition for <code>put</code>, which is a function that takes a value of the type you wish to encode and a value of type <code>Put</code>. By definition, <code>Put = PutM ()</code>
+where <code>PutM</code> is also an instance of <code>Monad</code>.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Binary
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Text </span><span>(</span><span style="color:#268bd2;">Text</span><span>)
+</span><span>
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Transaction </span><span style="color:#859900;">=  </span><span style="color:#93a1a1;">-- Same type as before, but without the Generic instance.
+</span><span>  </span><span style="color:#cb4b16;">Txn</span><span> { account </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Text</span><span>, amount </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Float</span><span> } </span><span style="color:#859900;">deriving </span><span style="color:#cb4b16;">Show
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Binary Transaction </span><span style="color:#859900;">where
+</span><span>  put (</span><span style="color:#cb4b16;">Txn</span><span> acct amt) </span><span style="color:#859900;">= do
+</span><span>    put acct
+</span><span>    put amt
+</span><span>
+</span><span>  get </span><span style="color:#859900;">= do
+</span><span>    acct </span><span style="color:#859900;">&lt;-</span><span> get
+</span><span>    amt </span><span style="color:#859900;">&lt;-</span><span> get
+</span><span>    return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Txn</span><span> acct amt
+</span><span>
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">() </span><span style="color:#93a1a1;">-- The main action is unchanged from before.
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#859900;">let</span><span> bytes </span><span style="color:#859900;">=</span><span> encode (</span><span style="color:#cb4b16;">Txn</span><span> { account </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Cash</span><span style="color:#839496;">&quot;</span><span>, amount </span><span style="color:#859900;">= </span><span style="color:#6c71c4;">1000</span><span> })
+</span><span>  putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Encode: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show bytes
+</span><span>  putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Decode: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++
+</span><span>    show (decode bytes </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Transaction</span><span>)
+</span></code></pre>
+<h2 id="conclusion">Conclusion</h2>
+<p>While quite straightforward to use, the <em>binary</em> library is vulnerable to two criticisms. Firstly, as its creator Duncan Coutts pointed out, <code>binary</code> entangles the issue of serializing Haskell values with that of read/writing externally defined formats. This can be confusing. Secondly, the error messages one may encounter when using <code>binary</code>are perhaps not as helpful as one would like. The <code>cereal</code> library offers to address the latter (though not the former) problem.</p>
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#4033212c2533002630232f2d302c2534256e232f2d" targe="_blank"><span class="__cf_email__" data-cfemail="9ae9fbf6ffe9dafceaf9f5f7eaf6ffeeffb4f9f5f7">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

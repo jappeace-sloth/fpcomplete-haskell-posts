@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Partial patterns in do blocks: let vs return</title>
+  <meta property="og:title" content="Partial patterns in do blocks: let vs return">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="If you&#x27;re in a do block, and you need a partial pattern match, should you use a let? This blog post explains why not. Recommended reading for Haskellers.">
+  <meta property="og:description" content="If you&#x27;re in a do block, and you need a partial pattern match, should you use a let? This blog post explains why not. Recommended reading for Haskellers.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;03&#x2F;partial-patterns-do-blocks&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Partial patterns in do blocks: let vs return</h1>
+      
+      <p id="page-description">By Michael Snoyman, March 10, 2017</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Partial%20patterns%20in%20do%20blocks%3A%20let%20vs%20return https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;03&#x2F;partial-patterns-do-blocks&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;03&#x2F;partial-patterns-do-blocks&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;03&#x2F;partial-patterns-do-blocks&#x2F;&amp;title=Partial%20patterns%20in%20do%20blocks%3A%20let%20vs%20return"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;03&#x2F;partial-patterns-do-blocks&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>This blog post is about a pattern (pun not intended) I've used
+in my code for a while, and haven't seen discussed explicitly. A
+prime example is when doing simplistic parsing using the functions
+in <code>Data.Text.Read</code>. (And yes, this is a contrived
+example, and using parsec or attoparsec would be far better.)</p>
+<p><i>Full versions of the code below are available as a <a href=
+"https://gist.github.com/snoyberg/bfb8bd7bf41410bc1b6aa9b744d5f66f">
+Github Gist</a>, and embedded at the end of this post.</i></p>
+<p>The example: consider a file format encoding one person per
+line, indicating the name, height (in centimeters), age (in years),
+and bank balance (in your favorite currency). I have no idea why
+anyone would have such a collection of information, but let's roll
+with it:</p>
+<pre><code>Alice 165cm 30y 15
+Bob 170cm 35y -20
+Charlie 175cm 40y 0</code></pre>
+<p>And we want to convert this into a list of <code>Person</code>
+values:</p>
+<pre><span class="hs-keyword">data</span> <span class=
+"hs-conid">Person</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">Person</span>
+    <span class="hs-layout">{</span> <span class=
+"hs-varid">name</span>    <span class=
+"hs-keyglyph">::</span> <span class="hs-varop">!</span><span class=
+"hs-conid">Text</span>
+    <span class="hs-layout">,</span> <span class=
+"hs-varid">height</span>  <span class=
+"hs-keyglyph">::</span> <span class="hs-varop">!</span><span class=
+"hs-conid">Int</span>
+    <span class="hs-layout">,</span> <span class=
+"hs-varid">age</span>     <span class=
+"hs-keyglyph">::</span> <span class="hs-varop">!</span><span class=
+"hs-conid">Int</span>
+    <span class="hs-layout">,</span> <span class=
+"hs-varid">balance</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-varop">!</span><span class=
+"hs-conid">Int</span>
+    <span class="hs-layout">}</span>
+    <span class="hs-keyword">deriving</span> <span class=
+"hs-conid">Show</span></pre>
+<p>Using the <code>Data.Text</code> and <code>Data.Text.Read</code>
+APIs, this isn't too terribly painful:</p>
+<pre><span class="hs-definition">parseLine</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Text</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Maybe</span> <span class="hs-conid">Person</span>
+<span class="hs-definition">parseLine</span> <span class=
+"hs-varid">t0</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-layout">(</span><span class="hs-varid">name</span><span class=
+"hs-layout">,</span> <span class="hs-varid">t1</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">T</span><span class=
+"hs-varop">.</span><span class="hs-varid">break</span> <span class=
+"hs-layout">(</span><span class="hs-varop">==</span> <span class=
+"hs-chr">' '</span><span class="hs-layout">)</span> <span class=
+"hs-varid">t0</span>
+    <span class="hs-varid">t2</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">T</span><span class="hs-varop">.</span><span class=
+"hs-varid">stripPrefix</span> <span class=
+"hs-str">" "</span> <span class="hs-varid">t1</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">height</span><span class=
+"hs-layout">,</span> <span class="hs-varid">t3</span><span class=
+"hs-layout">)</span> <span class="hs-keyglyph">&lt;-</span>
+        <span class="hs-keyword">case</span> <span class=
+"hs-varid">decimal</span> <span class=
+"hs-varid">t2</span> <span class="hs-keyword">of</span>
+            <span class="hs-conid">Right</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">height</span><span class="hs-layout">,</span> <span class="hs-varid">t3</span><span class="hs-layout">)</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">Just</span> <span class="hs-layout">(</span><span class="hs-varid">height</span><span class="hs-layout">,</span> <span class="hs-varid">t3</span><span class="hs-layout">)</span>
+            <span class="hs-conid">Left</span> <span class=
+"hs-keyword">_</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Nothing</span>
+    <span class="hs-varid">t4</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">T</span><span class="hs-varop">.</span><span class=
+"hs-varid">stripPrefix</span> <span class=
+"hs-str">"cm "</span> <span class="hs-varid">t3</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">age</span><span class="hs-layout">,</span> <span class=
+"hs-varid">t5</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">&lt;-</span>
+        <span class="hs-keyword">case</span> <span class=
+"hs-varid">decimal</span> <span class=
+"hs-varid">t4</span> <span class="hs-keyword">of</span>
+            <span class="hs-conid">Right</span> <span class=
+"hs-layout">(</span><span class="hs-varid">age</span><span class=
+"hs-layout">,</span> <span class="hs-varid">t5</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Just</span> <span class="hs-layout">(</span><span class=
+"hs-varid">age</span><span class="hs-layout">,</span> <span class=
+"hs-varid">t5</span><span class="hs-layout">)</span>
+            <span class="hs-conid">Left</span> <span class=
+"hs-keyword">_</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Nothing</span>
+    <span class="hs-varid">t6</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">T</span><span class="hs-varop">.</span><span class=
+"hs-varid">stripPrefix</span> <span class=
+"hs-str">"y "</span> <span class="hs-varid">t5</span>
+    <span class="hs-varid">balance</span> <span class=
+"hs-keyglyph">&lt;-</span>
+        <span class="hs-keyword">case</span> <span class=
+"hs-varid">signed</span> <span class=
+"hs-varid">decimal</span> <span class=
+"hs-varid">t6</span> <span class="hs-keyword">of</span>
+            <span class="hs-conid">Right</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">balance</span><span class=
+"hs-layout">,</span> <span class="hs-str">""</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Just</span> <span class="hs-varid">balance</span>
+            <span class="hs-keyword">_</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Nothing</span>
+    <span class="hs-conid">Just</span> <span class=
+"hs-conid">Person</span> <span class=
+"hs-layout">{</span><span class="hs-keyglyph">..</span><span class=
+"hs-layout">}</span></pre>
+<p>We start off with the original value of the line,
+<code>t0</code>, and continue to bite off pieces of it in the
+format we want. The progression is:</p>
+<ol>
+<li>Use <code>break</code> to grab the name (everything up until
+the first space)</li>
+<li>Use <code>stripPrefix</code> to drop the space itself</li>
+<li>Use the <code>decimal</code> function to parse out the
+height</li>
+<li>Use <code>stripPrefix</code> to strip off the <code>cm</code>
+after the height</li>
+<li>Use <code>decimal</code> and <code>stripPrefix</code> yet
+again, but this time for the age and the trailing
+<code>y</code></li>
+<li>Finally grab the balance using <code>signed decimal</code>.
+Notice that our pattern match is slightly different here, insisting
+that the rest of the input be the empty string to ensure no
+trailing characters</li>
+</ol>
+<p>If we add to this a pretty straight-forward helper function and
+a <code>main</code> function:</p>
+<pre><span class="hs-definition">parseLines</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Text</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Maybe</span> <span class=
+"hs-keyglyph">[</span><span class=
+"hs-conid">Person</span><span class="hs-keyglyph">]</span>
+<span class="hs-definition">parseLines</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">mapM</span> <span class=
+"hs-varid">parseLine</span> <span class=
+"hs-varop">.</span> <span class="hs-conid">T</span><span class=
+"hs-varop">.</span><span class="hs-varid">lines</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span>
+    <span class="hs-keyword">case</span> <span class=
+"hs-varid">parseLines</span> <span class=
+"hs-varid">input</span> <span class="hs-keyword">of</span>
+        <span class="hs-conid">Nothing</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">error</span> <span class="hs-str">"Invalid input"</span>
+        <span class="hs-conid">Just</span> <span class=
+"hs-varid">people</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">mapM_</span> <span class=
+"hs-varid">print</span> <span class="hs-varid">people</span></pre>
+<p>We get the output:</p>
+<pre>
+<code>Person {name = "Alice", height = 165, age = 30, balance = 15}
+Person {name = "Bob", height = 170, age = 35, balance = -20}
+Person {name = "Charlie", height = 175, age = 40, balance = 0}</code></pre>
+<p>And if we corrupt the input (such as by replacing
+<code>175cm</code> with <code>x175cm</code>), we get the
+output:</p>
+<pre><code>v1.hs: Invalid input
+CallStack (from HasCallStack):
+  error, called at v1.hs:49:20 in main:Main</code></pre>
+<p>This works, and the <code>Data.Text.Read</code> API is
+particularly convenient for grabbing part of an input and then
+parsing the rest. However, all of those case expressions really
+break up the flow, feel repetitive, and make it difficult to follow
+the logic in that code. Fortunately, we can clean this up with some
+<code>let</code>s and partial pattern matches:</p>
+<pre><span class="hs-definition">parseLine</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Text</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Maybe</span> <span class="hs-conid">Person</span>
+<span class="hs-definition">parseLine</span> <span class=
+"hs-varid">t0</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-layout">(</span><span class="hs-varid">name</span><span class=
+"hs-layout">,</span> <span class="hs-varid">t1</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">T</span><span class=
+"hs-varop">.</span><span class="hs-varid">break</span> <span class=
+"hs-layout">(</span><span class="hs-varop">==</span> <span class=
+"hs-chr">' '</span><span class="hs-layout">)</span> <span class=
+"hs-varid">t0</span>
+    <span class="hs-varid">t2</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">T</span><span class="hs-varop">.</span><span class=
+"hs-varid">stripPrefix</span> <span class=
+"hs-str">" "</span> <span class="hs-varid">t1</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-conid">Right</span> <span class=
+"hs-layout">(</span><span class="hs-varid">height</span><span class="hs-layout">,</span> <span class="hs-varid">t3</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=</span> <span class="hs-varid">decimal</span> <span class="hs-varid">t2</span>
+    <span class="hs-varid">t4</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">T</span><span class="hs-varop">.</span><span class=
+"hs-varid">stripPrefix</span> <span class=
+"hs-str">"cm "</span> <span class="hs-varid">t3</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-conid">Right</span> <span class=
+"hs-layout">(</span><span class="hs-varid">age</span><span class=
+"hs-layout">,</span> <span class="hs-varid">t5</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">decimal</span> <span class="hs-varid">t4</span>
+    <span class="hs-varid">t6</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">T</span><span class="hs-varop">.</span><span class=
+"hs-varid">stripPrefix</span> <span class=
+"hs-str">"y "</span> <span class="hs-varid">t5</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-conid">Right</span> <span class=
+"hs-layout">(</span><span class="hs-varid">balance</span><span class="hs-layout">,</span> <span class="hs-str">""</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=</span> <span class="hs-varid">signed</span> <span class="hs-varid">decimal</span> <span class="hs-varid">t6</span>
+    <span class="hs-conid">Just</span> <span class=
+"hs-conid">Person</span> <span class=
+"hs-layout">{</span><span class="hs-keyglyph">..</span><span class=
+"hs-layout">}</span></pre>
+<p>That's certainly easier to read! And our program works...
+assuming we have valid input. However, let's try running against
+our invalid input with <code>x175cm</code>:</p>
+<pre>
+<code>v2.hs: v2.hs:27:9-39: Irrefutable pattern failed for pattern Right (height, t3)</code></pre>
+<p>We've introduced partiality into our function! Instead of being
+well behaved and returning a <code>Nothing</code>, our program now
+creates an impure exception that blows up in our face, definitely
+<i>not</i> what we wanted with a simple refactoring.</p>
+<p>The problem here is that, when using <code>let</code>, an
+incomplete pattern match turns into a partial value. GHC will
+essentially convert our:</p>
+<pre><span class="hs-keyword">let</span> <span class=
+"hs-conid">Right</span> <span class=
+"hs-layout">(</span><span class="hs-varid">height</span><span class="hs-layout">,</span> <span class="hs-varid">t3</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=</span> <span class="hs-varid">decimal</span> <span class="hs-varid">t2</span></pre>
+<p>into</p>
+<pre><span class="hs-keyword">let</span> <span class=
+"hs-conid">Right</span> <span class=
+"hs-layout">(</span><span class="hs-varid">height</span><span class="hs-layout">,</span> <span class="hs-varid">t3</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=</span> <span class="hs-varid">decimal</span> <span class="hs-varid">t2</span>
+    <span class="hs-conid">Left</span> <span class=
+"hs-keyword">_</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">error</span> <span class=
+"hs-str">"Irrefutable pattern failed"</span></pre>
+<p>What we really want is for that <code>Left</code> clause to turn
+into a <code>Nothing</code> value, like we were doing explicitly
+with our <code>case</code> expressions above. Fortunately, we've
+got one more trick up our sleeve to do exactly that:</p>
+<pre><span class="hs-definition">parseLine</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Text</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Maybe</span> <span class="hs-conid">Person</span>
+<span class="hs-definition">parseLine</span> <span class=
+"hs-varid">t0</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-layout">(</span><span class="hs-varid">name</span><span class=
+"hs-layout">,</span> <span class="hs-varid">t1</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">T</span><span class=
+"hs-varop">.</span><span class="hs-varid">break</span> <span class=
+"hs-layout">(</span><span class="hs-varop">==</span> <span class=
+"hs-chr">' '</span><span class="hs-layout">)</span> <span class=
+"hs-varid">t0</span>
+    <span class="hs-varid">t2</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">T</span><span class="hs-varop">.</span><span class=
+"hs-varid">stripPrefix</span> <span class=
+"hs-str">" "</span> <span class="hs-varid">t1</span>
+    <span class="hs-conid">Right</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">height</span><span class="hs-layout">,</span> <span class="hs-varid">t3</span><span class="hs-layout">)</span> <span class="hs-keyglyph">&lt;-</span> <span class="hs-conid">Just</span> <span class="hs-varop">$</span> <span class="hs-varid">decimal</span> <span class="hs-varid">t2</span>
+    <span class="hs-varid">t4</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">T</span><span class="hs-varop">.</span><span class=
+"hs-varid">stripPrefix</span> <span class=
+"hs-str">"cm "</span> <span class="hs-varid">t3</span>
+    <span class="hs-conid">Right</span> <span class=
+"hs-layout">(</span><span class="hs-varid">age</span><span class=
+"hs-layout">,</span> <span class="hs-varid">t5</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">Just</span> <span class="hs-varop">$</span> <span class=
+"hs-varid">decimal</span> <span class="hs-varid">t4</span>
+    <span class="hs-varid">t6</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">T</span><span class="hs-varop">.</span><span class=
+"hs-varid">stripPrefix</span> <span class=
+"hs-str">"y "</span> <span class="hs-varid">t5</span>
+    <span class="hs-conid">Right</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">balance</span><span class=
+"hs-layout">,</span> <span class="hs-str">""</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">Just</span> <span class="hs-varop">$</span> <span class=
+"hs-varid">signed</span> <span class=
+"hs-varid">decimal</span> <span class="hs-varid">t6</span>
+    <span class="hs-conid">Just</span> <span class=
+"hs-conid">Person</span> <span class=
+"hs-layout">{</span><span class="hs-keyglyph">..</span><span class=
+"hs-layout">}</span></pre>
+<p>To make it abundantly clear, we've replaced:</p>
+<pre><span class="hs-keyword">let</span> <span class=
+"hs-conid">Right</span> <span class=
+"hs-layout">(</span><span class="hs-varid">height</span><span class="hs-layout">,</span> <span class="hs-varid">t3</span><span class="hs-layout">)</span> <span class="hs-keyglyph">=</span> <span class="hs-varid">decimal</span> <span class="hs-varid">t2</span></pre>
+<p>with:</p>
+<pre><span class="hs-conid">Right</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">height</span><span class="hs-layout">,</span> <span class="hs-varid">t3</span><span class="hs-layout">)</span> <span class="hs-keyglyph">&lt;-</span> <span class="hs-conid">Just</span> <span class="hs-varop">$</span> <span class="hs-varid">decimal</span> <span class="hs-varid">t2</span></pre>
+<p>We've replaced our <code>let</code> with the <code>&lt;-</code>
+feature of <code>do</code>-notation. In order to make things
+type-check, we needed to wrap the right hand side in a
+<code>Just</code> value (you could also use <code>return</code> or
+<code>pure</code>, I was just trying to be explicit in the types).
+But we've still got an incomplete pattern on the left hand side, so
+why is this better?</p>
+<p>When, within <code>do</code>-notation, you have an incomplete
+pattern match, <code>GHC</code> does something slightly different.
+Instead of using <code>error</code> and creating an impure
+exception, it uses the <code>fail</code> function. While generally
+speaking there are no guarantees that <code>fail</code> is a total
+function, certain types - like <code>Maybe</code> - due guarantee
+totality, e.g.:</p>
+<pre><span class="hs-keyword">instance</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-conid">Maybe</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">fail</span> <span class=
+"hs-keyword">_</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">Nothing</span></pre>
+<p>Voila! Exactly the behavior we wanted, and now we've achieved it
+without some bulky, repetitive <code>case</code>s. My general
+advice around these techniques:</p>
+<ul>
+<li>Don't define partial patterns in <code>let</code>s,
+<code>case</code>s, or function definitions.</li>
+<li>Only use partial patterns within <code>do</code>-notation if
+you know that the underlying type defines a total <code>fail</code>
+function.</li>
+</ul>
+<p>For completeness, you can also achieve this with more explicit
+conversion to a <code>Maybe</code> with the <code>either</code>
+helper function:</p>
+<pre><span class="hs-definition">parseLine</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Text</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Maybe</span> <span class="hs-conid">Person</span>
+<span class="hs-definition">parseLine</span> <span class=
+"hs-varid">t0</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-layout">(</span><span class="hs-varid">name</span><span class=
+"hs-layout">,</span> <span class="hs-varid">t1</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">T</span><span class=
+"hs-varop">.</span><span class="hs-varid">break</span> <span class=
+"hs-layout">(</span><span class="hs-varop">==</span> <span class=
+"hs-chr">' '</span><span class="hs-layout">)</span> <span class=
+"hs-varid">t0</span>
+    <span class="hs-varid">t2</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">T</span><span class="hs-varop">.</span><span class=
+"hs-varid">stripPrefix</span> <span class=
+"hs-str">" "</span> <span class="hs-varid">t1</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">height</span><span class=
+"hs-layout">,</span> <span class="hs-varid">t3</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">either</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">const</span> <span class="hs-conid">Nothing</span><span class="hs-layout">)</span> <span class="hs-conid">Just</span> <span class="hs-varop">$</span> <span class="hs-varid">decimal</span> <span class="hs-varid">t2</span>
+    <span class="hs-varid">t4</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">T</span><span class="hs-varop">.</span><span class=
+"hs-varid">stripPrefix</span> <span class=
+"hs-str">"cm "</span> <span class="hs-varid">t3</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">age</span><span class="hs-layout">,</span> <span class=
+"hs-varid">t5</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">either</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">const</span> <span class="hs-conid">Nothing</span><span class="hs-layout">)</span> <span class="hs-conid">Just</span> <span class="hs-varop">$</span> <span class="hs-varid">decimal</span> <span class="hs-varid">t4</span>
+    <span class="hs-varid">t6</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">T</span><span class="hs-varop">.</span><span class=
+"hs-varid">stripPrefix</span> <span class=
+"hs-str">"y "</span> <span class="hs-varid">t5</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">balance</span><span class=
+"hs-layout">,</span> <span class="hs-varid">t7</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">either</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">const</span> <span class="hs-conid">Nothing</span><span class="hs-layout">)</span> <span class="hs-conid">Just</span> <span class="hs-varop">$</span> <span class="hs-varid">signed</span> <span class="hs-varid">decimal</span> <span class="hs-varid">t6</span>
+    <span class="hs-varid">guard</span> <span class=
+"hs-varop">$</span> <span class="hs-conid">T</span><span class=
+"hs-varop">.</span><span class="hs-varid">null</span> <span class=
+"hs-varid">t7</span>
+    <span class="hs-conid">Just</span> <span class=
+"hs-conid">Person</span> <span class=
+"hs-layout">{</span><span class="hs-keyglyph">..</span><span class=
+"hs-layout">}</span></pre>
+<p>While this works, personally I'm not as big a fan:</p>
+<ul>
+<li>It feels bulkier, hiding the main information I want to
+express</li>
+<li>It doesn't handle the issue of ensuring no content is left over
+after parsing the balance, so we need to add an explicit
+<code>guard</code>. You <i>could</i> just use <code>(balance, "")
+&lt;-</code>, but that's just going back to using the partial
+pattern rules of <code>do</code>-notation.</li>
+</ul>
+<p>Hopefully you found this little trick useful. Definitely not
+earth shattering, but perhaps a fun addition to your arsenal. If
+you want to learn more, be sure to check out our <a href=
+"/haskell-syllabus">Haskell Syllabus</a>.</p>
+<p>The four versions of the code mentioned in this post are all
+available as a <a href=
+"https://gist.github.com/snoyberg/bfb8bd7bf41410bc1b6aa9b744d5f66f">
+Github Gist</a>:</p>
+<script src=
+"https://gist.github.com/snoyberg/bfb8bd7bf41410bc1b6aa9b744d5f66f.js"></script>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Partial%20patterns%20in%20do%20blocks%3A%20let%20vs%20return https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;03&#x2F;partial-patterns-do-blocks&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;03&#x2F;partial-patterns-do-blocks&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;03&#x2F;partial-patterns-do-blocks&#x2F;&amp;title=Partial%20patterns%20in%20do%20blocks%3A%20let%20vs%20return"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;03&#x2F;partial-patterns-do-blocks&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#c1b2a0ada4b281a7b1a2aeacb1ada4b5a4efa2aeac" targe="_blank"><span class="__cf_email__" data-cfemail="186b79747d6b587e687b777568747d6c7d367b7775">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

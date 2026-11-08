@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>The Pains of Path Parsing</title>
+  <meta property="og:title" content="The Pains of Path Parsing">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="A semi-deep dive into the finer points of path parsing and rendering in web applications">
+  <meta property="og:description" content="A semi-deep dive into the finer points of path parsing and rendering in web applications">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;pains-path-parsing&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images&#x2F;blog&#x2F;pains-path-parsing.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>The Pains of Path Parsing</h1>
+      
+      <p id="page-description">By Michael Snoyman, April 26, 2021</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=The%20Pains%20of%20Path%20Parsing https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;pains-path-parsing&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;pains-path-parsing&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;pains-path-parsing&#x2F;&amp;title=The%20Pains%20of%20Path%20Parsing"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;pains-path-parsing&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  <p>I've spent a considerable amount of coding time getting into the weeds of path parsing and generation in web applications. First with <a href="https://www.yesodweb.com/">Yesod in Haskell</a>, and more recently with a side project for <a href="https://github.com/snoyberg/routetype-rs">routetypes in Rust</a>. (Side note: I'll likely do some blogging and/or videos about that project in the future, stay tuned.) My recent work reminded me of a bunch of the pain points involved here. And as so often happens, I was complaining to my wife about these pain points, and decided to write a blog post about it.</p>
+<p>First off, there are plenty of pain points I'm not going to address. For example, the insane world of percent encoding, and the different rules for what part of the URL you're in, is a constant source of misery and mistakes. Little things like required leading forward slashes, or whether query string parameters should differentiate between &quot;no value provided&quot; (e.g. <code>?foo</code>) versus &quot;empty value provided&quot; (e.g. <code>?foo=</code>). But I'll restrict myself to just one aspect: <strong>roundtripping path segments and rendered paths</strong>.</p>
+<h2 id="what-s-a-path">What's a path?</h2>
+<p>Let's take this blog post's URL: <code>https://www.fpcomplete.com/blog/pains-path-parsing/</code>. We can break it up into four logical pieces:</p>
+<ul>
+<li><code>https</code> is the <em>scheme</em></li>
+<li><code>://</code> is a required part of the URL syntax</li>
+<li><code>www.fpcomplete.com</code> is the <em>authority</em>. You may be wondering: isn't it just the domain name? Well, yes. But the authority may contain additional information too, like port number, username, password</li>
+<li><code>/blog/pains-path-parsing/</code> is the path, including the leading and trailing forward slashes</li>
+</ul>
+<p>This URL doesn't include them, but URLs may also include query strings, like <code>?source=rss</code>, and fragments, like <code>#what-s-a-path</code>. But we just care about that <code>path</code> component.</p>
+<p>The first way to think of a path is as a string. And by string, I mean a sequence of characters. And by sequence of characters, I really mean Unicode code points. (See how ridiculously pedantic I'm getting? Yeah, that's important.) But that's not true at all. To demonstrate, here's some Rust code that uses Hebrew letters in the path:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> uri = http::Uri::builder().</span><span style="color:#859900;">path_and_query</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">/hello/מיכאל/</span><span style="color:#839496;">&quot;</span><span>).</span><span style="color:#859900;">build</span><span>();
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{:?}</span><span style="color:#839496;">&quot;</span><span>, uri);
+</span><span>}
+</span></code></pre>
+<p>And while that looks nice and simple, it fails spectacularly with the error message:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>Err(http::Error(InvalidUri(InvalidUriChar)))
+</span></code></pre>
+<p>In reality, according to <a href="https://tools.ietf.org/html/rfc3986#section-2">the RFC</a>, paths are made up of a limited set of ASCII characters, represented as octets (raw bytes). And we somehow have to use percent encoding to represent other characters.</p>
+<p>But before we can really talk about encoding and representing, we have to ask another orthogonal question.</p>
+<h2 id="what-do-paths-represent">What do paths represent?</h2>
+<p>While a path is technically a sequence of a reserved number of ASCII octets, that's not how our applications treat them. Instead, we <em>want</em> to be able to talk about the full range of Unicode code points. But it's more than just that. We want to be able to talk about <em>groupings</em> of <em>sequences</em>. We call these <em>segments</em> typically. The raw path <code>/hello/world</code> can be thought of as the segments <code>[&quot;hello&quot;, &quot;world&quot;]</code>. I would call this <em>parsing</em> the path. And, in reverse, we can <em>render</em> those segments back into the original raw path.</p>
+<p>With these kinds of parse/render pairs, it's always nice to have complete roundtripping abilities. In other words, <code>parse(render(x)) == x</code> and <code>render(parse(x)) == x</code>. Generally these rules fail for a variety of reasons, such as:</p>
+<ol>
+<li>Multiple valid representations. For example, with the percent encoding we'll mention below, <code>%2a</code> and <code>%2A</code> mean the same thing.</li>
+<li>Often unimportant whitespace details get lost during parsing. This applies to formats like JSON, where <code>[true, false]</code> and <code>[   true,   false  ]</code> have the same meaning.</li>
+<li>Parsing can fail, so that it's invalid to call <code>render</code> on <code>parse(x)</code>.</li>
+</ol>
+<p>Because of this, we often end up reducing our goals to something like: for all <code>x</code>, <code>parse(render(x))</code> is successful, and produces output identical to <code>x</code>.</p>
+<p>In path parsing, we definitely have problem (1) above (multiple valid representations). But by using this simplified goal, we no longer worry about that problem. Paths in URLs also don't have unimportant whitespace details (every octet has meaning), so (2) isn't a problem to be concerned with. Even if it was, our <code>parse(render(x))</code> step would end up &quot;fixing&quot; it.</p>
+<p>The final point is interesting, and is going to be crucial to our complete solution. What exactly does it mean for path parsing to fail? I can think of two ideas in basic path parsing:</p>
+<ul>
+<li>It includes an octet outside of the allowed range</li>
+<li>It includes a percent encoding which is invalid, e.g. <code>%@@</code></li>
+</ul>
+<p>Let's assume for the rest of this post, however, that those have been dealt with at a previous step, and we know for a fact that those error conditions will not occur. Are there any other ways for parsing to fail? In a basic sense: no. In a more sophisticated parsing: absolutely.</p>
+<h2 id="basic-rendering">Basic rendering</h2>
+<p>The basic rendering steps are fairly straightforward:</p>
+<ul>
+<li>Perform percent encoding on each segment</li>
+<li>Interpolate the segments with a slash separator</li>
+<li>Prepend a slash to the entire string</li>
+</ul>
+<p>To allow roundtripping, we need to ensure that each <em>input</em> to the <code>render</code> function generates a unique output. Unfortunately, with these basic rendering steps, we immediately run into an error:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>render segs </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">/</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> interpolate </span><span style="color:#839496;">&#39;</span><span style="color:#2aa198;">/</span><span style="color:#839496;">&#39;</span><span> (map percentEncode segs)
+</span><span>
+</span><span>render </span><span style="color:#b58900;">[]
+</span><span>    </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">/</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> interpolate </span><span style="color:#839496;">&#39;</span><span style="color:#2aa198;">/</span><span style="color:#839496;">&#39;</span><span> (map percentEncode </span><span style="color:#b58900;">[]</span><span>)
+</span><span>    </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">/</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> interpolate </span><span style="color:#839496;">&#39;</span><span style="color:#2aa198;">/</span><span style="color:#839496;">&#39; </span><span style="color:#b58900;">[]
+</span><span>    </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">/</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++ </span><span style="color:#839496;">&quot;&quot;
+</span><span>    </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">/</span><span style="color:#839496;">&quot;
+</span><span>
+</span><span>render [</span><span style="color:#839496;">&quot;&quot;</span><span>]
+</span><span>    </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">/</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> interpolate </span><span style="color:#839496;">&#39;</span><span style="color:#2aa198;">/</span><span style="color:#839496;">&#39;</span><span> (map percentEncode [</span><span style="color:#839496;">&quot;&quot;</span><span>])
+</span><span>    </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">/</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> interpolate </span><span style="color:#839496;">&#39;</span><span style="color:#2aa198;">/</span><span style="color:#839496;">&#39;</span><span> [</span><span style="color:#839496;">&quot;&quot;</span><span>]
+</span><span>    </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">/</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++ </span><span style="color:#839496;">&quot;&quot;
+</span><span>    </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">/</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>In other words, both <code>[]</code> and <code>[&quot;&quot;]</code> encode to the same raw path, <code>/</code>. This may seem like a trivial corner case not worth addressing. In fact, even more generally, empty path segments seem like a corner case. One possibility would be to say &quot;segments must be non-zero length&quot;. Then there's no potential <code>[&quot;&quot;]</code> input to worry about.</p>
+<p>When this topic came up in Yesod, we decided to approach this differently. We actually <em>did</em> have some people who had use cases for empty path segments. We'll get back to this in normalized rendering.</p>
+<h2 id="percent-encoding">Percent encoding</h2>
+<p>I mentioned originally the annoyances of percent encoding character sets. I'm still not going to go deeply into details of it. But we do need to discuss it at a surface level. In the steps above, let's ask two related questions:</p>
+<ul>
+<li>Why did we percent encode <em>before</em> interpolating?</li>
+<li>Do we percent encode forward slashes?</li>
+</ul>
+<p>Let's try percent encoding <em>after</em> interpolating. And let's say we decide not to percent encode forward slashes. Then <code>render([&quot;foo/bar&quot;])</code> would turn into <code>/foo/bar</code>, which is identical to <code>render([&quot;foo&quot;, &quot;bar&quot;])</code>. That's not what we want. And if we decide we're going to percent encode <em>after</em> interpolating and that we <em>will percent encode forward slashes</em>, both inputs result in <code>/foo%2Fbar</code> as output. Neither of those is any good.</p>
+<p>OK, going back to percent encoding before interpolating, let's say that we don't percent encode forward slashes. Then both <code>[&quot;foo/bar&quot;]</code> and <code>[&quot;foo&quot;, &quot;bar&quot;]</code> will turn into <code>/foo/bar</code>, again bad. So by process of elimination, we're left with percent encoding before interpolating, and escaping the forward slashes in segments. With this configuration, we're left with <code>render([&quot;foo/bar&quot;]) == &quot;/foo%2Fbar&quot;</code> and <code>render([&quot;foo&quot;, &quot;bar&quot;]) == &quot;/foo/bar&quot;</code>. Not only is this unique output (our goal here), but it also intuitively feels right, at least to me.</p>
+<h2 id="unicode-codepoint-handling">Unicode codepoint handling</h2>
+<p>One detail we've glossed over here is Unicode, and the difference between codepoints and octets. It's time to rectify that. Percent encoding is a process that works on <em>bytes</em>, not characters. I can percent encode <code>/</code> into <code>%2F</code>, but only because I'm assuming an ASCII representation of that character. By contrast, let's go back to my favorite non-Latin alphabet example, Hebrew. How do you represent the Hebrew letter Alef <code>א</code> with percent encoding? The answer is that you can't, at least not directly. Instead, we need to represent that <a href="https://unicode-table.com/en/05D0/">Unicode codepoint</a> (U+05D0) as bytes. And the most universally accepted way to do that is to use UTF-8. So our process is something like this:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">let</span><span> segment: </span><span style="color:#859900;">&amp;</span><span>[</span><span style="color:#268bd2;">char</span><span>] = </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">א</span><span style="color:#839496;">&quot;</span><span>;
+</span><span style="color:#268bd2;">let</span><span> segment_bytes: </span><span style="color:#859900;">&amp;</span><span>[</span><span style="color:#268bd2;">u8</span><span>] = </span><span style="color:#859900;">encode_utf8</span><span>(segment); </span><span style="color:#93a1a1;">// b&quot;\xD7\x90&quot;
+</span><span style="color:#268bd2;">let</span><span> encoded: </span><span style="color:#859900;">&amp;</span><span>[</span><span style="color:#268bd2;">u8</span><span>] = </span><span style="color:#859900;">percent_encode</span><span>(segment_bytes); </span><span style="color:#93a1a1;">// b&quot;%D7%90&quot;
+</span></code></pre>
+<p>OK, awesome, we now have a way to take a sequence of non-empty Unicode strings and generate a unique path representation of that. What's next?</p>
+<h2 id="basic-parsing">Basic parsing</h2>
+<p>How do we go <em>backwards</em>? Easy: we reverse each of the steps above. Let's see the render steps again:</p>
+<ul>
+<li>Percent encode each segment, consisting of:
+<ul>
+<li>UTF-8 encode the codepoints into bytes</li>
+<li>Percent encode all relevant octets, including the forward slash</li>
+</ul>
+</li>
+<li>Interpolate all of the segments together, separated by a forward slash
+<ul>
+<li>Technically, the &quot;forward slash&quot; here is the forward slash <em>octet</em> <code>\x2F</code>. But because everyone basically assumes ASCII/UTF-8 encoding, we can typically be a little loose in our terminology.</li>
+</ul>
+</li>
+<li>Prepend a forward slash (octet).</li>
+</ul>
+<p>Basic parsing is exactly the same steps in reverse:</p>
+<ul>
+<li>Strip off the forward slash.
+<ul>
+<li>Arguably, if a forward slash is missing, you could consider this a parse error. Most parsers simply ignore it instead.</li>
+</ul>
+</li>
+<li>Split the raw path on each occurrence of a forward slash. We'll discuss some subtleties about this next.</li>
+<li>Percent decode each segment, consisting of:
+<ul>
+<li>Look for any <code>%</code> signs, and grab the next two hexadecimal digits. In theory, you could treat an incorrect or missing digit as a parse error. In practice, many people end up using some kind of fallback.</li>
+<li>Take the percent decoded octets and UTF-8 decode them. Again, in theory, you could treat invalid UTF-8 data as a parse error, but many people simply use the <a href="https://en.wikipedia.org/wiki/Replacement_character">Unicode replacement character</a>.</li>
+</ul>
+</li>
+</ul>
+<p>If implemented correctly, this should result in the goal we mentioned above: encoding and decoding a specific input will always give back the original value (ignoring the empty segment case, which we still haven't addressed). The one really tricky thing is making sure that our <em>split</em> and <em>interpolate</em> operations mirror each other correctly. There are actually <a href="https://www.stackage.org/package/split">many different ways of splitting lists and strings</a>. Fortunately for my Rust interpolation, the <a href="https://doc.rust-lang.org/stable/std/primitive.str.html#method.split">standard <code>split</code> method on <code>str</code></a> happens to implement exactly the behavior we want. You can check out the method's documentation for details (helpful even for non-Rustaceans!). Pay particular attention to the comments about contiguous separators, and think about how <code>[&quot;foo&quot;, &quot;&quot;, &quot;&quot;, &quot;bar&quot;]</code> would end up being interpolated and then parsed.</p>
+<p>OK, we're all done, right? Wrong!</p>
+<h2 id="normalization">Normalization</h2>
+<p>I bet you thought I forgot about the empty segments. (Actually, given how many times I called them out, I bet you <em>didn't</em> think that.) Before, we saw exactly one problem with empty segments: the weird case of <code>[&quot;&quot;]</code>. I want to first establish that empty segments are a much bigger problem than that.</p>
+<p>I gave a link above to a GitHub repository: <code>https://github.com/snoyberg/routetype-rs</code>. Let's change that URL ever so slightly, and add an extra forward slash in between <code>snoyberg</code> and <code>routetype-rs</code>: <code>https://github.com/snoyberg//routetype-rs</code>. Amazingly, you get the same page for both URLs. Isn't that weird?</p>
+<p>No, not really. Extra forward slashes are often times ignored by web servers. &quot;I know what you meant, and you didn't mean an empty path segment.&quot; This isn't just a &quot;feature&quot; of webservers. The same concept applies on my Linux command line:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ cat /etc/debian_version
+</span><span>bullseye/sid
+</span><span>$ cat /etc///debian_version
+</span><span>bullseye/sid
+</span></code></pre>
+<p>I've got two problems with the behavior GitHub is demonstrating above:</p>
+<ul>
+<li>What if I'm writing some web application and I really, truly want to be able to embed a <em>meaningful</em> empty segment in the path?</li>
+<li>Doesn't it feel wrong, and maybe even hurt SEO, to have two different URLs that resolve to the same content?</li>
+</ul>
+<p>In Yesod, we addressed the second issue with a class method called <code>cleanPath</code>, that analyzes the segments of an incoming path and sees if there's a more canonical representation of them. For the case above, <code>https://github.com/snoyberg//routetype-rs</code> would produce the segments <code>[&quot;snoyberg&quot;, &quot;&quot;, &quot;routetype-rs&quot;]</code>, and <code>cleanPath</code> would decide that a more canonical representation would be <code>[&quot;snoyberg&quot;, &quot;routetype-rs&quot;]</code>. Then, Yesod would take the canonical representation and generate a redirect. In other words, if GitHub was written in Yesod, my request to <code>https://github.com/snoyberg//routetype-rs</code> would result in a redirect to <code>https://github.com/snoyberg/routetype-rs</code>.</p>
+<p><a href="https://github.com/yesodweb/yesod/issues/421">Way back in 2012</a>, this led to a problem, however. Someone actually had empty path segments, and Yesod was automatically redirecting away from the generated URLs. We came up with a solution back then that I'm still very fond of: dash prefixing. See the linked issue for the details, but the way it works is:</p>
+<ul>
+<li>When encoding, if a segment consists entirely of dashes, add one more dash to it.
+<ul>
+<li>By our definition of &quot;consists entirely of dashes,&quot; the empty string counts too. So <code>dashPrefix &quot;&quot; == &quot;-&quot;</code>, and <code>dashPrefix &quot;---&quot; == &quot;----&quot;</code>.</li>
+</ul>
+</li>
+<li>When decoding:
+<ul>
+<li>Perform the split operation above.</li>
+<li>Next, perform the clean path check, and generate a redirect if there are any empty path segments.</li>
+<li>Once we know that there are no empty path segments, <em>then</em> undo dash prefixing. If a segment consists of only dashes, remove one of the dashes.</li>
+</ul>
+</li>
+</ul>
+<p>If you work this through enough, you can see that with this addition, every possible sequence of segments—even empty segments—results in a unique raw path after rendering. And every incoming raw path can either be parsed to a necessary redirect (if there are empty segments) or to a sequence of segments. And finally, each sequence of segments will successfully roundtrip back to the original sequence when parsing and rendering.</p>
+<p>I call this <em>normalized</em> parsing and rendering, since it is normalizing each incoming path to a single, canonical representation, at least as far as empty path segments are concerned. I suppose if someone wanted to be truly pedantic, they could also try to address variations in percent encoding behavior or invalid UTF-8 sequences. But I'd consider the former a non-semantic difference, and the latter garbage-in-garbage-out.</p>
+<h2 id="trailing-slashes">Trailing slashes</h2>
+<p>There's one final point to bring up. What exactly causes an empty path segment to occur when parsing? One example is contiguous slashes, like our <code>snoyberg//routetype-rs</code> example above. But there's a far more interesting and prevalent case: the trailing slash. Many web servers use trailing slashes, likely originating from the common pattern of having <code>index.html</code> files and accessing a page based on the containing directory name. In fact, this blog post is hosted on a statically generating site which uses that technique, which is why the URL has a trailing slash. And if you perform basic parsing on our path here, you'd get:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>basic_parse(&quot;/blog/pains-path-parsing/&quot;) == [&quot;blog&quot;, &quot;pains-path-parsing&quot;, &quot;&quot;]
+</span></code></pre>
+<p>Whether to include trailing slashes in URLs has been an old argument on the internet. Personally, because I consider the parsing-into-segments concept to be central to path parsing, I prefer excluding the trailing slash. And in fact, Yesod's default (and, at least for now, <code>routetype-rs</code>'s default) is to treat such a URL as non-canonical and redirect away from it. I felt even more strongly about that when I realized lots of frameworks have special handling for &quot;final segments with filename extensions.&quot; For example, <code>/blog/bananas/</code> is good with a trailing slash, but <code>/images/bananas.png</code> should <em>not</em> have a trailing slash.</p>
+<p>However, since so many people like having trailing slashes, Yesod is configurable on this point, which is why <code>cleanPath</code> is a typeclass method that can be overridden. To each their own I suppose.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>I hope this blog post gave a little more insight into the wild world of the web and how something as seemingly innocuous as paths actually hides some depth. If you're interested in learning more about the <code>routetype-rs</code> project, please let me know, and I'll try to prioritize some follow ups on it.</p>
+<p>You may be interested in more <a href="https://tech.fpcomplete.com/rust/">Rust</a> or <a href="https://tech.fpcomplete.com/haskell/">Haskell</a> from FP Complete. Also, check out <a href="https://tech.fpcomplete.com/blog/">our blog</a> for a wide range of technical content.</p>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=The%20Pains%20of%20Path%20Parsing https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;pains-path-parsing&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;pains-path-parsing&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;pains-path-parsing&#x2F;&amp;title=The%20Pains%20of%20Path%20Parsing"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;pains-path-parsing&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#84f7e5e8e1f7c4e2f4e7ebe9f4e8e1f0e1aae7ebe9" targe="_blank"><span class="__cf_email__" data-cfemail="4734262b223407213724282a372b2233226924282a">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

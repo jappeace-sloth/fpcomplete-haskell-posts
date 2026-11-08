@@ -1,0 +1,338 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Philosophies of Rust and Haskell
+
+By Michael Snoyman, January 11, 2021
+
+Share this     
+
+Rust is a systems programming language following fairly standard imperative approaches and a
+C-style syntax. Haskell is a purely functional programming language, innovating in areas such as
+type theory and effect management. Viewed that way, these languages are polar opposites.
+
+And yet, these two languages attract many of the same people, including the engineering team at FP
+Complete. Putting on a different set of lenses, both languages provide powerful abstractions,
+enforce different kinds of correctness via static analysis in the compiler, and favor powerful
+features over quick adoption.
+
+In this post, I want to look at some of the philosophical underpinnings that explain some of the
+similarities and differences in the languages. Some of these are inherent. Rust's status as a
+systems programming language essentially requires some different approaches to Haskell's purely
+functional nature. But some of these are not. It wasn't strictly necessary for both languages to
+converge on similar systems for Algebraic Data Types (ADTs) and ad hoc polymorphism (via traits/
+type classes).
+
+Keep in mind that in writing this post, I'm viewing it as a consumer of the languages, not a
+designer. The designers themselves may have different motivations than those I describe. It would
+certainly be interesting to see if others have different takes on this topic.
+
+Rust: ownership
+
+This is so obvious that I almost forgot to include it. If there's one thing that defines Rust
+versus any other language, it's ownership and the borrow checker. This speaks to two core pieces of
+Rust:
+
+  • The goal of serving as a systems programming language, where garbage collection is not an
+    option
+  • The goal of providing a safe subset of the language, where undefined behavior cannot occur
+
+The concept of ownership achieves both of these. Many additions have been made to the language to
+make it easier to work with ownership overall. This hints at the concept of ergonomics, which is
+fundamental to Rust philosophy. But ownership and borrow checking are also known as the harder
+parts of the language. Putting it together, we see a philosophy of striving to meet our goals
+safely, while making the usage of the features as easy as possible. However, if there's a conflict
+between the goals and ease of use, the goals win out.
+
+All of this stands in stark contrast to Haskell, which is explicitly not a systems language, and
+does not attempt in any way to address those cases. Instead, it leverages garbage collection quite
+happily, with the trade-offs between performance and ease-of-use inherent in that choice.
+
+Haskell: purely functional
+
+The underlying goal of Haskell is ultimately to create a purely functional programming language.
+Many of the most notable and unusual features of Haskell directly derive from this goal, such as
+using monads to explicitly track effects.
+
+Other parts of the language follow from this less directly. For example, Haskell strongly embraces
+Higher Order Functions, currying, and partial function application. This combination turns many
+common structures in other languages (like loops) into normal functions. But in order to make this
+feel natural, Haskell uses slightly odd (compared to other languages) syntax for function
+application.
+
+And this gets into a more fundamental piece of philosophy. Haskell is willing to be quite
+dramatically different from other programming languages in its pursuit of its goals. In my opinion,
+Rust has been less willing to diverge from mainstream approaches, veering away only out of absolute
+necessity.
+
+This results in a world where Haskell feels quite a bit more foreign to others, but has more
+freedom to innovate. Rust, on the other hand, has stuck to existing solutions when possible, such
+as eschewing monadic futures in favor of async/.await syntax.
+
+Expression oriented
+
+I undervalued how important this feature was for a while, but recently I've realized that it's one
+of the most important features in both languages for me.
+
+    I used to think that the reason I loved both Haskell and Rust so much was their shared strong
+    typing, ADTs, and pattern matching combination.
+
+    After a recent discussion, I think it may be more about being expression-oriented languages.
+
+    — Michael Snoyman (@snoyberg) January 11, 2021
+
+Instead of relying on declare-then-assign patterns, both languages allow conditionals and other
+constructs to evaluate to values. This reduces the frequency of seeing mutable assignment and
+avoids cases of uninitialized variables. By restricting mutable assignment to cases where it's
+actual mutation, we get to free up a lot of head space to focus on the trickier parts of
+programming.
+
+Type system
+
+Rust and Haskell have very similar type systems. Both make it easy to create new types, provide for
+features like newtypes, provide type aliases, and offer a combination of product (struct) and sum
+(enum) types. Both allow labeling fields or accessing values positionally. Both offer pattern
+matching constructs. Overall, the similarities between the two languages far outweigh the
+differences.
+
+I place a large part of the shared interest between these languages at the feet of the type system.
+Since I started using Haskell, I feel strongly hampered using any language without a rich,
+flexible, and powerful type system. Rust's embrace of Algebraic Data Types (ADTs) feels natural.
+
+There are some differences between the languages in these topics, but they are mostly superficial.
+For example, Haskell uses the single keyword data for introducing both product and sum types, while
+Rust uses struct and enum, respectively. Haskell will allow creation of partial field accessors in
+sum types, while Rust does not. Haskell allows for partial pattern matches (with an optional
+warning), and Rust does not.
+
+These are meaningful and affect the way you use the languages, but I don't see them as deeply
+philosophical. Instead, I see both languages embracing the idea that encouraging programmers to
+define and use strong typing mechanisms leads to better code. And it's a message I wholeheartedly
+endorse.
+
+Traits and type classes
+
+In the wide world of inheritance and polymorphism, there are a lot of different approaches. Within
+that, Rust's traits and Haskell's type classes are far more similar than different. Both of them
+allow you to separate out functionality (methods) from data (struct/data). Both allow you to create
+new types or traits/classes yourself and add them on to existing types/traits/classes. Both of them
+support a concept of associated types, and multiple parameters (either via parameterized traits or
+multi-param type classes).
+
+There are some differences between the two. For one, Rust doesn't allow orphans. An implementation
+must appear in the same crate as either the type definition or the trait definition. (The fact that
+Rust treats an entire crate as a compilation unit instead of a single module makes this restriction
+less of an imposition.) Also, Haskell supports functional dependencies, but that's not terribly
+interesting, since that can be closely approximated with associated types. And there are other,
+more subtle differences, around issues like overlapping instances. Rust's lack of orphans allows it
+to make some closed world assumptions that Haskell cannot.
+
+Ultimately, the distinctions above don't lend themselves to a deep philosophical difference, but
+rather minor variations on a theme. There is, however, one major distinction in this area between
+the two languages: Higher Kinded Types (HKTs). In Haskell, HKTs provide the basis for such
+typeclasses as Functor, Applicative, Monad, Foldable, and Traversable. In Rust, implementing some
+kind of traits around these concepts is a bit more complicated.
+
+And this is one of the deeper philosophical differences between the two languages. Haskellers
+readily embrace concepts like HKTs. The Rust community has adamantly avoided embracing them, due to
+their perceived complexity. Instead, in Rust, alternative and arguably simpler approaches have been
+used to solve the same problems these typeclasses solve in Haskell. Which leads us to probably the
+biggest philosophical difference between the languages.
+
+General vs specific
+
+Let's say I want to have early termination in the case of an error. Or asynchronous coding
+capabilities. Or the ability to pass information to the rest of a computation. How would I achieve
+this?
+
+In Haskell, the answer is obviously Monads. do-notation is a general purpose "programmable
+semicolon." It generally solves all of these cases. And many, many more. Writing a parser? Monad.
+Concurrency? Maybe Monad, or maybe Applicative with ApplicativeDo turned on. But the common factor:
+we can express large classes of problems as do-notation.
+
+How about Rust? Well, if you want early termination for errors, you'll use a Result return type and
+the ? try operator. Async? async/.await syntax. Pass in information? Maybe use method syntax, maybe
+use thread-local state, maybe something else.
+
+The point is that the Haskell community overall reaches for generalizing a solution as far as
+possible, usually along the lines of some abstract mathematical underpinning. There are huge
+advantages to this. We build out solutions to problems we didn't even know we had. We are able to
+rely on mathematical laws to guide our designs and ensure concepts compose nicely.
+
+The Rust community, instead, favors specific, ergonomic solutions. Error handling is really common,
+so give it a single character operator. Make sure that it handles common cases, like unifying error
+types via the From trait. Make sure error messages are as clear as possible. Optimize for the 95%,
+and don't worry about the 5% yet. (And see the next section for the 5%.)
+
+To me, this is the deepest non-inherent divide between the languages. Sure, ownership versus purity
+is huge, but it's right there on the label of the languages. This distinction ends up impacting how
+new language features are added, how people generally think about solutions, and how libraries are
+designed.
+
+One final point. As much as I've implied that the Rust and Haskell communities are in two camps
+here, that's not quite fair. There are people in the Haskell community looking to make more
+specific solutions to some problems. (I'm probably one of them with things like RIO.) And while I
+can't think of a concrete Rust example to the contrary, I have no doubt that there are cases where
+people design general solutions when a more specific one would suffice.
+
+Code generation/metaprogramming/macros
+
+Haskell has metaprogramming via Template Haskell (TH). It's almost universally viewed as a
+necessary evil, but evil nonetheless. It screws up compilation in some cases via stage
+restrictions, it requires a language pragma to enable, and introduces awkward syntax. Features like
+deriving serialization instances are generally moving towards in-language features via the Generic
+typeclass.
+
+Rust's "Hello World" sticks a macro call on the second line via println!. The syntax for calling
+macros looks almost identical to function calls. Common libraries encourage macro usage all over
+the place. serde serialization deriving, structopt command line parsing, and snafu/thiserror error
+type creation all leverage macro attributes and deriving.
+
+This is a fascinating distinction to me. I've been on both sides of the TH divide. Yesod famously
+uses TH for a lot of code generation, which has earned the ire of many Haskellers. I've since
+generally avoided using TH when possible in the past few years. And when I picked up Rust, I
+studiously avoided learning how to create macros until relatively recently, lest I be tempted to
+slip back into my old, evil ways.
+
+Metaprogramming definitely complicates some things. It makes it harder to debug some problems. Rust
+does a pretty good job at making sure error messages can be comprehensible. But documentation on
+macro arguments and return types is still not as nice as functions and methods.
+
+I think I'm still mostly in the Haskell camp of avoiding unnecessary metaprogramming in my API
+design, but I'm beginning to be more free with it. And I have no reservations in Rust about using
+macros; they're wonderful. I do wonder if the main issue in Haskell isn't the overall concept of
+metaprogramming, but the specific implementation with Template Haskell.
+
+Backwards compatibility
+
+Rust overall has a more coherent and consistent story around backwards compatibility. It's almost
+always painless to upgrade to new versions of the Rust compiler. This puts an extra burden on the
+compiler team, and constrains changes that can be made to the language. And in one case (the module
+system update), it required a new edition system to allow for full backwards compatibility.
+
+The Haskell community overall cares less about backwards compatibility. New versions of the
+compiler regularly break code. New versions of libraries will get released to smooth out rough
+edges in the APIs. (I used to do this regularly, and now regret that. I've tried hard to keep
+backwards compatibility in my libraries.)
+
+Overall, I think the Rust community's approach here is better for producing production software.
+Arguably the Haskell approach allows for much more exploration and attainment of some higher level
+of beauty. Or as they say, "avoid (success at all costs)."
+
+Optimistic optimizations
+
+GHC has a powerful rewrite rules system, which can rewrite less efficient combinations of functions
+to more optimized ones. This plays in a big way in the vector package, where rewrite rules
+implement stream fusion, allowing many classes of vector pipelines to completely avoid allocation.
+This is a massive optimization. At least when it works. As I've personally experienced, and many
+others have too, rewrite rules can be finicky. The Haskell approach is to be happy that our code
+sometimes gets much faster, and that we get to keep elegant, easy-to-understand code.
+
+The Rust approach is the polar opposite. Either code will definitely be fast or definitely be slow.
+I learned this a while ago when looking into recursive functions and tail call optimization (TCO).
+The Rust compiler will not perform a TCO, because it's so easy to accidentally change a TCO-able
+implementation into something that eats up stack space. There are plans to make explicit tail calls
+possible with the become keyword someday.
+
+More generally, Rust embraces the concept of zero cost abstractions. The idea is that you should be
+able to abstract and simplify code, when we can guarantee that there is no cost. In the Haskell
+world, we tend to focus on the elegant abstraction, even if a cost will be involved.
+
+Learning curve
+
+A short one here. Both languages have a higher-than-average learning curve compared with other
+languages. Both languages embrace their learning curves. As much as possible, we try to make
+learning and using the languages easy. But neither language shies away from powerful features, even
+if it will make the language a bit harder to learn.
+
+To quote a Perlism: you'll only learn the language once, you'll use it for the rest of your life.
+
+Explicitly mark things
+
+Both languages embrace the idea of explicitly marking things. For example, both languages encourage
+(in Haskell's case) or enforce (in Rust's case) marking the type signature of all functions. But
+that's pretty common. Haskell goes further, and requires that you mark all effectful computations
+with the IO type (or something similar, like MonadIO). Rust requires than anything which may fail
+be marked with a Result return value.
+
+You may argue that these are actually a difference in the language, and to some extent that's true.
+But I think the difference is about what the language considers important. Haskell, for reasons of
+purity, values deeply the idea that an effect may be performed. It then lumps errors and exceptions
+into the contract of IO and the concept of laziness (for better or worse). Rust, on the other hand,
+doesn't care if you may perform an effect, but deeply cares about whether an error may occur.
+
+Type enforce everything?
+
+When I initially implemented Haskell's monad-logger, I provided an instance for IO which performed
+no output. I received many complaints that people would rather get a compile time error if they
+forgot to initialize the logging system, and I removed the IO instance. (Without getting into
+details: this was definitely the right decision for the API, regardless of the distinction with
+Rust.)
+
+That's why I was so amused when I first used the log crate in Rust, and realized that if you don't
+initialize the logging system, it produces no output. There's no runtime error, just silence.
+
+Similarly, many functions in the Tokio crate will fail at runtime if run from outside of the
+context of a Tokio runtime. But nothing in the type system enforces this idea.
+
+And finally, I've been bitten a few times by actix-web's state management. If you mismatch the type
+of the state between your handlers and your service declaration, you'll end up with a runtime error
+instead of a compile time bug.
+
+In the Haskell world, the overall philosophy is generally to approach "if it compiles, it works."
+Haskellers love enforcing almost every invariant at the type level.
+
+I haven't discussed this much with Rustaceans, but it seems to me that the overall Rust philosophy
+here is slightly different. Instead, we like to express tricky invariants at the type level. But if
+something is so obviously going to fail or behave incorrectly in the most basic smoke testing, such
+as a Tokio function crashing, there's no need to develop type-level protections against it.
+
+Conclusion
+
+I hope this laundry list comparison was interesting. I've been meaning to write it down for a
+while, so I kind of feel like I checked off a New Year's Resolution in doing so. I'd be curious to
+hear any other points of comparison people have, or disagreements about my assessments.
+
+You may also like:
+
+  • Rust at FP Complete, 2020 update
+  • Collect in Rust, traverse in Haskell and Scala
+  • Error handling is hard
+  • Training at FP Complete
+  • Rust Crash Course
+  • Applied Haskell syllabus
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

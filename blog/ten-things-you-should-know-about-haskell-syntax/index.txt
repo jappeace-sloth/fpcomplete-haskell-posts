@@ -1,0 +1,383 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Ten Things You Should Know About Haskell Syntax
+
+By Bartosz Milewski, August 22, 2012
+
+Share this     
+
+Learning a new programming language involves learning syntax, semantics, and idioms. Syntax itself
+can tell you a lot about the philosophy of the language, but learning syntax without any context is
+not only hard but also boring. On the other hand, you'd want to get some handle on syntax as soon
+as possible, so you can sight-read simple programs and try your own hand at modifying them.
+
+So here's a little introduction to Haskell syntax, without any formal definitions, that touches on
+the philosophy of the language and tries not to be too boring. Unless you are already a Haskell
+pro, you're not supposed to understand all of it on the first reading. In fact you might want to
+occasionally come back to it as you are progressing in your understanding of Haskell. (If you're a
+Haskell pro, you might cringe at some mental shortcuts I've taken for the sake of simplicity.)
+
+Table of Contents
+
+ 1. Haskell is Terse
+ 2. Function Call Syntax is Terse
+ 3. Function Definition Syntax is Terse
+ 4. Currying is Cool (and Terse)
+ 5. What’s not a Declaration is an Expression
+ 6. There are no Loops
+ 7. Function Application Has Precedence over Operators
+ 8. Data Types are Algebraic and Pattern Matching is Ubiquitous
+ 9. There is no Order
+10. There is Order in Do
+
+1. Haskell is Terse
+
+There is very little redundancy in Haskell so almost everything, including whitespace, has meaning.
+
+The good thing is that, once you get used to it, you'll be able to see more program logic at a
+glance. In a wordy language you not only waste precious keystrokes but you also dilute the
+structure and meaning of your program. Code that fills one screenful in Haskell, would be spread
+over several screenfuls in Java. For a Haskell programmer, studying a Java or a C++ program is like
+looking at it through a microscope: you see lots of detail but miss the big picture.
+
+One of those things that seem indispensable in other languages are special characters for
+separating statements (e.g., semicolons) and delimiting blocks (e.g., braces). Mind you, every
+programmer worth his or her salt uses formatting to make their code readable, but the compiler
+throws the formatting away. Haskell does (almost) the opposite. It recognizes blocks by indentation
+(but please use spaces, not tabs), and newlines as separators.
+
+As part of this philosophy of frugality of expression Haskell doesn't require type signatures --
+although an experienced Haskeller provides them for clarity -- so type errors in this strongly
+typed language are often cryptic for the uninitiated. For instance, if you define a function f that
+adds two numbers and then call it with two strings, the compiler will not complain about bad
+arguments, it will complain about string not supporting operator plus. And it will formulate this
+complaint in a very non-obvious way:
+
+No instance for (Num [Char]) arising from a use of `f'
+    Possible fix: add an instance declaration for (Num [Char])
+
+Also, the case is important. Anything that starts with a capital letter is either a concrete type
+or a data constructor. Lower-case-starting names are reserved for function names and variables,
+including type variables.
+
+The bad thing about terseness is that lack of redundancy makes error reporting harder. The compiler
+truly doesn't know if you have forgotten a closing parenthesis or messed up indentation.
+
+2. Function Call Syntax is Terse
+
+This is probably the first and the hardest obstacle in reading Haskell code fluently: There is no
+special syntax for function application. Any set of identifiers separated by spaces is a function
+call. For instance:
+
+a b c d e
+
+is a call to function a with arguments b, c, d, and e. If you use parentheses it's only to delimit
+individual arguments (if they are expressions); and commas are used to separate tuple elements. So
+if you see something like this:
+
+f (a, b, c)
+
+you interpret it as a call to (application of) a function f to just one argument -- a tuple of
+three elements. It's very important to train your eyes to look for spaces. They separate functions
+from their arguments and arguments from each other.
+
+When an argument to a function is a result of another function application, you have to use
+parentheses for that. For instance,
+
+a b (c d)
+
+means the function a acting on two arguments, b and (c d), which itself is an application of
+function c to d. There is a way to omit the parentheses in the above by using the operator $
+(dollar sign):
+
+a b $ c d
+
+A $ is interpreted as: What follows is the last argument to the function you're calling.
+
+3. Function Definition Syntax is Terse
+
+A function definition:
+
+  • starts with the name of the function,
+  • followed by its formal parameters separated by white spaces,
+  • an equal sign,
+  • and an expression that is the body of the function.
+
+You should be able to parse this line of code:
+
+a b c = d e f
+
+It's a definition of the function a that takes two formal parameters, b and c. The body of this
+function is a call to d with two arguments, e and f. Of course, the use of short meaningless names
+is not encouraged in Haskell but I do it here to help you prime your internal parser.
+
+When formal parameters are enclosed in parentheses, they contain patterns. If an argument is data
+with some structure, it can be pattern-matched on the spot. Types that have more than one
+constructor may be pattern-matched in more than one way. In that case there may be what looks like
+several definitions of the same function. For instance, a function that operates on a tree might be
+defined as:
+
+f (Leaf x) = ...
+f (Node left right) = ...
+
+Here, (Leaf x) matches a leaf node containing a value x, and (Node left right) matches an internal
+node with two children left and right.
+
+Function definitions may also contain guards: boolean expressions constraining the arguments.
+
+The use of the equal sign as part of function definition has a deeper meaning. The right hand side
+is equal to the left hand side in the sense that it might be substituted for it anywhere in the
+program -- with the formal parameters replaced by actual arguments. In fact using this kind of
+"equational reasoning" you may formally prove things about your code.
+
+4. Currying is Cool (and Terse)
+
+It's okay to call a function of, say, 5 parameters:
+
+f a b c d e = ...
+
+with, say, two arguments:
+
+f 7.1 2.35
+
+The result is a new function that takes 3 arguments (the remaining ones). This is called partial
+application and is possible because any function of multiple arguments can be curried, i.e.,
+interpreted as a function of one argument returning another function. This fundamental property is
+reflected in the way we write type signatures for functions:
+
+A function of one argument has the type:
+
+a -> b
+
+where a and b are some types. For instance, a function strLen that takes a string and returns an
+integer would have the signature:
+
+strLen :: String -> Int
+
+Type signatures are optional but, nevertheless, they are routinely written before function
+definitions.
+
+The signature of the function prefix that takes a string and an integer and returns a string would
+be:
+
+prefix :: String -> Int -> String
+
+The last arrow points to the return type of the function, the preceding one(s) separate argument
+types (here, String from Int). But there is an equivalent, curried, interpretation of this
+signature:
+
+prefix :: String -> (Int -> String)
+
+In this interpretation prefix is a function of one argument of type String returning a function
+that takes an Int and returns a String. The parentheses are usually omitted because of the right
+associativity of the arrow.
+
+Another common trick is to provide a signature that lists more arguments than the function
+definition. For instance:
+
+f :: a -> b -> c
+f x = g
+
+Here a two-argument function f is defined in terms of a one-argument function g. This is equivalent
+to:
+
+f x y = g y
+
+but using the curried form is considered cooler because it eliminates some notational redundancy.
+The extreme of this approach is called point-free style, in which arguments are not used at all and
+functions are defined in terms of other functions.
+
+The downside to currying is cryptic error messages. The compiler can't, for instance, guess that
+you have forgotten to provide an argument to some function. It will instead think that you used a
+curried function and may, for instance, complain that it can't convert the (curried) function to
+some other type that was expected at that point in your code.
+
+5. What's not a Declaration is an Expression
+
+The body of a function is an expression. This expression evaluates to a value which is returned by
+the function. Terseness dictates that there is no return statement in Haskell. There is however an
+(overloaded) library function called return (more about which later).
+
+It follows that the if/then/else construct is an expression too: it returns a value from one of the
+branches.
+
+You might think that a definition of a local variable would be a statement, but it isn't. Instead
+you introduce locals using the let/in expression. You "let" a name (or a pattern) be equal to
+something "in" an expression. The scope of the new name(s) span the expression following in. For
+instance:
+
+let x = 5 in
+    x * x
+
+is equal to 25.
+
+Another statement-like expression is the pattern-matching case/of construct, as in:
+
+case tree of
+    Leaf x -> ...
+    Node left right -> ...
+
+The value of this expression is one of the expressions to the right of the arrows.
+
+You might think that a loop must be a statement, but it isn't because:
+
+6. There are no Loops
+
+The replacement for loops is recursion. You might worry that recursion could blow your stack, and
+that's a valid concern. In time you'll learn more about the execution model of Haskell to be able
+to correctly predict resource usage (both stack and heap memory) of each approach. For now,
+remember that Haskell will optimize tail-recursive cases. Thinking recursively rather than loopily
+takes some getting used to, but it quickly becomes second nature.
+
+Recursion is not used as often as you'd expect since a lot of loops can be replaced by bulk
+operations: functions that take lists or other containers. They are, under the surface, implemented
+using recursion, but they are often easier to read and reason about. Four such functions from the
+Haskell standard library, Prelude, are ubiquitous in Haskell code: map, filter, foldl, and foldr.
+
+7. Function Application Has Precedence over Operators
+
+The most important thing in parsing Haskell code is to understand the precedence of various
+constructs. Function application -- in most cases just the "whitespace operator" --has the highest
+precedence. So if you see something like this:
+
+f a b c + g d e
+
+you know that you are adding the result of two function calls rather than calling one function with
+one of the arguments being the sum of two terms. Other operators have precedences between 0 (the
+lowest) and 9 (the highest, but still lower than function application). In particular the $
+operator has precedence 0; and the dot, function composition, has precedence 9.
+
+Parentheses may always be used to clarify both precedence and associativity.
+
+8. Data Types are Algebraic and Pattern Matching is Ubiquitous
+
+Conceptually, new data types are defined using combinations of OR and AND. These two operations
+form an algebra, with OR playing the role of addition and AND playing the role of multiplication.
+
+The OR, denoted by | (vertical bar) in data definitions, could be understood as creating a tagged
+union -- in the simplest case it's just an enumeration. For instance, a Bool type can be described
+as:
+
+data Bool = True | False
+
+Bool is the name of the type and True and False are called data constructors (notice the mandatory
+capitalization).
+
+The AND combination could be understood as forming tuples or structures with one or more fields of
+different types.
+
+Since data is immutable in Haskell, an object always remembers how it was created. It remembers
+which data constructor was called and what values (or expressions) were passed to it.
+
+Data constructor can also be used as a pattern to match this information, e.g., in a function
+definition, a let expression, or in the case/of expression. We've seen examples of this in items 3
+and 5. Here's the (recursive) data type definition that was used in those examples (see also the
+Appendix):
+
+data Tree = Leaf Int | Node Tree Tree
+
+9. There is no Order
+
+The order of definitions within a module doesn't matter. That means you can call a function or use
+a data structure whose definition is further down in the file -- no no need for forward
+declarations. There is even a where construct that lets you define local functions or variables
+after the code that calls them, as in:
+
+len x y = sqrt (sq x + sq y)
+  where
+    sq a = a * a
+
+By the way, Haskell is a lazy language, so things are not evaluated in the order you write them.
+Instead they are evaluated when the values are needed. Evaluation is forced, for instance, when you
+want to output results, or when you want to pattern-match them. There is also the bang operator and
+the seq function that force (some degree of) evaluation.
+
+One of the advantages of lazy evaluation is that you can define infinite data structures, like this
+list from 0 to infinity:
+
+[0..]
+
+10. There is Order in Do
+
+Haskell has a built-in domain specific language for imperative programming (this is one of those
+useful simplifications at which purists turn up their noses). Blocks written in this language start
+with do and contain lines that look like statements and assignments:
+
+do
+    a <- giveMeAnA
+    b <- giveMeAB
+    return (a + b)
+
+You can even see here the return "statement" (really, a library function). The "statements" inside
+the do blocks are executed in order -- when and if they are executed. This kind of code is called
+monadic because there is always a monad behind it. Monads are very interesting beasts but,
+unfortunately, beyond the scope of the current article.
+
+In monadic code there is usually something hidden from view; often some state is passed implicitly,
+or some form of flow of control is imposed. The details vary from monad to monad.
+
+An important example of monadic code is input and output. You always do I/O inside a do statement
+-- using the IO monad. This way you are guaranteed that I/O actions are executed in order.
+
+A function that does I/O returns an IO object, often called an action. There's nothing you can do
+with an IO action, except to ignore it (in that case no I/O will be done), or pass it all the way
+to main, where you can return it to the system -- main usually has the signature:
+
+main :: IO ()
+
+Conclusion
+
+This is by no means a complete presentation of the Haskell syntax, but it should get you going for
+now.
+
+I'd like to thank Michael Snoyman for valuable comments on the draft of this blog.
+
+Appendix
+
+Here's the more complete version of the tree example I used in this article:
+
+data Tree = Leaf Int | Node Tree Tree
+g (Leaf x) = x
+g (Node left right) = g left + g right
+f tree =
+    case tree of
+        Leaf x -> x
+        Node left right -> f left + f right
+
+The two functions, f and g, are equivalent.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

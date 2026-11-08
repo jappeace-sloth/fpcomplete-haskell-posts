@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Hash Based Package Downloads - part 1 of 2</title>
+  <meta property="og:title" content="Hash Based Package Downloads - part 1 of 2">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Reproducible build plans are vital for many industries. Can we be doing more to make our build tools more reliable?">
+  <meta property="og:description" content="Reproducible build plans are vital for many industries. Can we be doing more to make our build tools more reliable?">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;01&#x2F;hash-based-package-downloads-part-1-of-2&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Hash Based Package Downloads - part 1 of 2</h1>
+      
+      <p id="page-description">By Michael Snoyman, January 23, 2018</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Hash%20Based%20Package%20Downloads%20-%20part%201%20of%202 https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;01&#x2F;hash-based-package-downloads-part-1-of-2&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;01&#x2F;hash-based-package-downloads-part-1-of-2&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;01&#x2F;hash-based-package-downloads-part-1-of-2&#x2F;&amp;title=Hash%20Based%20Package%20Downloads%20-%20part%201%20of%202"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;01&#x2F;hash-based-package-downloads-part-1-of-2&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p><em>This is part 1 of a 2 part series. This post will define the
+problem we're trying to solve, and part 2 will go into some details
+on a potential storage mechanism to make this a reality.</em></p>
+<p>Suppose you're working on a highly regulated piece of software.
+For example, something on a defense contract, or a medical device,
+or the space shuttle. One goal that most regulators will have is
+that we can fully determine how the software was built at any point
+in time. The gold standard for this is fully reproducible builds,
+where you get byte-identical artifacts for rerunning the build
+system at different times.</p>
+<p>Not all of our build tools support that unfortunately, due to a
+variety of reasons which I'm not going to go into. The <a href=
+"https://wiki.debian.org/ReproducibleBuilds">Debian project</a> has
+been making great strides in that direction, as has <a href=
+"https://nixos.org/">NixOS</a>. But let's talk about a slightly
+weaker guarantee: reproducible build <em>plans</em>.</p>
+<p>The idea here is simple: for a given set of source files, I can
+deterministically know exactly which versions of its dependencies
+will be used. Usually, there's some kind of boundary to how deeply
+this determinism goes. For example, which of the following are
+determined:</p>
+<ul>
+<li>The exact versions of my language-specific (Haskell, Rust,
+Python, etc) source files</li>
+<li>The exact versions of the system's libraries</li>
+<li>The version of the kernel I'm building on</li>
+<li>The hardware I'm building on</li>
+</ul>
+<p><em>NOTE</em> Other things, like filesystem state, also apply.
+For that matter, in a crazy build system, GPS location could matter
+too, if it somehow affected the build. But these are some of the
+most common cases.</p>
+<p>Building with something like Nix will guarantee determinism in
+the first two bullets. Docker can be (ab)used to give the same
+guarantee. Virtual machines can give guarantees about the kernel as
+well.</p>
+<p>The rest of this blog post will talk about just that first
+bullet: language-specific source file determinism. That's not
+because the other points are unimportant, but because:</p>
+<ol>
+<li>It's the problem I typically have to solve</li>
+<li>Docker and VMs can encapsulate the others very well for most
+cases</li>
+<li>In practice, there tends to be the most variability in build
+process output from language-specific source files, due to often
+large numbers of such dependencies and frequent releases of those
+dependencies</li>
+</ol>
+<p>I'll primarily be talking about how this affects <a href=
+"https://haskell-lang.org/">the Haskell world</a>, and in
+particular the <a href="https://haskellstack.org">Stack build
+tool</a>, but the ideas hopefully generalize well to other
+languages too.</p>
+<h2>Snapshots</h2>
+<p>A primary design goal in Stack is reproducible build plans,
+usually (but not exclusively) provided via <em>Stackage
+Snapshots</em>. These snapshots define a compiler version, a set of
+packages and their versions*, and various configuration like build
+flags. These snapshots are also immutable. Most users use the Long
+Term Support (LTS) flavor of snapshots, and end up with a
+<code>stack.yaml</code> configuration file like the following:</p>
+<pre><code class="haskell">resolver: lts-10.3
+</code></pre>
+<p>Stack knows where to download the <code>lts-10.3.yaml</code>
+configuration file from (specifically, from <a href=
+"https://github.com/fpco/lts-haskell/">a Github repo</a>), and
+takes care of that for you automatically. This looks perfectly
+reproducible: LTS 10.3 is immutable, fully determines the exact
+content of all of its packages, and the flags to provide to build
+it. Given the same OS and same executable of the Stack build tool,
+you should be able to make a very strong argument to a regulator
+that this is a fully reproducible build plan… right?</p>
+<p>* And for those familiar: also specifies Hackage revisions of
+the cabal file.</p>
+<h2>Immutable?</h2>
+<p>How do you know that LTS 10.3 is immutable? Easy: I just told
+you! And I am clearly:</p>
+<ul>
+<li>Totally trustworthy</li>
+<li>The only person with the ability to change the
+<code>lts-10.3.yaml</code> file. There are clearly no other people
+with push access to the repo, or someone at Github with the ability
+to override our access controls.</li>
+<li>Going to live forever, and never pass on control of the project
+to anyone else.</li>
+<li>Happy to sign a boatload of liability documents that your
+regulator demands be signed to determine who will be at fault and
+responsible to pay damages when the missile guidance system you're
+writing bombs the wrong house due to a faulty version of
+<code>leftpad</code> being used.</li>
+</ul>
+<p>Obviously, my goal as one of the Stackage Curators is to strive
+to deliver on the guarantees we're claiming. We want snapshots to
+remain immutable for all time. But we can't ignore the fact that
+some things are completely outside of our control. And a good
+regulator will notice and challenge this.</p>
+<h2>Same with packages</h2>
+<p>OK, let's pretend for just a moment that you could convince your
+regulator that snapshots are totally immutable and awesome. Next,
+she's going to open up that <code>lts-10.3.yaml</code> file and see
+something along the lines of:</p>
+<pre><code class="yaml">compiler: ghc-8.2.2
+packages:
+- name: foobar
+  version: 1.2.3
+  flags:
+    be-awesome: true
+# And lots and lots and lots more
+# Note that our config files in practice look
+# nothing like this :) </code></pre>
+<img alt=
+"stock-vector-conceptual-tag-cloud-containing-names-of-programming-languages-haskell-emphasized-related-to-web-245439163-352442-edited.jpg"
+sizes="(max-width: 320px) 100vw, 320px" src=
+"/images/hubspot/5a7e8143f2921c46b09051268c9894dd812febb47f6a49ea3143774ab0c397f7.jpeg"
+srcset=
+"/images/hubspot/6f9d06da92626eff57b56599e40790d5a0a1186092596d92308a1fa5060876a5.jpeg 160w, /images/hubspot/5a7e8143f2921c46b09051268c9894dd812febb47f6a49ea3143774ab0c397f7.jpeg 320w, /images/hubspot/780c790fc50a559c29b064d0913a540b82824fe4a5df4eac977c3ce5f83a90c1.jpeg 480w, /images/hubspot/f58b99d19c49cbd37adeecdbae37aa12b798c3e63dc4b789153f2448254acc27.jpeg 640w, /images/hubspot/4b5fe616f8e6e2b988fd05f5ff8ab9ceeb8c0ec39b7f77a9db73fa96eabb4b80.jpeg 800w, /images/hubspot/6d30883292d768f7ac9232cc3622205919c3f06ab74e9a053a79e2876c680ee9.jpeg 960w"
+style="margin: 0px 0px 10px 10px; width: 320px; float: right;"
+width="320">
+<p>I imagine a conversation going something like this:</p>
+<p>Regulator: Alright, how do you know what
+<code>foobar-1.2.3</code> is?<br>
+Developer: Well, obviously you go to your package index… which
+isn't specified in the snapshot file, of course. It's specified in
+Stack's global config. Regulator: Why?<br>
+Developer: Well, it allows people to more easily host mirrors.<br>
+Regulator: So you mean if you change some other config file, it can
+totally change which <code>foobar-1.2.3</code> is used?<br>
+Developer: Yeah, but that's totally a feature, not a bug. And
+anyway, we guarantee in our build process that this doesn't
+happen.<br>
+Regulator: OK. Fine. And how do you know that when you download
+<code>foobar-1.2.3</code> that it contains the exact same content
+at all time?<br>
+Developer: Oh, remember how I told you that Michael's a real
+trustworthy guy and runs Stackage Snapshots? Yeah, same for the
+Hackage package index.</p>
+<p>Notice the pattern here. Even taken as a given that everyone
+wants to work towards immutability, if my job is to make guarantees
+to a regulator, everyone's best intentions are irrelevant.</p>
+<h2>Using hashes</h2>
+<p>The solution to this is relatively straightforward. Instead of
+trusting some arbitrary identifier which gives no guarantees of the
+file contents, let's consider this reality instead:</p>
+<pre><code class="yaml">resolver:
+  name: lts-10.3 # display purposes only
+  sha256: bd7a6cbf8bce34086aff452c03ae1f3d8e0bbe9427f753936fabcdd797848d06
+  bytes: 6693345 # byte count, avoid an overflow attack
+</code></pre>
+<p>Now the conversation with the regulator:</p>
+<p>Regulator: How do we know what lts-10.3 is?<br>
+Developer: We don't, and we don't care.<br>
+Regulator: What's it there for?<br>
+Developer: Documentation purposes only.<br>
+Regulator: OK, and how do we know that we have the right snapshot
+content?<br>
+Developer: We perform a cryptographic hash on the file contents and
+ensure it matches the hash we placed in our config file.</p>
+<p>This depends on trusting cryptographic hashes (which most
+regulators are willing to do in my experience), and on having some
+way of finding the config file based on the cryptographic hash
+(more on that in a bit). And for that second bit, we have a
+guarantee that the snapshot cannot be changed without detection,
+which is not the case with <code>lts-10.3</code> as the only
+identifier.</p>
+<p>Similarly, we would want to extend the snapshot format itself to
+retain this metadata:</p>
+<pre><code class="yaml">packages:
+- name: foobar
+  version: 1.2.3
+  flags:
+    be-awesome: true
+  sha256: 7cbb4101018cdc92244c321db8c99b709681f4b7c3ea2ce24ceea0d9ae1595ce
+  bytes: 1234
+</code></pre>
+<p>There's no way for an attacker to slip in a nefarious
+<code>foobar-1.2.3</code> without breaking SHA256 security. And
+once again, we can use the hash for performing downloads, and then
+simply verify the contents actually contain
+<code>foobar-1.2.3</code> by inspecting metadata (in Haskell land:
+the cabal package file).</p>
+<h2>Tooling assistance</h2>
+<p>I love typing in <code>resolver: lts-10.3</code>: it's easy to
+remember, quick, and explains exactly what I want. But easy and
+quick are not the cornerstones of regulated software. To make this
+story more palatable, we could easily add some tooling support,
+e.g.:</p>
+<ul>
+<li><code>stack add-hashes</code>, which modifies a
+<code>stack.yaml</code> to add the cryptographic hashes to a
+<code>stack.yaml</code> file</li>
+<li>A <code>--verified</code> mode (or similar) that refuses to
+download anything that doesn't have a cryptographic hash to back it
+up</li>
+</ul>
+<p>These could even be provided outside of the build tool itself,
+there's no necessity for it being in Stack.</p>
+<h2>Keep build metadata files separately</h2>
+<p>This may be a specific quirk of Haskell, but I'll spell it out
+here anyway. It's common in Haskell build tools to want to analyze
+the build metadata files (cabal package files) to determine
+dependency trees. Therefore, we'd want to support downloading them
+separately, e.g.:</p>
+<pre><code class="yaml">packages:
+- name: foobar
+  version: 1.2.3
+  flags:
+    be-awesome: true
+  sha256: 7cbb4101018cdc92244c321db8c99b709681f4b7c3ea2ce24ceea0d9ae1595ce
+  bytes: 1234
+  cabal-file:
+    sha256: 7cbb4101018cdc92244c321db8c99b709681f4b7c3ea2ce24ceea0d9ae1595ce
+    bytes: 10685
+</code></pre>
+<p>This allows us to download the metadata without downloading the
+entire package. Also, for those familiar with it, this provides a
+robust way to handle Hackage file revisions.</p>
+<h2>Next time</h2>
+<p>In the next post, we'll discuss how to create a storage system
+that can provide downloads of packages, package metadata, and
+snapshot definitions. Stay tuned!</p>
+<p><strong>If you liked this article you may also
+like:</strong></p>
+<ul>
+<li><a href="/case-study/case-study-fda-regulated-medical-device"
+rel="">Case Study: FDA Regulated Medical Device</a></li>
+<li><a href=
+"/5-roadblocks-to-it-success-and-how-to-get-around-them" rel=""
+target="_blank">Major IT project roadblocks and how to avoid
+them</a></li>
+<li><a href="/blog/2017/02/immutability-docker-haskells-st-type"
+rel="">Immutability - Docker - Haskell</a></li>
+</ul>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Hash%20Based%20Package%20Downloads%20-%20part%201%20of%202 https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;01&#x2F;hash-based-package-downloads-part-1-of-2&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;01&#x2F;hash-based-package-downloads-part-1-of-2&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;01&#x2F;hash-based-package-downloads-part-1-of-2&#x2F;&amp;title=Hash%20Based%20Package%20Downloads%20-%20part%201%20of%202"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;01&#x2F;hash-based-package-downloads-part-1-of-2&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#b7c4d6dbd2c4f7d1c7d4d8dac7dbd2c3d299d4d8da" targe="_blank"><span class="__cf_email__" data-cfemail="9deefcf1f8eeddfbedfef2f0edf1f8e9f8b3fef2f0">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,170 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Without performance tests, we will have a bad time, forever
+
+By Niklas Hambüchen, March 15, 2018
+
+Share this     
+
+Today I was working on a client project when a seemingly innocent refactoring made the program 2x
+faster.
+
+Of course, being happy about the improvement and going on with my life would have been wrong, as
+random performance improvements almost always mean that something foul is at play.
+
+I undid the refactoring step by step, until the only change remaining was that I replaced a use of
+the forever function by implementing forever itself, like this:
+
+myForever :: (Monad m) => m () -> m ()
+myForever f = do
+  f
+  myForever f
+
+How could using this function make my client's application 2x faster?
+
+Looking at forever's code, it is basically:
+
+myForever :: (Applicative f) => f a -> f b
+myForever f = f *> myForever f
+
+Doing a couple more tests:
+
+myForever :: (Monad m) => m a -> m a
+myForever f = f *> myForever f
+
+is slow, but
+
+myForever :: (Monad m) => m a -> m a
+myForever f = f >> myForever f
+
+is fast.
+
+So the issue seems to be that *> is 2x slower than >>. Not great.
+
+Of course the next question is: What Monad m am I running on? In my program I'm running StateT
+SomeStuff IO ().
+
+I was promptly reminded by a colleague that I shouldn't be using StateT over IO as it makes
+exception handling and concurrency very hard, and that I should use a ReaderT instead, but since
+the program dealt neither with exceptions nor concurrency, that shouldn't be relevant here (more on
+it later).
+
+Digging further into this performance difference, I found that it went away when upgrading
+transformers from 0.5.2.0 to 0.5.3.0. Looking at the transformers changelog, the point
+
+* Added specialized definitions of several methods for efficiency
+
+sounded relevant. I then found the transformers issue *> must be defined in instances to prevent
+space leak with forever, which reports that
+
+    forever, used with StateT s IO or ReaderT r IO has a space leak
+
+The linked GHC ticket explains that it was introduced when base-4.9.0.0 (for GHC 8.0) switched
+forever to use Applicative. But here I sit, 15 months later with GHC 8.2, spending hours debugging
+this issue for my client.
+
+This is pretty bad.
+
+Software Bug - Small.jpgHow can a performance regression like this sneak into a core library that
+everybody uses, triggered by a function as fundamental as forever? And the problem also applying
+for ReaderT makes it even more widely spread. This reminds me of another similar bug from 4 years
+ago, where I found that some operations in the vector package (also fundamental and widely used)
+had become 5x slower without anyone noticing, that time because of some C-preprocessor-macros
+accidentally being undefined due to missing header includes.
+
+As a community we make a big fuss about how Haskell allows you to write correct code and how
+refactorings are easy and safe. But we're not promoting a good image of Haskell here. In other
+programming languages I rarely encounter performance issues in parts that are this fundamental and
+this widely used. Not having major performance regressions is also a form of correctness.
+
+Right now, as a community, we are simply bad at not introducing performance regressions. If we want
+Haskell to grow, we must do something about that.
+
+So, who is to blame?
+
+  • The GHC developers for pushing the generalisation fromMonad to Applicative in forever and other
+    functions, a change that has been desired and requested by pretty much all Haskell users for
+    years? Looks like they did everything right. Without such changes, Haskell will stagnate and
+    we'll have to live with historical ballast, forever.
+  • The transformers maintainer, for immediately applying a fix after being shown the problem, in
+    response to code that he did not change? Looks like he did everything right.
+
+
+
+
+It looks like we cannot blame either of the two parties actively changing code.
+
+I think the problem is: Lack of performance tests.
+
+If our tools do not allow us to reason trivially about performance (rewrite rules unnoticeably not
+firing or being commented out, header files unnoticeably not being included, non-breaking
+fundamental changes accidentally introducing space leaks and huge run-time differences), then we
+must not rely on human inspection (people reading diffs) to immediately spot these issues.
+
+Instead, we must write tests to automatically verify that we're not regressing the performance of
+core functionality. Such tests should:
+
+  • ensure that the time spent in commonly used functions stays the same,
+  • ensure that the space complexity doesn't accidentally change (for example, forever on StateT
+    should not space-leak),
+  • be ubiquitous in the core libraries we all use.
+
+A good example of this approach is the nofib test suite in GHC, that exercises common use cases of
+the compiler, and, via Continuous Integration and automatically run tests, notifies the developers
+if they made something slower. Unfortunately this approach is extremely rarely seen in any Haskell
+libraries higher-level than GHC, and tools that make it easier (such as weigh) are recent
+developments.
+
+Preaching performance tests when they are difficult to implement isn't exactly useful. To put my
+(or rather, FP Complete's) money where my mouth is, I have just published a new library
+cpu-instruction-counter, which can measure the CPU instructions executed by a piece of Haskell
+code. I encourage you to use it to guard your code against accidental performance regressions, and
+it would also be great if we started using these approaches directly in the test suites of base,
+transformers and so on.
+
+By pushing more into this direction and adding performance tests to fundamental libraries, we can
+keep improving these fundamentals, such as moving functions from Monad to Applicative, and be sure
+to get notified early if we accidentally break things, instead of wasting productive days on evil
+surprises one and a half years later.
+
+If you liked this blog you may also like:
+
+  • Multi-faceted Testing - A DevOps Best Practice
+  • QuickCheck and the magic of testing
+  • Setting up High Performance computing with Haskell
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>stm: Software Transactional Memory</title>
+  <meta property="og:title" content="stm: Software Transactional Memory">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;library&#x2F;stm&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+  
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+<section class="hero grid-bg">
+  <div class="container">
+    <h1>stm: Software Transactional Memory
+    </h1></div>
+</section>
+
+
+
+  
+<div class="container py-3">
+  <p><strong>FIXME</strong> This module needs to be updated to discuss the
+<code>UnliftIO.Async</code> module instead of <code>async</code> itself.</p>
+<p>Software Transactional Memory, or STM, is a technique for storing mutable
+variables in Haskell. Unlike other mutable variables in Haskell, or mutable
+variables in most languages, it provides transactional capabilities. This is
+best understood by looking at a typical failure case in other mutable variable
+techniques:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>runServer (|request| =&gt; {
+</span><span>  from := accounts.lookup(request.from)
+</span><span>  to := accounts.lookup(request.to)
+</span><span>  accounts.set(request.from, from - request.amt)
+</span><span>  accounts.set(request.to, to + request.amt)
+</span><span>})
+</span></code></pre>
+<p>This kind of pseudo-code is vulnerable to a major race condition, where two
+threads both read an account's current value at the same time, and then update
+the value, the second thread overwriting changes by the first. This kind of
+problem is usually solved by locking, which brings on its own concern about
+deadlocks. Instead, let's see how this is accomplished with STM:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>runServer </span><span style="color:#859900;">$ \</span><span>request </span><span style="color:#859900;">-&gt;</span><span> atomically </span><span style="color:#859900;">$ do
+</span><span>  </span><span style="color:#859900;">let</span><span> fromVar </span><span style="color:#859900;">=</span><span> lookup (from request) accounts
+</span><span>      toVar </span><span style="color:#859900;">=</span><span> lookup (to request) accounts
+</span><span>  origFrom </span><span style="color:#859900;">&lt;-</span><span> readTVar fromVar
+</span><span>  writeTVar fromVar (origFrom </span><span style="color:#859900;">-</span><span> amt request)
+</span><span>  origTo </span><span style="color:#859900;">&lt;-</span><span> readTVar toVar
+</span><span>  writeTVar toVar (origTo </span><span style="color:#859900;">+</span><span> amt request)
+</span></code></pre>
+<p>Notice that we're doing the same style of updates as the bad example. However,
+with STM, this is safe. Within <code>atomically</code>, all reads and writes to a
+transactional variable—or <code>TVar</code>—are tracked. At the end of the
+transaction, the runtime checks if any of those variables have been updated
+since we looked at them.</p>
+<p>If not, it commits the transaction, updating all of the variables at once in a
+consistent state. If some variables were changed by another thread in the
+interim, our results are thrown away, and the transaction is retried. Thanks to
+Haskell's purity, we know that no side effects occur within the <code>atomically</code>
+call, making this a safe operation.</p>
+<h2 id="basics">Basics</h2>
+<p>STM comes with a few basic types and operations, and builds a rich
+ecosystem from them.</p>
+<ul>
+<li><code>STM</code> is a monad in which all STM actions take place. It allows
+actions which read from and write to <code>TVar</code>s, but not other side
+effects (like writing to a file) which cannot be rolled back.</li>
+<li><code>atomically :: STM a -&gt; IO a</code> runs a block of STM actions
+atomically. Either everything succeeds, or nothing does. Since the
+resulting changes to mutable variables are visible to the entire
+program, it must be run from <code>IO</code>.</li>
+<li><code>TVar</code> is a mutable variable, which can hold any data type.</li>
+<li>A standard, expected set of <code>TVar</code> creation and modification
+functions: <code>newTVar</code>, <code>readTVar</code>, and <code>writeTVar</code>.</li>
+</ul>
+<p>These types and functions, along with many more, are exposed from the
+<code>Control.Concurrent.STM</code> module in the
+<a href="https://www.stackage.org/package/stm">stm package</a>.</p>
+<p><strong>EXERCISE</strong> Fill out the implementation of the following program so
+that it gives the output provided below.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.STM
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad </span><span>(</span><span style="color:#b58900;">replicateM_</span><span>)
+</span><span>
+</span><span style="color:#b58900;">makeCounter </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO</span><span> (</span><span style="color:#268bd2;">IO Int</span><span>)
+</span><span>makeCounter </span><span style="color:#859900;">= do
+</span><span>  var </span><span style="color:#859900;">&lt;-</span><span> newTVarIO </span><span style="color:#6c71c4;">1
+</span><span>  return undefined
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  counter </span><span style="color:#859900;">&lt;-</span><span> makeCounter
+</span><span>  replicateM_ </span><span style="color:#6c71c4;">10 </span><span style="color:#859900;">$</span><span> counter </span><span style="color:#859900;">&gt;&gt;=</span><span> print
+</span></code></pre>
+<p>Should print:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>1
+</span><span>2
+</span><span>3
+</span><span>4
+</span><span>5
+</span><span>6
+</span><span>7
+</span><span>8
+</span><span>9
+</span><span>10
+</span></code></pre>
+<h2 id="failure-retry-and-alternative">Failure, retry, and alternative</h2>
+<p>One of the most powerful concepts in STM is the ability to retry. As a
+motivating example: let's say we have two <code>TVar</code>s, representing the
+bank accounts for Alice and Bob. Alice makes $5 every second (pretty
+nice!), and wants to give Bob $20. Our code might initially look like:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.STM
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad </span><span>(</span><span style="color:#b58900;">forever</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Say
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  aliceVar </span><span style="color:#859900;">&lt;-</span><span> newTVarIO </span><span style="color:#6c71c4;">0
+</span><span>  bobVar </span><span style="color:#859900;">&lt;-</span><span> newTVarIO </span><span style="color:#6c71c4;">0
+</span><span>
+</span><span>  _ </span><span style="color:#859900;">&lt;-</span><span> forkIO </span><span style="color:#859900;">$</span><span> payAlice aliceVar
+</span><span>
+</span><span>  atomically </span><span style="color:#859900;">$ do
+</span><span>    currentAlice </span><span style="color:#859900;">&lt;-</span><span> readTVar aliceVar
+</span><span>    writeTVar aliceVar (currentAlice </span><span style="color:#859900;">- </span><span style="color:#6c71c4;">20</span><span>)
+</span><span>    currentBob </span><span style="color:#859900;">&lt;-</span><span> readTVar bobVar
+</span><span>    writeTVar bobVar (currentBob </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">20</span><span>)
+</span><span>
+</span><span>  finalAlice </span><span style="color:#859900;">&lt;-</span><span> atomically </span><span style="color:#859900;">$</span><span> readTVar aliceVar
+</span><span>  finalBob </span><span style="color:#859900;">&lt;-</span><span> atomically </span><span style="color:#859900;">$</span><span> readTVar bobVar
+</span><span>
+</span><span>  sayString </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Final Alice: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show finalAlice
+</span><span>  sayString </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Final Bob: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show finalBob
+</span><span>
+</span><span style="color:#b58900;">payAlice </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">TVar Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>payAlice aliceVar </span><span style="color:#859900;">=</span><span> forever </span><span style="color:#859900;">$ do
+</span><span>  threadDelay </span><span style="color:#6c71c4;">1000000
+</span><span>  atomically </span><span style="color:#859900;">$ do
+</span><span>    current </span><span style="color:#859900;">&lt;-</span><span> readTVar aliceVar
+</span><span>    writeTVar aliceVar (current </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">5</span><span>)
+</span><span>  sayString </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Paid Alice</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>There are no race conditions, thanks to STM. But this program is still
+buggy, at least at the logic bug level. The issue is that we allow
+Alice to give money she doesn't have! Let's look at our output:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#cb4b16;">Final Alice</span><span style="color:#859900;">: -</span><span style="color:#6c71c4;">20
+</span><span style="color:#cb4b16;">Final Bob</span><span style="color:#859900;">: </span><span style="color:#6c71c4;">20
+</span></code></pre>
+<p>Instead, we want to check that Alice's balance is at least $20 before
+we let her transfer the money. In order to do this, we just need to
+use one new helper function:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">check </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Bool </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">STM </span><span style="color:#859900;">()
+</span><span>check b </span><span style="color:#859900;">= if</span><span> b </span><span style="color:#859900;">then</span><span> return </span><span style="color:#b58900;">() </span><span style="color:#859900;">else</span><span> retry
+</span></code></pre>
+<p>As the implementation indicates, this function will do nothing if <code>b</code>
+is true, but will <em>retry</em> if it's false. This is the second bit of
+magic in STM. Since STM needs to track all of the variables it has
+looked at in order to handle transactions, it knows exactly what led
+to its current state. If you call <code>retry</code>, you're saying to STM, &quot;I
+don't like this result. Run me again when one of the variables I
+looked at changed, and I'll decide if things are OK now.&quot;</p>
+<p><strong>EXERCISE</strong> Use the <code>check</code> function to modify the program above so
+Alice's bank balance is never negative. The output should look
+something like this:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>Paid Alice
+</span><span>Paid Alice
+</span><span>Paid Alice
+</span><span>Paid Alice
+</span><span>Final Alice: 0
+</span><span>Final Bob: 20
+</span></code></pre>
+<p>On top of this retry behavior, STM also implements an <code>Alternative</code>
+instance which allows us to try a number of different transactions
+until one of them succeeds. For example, let's say both Alice and Bob
+are trying to give Charlie $20. We can wait to see who sends the money
+first.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Applicative </span><span>(</span><span style="color:#b58900;">(&lt;|&gt;)</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.STM
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad </span><span>(</span><span style="color:#b58900;">forever</span><span>, </span><span style="color:#b58900;">void</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Say
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  aliceVar </span><span style="color:#859900;">&lt;-</span><span> newTVarIO </span><span style="color:#6c71c4;">0
+</span><span>  bobVar </span><span style="color:#859900;">&lt;-</span><span> newTVarIO </span><span style="color:#6c71c4;">0
+</span><span>  charlieVar </span><span style="color:#859900;">&lt;-</span><span> newTVarIO </span><span style="color:#6c71c4;">0
+</span><span>
+</span><span>  payThread aliceVar </span><span style="color:#6c71c4;">1000000 5
+</span><span>  payThread bobVar   </span><span style="color:#6c71c4;">1500000 8
+</span><span>
+</span><span>  atomically </span><span style="color:#859900;">$</span><span> transfer </span><span style="color:#6c71c4;">20</span><span> aliceVar charlieVar
+</span><span>           </span><span style="color:#859900;">&lt;|&gt;</span><span> transfer </span><span style="color:#6c71c4;">20</span><span> bobVar   charlieVar
+</span><span>
+</span><span>  finalAlice </span><span style="color:#859900;">&lt;-</span><span> atomically </span><span style="color:#859900;">$</span><span> readTVar aliceVar
+</span><span>  finalBob </span><span style="color:#859900;">&lt;-</span><span> atomically </span><span style="color:#859900;">$</span><span> readTVar bobVar
+</span><span>  finalCharlie </span><span style="color:#859900;">&lt;-</span><span> atomically </span><span style="color:#859900;">$</span><span> readTVar charlieVar
+</span><span>
+</span><span>  sayString </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Final Alice: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show finalAlice
+</span><span>  sayString </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Final Bob: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show finalBob
+</span><span>  sayString </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Final Charlie: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show finalCharlie
+</span><span>
+</span><span style="color:#b58900;">payThread </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">TVar Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>payThread var interval amount </span><span style="color:#859900;">=</span><span> void </span><span style="color:#859900;">$</span><span> forkIO </span><span style="color:#859900;">$</span><span> forever </span><span style="color:#859900;">$ do
+</span><span>  threadDelay interval
+</span><span>  atomically </span><span style="color:#859900;">$ do
+</span><span>    current </span><span style="color:#859900;">&lt;-</span><span> readTVar var
+</span><span>    writeTVar var (current </span><span style="color:#859900;">+</span><span> amount)
+</span><span>
+</span><span style="color:#b58900;">transfer </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">TVar Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">TVar Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">STM </span><span style="color:#859900;">()
+</span><span>transfer amount fromVar toVar </span><span style="color:#859900;">= do
+</span><span>  currentFrom </span><span style="color:#859900;">&lt;-</span><span> readTVar fromVar
+</span><span>  check (currentFrom </span><span style="color:#859900;">&gt;=</span><span> amount)
+</span><span>  writeTVar fromVar (currentFrom </span><span style="color:#859900;">-</span><span> amount)
+</span><span>  currentTo </span><span style="color:#859900;">&lt;-</span><span> readTVar toVar
+</span><span>  writeTVar toVar (currentTo </span><span style="color:#859900;">+</span><span> amount)
+</span></code></pre>
+<p>The runtime system will try to transfer money from Alice. If that
+fails, it will try to transfer money from Bob. If that fails, it will
+wait until either Alice or Bob's account balance changes, and then try
+again.</p>
+<p><strong>QUESTION</strong> Would it be possible to get the desired behavior if
+<code>transfer</code> called <code>atomically</code> itself and returned <code>IO ()</code> instead of
+<code>STM ()</code>? If so, write the program. If not, why not?</p>
+<h2 id="other-helper-functions">Other helper functions</h2>
+<p>You may have already discovered in the previous exercises that there
+are a number of other helper functions to work with <code>TVar</code>s. One
+example is:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">modifyTVar </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">TVar a </span><span style="color:#859900;">-&gt;</span><span> (</span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a</span><span>) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">STM </span><span style="color:#859900;">()
+</span></code></pre>
+<p>If you're accustomed to dealing with thread-safe code, you may expect
+this to use a special implementation internally to perform some
+locking. But remember: with STM, locking is unnecessary. Instead, this
+is nothing more than a convenience function, with the very simple
+implementation:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">modifyTVar </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">TVar a </span><span style="color:#859900;">-&gt;</span><span> (</span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a</span><span>) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">STM </span><span style="color:#859900;">()
+</span><span>modifyTVar var f </span><span style="color:#859900;">= do
+</span><span>    x </span><span style="color:#859900;">&lt;-</span><span> readTVar var
+</span><span>    writeTVar var (f x)
+</span></code></pre>
+<p><strong>EXERCISE</strong> This modify function is lazy. Can you change it to be
+strict?</p>
+<h3 id="why-newtvario">Why newTVarIO?</h3>
+<p>One of the helper functions available is:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">newTVarIO </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO</span><span> (</span><span style="color:#268bd2;">TVar a</span><span>)
+</span></code></pre>
+<p>It may seem like this should have the obvious implementation of
+<code>atomically . newTVar</code>. However, this implementation would be bad for
+two reasons. The first is that it's inefficient: it requires all of
+the machinery for running a transaction, when by its nature we know
+that creating a new <code>TVar</code> will never fail.</p>
+<p>The second is more subtle. Let's say we're going to follow the common
+(albeit arguably evil) practice of creating a global mutable
+variable. You'll end up with some code that looks like this:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.STM
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad </span><span>(</span><span style="color:#b58900;">replicateM_</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">System.IO.Unsafe </span><span>(</span><span style="color:#b58900;">unsafePerformIO</span><span>)
+</span><span>
+</span><span style="color:#b58900;">callCount </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">TVar Int
+</span><span>callCount </span><span style="color:#859900;">=</span><span> unsafePerformIO </span><span style="color:#859900;">$</span><span> atomically </span><span style="color:#859900;">$</span><span> newTVar </span><span style="color:#6c71c4;">0
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">NOINLINE</span><span style="color:#b58900;"> callCount #-}
+</span><span>
+</span><span style="color:#b58900;">someFunction </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>someFunction </span><span style="color:#859900;">= do
+</span><span>  count </span><span style="color:#859900;">&lt;-</span><span> atomically </span><span style="color:#859900;">$ do
+</span><span>    modifyTVar callCount (</span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1</span><span>)
+</span><span>    readTVar callCount
+</span><span>  putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">someFunction call count: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show count
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> replicateM_ </span><span style="color:#6c71c4;">10</span><span> someFunction
+</span></code></pre>
+<p>Besides the nauseating call to <code>unsafePerformIO</code>, everything looks
+fine. Unfortunately, running this application fails:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>Main.hs: Control.Concurrent.STM.atomically was nested
+</span></code></pre>
+<p>The issue is that, in order to properly implement STM, you cannot
+embed one call to <code>atomically</code> inside another call to
+<code>atomically</code>. &quot;But wait,&quot; you exclaim, &quot;the types prevent that from
+ever happening! You can't run an <code>IO</code> action inside an <code>STM</code> action!&quot;
+The problem is that <code>unsafePerformIO</code> let us do just this. <code>callCount</code>
+starts as a thunk which, when evaluated, calls <code>atomically</code>. And the
+first time it's evaluated is at <code>modifyTVar callCount (+ 1)</code>, which is
+<em>also</em> inside <code>atomically</code>!</p>
+<p>For these two reasons, the <code>newTVarIO</code> function exists. This isn't a
+promotion of global variables, but simply an explanation: if you're
+going to use them, do them correctly.</p>
+<p>There's also a <code>readTVarIO</code> function available. This one is present
+purely for performance reasons, as reading a <code>TVar</code> is always a
+non-failing operation.</p>
+<p><strong>EXERCISE</strong> Fix up the code above so that it doesn't throw an
+exception.</p>
+<p><strong>QUESTION</strong> Is it possible to use <code>readTVarIO</code> in this program? Is it
+safe? Would it still be safe if we introduced some concurrency?</p>
+<h2 id="other-variable-types">Other variable types</h2>
+<p><code>TVar</code>s are the core variable type in STM. However, as a convenient,
+the <code>stm</code> library provides a number of other variable types built on
+top of it. We'll demonstrate a few here.</p>
+<h3 id="tmvars">TMVars</h3>
+<h2 id="channels-and-queues">Channels and queues</h2>
+<p>There are three related variable types in <code>stm</code>:</p>
+<ul>
+<li><code>TChan</code> is an unbounded FIFO channel. You write things to one end,
+and read them at the other end.</li>
+<li><code>TQueue</code> is just like a <code>TChan</code>, but it doesn't support a concept
+known as <em>broadcast</em>, with multiple readers for a single writer. In
+exchange, <code>TQueue</code>s are faster. Takeaway: unless you specifically need
+broadcast (which in my experience is a rare occurrence), prefer
+queues.</li>
+<li><code>TBQueue</code> is like a <code>TQueue</code>, but is also bounded. If more than the
+given amount of values are present in the queue already, further
+writes will <code>retry</code> until the queue has been drained.</li>
+</ul>
+<p>In addition to these types, the <code>stm-chans</code> library provides a number
+of additional channel and queue types, including variants which can be
+closed. Let's use one of these to explore the basic APIs a bit, and
+implement a concurrent URL downloader in the process.</p>
+<p><strong>NOTE</strong> This example takes advantage of the wonderful
+<a href="https://tech.fpcomplete.com/haskell/library/async/">async library</a>, which goes
+hand-in-hand with STM. Once you've finished this tutorial, it's
+strongly advised to go and read about async to get the rest of the
+story with concurrency in Haskell. We're also using the
+<a href="https://tech.fpcomplete.com/haskell/library/http-client/">http-conduit library</a>
+for HTTP requests.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.Async
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.STM
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Concurrent.STM.TBMQueue
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Exception </span><span>(</span><span style="color:#b58900;">finally</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad </span><span>(</span><span style="color:#b58900;">forever</span><span>, </span><span style="color:#b58900;">void</span><span>)
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.ByteString.Lazy </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">BL
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Foldable </span><span>(</span><span style="color:#b58900;">for_</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Network.HTTP.Simple
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  queue </span><span style="color:#859900;">&lt;-</span><span> newTBMQueueIO </span><span style="color:#6c71c4;">16
+</span><span>  concurrently_
+</span><span>    (fillQueue queue </span><span style="color:#859900;">`finally`</span><span> atomically (closeTBMQueue queue))
+</span><span>    (replicateConcurrently_ </span><span style="color:#6c71c4;">8</span><span> (drainQueue queue))
+</span><span>
+</span><span style="color:#b58900;">fillQueue </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">TBMQueue</span><span> (</span><span style="color:#268bd2;">String</span><span>, </span><span style="color:#268bd2;">String</span><span>) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>fillQueue queue </span><span style="color:#859900;">= do
+</span><span>  contents </span><span style="color:#859900;">&lt;-</span><span> getContents
+</span><span>  for_ (lines contents) </span><span style="color:#859900;">$ \</span><span>line </span><span style="color:#859900;">-&gt;
+</span><span>    </span><span style="color:#859900;">case</span><span> words line </span><span style="color:#859900;">of
+</span><span>      [url, file] </span><span style="color:#859900;">-&gt;</span><span> atomically </span><span style="color:#859900;">$</span><span> writeTBMQueue queue (url, file)
+</span><span>      _ </span><span style="color:#859900;">-&gt;</span><span> error </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Invalid line: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show line
+</span><span>
+</span><span style="color:#b58900;">drainQueue </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">TBMQueue</span><span> (</span><span style="color:#268bd2;">String</span><span>, </span><span style="color:#268bd2;">String</span><span>) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>drainQueue queue </span><span style="color:#859900;">=
+</span><span>    loop
+</span><span>  </span><span style="color:#859900;">where
+</span><span>    loop </span><span style="color:#859900;">= do
+</span><span>      mnext </span><span style="color:#859900;">&lt;-</span><span> atomically </span><span style="color:#859900;">$</span><span> readTBMQueue queue
+</span><span>      </span><span style="color:#859900;">case</span><span> mnext </span><span style="color:#859900;">of
+</span><span>        </span><span style="color:#cb4b16;">Nothing </span><span style="color:#859900;">-&gt;</span><span> return </span><span style="color:#b58900;">()
+</span><span>        </span><span style="color:#cb4b16;">Just</span><span> (url, file) </span><span style="color:#859900;">-&gt; do
+</span><span>          req </span><span style="color:#859900;">&lt;-</span><span> parseRequest url
+</span><span>          res </span><span style="color:#859900;">&lt;-</span><span> httpLBS req
+</span><span>          </span><span style="color:#cb4b16;">BL</span><span style="color:#859900;">.</span><span>writeFile file </span><span style="color:#859900;">$</span><span> getResponseBody res
+</span></code></pre>
+<p>And this should be executed like this:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ stack program.hs
+</span><span>https://www.google.com google.txt
+</span><span>https://www.snoyman.com snoyman.txt
+</span><span>^Ctrl-D
+</span></code></pre>
+<p>You will find the content of the above website in the respective
+files.</p>
+<h2 id="exceptions">Exceptions</h2>
+<p>You can throw and catch exceptions inside an STM block if desired. The
+semantics are the same as catching and handling exception inside <code>IO</code>
+itself. Inside of <code>throwIO</code> and <code>catch</code>, you just use <code>throwSTM</code> and
+<code>catchSTM</code>.</p>
+<h2 id="the-join-trick">The join trick</h2>
+<p>There's a nifty little trick you can use when writing STM code. A
+common pattern is to want to perform some <code>IO</code> at the end of a
+transaction. Since you can't run it inside the transaction itself, you
+instead run it right after the transaction. For example:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">addFunds </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">TVar Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>addFunds var amt </span><span style="color:#859900;">= do
+</span><span>  new </span><span style="color:#859900;">&lt;-</span><span> atomically </span><span style="color:#859900;">$ do
+</span><span>    orig </span><span style="color:#859900;">&lt;-</span><span> readTVar var
+</span><span>    </span><span style="color:#859900;">let</span><span> new </span><span style="color:#859900;">=</span><span> orig </span><span style="color:#859900;">+</span><span> amt
+</span><span>    writeTVar var new
+</span><span>    return new
+</span><span>  putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">New amount: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show new
+</span></code></pre>
+<p>Having to break up your logic like that feels wrong, so instead of
+simply returning the <code>new</code> value, we can instead return an <code>IO</code> action
+to be run after the block:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">addFunds </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">TVar Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>addFunds var amt </span><span style="color:#859900;">= do
+</span><span>  action </span><span style="color:#859900;">&lt;-</span><span> atomically </span><span style="color:#859900;">$ do
+</span><span>    orig </span><span style="color:#859900;">&lt;-</span><span> readTVar var
+</span><span>    </span><span style="color:#859900;">let</span><span> new </span><span style="color:#859900;">=</span><span> orig </span><span style="color:#859900;">+</span><span> amt
+</span><span>    writeTVar var new
+</span><span>    return </span><span style="color:#859900;">$</span><span> putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">New amount: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show new
+</span><span>  action
+</span></code></pre>
+<p>And then we can use the <code>join</code> function to clean things up a bit
+further:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">addFunds </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">TVar Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>addFunds var amt </span><span style="color:#859900;">=</span><span> join </span><span style="color:#859900;">$</span><span> atomically </span><span style="color:#859900;">$ do
+</span><span>  orig </span><span style="color:#859900;">&lt;-</span><span> readTVar var
+</span><span>  </span><span style="color:#859900;">let</span><span> new </span><span style="color:#859900;">=</span><span> orig </span><span style="color:#859900;">+</span><span> amt
+</span><span>  writeTVar var new
+</span><span>  return </span><span style="color:#859900;">$</span><span> putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">New amount: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show new
+</span></code></pre>
+<h2 id="unliftio">UnliftIO</h2>
+<p>There are a number of functions in the <code>stm</code> package which are
+specialized to <code>IO</code>, such as <code>newTVarIO</code>. If you work with monad
+transformers a lot, and would like something generalized to <code>MonadIO</code>,
+you can instead import the <code>UnliftIO.STM</code> module from the
+<a href="https://www.stackage.org/package/unliftio">unliftio library</a>. It's
+fully compatible with <code>stm</code> itself, just providing lifting (and in
+some cases <em>unlifting</em>) where needed.</p>
+<h2 id="concurrency">Concurrency</h2>
+<p>STM is most useful in concurrent applications. The best next step is
+to
+<a href="https://tech.fpcomplete.com/haskell/library/async/">read up on the async library</a>.</p>
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#f685979a9385b6908695999b869a938293d895999b" targe="_blank"><span class="__cf_email__" data-cfemail="80f3e1ece5f3c0e6f0e3efedf0ece5f4e5aee3efed">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

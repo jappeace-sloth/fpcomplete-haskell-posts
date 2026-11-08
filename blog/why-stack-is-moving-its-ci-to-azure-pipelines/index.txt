@@ -1,0 +1,110 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Why Stack is moving its CI to Azure Pipelines
+
+By Emanuel Borsboom, April 12, 2019
+
+Share this     
+
+Up to now, Stack has been using a number of CI solutions:
+
+  • Travis CI for unit tests on Linux and macOS
+  • AppVeyor for unit tests on Windows
+  • Gitlab CI for integration tests
+
+There are a number of problems we’re running into:
+
+  • Travis’s lack of resources and limited build times lead to unreliability of tests, which are
+    frequently hitting Travis’s 50 minute time limit even with all dependencies cached. I don’t
+    think we’ve ever gotten the macOS build to complete. We’ve also seen a lot of network
+    instability which leads to spurious build failures.
+
+  • Running integration tests with Gitlab CI gets us past the resourcing/timeout problems, but
+    Gitlab CI doesn’t integrate well with Github (e.g., showing test status for pull requests),
+    which rules out moving all tests to it.
+
+  • For Gitlab CI, we have to manage a Gitlab runner on an EC2 instance, and pay costs of the EC2
+    instance that hosts it.
+
+  • Using multiple CI services increases complexity and maintenance burden.
+
+Azure LogoBack in September, Microsoft announced Azure Pipelines, a new CI/CD service that
+integrates with Github, provides unlimited free build minutes, a 20 hour time limit for jobs, and
+supports all three major platforms (Linux, macOS, and Windows). This looked very intriguing, and
+we’ve been trying it out with success.
+
+  • Most builds complete in less than 15 minutes.
+
+  • All three platforms are building reliably (when there are test failures, they are legitimate).
+
+  • Unit tests are run on every push.
+
+  • Integration tests are run nightly on the master and stable branches, and nightly binaries are
+    published as artifacts.
+
+  • There is now one place to see the status of all automated tests.
+
+Converting all the existing pipelines was not trivial, but also not overly difficult. UPDATE We've
+since moved this CI over to Github Actions, and have removed the files referenced. See the YAML
+configurations for unit tests, nightly integration tests, and emplates they reference.
+
+The Azure Pipelines UI is not very intuitive. In particular, adding a second pipeline (for
+nightlies) was confusing, and it’s hard to find settings and options.While we are generally happy
+with Azure Pipelines, that is not to say everything is perfect:
+
+  • Parts of the CI configuration (such as scheduled builds) are not controlled by the YAML files
+    and must be configured through the UI.
+
+  • Azure Pipelines does not have built-in support for caching. For Stack, this isn’t a big deal
+    since built-in caching solutions are rarely a great fit for large Haskell projects, so we use
+    the cache-s3 tool to manage a cache in an S3 bucket.
+
+  • We’ve found bugs, such as an incompatibility between bash and powershell tasks.
+
+  • This ties us a bit more closely to Microsoft, and it’s unknown whether they’ll offer all the
+    features we use for free indefinitely. That said, we’re already tied to Microsoft by using
+    Github (which Microsoft has acquired), and moving to a different CI platform in the future
+    isn’t terribly difficult should it turn out to be necessary.
+
+We’ve added a page to the Stack documentation with details on how to enable Azure Pipelines for
+your own Haskell projects.
+
+Any contributions to move other commercialhaskell or fpco repos over to Azure Pipelines would be
+welcome (we don’t necessarily plan to move them all over immediately if Travis is working well
+enough, but happy for help any time).
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

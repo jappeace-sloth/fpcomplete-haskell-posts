@@ -1,0 +1,126 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+stack: more binary package sharing
+
+By Michael Snoyman, September 1, 2015
+
+Share this     
+
+This blog post describes a new feature in stack. Until now, multiple projects using the same
+snapshot could share the binary builds of packages. However, two separate snapshots could not share
+the binary builds of their packages, even if they were substantially identical. That's now
+changing.
+
+tl;dr: stack will now be able to install new snapshots much more quickly, with less disk space
+usage, than previously.
+
+This has been a known shortcoming since stack was first released. It's not coincidental that this
+support is being added not long after a similar project completed for Cabal. Ryan Trinkle- Vishal's
+mentor on the project- described the work to me a few months back, and I decided to wait to see the
+outcome of the project before working on the feature in stack.
+
+The improvements to Cabal here are superb, and I'm thrilled to see them happening. However, after
+reviewing and discussing with a few stack developers and users, I decided to implement a different
+approach that doesn't take advantage of the new Cabal changes. The reasons are:
+
+  • As Herbert very aptly pointed out on Reddit:
+
+        Since Stack sandboxes everything maximum sharing between LTS versions can easily be
+        implemented going back to GHC 7.0 without this new multi-instance support.
+
+        This multi-instance support is needed if you want to accomplish the same thing without
+        isolated sandboxes in a single package db.
+
+  • There are some usability concerns around a single massive database with all packages in it.
+    Specifically, there are potential problems around getting GHC to choose a coherent set of
+    packages when using something like ghci or runghc. Hopefully some concept of views will be
+    added (as Duncan described in the original proposal), but the implications still need to be
+    worked out.
+
+  • stack users are impatient (and I mean that in the best way possible). Why wait for a feature
+    when we could have it now? While the Cabal Google Summer of Code project is complete, the
+    changes are not yet merged to master, much less released. stack would need to wait until those
+    changes are readily available to end users before relying on them.
+
+stack's implementation
+
+I came up with some complicated approaches to the problem, but ultimately a comment from Aaron Wolf
+rang true:
+
+    check the version differences and just copy compiled binaries from previous LTS for unchanged
+    items
+
+It turns out that this is really easy. The implementation ends up having two components:
+
+ 1. Whenever a snapshot package is built, write a precompiled cache file containing the filepaths
+    of the library's .conf file (from inside the package database) and all of the executables
+    installed.
+ 2. Before building a snapshot package, check for a precompiled cache file. If the file exists,
+    copy over the executables and register the .conf file into the new snapshots database.
+
+That precompiled cache file's path looks something like this:
+
+/home/vagrant/.stack/precompiled/ghc-7.10.2/1.22.4.0/aeson-0.8.0.2/Vr6rCTNr+UeoWMN1qGJGhFfxIDSFqTgJixKuD6TtVEQ\=
+
+This encodes the GHC version, Cabal version, package name, and package version. The last bit is a
+hash of all of the configuration information, including flags, GHC options, and dependencies. We
+then hash those flags and put them in the filepath, ensuring that when we look up a precompiled
+package, we're getting something that matches what we'd be building ourselves now.
+
+The reason we can get away with this approach in stack is because of the invariants of a snapshot,
+namely: each snapshot has precisely one version of a package available, and therefore we have no
+need to deal with the new multi-instance installations GHC 7.10 supports. This also means no
+concern around views: a snapshot database is by its very nature a view.
+
+Advantages
+
+  • Decreased compile times
+  • Decreased disk space usage
+
+Downsides
+
+  • You can't reliably delete a single snapshot, as there can be files shared between different
+    snapshots. Deleting a single snapshot was never an officially supported feature previously, but
+    if you knew what you were doing, you could do it safely.
+
+After discussing with others: this trade-off seems acceptable: the overall decrease in disk space
+usage means that the desire to delete a single snapshot will be reduced. When real disk space
+reclaiming needs to happen, the recommended approach will be to wipe all snapshots and start over,
+which (1) will be an infrequent occurrence, and (2) due to the faster compile times, will be less
+burdensome.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

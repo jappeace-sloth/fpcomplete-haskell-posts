@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Functional Dependencies</title>
+  <meta property="og:title" content="Functional Dependencies">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="A quick tutorial on understanding functional dependencies, multi param type classes, and the basics of the mtl library">
+  <meta property="og:description" content="A quick tutorial on understanding functional dependencies, multi param type classes, and the basics of the mtl library">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;tutorial&#x2F;fundeps&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+  
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+<section class="hero grid-bg">
+  <div class="container">
+    <h1>Functional Dependencies
+    </h1><p id="page-description">A quick tutorial on understanding functional dependencies, multi param type classes, and the basics of the mtl library</p></div>
+</section>
+
+
+
+  
+<div class="container py-3">
+  <p>Functional dependencies (aka fundeps) are a language extension. It builds on top of multi param type classes, and provides the basis for many common libraries. In particular, fundeps are core to <code>mtl</code>, the monad transformer library. And finally, fundeps overlap these days a bit with type families. We'll touch on that at the end.</p>
+<p>Prereqs: you should have an understanding of type classes (the boring, single-parameter kind) and monads to understand this tutorial.</p>
+<h2 id="personreader">PersonReader</h2>
+<p>Our motivating use case will be the <code>Reader</code> monad. We're going to deal with a simplified version of <code>Reader</code> that provides just one action: <code>ask</code>. And this <code>Reader</code> will always allow us to only hold onto values of one type: <code>Person</code>. Let's see it in practice. We'll include all the boring boilerplate for defining our own <code>PersonReader</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver ghc-8.8.3 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> DeriveFunctor #-}
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Person </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Person
+</span><span>  { name </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">String
+</span><span>  , age </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int
+</span><span>  }
+</span><span>  </span><span style="color:#859900;">deriving </span><span style="color:#cb4b16;">Show
+</span><span>
+</span><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">PersonReader</span><span> a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">PersonReader</span><span> { runPersonReader </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Person </span><span style="color:#859900;">-&gt;</span><span> a }
+</span><span>  </span><span style="color:#859900;">deriving </span><span style="color:#cb4b16;">Functor
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Applicative PersonReader </span><span style="color:#859900;">where
+</span><span>  pure x </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">PersonReader </span><span style="color:#859900;">$ \</span><span>_env </span><span style="color:#859900;">-&gt;</span><span> x
+</span><span>  </span><span style="color:#cb4b16;">PersonReader</span><span> f </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">PersonReader</span><span> x </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">PersonReader </span><span style="color:#859900;">$ \</span><span>env </span><span style="color:#859900;">-&gt;</span><span> f env (x env)
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Monad PersonReader </span><span style="color:#859900;">where
+</span><span>  return </span><span style="color:#859900;">=</span><span> pure
+</span><span>  </span><span style="color:#cb4b16;">PersonReader</span><span> x </span><span style="color:#859900;">&gt;&gt;=</span><span> f </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">PersonReader </span><span style="color:#859900;">$ \</span><span>env </span><span style="color:#859900;">-&gt;</span><span> runPersonReader (f (x env)) env
+</span><span>
+</span><span style="color:#b58900;">ask </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">PersonReader Person
+</span><span>ask </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">PersonReader </span><span style="color:#859900;">$ \</span><span>env </span><span style="color:#859900;">-&gt;</span><span> env
+</span><span>
+</span><span style="color:#b58900;">greeting </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">PersonReader String
+</span><span>greeting </span><span style="color:#859900;">= do
+</span><span>  person </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  pure </span><span style="color:#859900;">$</span><span> concat
+</span><span>    [ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Greetings, </span><span style="color:#839496;">&quot;
+</span><span>    , show </span><span style="color:#859900;">$</span><span> name person
+</span><span>    , </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">, you are </span><span style="color:#839496;">&quot;
+</span><span>    , show </span><span style="color:#859900;">$</span><span> age person
+</span><span>    , </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;"> years old</span><span style="color:#839496;">&quot;
+</span><span>    ]
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#859900;">let</span><span> alice </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Person </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot; </span><span style="color:#6c71c4;">30
+</span><span>  putStrLn </span><span style="color:#859900;">$</span><span> runPersonReader greeting alice
+</span></code></pre>
+<p>The type of <code>ask</code> is fully <em>monomorphic</em>: there are no type variables at all. When you use <code>ask</code>, you <em>will</em> get a <code>PersonReader</code> action which, when run, gives you a <code>Person</code>.</p>
+<h2 id="generalizing-the-environment">Generalizing the environment</h2>
+<p>But having our <code>PersonReader</code> so constrained in what it can hold is limiting. We may want to hold other types! So as good Haskellers we obviously want to use a type variable here. And behold: our <code>PersonReader</code> can easily turn into a <code>Reader</code> with very little extra work:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver ghc-8.8.3 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> DeriveFunctor #-}
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Person </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Person
+</span><span>  { name </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">String
+</span><span>  , age </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int
+</span><span>  }
+</span><span>
+</span><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">Reader</span><span> env a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Reader</span><span> { runReader </span><span style="color:#859900;">::</span><span> env </span><span style="color:#859900;">-&gt;</span><span> a }
+</span><span>  </span><span style="color:#859900;">deriving </span><span style="color:#cb4b16;">Functor
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Applicative</span><span> (</span><span style="color:#268bd2;">Reader env</span><span>) </span><span style="color:#859900;">where
+</span><span>  pure x </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Reader </span><span style="color:#859900;">$ \</span><span>_env </span><span style="color:#859900;">-&gt;</span><span> x
+</span><span>  </span><span style="color:#cb4b16;">Reader</span><span> f </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Reader</span><span> x </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Reader </span><span style="color:#859900;">$ \</span><span>env </span><span style="color:#859900;">-&gt;</span><span> f env (x env)
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Monad</span><span> (</span><span style="color:#268bd2;">Reader env</span><span>) </span><span style="color:#859900;">where
+</span><span>  return </span><span style="color:#859900;">=</span><span> pure
+</span><span>  </span><span style="color:#cb4b16;">Reader</span><span> x </span><span style="color:#859900;">&gt;&gt;=</span><span> f </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Reader </span><span style="color:#859900;">$ \</span><span>env </span><span style="color:#859900;">-&gt;</span><span> runReader (f (x env)) env
+</span><span>
+</span><span style="color:#b58900;">ask </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Reader env env
+</span><span>ask </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Reader </span><span style="color:#859900;">$ \</span><span>env </span><span style="color:#859900;">-&gt;</span><span> env
+</span><span>
+</span><span style="color:#b58900;">greeting </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Reader Person String
+</span><span>greeting </span><span style="color:#859900;">= do
+</span><span>  person </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  pure </span><span style="color:#859900;">$</span><span> concat
+</span><span>    [ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Greetings, </span><span style="color:#839496;">&quot;
+</span><span>    , show </span><span style="color:#859900;">$</span><span> name person
+</span><span>    , </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">, you are </span><span style="color:#839496;">&quot;
+</span><span>    , show </span><span style="color:#859900;">$</span><span> age person
+</span><span>    , </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;"> years old</span><span style="color:#839496;">&quot;
+</span><span>    ]
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#859900;">let</span><span> alice </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Person </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot; </span><span style="color:#6c71c4;">30
+</span><span>  putStrLn </span><span style="color:#859900;">$</span><span> runReader greeting alice
+</span></code></pre>
+<p>Hurrah!</p>
+<h2 id="unifying-ask">Unifying <code>ask</code></h2>
+<p>Now we have two different type signatures for <code>ask</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">ask </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">PersonReader Person
+</span><span style="color:#b58900;">ask </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Reader Person Person
+</span></code></pre>
+<p>We would like to be able to represent both of these with a single typeclass method, so we can write functions that work on both <code>Reader</code> and <code>PersonReader</code>. Let's take a few obviously wrong attempts. First, let's try:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">class </span><span style="color:#268bd2;">MonadReader m </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#b58900;">ask </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">m Person
+</span></code></pre>
+<p>This forces the result type to a <code>Person</code>. This works fine for <code>PersonReader</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadReader PersonReader </span><span style="color:#859900;">where
+</span><span>  ask </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">PersonReader </span><span style="color:#859900;">$ \</span><span>env </span><span style="color:#859900;">-&gt;</span><span> env
+</span></code></pre>
+<p>However, we're left with something that doesn't work too well for <code>Reader</code>. If we try to keep a type variable for the <code>Reader</code> like this:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadReader</span><span> (</span><span style="color:#268bd2;">Reader env</span><span>) </span><span style="color:#859900;">where
+</span><span>  ask </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Reader </span><span style="color:#859900;">$ \</span><span>env </span><span style="color:#859900;">-&gt;</span><span> env
+</span></code></pre>
+<p>We get an error message:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>/Users/michael/Desktop/Main.hs:16:9: error:
+</span><span>    • Couldn&#39;t match type ‘env’ with ‘Person’
+</span><span>      ‘env’ is a rigid type variable bound by
+</span><span>        the instance declaration
+</span><span>        at /Users/michael/Desktop/Main.hs:15:10-33
+</span><span>      Expected type: Reader env Person
+</span><span>        Actual type: Reader env env
+</span></code></pre>
+<p>And if we try to use <code>instance MonadReader (Reader Person)</code>, we have two problems:</p>
+<ul>
+<li>GHC insists that we turn on <code>FlexibleInstances</code> as a language extension. Fine, easy enough. But...</li>
+<li>We also are limited massively in the usefulness of the <code>ask</code> method: it only works with <code>Person</code>s!</li>
+</ul>
+<p>Instead, let's try a more generic version of <code>MonadReader</code>. Up until now, the <code>m</code> parameter has had <em>kind</em> <code>Type -&gt; Type</code>, meaning the monad takes a single type variable. This is true for <code>PersonReader</code>. But <code>Reader</code> takes two type variables: <code>env</code> and <code>a</code>. That's why we had to provide the extra <code>env</code> type variable in the instance definition. Instead, let's try this class:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">class </span><span style="color:#268bd2;">MonadReader m </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#b58900;">ask </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">m env env
+</span></code></pre>
+<p>Now <code>m</code> has two parameters, and we're able to define an instance for <code>Reader</code> easily:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadReader Reader </span><span style="color:#859900;">where
+</span><span>  ask </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Reader </span><span style="color:#859900;">$ \</span><span>env </span><span style="color:#859900;">-&gt;</span><span> env
+</span></code></pre>
+<p>However, we're completely unable to define an instance for <code>PersonReader</code>. If we try with something like this:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadReader PersonReader </span><span style="color:#859900;">where
+</span><span>  ask </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">PersonReader </span><span style="color:#859900;">$ \</span><span>env </span><span style="color:#859900;">-&gt;</span><span> env
+</span></code></pre>
+<p>We get the error message:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>/Users/michael/Desktop/Main.hs:13:22: error:
+</span><span>    • Expected kind ‘* -&gt; * -&gt; *’, but ‘PersonReader’ has kind ‘* -&gt; *’
+</span><span>    • In the first argument of ‘MonadReader’, namely ‘PersonReader’
+</span><span>      In the instance declaration for ‘MonadReader PersonReader’
+</span></code></pre>
+<p>Note that <code>* -&gt; * -&gt; *</code> is the same as saying <code>Type -&gt; Type -&gt; Type</code>.</p>
+<p>So how do we come up with a type class that:</p>
+<ul>
+<li>Works for both <code>Reader</code> and <code>PersonReader</code></li>
+<li>Allows <code>Reader</code> to have any environment type it wants</li>
+</ul>
+<h2 id="multiparamtypeclasses">MultiParamTypeClasses</h2>
+<p>The <code>MonadReader</code> type classes we've tried so far all have a single parameter: <code>m</code>. In order to fix our problem above, we're going to use <em>multiple</em> parameters: both <code>m</code> (the monad) and <code>env</code> (the environment). Since all production Haskell code is 43% made up of language extensions, add this to the top of your module:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> MultiParamTypeClasses #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> FlexibleInstances #-}
+</span></code></pre>
+<p>And then we can define our typeclass as:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">class </span><span style="color:#268bd2;">MonadReader env m </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#b58900;">ask </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">m env
+</span></code></pre>
+<p>Defining the instance for <code>PersonReader</code> is a bit simpler. The <code>env</code> parameter is <code>Person</code>, the <code>m</code> is <code>PersonReader</code>, and therefore we have:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadReader Person PersonReader </span><span style="color:#859900;">where
+</span><span>  ask </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">PersonReader </span><span style="color:#859900;">$ \</span><span>env </span><span style="color:#859900;">-&gt;</span><span> env
+</span></code></pre>
+<p>The instance for <code>Reader</code> is slightly more complicated. We don't have a concrete <code>env</code> type variable. So instead, we keep it as a type variable! And our <code>m</code> still needs to have kind <code>Type -&gt; Type</code>. So we need to partially apply <code>Reader</code> to <code>env</code>. We end up with:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadReader env</span><span> (</span><span style="color:#268bd2;">Reader env</span><span>) </span><span style="color:#859900;">where
+</span><span>  ask </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Reader </span><span style="color:#859900;">$ \</span><span>env </span><span style="color:#859900;">-&gt;</span><span> env
+</span></code></pre>
+<p>And voila, we have a real <code>ask</code> method!</p>
+<h2 id="where-s-the-fundeps">Where's the fundeps?</h2>
+<p>So far, this example works just fine, and we didn't have to use any functional dependencies. You may be thinking: maybe we don't need fundeps at all! But let's get a little more complicated.</p>
+<p>I want to modify the <code>greeting</code> function I wrote before. Instead of generating a nice, pretty message, I'm just going to reuse the <code>Show</code> instance:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">greeting </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">PersonReader String
+</span><span>greeting </span><span style="color:#859900;">= do
+</span><span>  person </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  pure </span><span style="color:#859900;">$</span><span> show person
+</span></code></pre>
+<p>Ugly, but it seems reasonable. Unfortunately, GHC is <em>not</em> amused with us:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>/Users/michael/Desktop/Main.hs:39:13: error:
+</span><span>    • Ambiguous type variable ‘a0’ arising from a use of ‘ask’
+</span><span>      prevents the constraint ‘(MonadReader
+</span><span>                                  a0 PersonReader)’ from being solved.
+</span><span>      Probable fix: use a type annotation to specify what ‘a0’ should be.
+</span><span>      These potential instance exist:
+</span><span>        instance MonadReader Person PersonReader
+</span><span>          -- Defined at /Users/michael/Desktop/Main.hs:16:10
+</span></code></pre>
+<p>Here's what's happening: we have two type parameters for the <code>MonadReader</code> type class. In our <code>greeting</code> function, we call <code>ask</code> in a context where type inference tells us that the value must be <code>ask :: PersonReader a</code>. However, <em>nothing</em> tells us what that <code>a</code> must be. Previously, we were using the <code>name</code> and <code>age</code> record accessors, which helped type inference along. But that doesn't apply with the <code>show</code> method.</p>
+<p>Before we introduce fundeps, let's see how we can fix the problem here, and some cool extra features we get. First, we can do example what GHC tells us: &quot;use a type annotation.&quot; This looks like:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">greeting </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">PersonReader String
+</span><span>greeting </span><span style="color:#859900;">= do
+</span><span>  person </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  pure </span><span style="color:#859900;">$</span><span> show (person </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Person</span><span>)
+</span></code></pre>
+<p>But at its core, this error message is hinting at something bigger: we're allowed to have more than one instance of <code>MonadReader</code> for <code>PersonReader</code>. So far, we've only provided one such instance. But we could provide more. For example:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadReader String PersonReader </span><span style="color:#859900;">where
+</span><span>  ask </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">PersonReader </span><span style="color:#859900;">$ \</span><span>person </span><span style="color:#859900;">-&gt;</span><span> name person
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadReader Int PersonReader </span><span style="color:#859900;">where
+</span><span>  ask </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">PersonReader </span><span style="color:#859900;">$ \</span><span>person </span><span style="color:#859900;">-&gt;</span><span> age person
+</span></code></pre>
+<p>And then, using type annotations, we can tell GHC which instance we want to use, e.g.:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">greeting </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">PersonReader String
+</span><span>greeting </span><span style="color:#859900;">= do
+</span><span>  person </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  pure </span><span style="color:#859900;">$</span><span> show (person </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>) </span><span style="color:#93a1a1;">-- show the age
+</span></code></pre>
+<p>That's kind of nifty.... I guess.</p>
+<h2 id="introducing-fundeps">Introducing fundeps</h2>
+<p>With our multi param type class, we end up with a lot of flexibility (many different instances), but lose type inference. Usually, we prefer to keep the type inference, not the flexibility. And that's exactly where fundeps come into play. Be sure to appease the Haskell deities with:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> FunctionalDependencies #-}
+</span></code></pre>
+<p>What we want to say is that, for each type parameter <code>m</code>, there is only ever allowed to be a single instance of <code>MonadReader</code>. The way we say that with fundeps is &quot;the type parameters <code>m</code> dictates exactly what the type parameter <code>env</code> will be.&quot; And the syntax we use for this is:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">class </span><span style="color:#268bd2;">MonadReader env m</span><span> | </span><span style="color:#268bd2;">m</span><span> -&gt; </span><span style="color:#268bd2;">env </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#b58900;">ask </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">m env
+</span></code></pre>
+<p>With this in place, our earlier <code>greeting</code> works just fine:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">greeting </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">PersonReader String
+</span><span>greeting </span><span style="color:#859900;">= do
+</span><span>  person </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  pure </span><span style="color:#859900;">$</span><span> show person
+</span></code></pre>
+<p>That's because type inference now holds. We know from the type signature of <code>greeting</code> that <code>ask</code> must have type <code>ask :: PersonReader env</code>. <em>And</em> we know from the fundep that the <code>m</code> dictates the <code>env</code>. And in this case, where <code>m</code> is <code>PersonReader</code>, <code>env</code> must be <code>Person</code>.</p>
+<p>If we try to add in the extra <code>MonadReader</code> instances like we had before, we get an error message from GHC:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>Functional dependencies conflict between instance declarations:
+</span><span>  instance MonadReader Person PersonReader
+</span><span>    -- Defined at /Users/michael/Desktop/Main.hs:17:10
+</span><span>  instance MonadReader String PersonReader
+</span><span>    -- Defined at /Users/michael/Desktop/Main.hs:38:10
+</span><span>  instance MonadReader Int PersonReader
+</span><span>    -- Defined at /Users/michael/Desktop/Main.hs:40:10
+</span></code></pre>
+<p>So we've lost the flexibility to have multiple instances per monad, but instead gained back type inference. And overall, this is considered a win.</p>
+<h2 id="type-families">Type families</h2>
+<p>Historically, fundeps were introduced before type families. Type families are another language extension which provide for slightly different use cases than fundeps. However, in many cases type families can be used to solve the same problems as fundeps, including here. Type families may be more familiar to you under the phrase &quot;associated types.&quot;</p>
+<p>Let's restate our problem: we want a <code>MonadReader</code> typeclass where there is only a single instance per <code>m</code>, and we know the <code>env</code> parameter that will be available from each <code>m</code>. Multi param type classes let us specify explicitly what the <code>env</code> was, and fundeps allowed us to constrain ourselves to a single instance. Type families arguably do all of this more directly. Appease the deities again:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> TypeFamilies #-}
+</span></code></pre>
+<p>Then we change our typeclass to:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">class </span><span style="color:#268bd2;">MonadReader m </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#859900;">type </span><span style="color:#cb4b16;">Env</span><span> m
+</span><span>  </span><span style="color:#b58900;">ask </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">m</span><span> (</span><span style="color:#268bd2;">Env m</span><span>)
+</span></code></pre>
+<p>We now have an <em>associated type</em> <code>Env</code> for our <code>m</code> type variable. We can use that associated type in our method definitions. Here we're saying &quot;the method <code>ask</code> returns a value wrapped in the <code>m</code> monad, and that value must be the <code>Env</code> associated with <code>m</code>.&quot;</p>
+<p>Another way to put this: <code>Env</code> is a function <em>at the type level</em>. You give me a type <code>m</code>, and I'll give you back the type which is its environment.</p>
+<p>Defining the typeclass instances for <code>PersonReader</code> and <code>Reader</code> is fairly straightforward:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadReader PersonReader </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#859900;">type </span><span style="color:#cb4b16;">Env PersonReader </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Person
+</span><span>  ask </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">PersonReader </span><span style="color:#859900;">$ \</span><span>env </span><span style="color:#859900;">-&gt;</span><span> env
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadReader</span><span> (</span><span style="color:#268bd2;">Reader env</span><span>) </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#859900;">type </span><span style="color:#cb4b16;">Env</span><span> (</span><span style="color:#cb4b16;">Reader</span><span> env) </span><span style="color:#859900;">=</span><span> env
+</span><span>  ask </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Reader </span><span style="color:#859900;">$ \</span><span>env </span><span style="color:#859900;">-&gt;</span><span> env
+</span></code></pre>
+<p>So, should you use fundeps or type families? Your call. Like many other things in Haskell, there are more than one way to do it. And as you use libraries in the ecosystem, you'll find both used. There are some advantages to both. <code>mtl</code> uses fundeps, both for historical reasons, and arguably because it's slightly easier to work with. Many other use cases are better served with type families. The decision is yours!</p>
+<h2 id="exercises">Exercises</h2>
+<ul>
+<li>
+<p>Using the fundep version of the <code>MonadReader</code> type class, write functions <code>askName</code> and <code>askAge</code> so that the following <code>greeting</code> function works:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">greeting </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">Monad m</span><span>, </span><span style="color:#268bd2;">MonadReader Person m</span><span>) </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">m String
+</span><span>greeting </span><span style="color:#859900;">= do
+</span><span>  name </span><span style="color:#859900;">&lt;-</span><span> askName
+</span><span>  age </span><span style="color:#859900;">&lt;-</span><span> askAge
+</span><span>  pure </span><span style="color:#859900;">$</span><span> name </span><span style="color:#859900;">++ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;"> is </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show age </span><span style="color:#859900;">++ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;"> years old</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>Some pointers:</p>
+<ul>
+<li>You'll probably need to add an extra language extension... of course :)</li>
+<li>You <em>may</em> want to add a superclass constraint to <code>MonadReader</code> of <code>Monad m</code></li>
+</ul>
+</li>
+<li>
+<p>Write <code>State</code> and <code>PersonState</code> monads and define a <code>MonadState</code> typeclass with <code>get</code> and <code>put</code> methods.</p>
+</li>
+</ul>
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#deadbfb2bbad9eb8aebdb1b3aeb2bbaabbf0bdb1b3" targe="_blank"><span class="__cf_email__" data-cfemail="f58694999086b59385969a988599908190db969a98">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

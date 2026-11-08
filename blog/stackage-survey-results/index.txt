@@ -1,0 +1,189 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Stackage: Survey results, easier usage, and LTS Haskell 0.X
+
+By Michael Snoyman, December 15, 2014
+
+Share this     
+
+There was tremendous response to our Stackage survey, so I'd like to say: thank you everyone who
+participated, the feedback was invaluable. Additionally, in the past two weeks, I think we've added
+around 100 new packages to Stackage based on everyone's pull requests, so again, thank you for
+everyone who got involved. You can view the survey results yourself (no longer available). Of
+particular interest to me were the freeform responses, which gave us a lot of valuable information.
+
+Chris Done and I went over the results together, and by far, the strongest impression that we got
+was that the Stackage setup process was too onerous. Lack of direct cabal-install support and need
+to choose from among six possible snapshots were very problematic. Furthermore, some people found
+the homepage confusing, and didn't understand from it why they should use Stackage. There was also
+fear that, by using Stackage, you'd end up missing out on some important packages, either because
+those packages aren't present, or because it's unclear how to add new packages.
+
+So today, we're announcing a number of changes on stackage.org to address these concerns, as well
+as to pave the way for the upcoming LTS Haskell release. These changes are still a work in process,
+so please give us feedback (or feel free to send a pull request as well).
+
+Simplified choices
+
+In order to use Stackage, you first had to choose GHC 7.8, GHC 7.8 + Haskell Platform, or GHC 7.6.
+You then had to decide if you wanted exclusive vs inclusive. Once we add LTS Haskell, that's
+another choice to add to the mix. So we've decided to simplify the options advertised on the
+homepage to two:
+
+  • LTS Haskell (URL: /lts)
+  • Stackage Nightly (URL: /nightly)
+
+Each of these will be compatible with only one version of GHC (7.8.3 for now). Another piece of
+feedback is that users are by far using inclusive more commonly than exclusive. So we're going to
+default to giving inclusive instructions.
+
+One important thing to keep in mind is that this will not affect current users at all. All
+snapshots currently hosted on stackage.org will remain there in perpetuity. We're talking about
+discovery for new users here.
+
+Simplified setup
+
+Until now, we've recommended setting up Stackage by changing your remote-repo setting to point to
+the appropriate stackage.org URL. In October, Greg Weber came up with the idea of generating a
+cabal.config file to specify constraints instead of using a manual URL. We've decided to make this
+the preferred Stackage setup method. This provides a number of benefits for you immediately:
+
+  • Works directly with cabal, without needing a bleeding-edge version with remote-repo support
+  • It's fully supported by cabal sandboxes
+  • It's easy to tweak your version requirements if desired
+  • You keep Hackage server as your package source, which may be desired by some
+
+The downsides with this are:
+
+  • There are a few bugs in cabal-install around cabal.config support, see the issue for more
+    information
+  • This approach only works for "inclusive"-style snapshots. However, as we're now recommending
+    inclusive as the default mechanism, this makes sense. The cabal.config file contains an
+    optional remote-repo line which you can uncomment to get back exclusive-style snapshots.
+  • There are some concerns about Hackage server's reliability. If you'd like to have a more
+    reliable server, FP Complete offers hackage.fpcomplete.com as an alternative remote-repo,
+    hosted by Amazon S3.
+
+As a result of this change, getting set up with Stackage is now as easy as downloading a
+cabal.config file, placing it in your project directory, and running cabal install. Our homepage
+has easy to use instructions for this as well.
+
+More focused homepage
+
+Speaking of the homepage: we've updated it to:
+
+  • Give easy-to-use installation instructions
+  • Give a clear, concise explanation of what Stackage is and the problems it solves
+  • Provide a link for installation instructions, for people without a Haskell toolchain installed
+  • Provide information on how to deal with a package not included in Stackage
+  • Provide a link for package authors to get involved with Stackage
+
+Relevant Github issue with more details
+
+More informative snapshot pages
+
+The snapshot pages now list all packages in the snapshot, together with version numbers, synopses,
+and documentation links (if available). The setup instructions are also much simpler on each
+snapshot page.
+
+We've also set up nicer URLs for the commonly used snapshots. In particular:
+
+  • /nightly will take you to the latest nightly
+  • /nightly/2014-12-15 will take you to the December 15, 2014 nightly
+  • /lts will take you to the latest LTS
+  • /lts/1 will take you to the latest LTS in the 1 series
+  • /lts/1.3 will take you to LTS 1.3
+
+Relevant Github issue with more details
+
+More informative package pages
+
+We've streamlined the package pages to provide the most pertinent information. Have a look for
+yourself. Of particular interest, we now have inline links for Haddock documentation. You can now
+very easily start browsing docs from just looking at a package page.
+
+Relevant Github issue with more details
+
+New installation instructions
+
+There's now a dedicated installation instructions page targeted at people without a Haskell
+installation. This page is controlled by a Markdown file on Github, and pull requests to improve
+content are very much welcome!
+
+LTS repo has started, updated Stackage codebase
+
+I've created the LTS Haskell repo. I'm populating it with 0.X releases now as pre-release testing.
+To reiterate: LTS Haskell is not launched yet, and I will be holding off on an official 1.0 until
+January 1. So if you have packages you want in LTS, you still have two weeks to get them in.
+
+I've also done a major overhaul of the Stackage codebase itself to make for far more reliable
+builds. There are lots of details involved, but they're probably not too terribly interesting to
+most readers. The important takeaways are:
+
+  • Each build is now fully represented by a YAML file that contains a lot of useful metadata
+  • There are completely automated executables to create new LTS and nightly releases
+  • The codebase is well set up to create reusable binary package databases, if anyone's interested
+    in doing that (I know we'll be using it at FP Complete)
+
+Stopping future GHC 7.6/Haskell Platform builds (?)
+
+This decision is still up for discussion, but my plan is to discontinue Stackage daily builds for
+GHC 7.6 and GHC 7.8 + Haskell Platform. The reasons are:
+
+  • It puts a large burden on package authors to maintain their packages with old dependencies,
+    which is precisely the opposite of what we want to do with LTS Haskell
+  • Very few people are using GHC 7.6
+  • There are some fundamental problems with the current Haskell Platform package set. I hope these
+    are addressed- hopefully by unifying with LTS Haskell. But currently, the package sets based on
+    Haskell Platform are inherently buggy by using package versions with known deficiencies.
+
+If you're using a Haskell Platform installed toolchain now, I recommend trying out the new
+installation instructions to get a toolchain that will be fully compatible with both LTS Haskell
+and Stackage Nightly.
+
+Future: GHC upgrade policy
+
+One future policy decision we'll need to make is: when do we upgrade to a new version of GHC. My
+proposed plan is that, once we get a successful nightly build with a new GHC version, we stop
+generating nightlies for the old version. For LTS Haskell, we'll use whatever version of GHC is
+used by the nightlies at the time we take a snapshot.
+
+The upshot of this will be that, at any given time, there will be at most two supported GHC
+versions by the official Stackage snapshots: whatever nightly supports, and the version used by
+LTS, which may be one version behind.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

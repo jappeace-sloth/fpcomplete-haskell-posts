@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>The Hidden Dangers of Haskell&#x27;s Ratio Type</title>
+  <meta property="og:title"        content="The Hidden Dangers of Haskell&#x27;s Ratio Type">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta     name="description"     content="Haskell&#x27;s Rational datatype is useful, but using a type other than Integer with Ratio leads to surprises.">
+  <meta property="og:description"  content="Haskell&#x27;s Rational datatype is useful, but using a type other than Integer with Ratio leads to surprises.">
+  
+  
+  
+  
+  <meta property="og:url"          content="https:&#x2F;&#x2F;www.fpcomplete.com&#x2F;blog&#x2F;hidden-dangers-of-ratio&#x2F;">
+  
+  <meta property="og:locale"       content="en_US">
+  <meta property="og:type"         content="website">
+  <meta property="og:site_name"    content="FP Complete">
+  <meta property="twitter:site"    content="@FPComplete">
+
+  
+  <meta property="og:image"        content="https:&#x2F;&#x2F;www.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card"    content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpcomplete-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpcomplete-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpcomplete-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpcomplete-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <script async src="https://use.fontawesome.com/e0443fd3c9.js"></script>
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/fonts/calibre/stylesheet.css" rel="stylesheet">
+  <link href="/css/fonts/exo/stylesheet.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+
+  
+  
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+ 
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+ 
+  
+  
+</head>
+
+<body class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+
+        <a class="navbar-brand ml-3" href="/">
+          <img class="main-logo" src="/images/logo-straight.png" alt="FP Complete">
+        </a>
+
+        <span class="onlymobile mobile-nav-icon">
+          <a href="tel:+18586170430"><i class="fa fa-phone" aria-hidden="true"></i></a>
+        </span>
+        
+        <span class="search-nav-item mb-lg-0 onlymobile mobile-nav-icon">
+          <a href="#" id="navbarDropdown" role="button"
+              data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-search" aria-hidden="true"></i></a>
+          <div class="dropdown-menu py-0 my-0 search-dropdown" aria-labelledby="navbarDropdown">
+              <script async src="https://cse.google.com/cse.js?cx=011962549138852701404:zubvejdzvpo"></script>
+              <div class="gcse-searchbox-only" data-resultsUrl="/search" data-newWindow="true" data-queryParameterName="search"></div>
+          </div>
+        </span>
+
+        <button
+            class="navbar-toggler" type="button"
+            data-toggle="collapse"
+            data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+            aria-expanded="false"
+            aria-label="Toggle navigation">
+          <i class="fa fa-bars"></i>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav ml-auto mt-3">
+
+            <li class="nav-item mb-lg-0 drophover small-dropdown">
+              <a class="nav-link" href="/services/" id="navbarDropdown" role="button"
+                  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Services</a>
+              <div class="dropdown-menu py-0 my-0 bg-blackish" aria-labelledby="navbarDropdown">
+                <div class="row">
+                  <div class="col-sm-12">
+                    <a class="dropdown-item" href="https:&#x2F;&#x2F;www.fpcomplete.com&#x2F;services&#x2F;">Overview</a>
+                    <a class="dropdown-item" href="https:&#x2F;&#x2F;www.fpcomplete.com&#x2F;custom&#x2F;">Next Generation Software Engineering</a>
+                    <a class="dropdown-item" href="https:&#x2F;&#x2F;www.fpcomplete.com&#x2F;devsecops&#x2F;">DevSecOps</a>
+                    <a class="dropdown-item" href="https:&#x2F;&#x2F;www.fpcomplete.com&#x2F;blockchain&#x2F;">Blockchain & Smart Contracts</a>
+                    <a class="dropdown-item" href="/services/#training">Training</a>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item mb-lg-0 drophover small-dropdown">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button"
+                  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Tools</a>
+              <div class="dropdown-menu py-0 my-0" aria-labelledby="navbarDropdown">
+                <div class="row">
+                  <div class="col-sm-12">
+                    <a class="dropdown-item" href="/products/kube360">
+                      Kube360®
+                    </a>
+                    <a class="dropdown-item" href="/products/zehut/">
+                      Zehut
+                    </a>
+                    <a class="dropdown-item" href="https:&#x2F;&#x2F;www.fpcomplete.com&#x2F;blog&#x2F;announcing-amber-ci-secret-tool&#x2F;">
+                      Amber
+                    </a>
+                    <a class="dropdown-item" href="https:&#x2F;&#x2F;www.fpcomplete.com&#x2F;rust&#x2F;">Rust</a>
+                    <a class="dropdown-item" href="https:&#x2F;&#x2F;www.fpcomplete.com&#x2F;haskell&#x2F;">Haskell</a>
+                    <a class="dropdown-item" href="/products/kafka-library">
+                      Kafka Library
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item mb-lg-0 drophover small-dropdown">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button"
+                  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Solutions</a>
+              <div class="dropdown-menu py-0 my-0" aria-labelledby="navbarDropdown">
+                <div class="row">
+                  <div class="col-sm-12">
+                    <a class="dropdown-item" href="/resources/case-studies/improve-time-to-market/">
+                      Improve Time to Market
+                    </a>
+                    <a class="dropdown-item" href="/resources/case-studies/deploy-modern-immutable-infrastructure-improve-time-to-market/">
+                      Deploy Modern Infrastructure
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item mb-lg-0 drophover small-dropdown">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button"
+                  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Resources</a>
+              <div class="dropdown-menu py-0 my-0 bg-blackish" aria-labelledby="navbarDropdown">
+                <div class="row">
+                  <div class="col-sm-12">
+                    <a class="dropdown-item" href="/video-library">Video Library</a>
+                    <a class="dropdown-item" href="https:&#x2F;&#x2F;www.fpcomplete.com&#x2F;resources&#x2F;case-studies&#x2F;">Case Studies</a>
+                    <a class="dropdown-item" href="https:&#x2F;&#x2F;www.fpcomplete.com&#x2F;resources&#x2F;whitepaper&#x2F;">White Papers</a>
+                    <a class="dropdown-item" href="https:&#x2F;&#x2F;www.fpcomplete.com&#x2F;blog&#x2F;">Blog Posts</a>
+                    <!--<a class="dropdown-item" href="#">eBooks</a>
+                    <a class="dropdown-item" href="#">Podcasts</a>-->
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item mb-lg-0 drophover small-dropdown">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button"
+                  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Company</a>
+              <div class="dropdown-menu py-0 my-0 bg-blackish" aria-labelledby="navbarDropdown">
+                <div class="row">
+                  <div class="col-sm-12">
+                    <a class="dropdown-item" href="/about-us/#our-journey">Our Journey</a>
+                    <a class="dropdown-item" href="/about-us/#our-mission">Our Mission</a>
+                    <a class="dropdown-item" href="/about-us/#our-leaders">Our Leadership</a>
+                    <a class="dropdown-item" href="/about-us/#our-engineers">Our Engineers</a>
+                    <a class="dropdown-item" href="/about-us/#our-clients">Our Clients</a>
+                    <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item mb-lg-0">
+              <a class="nav-link nav-cta mx-2" href="/contact-us/">Contact Us</a>
+            </li>
+
+            <li class="nav-item search-nav-item mb-lg-0 onlydesktop">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button"
+                  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-search" aria-hidden="true"></i></a>
+              <div class="dropdown-menu py-0 my-0 search-dropdown" aria-labelledby="navbarDropdown">
+                  <script async src="https://cse.google.com/cse.js?cx=011962549138852701404:zubvejdzvpo"></script>
+                  <div class="gcse-searchbox-only" data-resultsUrl="/search" data-newWindow="true" data-queryParameterName="search">
+              </div>
+            </li>
+
+            <li class="nav-item mb-lg-0 onlydesktop">
+              <a class="nav-link" href="tel:+18586170430"><i class="fa fa-phone" aria-hidden="true"></i></a>
+            </li>
+
+
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+
+
+  
+
+
+
+  
+
+
+
+  
+  
+
+
+<section class="banner-area text-light" style="background:url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat;background-size: cover;background-position:center">
+  <div class="banner-overlay">
+    <div class="container">
+        <h1>The Hidden Dangers of Haskell&#x27;s Ratio Type</h1>
+        
+        <p id="page-description">By Neil Mayhew, April 27, 2022</p>
+        
+    </div>
+  </div>
+</div>
+</section>
+
+
+
+
+  
+   <div class="container my-5 blog-body">
+     
+
+
+  
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b>Share this</b>
+    <a target="_blank" href="https://twitter.com/intent/tweet?text=The%20Hidden%20Dangers%20of%20Haskell%27s%20Ratio%20Type https%3A&#x2F;&#x2F;www.fpcomplete.com&#x2F;blog&#x2F;hidden-dangers-of-ratio&#x2F;" title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;www.fpcomplete.com&#x2F;blog&#x2F;hidden-dangers-of-ratio&#x2F;" title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank" href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;www.fpcomplete.com&#x2F;blog&#x2F;hidden-dangers-of-ratio&#x2F;&amp;title=The%20Hidden%20Dangers%20of%20Haskell%27s%20Ratio%20Type" title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;www.fpcomplete.com&#x2F;blog&#x2F;hidden-dangers-of-ratio&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+     
+       <p>Here's a new Haskell <a href="https://www.destroyallsoftware.com/talks/wat"><strong>WAT?!</strong></a></p>
+<p>Haskell has a type <code>Rational</code> for working with precisely-valued fractional numbers, and it models the mathematical concept of a <a href="https://en.wikipedia.org/wiki/Rational_number">rational number</a>. Although it's relatively slow compared with <code>Double</code>, it doesn't suffer from the rounding that's intrinsic to floating-point arithmetic. It's very useful when writing tests because an exact result can be predicted ahead of time. For example, a computation that should produce zero will produce exactly zero rather than a small value within some range that would have to be determined.</p>
+<p><code>Rational</code> is actually a (monomorphic) specialization of the more general (polymorphic) type <code>Ratio</code> (from <a href="https://hackage.haskell.org/package/base/docs/Data-Ratio.html"><code>Data.Ratio</code></a>). <code>Ratio</code> allows you to specify the underlying type used for the numerator and denominator. For example, to work with rational numbers using <code>Int</code> as the underlying type you can use <code>Ratio Int</code>. For the common case of using <code>Integer</code> as the underlying type, the type synonym <code>Rational</code> is provided:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#859900;">type </span><span style="color:#cb4b16;">Rational </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Ratio Integer
+</span></code></pre>
+<p>It's tempting to use <code>Ratio</code> with a fixed-width type like <code>Int</code> because <code>Int</code> is much faster than <code>Integer</code>. However, let's see what can happen if you do this:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#657b83;">λ</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Int</span><span style="color:#657b83;">
+λ</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Ratio</span><span style="color:#657b83;">
+λ</span><span style="color:#859900;">&gt; let</span><span style="color:#657b83;"> r </span><span style="color:#859900;">= </span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">% </span><span style="color:#6c71c4;">12 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Rational   </span><span style="color:#859900;">in</span><span style="color:#657b83;"> r </span><span style="color:#859900;">-</span><span style="color:#657b83;"> r </span><span style="color:#859900;">== </span><span style="color:#6c71c4;">0
+</span><span style="color:#cb4b16;">True</span><span style="color:#657b83;">
+λ</span><span style="color:#859900;">&gt; let</span><span style="color:#657b83;"> r </span><span style="color:#859900;">= </span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">% </span><span style="color:#6c71c4;">12 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Ratio Int8 </span><span style="color:#859900;">in</span><span style="color:#657b83;"> r </span><span style="color:#859900;">-</span><span style="color:#657b83;"> r </span><span style="color:#859900;">== </span><span style="color:#6c71c4;">0
+</span><span style="color:#cb4b16;">False
+</span></code></pre>
+<p><strong>WAT?!</strong></p>
+<p>Let's see what those subtracted values evaluate to:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#657b83;">λ</span><span style="color:#859900;">&gt; let</span><span style="color:#657b83;"> r </span><span style="color:#859900;">= </span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">% </span><span style="color:#6c71c4;">12 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Rational   </span><span style="color:#859900;">in</span><span style="color:#657b83;"> r </span><span style="color:#859900;">-</span><span style="color:#657b83;"> r
+</span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">% </span><span style="color:#6c71c4;">1</span><span style="color:#657b83;">
+λ</span><span style="color:#859900;">&gt; let</span><span style="color:#657b83;"> r </span><span style="color:#859900;">= </span><span style="color:#6c71c4;">1 </span><span style="color:#859900;">% </span><span style="color:#6c71c4;">12 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Ratio Int8 </span><span style="color:#859900;">in</span><span style="color:#657b83;"> r </span><span style="color:#859900;">-</span><span style="color:#657b83;"> r
+</span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">%</span><span style="color:#657b83;"> (</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1</span><span style="color:#657b83;">)
+</span></code></pre>
+<p>Hmmm, let's see if that <code>Ratio Int8</code> value is considered equal to <code>0</code>:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#657b83;">λ</span><span style="color:#859900;">&gt; let</span><span style="color:#657b83;"> r </span><span style="color:#859900;">= </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">%</span><span style="color:#657b83;"> (</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1</span><span style="color:#657b83;">) </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Ratio Int8 </span><span style="color:#859900;">in</span><span style="color:#657b83;"> r </span><span style="color:#859900;">== </span><span style="color:#6c71c4;">0
+</span><span style="color:#cb4b16;">True
+</span></code></pre>
+<p><strong>WAT?!</strong></p>
+<p>Let's see what those manually-entered values are:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#657b83;">λ</span><span style="color:#859900;">&gt; </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">%</span><span style="color:#657b83;"> (</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1</span><span style="color:#657b83;">) </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Ratio Int8
+</span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">% </span><span style="color:#6c71c4;">1</span><span style="color:#657b83;">
+λ</span><span style="color:#859900;">&gt; </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Ratio Int8
+</span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">% </span><span style="color:#6c71c4;">1
+</span></code></pre>
+<p>OK, so these values really are equal, but why are the values in the subtraction different? The explanation is two-fold.</p>
+<p>First, <code>0 % (-1)</code> is a denormalized state for <code>Ratio</code> and shouldn't occur. (As you've probably suspected, it arises from integer overflow. More on that in a minute.) It's not too surprising, then, that it isn't equal to <code>0</code>.</p>
+<p>But why is it equal to <code>0</code> when we enter it directly? It's because <code>%</code> is a function not a constructor, and it normalizes the signs of the numerator and denominator before constructing the value:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#657b83;">x </span><span style="color:#859900;">%</span><span style="color:#657b83;"> y </span><span style="color:#859900;">=</span><span style="color:#657b83;"> reduce (x * signum y) (abs y)
+</span></code></pre>
+<p>The underlying assumption (the <em>invariant</em>) is that denominators will always be positive.</p>
+<p><code>reduce</code> is a function that reduces the numerator and denominator to their lowest terms, by dividing by the greatest common divisor:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#657b83;">reduce x y </span><span style="color:#859900;">=</span><span style="color:#657b83;"> (x </span><span style="color:#859900;">`quot`</span><span style="color:#657b83;"> d) </span><span style="color:#859900;">:%</span><span style="color:#657b83;"> (y </span><span style="color:#859900;">`quot`</span><span style="color:#657b83;"> d)
+  </span><span style="color:#859900;">where</span><span style="color:#657b83;"> d </span><span style="color:#859900;">=</span><span style="color:#657b83;"> gcd x y
+</span></code></pre>
+<p>Here you can see the constructor that actually creates the values from their components, which is <code>:%</code>. It's not exported from <code>Data.Ratio</code> and the &quot;smart constructor&quot; <code>%</code> is used instead, to ensure that new <code>Ratio</code> values always satisfy the invariant.</p>
+<p>Second, addition and subtraction are implemented without trying to minimize the possibility of integer overflow. For example:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#657b83;">(x </span><span style="color:#859900;">:%</span><span style="color:#657b83;"> y) </span><span style="color:#859900;">-</span><span style="color:#657b83;"> (x&#39; </span><span style="color:#859900;">:%</span><span style="color:#657b83;"> y&#39;) </span><span style="color:#859900;">=</span><span style="color:#657b83;"> reduce (x * y&#39; </span><span style="color:#859900;">-</span><span style="color:#657b83;"> x&#39; * y) (y * y&#39;)
+</span></code></pre>
+<p>If <code>y * y'</code> overflows to a negative value, <code>reduce</code> will not normalize the signs. The result of <code>gcd</code> is always non-negative so the signs don't change and denormalized values are never renormalized. That happens only in <code>%</code> when constructing <code>Ratio</code> values.</p>
+<p>Let's look at what happens in our example:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#657b83;">λ</span><span style="color:#859900;">&gt;</span><span style="color:#657b83;"> x </span><span style="color:#859900;">= </span><span style="color:#6c71c4;">1</span><span style="color:#657b83;">; y </span><span style="color:#859900;">= </span><span style="color:#6c71c4;">12</span><span style="color:#657b83;">; x&#39; </span><span style="color:#859900;">= </span><span style="color:#6c71c4;">1</span><span style="color:#657b83;">; y&#39; </span><span style="color:#859900;">= </span><span style="color:#6c71c4;">12</span><span style="color:#657b83;">
+λ</span><span style="color:#859900;">&gt;</span><span style="color:#657b83;"> x * y&#39; </span><span style="color:#859900;">-</span><span style="color:#657b83;"> x&#39; * y </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int8
+</span><span style="color:#6c71c4;">0</span><span style="color:#657b83;">
+λ</span><span style="color:#859900;">&gt;</span><span style="color:#657b83;"> y * y&#39; </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int8
+</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">112</span><span style="color:#657b83;">
+λ</span><span style="color:#859900;">&gt;</span><span style="color:#657b83;"> gcd </span><span style="color:#6c71c4;">0</span><span style="color:#657b83;"> (</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">112</span><span style="color:#657b83;">)
+</span><span style="color:#6c71c4;">112</span><span style="color:#657b83;">
+λ</span><span style="color:#859900;">&gt; </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">`quot` </span><span style="color:#6c71c4;">112
+0</span><span style="color:#657b83;">
+λ</span><span style="color:#859900;">&gt;</span><span style="color:#657b83;"> (</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">112</span><span style="color:#657b83;">) </span><span style="color:#859900;">`quot` </span><span style="color:#6c71c4;">112
+</span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1
+</span></code></pre>
+<p>The reduced result of <code>1 % 12 - 1 % 12</code> is therefore the denormalized value <code>0 :% (-1)</code> which isn't considered equal to the normalized value <code>0 % 1</code>.</p>
+<p>Even though <code>12</code> is much less than <code>maxBound :: Int8</code>, when squared it results in integer overflow. The implementation of <code>Num</code> for <code>Ratio</code> is <em>not</em> designed to avoid overflows and they can happen very easily with numerators and denominators that are much less than the <code>maxBound</code> for the type.</p>
+<p>The implementation could have used a slightly different approach:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#657b83;">(x </span><span style="color:#859900;">:%</span><span style="color:#657b83;"> y) </span><span style="color:#859900;">-</span><span style="color:#657b83;"> (x&#39; </span><span style="color:#859900;">:%</span><span style="color:#657b83;"> y&#39;) </span><span style="color:#859900;">=</span><span style="color:#657b83;"> reduce (x * z&#39; </span><span style="color:#859900;">-</span><span style="color:#657b83;"> x&#39; * z) (y * z&#39;)
+  </span><span style="color:#859900;">where</span><span style="color:#657b83;"> z </span><span style="color:#859900;">=</span><span style="color:#657b83;"> y </span><span style="color:#859900;">`quot`</span><span style="color:#657b83;"> d
+        z&#39; </span><span style="color:#859900;">=</span><span style="color:#657b83;"> y&#39; </span><span style="color:#859900;">`quot`</span><span style="color:#657b83;"> d
+        d </span><span style="color:#859900;">=</span><span style="color:#657b83;"> gcd y y&#39;
+</span></code></pre>
+<p>However, the use of <code>reduce</code> is still necessary (consider <code>3 % 10 - 2 % 15</code>) so this requires two more divisions and a <code>gcd</code> compared with the actual implementation.</p>
+<p>Using a type as small as <code>Int8</code> might seem a little unrealistic, but the problem can occur with any fixed-width integral type and I used <code>Int8</code> for the illustration because it's easier to understand the problem when working with small values. I originally encountered it when using <code>Ratio Int</code> even though <code>Int</code> has a very large <code>maxBound</code>. I was writing property tests using QuickCheck for some polymorphic arithmetic code that was supposed to produce a zero sum as a result. The test succeeded with <code>Rational</code> and failed with <code>Ratio Int</code> and I couldn't understand why because the random values being generated by the test framework had numerators and denominators far less than <code>maxBound :: Int</code>. However, they <em>were</em> greater than its square root.</p>
+<p>The documentation for <code>Ratio</code> says:</p>
+<blockquote>
+<p>Note that Ratio's instances inherit the deficiencies from the type parameter's.
+For example, <code>Ratio Natural</code>'s <code>Num</code> instance has similar problems to <code>Natural</code>'s.</p>
+</blockquote>
+<p>However, that doesn't really prepare you for what might happen with other type parameters! The moral of this story is that <code>Ratio</code> isn't much use on its own and you should always use <code>Rational</code> unless you <em>really</em> understand what you're getting into.</p>
+<h2 id="further-reading">Further reading</h2>
+<p>Like that blog post? Check out the <a href="https://www.fpcomplete.com/haskell/">Haskell section</a> of our site with tutorials and other blog posts. You can also check out all <a href="/tags/haskell/">Haskell tagged blog posts</a>.</p>
+<p><strong>We're hiring.</strong> Interested in working with our team on solving these kinds of WAT issues? Check out our <a href="https://www.fpcomplete.com/jobs/">jobs page</a> for more information.</p>
+
+     
+
+    <p class="text-center" style="border: 1px solid #000;border-radius:1rem;padding:1rem;background-color:#f1f1f1">
+      <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/" target="_blank">
+        Subscribe to our blog via email
+      </a>
+      <br>
+      <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts, and can unsubscribe any time.</small>
+    </p>
+
+     <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, DevSecOps or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+     
+
+
+  
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b>Share this</b>
+    <a target="_blank" href="https://twitter.com/intent/tweet?text=The%20Hidden%20Dangers%20of%20Haskell%27s%20Ratio%20Type https%3A&#x2F;&#x2F;www.fpcomplete.com&#x2F;blog&#x2F;hidden-dangers-of-ratio&#x2F;" title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;www.fpcomplete.com&#x2F;blog&#x2F;hidden-dangers-of-ratio&#x2F;" title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank" href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;www.fpcomplete.com&#x2F;blog&#x2F;hidden-dangers-of-ratio&#x2F;&amp;title=The%20Hidden%20Dangers%20of%20Haskell%27s%20Ratio%20Type" title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;www.fpcomplete.com&#x2F;blog&#x2F;hidden-dangers-of-ratio&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+   </div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-lg text-center logo-holder">
+          <img alt="Fp Complete White logo" class="footer-logo" src="/images/FPC_Logo_Straight_coral-white.png">
+          <div class="">© FP Complete. All Rights Reserved.</div>
+          <div><a href="/privacy">Privacy Policy</a></div>
+        </div>
+        <div class="col-sm">
+          <h3 class="font-weight-normal pt-4 pb-3 dark-coral-text">Contact Us</h3> 
+           <u>Corporate Office</u>
+          <p>10130 Perimeter Parkway
+          <br>Suite 200
+          <br>Charlotte, NC 28216</p>
+          <a href="tel:+18586170430">+1 858-617-0430</a>
+          <br><br>
+          <a href="mailto:sales@fpcomplete.com">sales@fpcomplete.com</a>
+          </p>
+        </div>
+        <div class="col-sm">
+          <ul class="list-unstyled">
+            <li class="pt-4 pb-3"><h3 class="font-weight-normal dark-coral-text">Services</h3></li>
+            <li>
+              <ul class="list-unstyled">
+                <li><a href="https:&#x2F;&#x2F;www.fpcomplete.com&#x2F;services&#x2F;">Overview</a></li>
+                <li><a href="https:&#x2F;&#x2F;www.fpcomplete.com&#x2F;custom&#x2F;">Next Generation Software Engineering</a></li>
+                <li><a href="https:&#x2F;&#x2F;www.fpcomplete.com&#x2F;devsecops&#x2F;">DevSecOps</a></li>
+                <li><a href="https:&#x2F;&#x2F;www.fpcomplete.com&#x2F;blockchain&#x2F;">Blockchain & Smart Contracts</a></li>
+                <li><a href="/services/#training">Training</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div> 
+        <div class="col-sm">
+          <ul class="list-unstyled">
+            <li class="pt-4 pb-3"><h3 class="font-weight-normal dark-coral-text">Tools</h3></li>
+            <li>
+              <ul class="list-unstyled">
+                <li><a href="/products/kube360">Kube360®</a></li>
+                <li><a href="/products/zehut">Zehut</a></li>
+                <li>
+                  <a href="https:&#x2F;&#x2F;www.fpcomplete.com&#x2F;blog&#x2F;announcing-amber-ci-secret-tool&#x2F;">
+                    Amber
+                  </a>
+                </li> 
+                <li><a href="/rust">Rust</a></li>
+                <li><a href="/haskell">Haskell</a></li>
+                <li><a href="/products/kafka-library">Kafka Library</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+        <div class="col-sm">
+          <ul class="list-unstyled">
+            <li class="pt-4 pb-3"><h3 class="font-weight-normal dark-coral-text">Solutions</h3></li>
+            <li>
+              <ul class="list-unstyled">
+                <li><a target="_blank" href="/resources/case-studies/improve-time-to-market/">Improve Time to Market</a></li>
+                <li><a target="_blank" href="/resources/case-studies/deploy-modern-immutable-infrastructure-improve-time-to-market/">Deploy Modern Infrastructure</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+        <div class="col-sm">
+          <ul class="list-unstyled">
+            <li class="pt-4 pb-3"><h3 class="font-weight-normal dark-coral-text">Resources</h3></li>
+            <li>
+              <ul class="list-unstyled">
+                <li><a target="_blank" href="/video-library/">Video Library</a></li>
+                <li><a href="https:&#x2F;&#x2F;www.fpcomplete.com&#x2F;resources&#x2F;case-studies&#x2F;">Case Studies</a></li>
+                <li><a href="https:&#x2F;&#x2F;www.fpcomplete.com&#x2F;resources&#x2F;whitepaper&#x2F;">White Papers</a></li>
+                <li><a href="https:&#x2F;&#x2F;www.fpcomplete.com&#x2F;blog&#x2F;">Blog Posts</a></li>
+                <!--<li><a href="#">eBooks</a></li>
+                <li><a href="#">Podcasts</a></li>-->
+              </ul>
+            </li>
+          </ul>
+        </div>
+        <div class="col-sm">
+          <ul class="list-unstyled">
+            <li class="pt-4 pb-3"><h3 class="font-weight-normal dark-coral-text">Our Company</h3></li>
+            <li>
+              <ul class="list-unstyled">
+                <li><a href="/about-us/#our-journey">Our Journey</a></li>
+                <li><a href="/about-us/#our-mission">Our Mission</a></li>
+                <li><a href="/about-us/#our-leaders">Our Leadership</a></li>
+                <li><a href="/about-us/#our-engineers">Our Engineers</a></li>
+                <li><a href="/about-us/#our-clients">Our Clients</a></li>
+                <li><a href="/jobs/">Jobs</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+  
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+</html>

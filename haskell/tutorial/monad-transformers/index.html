@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Monad Transformers</title>
+  <meta property="og:title"        content="Monad Transformers">
+  
+  
+  
+  
+  
+  
+  <meta property="og:url"          content="https:&#x2F;&#x2F;www.fpcomplete.com&#x2F;haskell&#x2F;tutorial&#x2F;monad-transformers&#x2F;">
+  
+  <meta property="og:locale"       content="en_US">
+  <meta property="og:type"         content="website">
+  <meta property="og:site_name"    content="FP Complete">
+  <meta property="twitter:site"    content="@FPComplete">
+
+  
+  <meta property="og:image"        content="https:&#x2F;&#x2F;www.fpcomplete.com/images/footer-logo.png">
+  <meta property="og:image:width"  content="177">
+  <meta property="og:image:height" content="87">
+  
+
+  <meta property="twitter:card"    content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpcomplete-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpcomplete-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpcomplete-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpcomplete-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <script async src="https://use.fontawesome.com/e0443fd3c9.js"></script>
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/fonts/calibre/stylesheet.css" rel="stylesheet">
+  <link href="/css/fonts/exo/stylesheet.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+
+  
+  
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+ 
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+ 
+  
+  
+</head>
+
+<body class="">
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+
+        <a class="navbar-brand ml-3" href="/">
+          <img class="main-logo" src="/images/logo-straight.png" alt="FP Complete">
+        </a>
+
+        <span class="onlymobile mobile-nav-icon">
+          <a href="tel:1(858)617-0430"><i class="fa fa-phone" aria-hidden="true"></i></a>
+        </span>
+        
+        <span class="search-nav-item mb-lg-0 onlymobile mobile-nav-icon">
+          <a href="#" id="navbarDropdown" role="button"
+              data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-search" aria-hidden="true"></i></a>
+          <div class="dropdown-menu py-0 my-0 search-dropdown" aria-labelledby="navbarDropdown">
+              <script async src="https://cse.google.com/cse.js?cx=011962549138852701404:zubvejdzvpo"></script>
+              <div class="gcse-searchbox-only" data-resultsUrl="/search" data-newWindow="true" data-queryParameterName="search"></div>
+          </div>
+        </span>
+
+        <button
+            class="navbar-toggler" type="button"
+            data-toggle="collapse"
+            data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+            aria-expanded="false"
+            aria-label="Toggle navigation">
+          <i class="fa fa-bars"></i>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav ml-auto mt-3">
+
+            <li class="nav-item mb-lg-0 drophover small-dropdown">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button"
+                  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Our Products</a>
+              <div class="dropdown-menu py-0 my-0" aria-labelledby="navbarDropdown">
+                <div class="row">
+                  <div class="col-sm-12">
+                    <a class="dropdown-item" href="/products/kube360">
+                      Kube360®
+                    </a>
+                    <a class="dropdown-item" href="/products/sekure360">
+                      SeKure360
+                    </a>
+                    <a class="dropdown-item" href="/products/konsole360">
+                      Konsole360
+                    </a>
+                    <a class="dropdown-item" href="/products/idiom">
+                      Idiom
+                    </a>
+                    <a class="dropdown-item" href="/products/kafka-library">
+                      Kafka Library
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item mb-lg-0 drophover small-dropdown">
+              <a class="nav-link" href="/services/" id="navbarDropdown" role="button"
+                  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Our Services</a>
+              <div class="dropdown-menu py-0 my-0 bg-blackish" aria-labelledby="navbarDropdown">
+                <div class="row">
+                  <div class="col-sm-12">
+                    <a class="dropdown-item" href="/services/#devops">Dev(Sec)Ops</a>
+                    <a class="dropdown-item" href="/services/#custom">Custom Engineering & Software Dev</a>
+                    <a class="dropdown-item" href="/services/#containerization">Containerization</a>
+                    <a class="dropdown-item" href="/services/#automation">Technology Process Automation</a>
+                    <a class="dropdown-item" href="/services/#techcost">Technology Cost Optimization</a>
+                    <a class="dropdown-item" href="/services/#managedit">Managed IT Services & Training</a>
+                    <a class="dropdown-item" href="/services/#blockchain">Blockchain, Crypto, Distr. Ledgers</a>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item mb-lg-0 drophover small-dropdown">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button"
+                  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Our Resources</a>
+              <div class="dropdown-menu py-0 my-0 bg-blackish" aria-labelledby="navbarDropdown">
+                <div class="row">
+                  <div class="col-sm-12">
+                    <a class="dropdown-item" href="/devops/">DevOps (Best Practices)</a>
+                    <a class="dropdown-item" href="/blog/">Blog Posts</a>
+                    <a class="dropdown-item" href="/resources/case-studies/">Case Studies</a>
+                    <a class="dropdown-item" href="/resources/whitepaper/">White Papers</a>
+                    <!--<a class="dropdown-item" href="#">eBooks</a>
+                    <a class="dropdown-item" href="#">Podcasts</a>-->
+                    <a class="dropdown-item" href="/rust/">Rust</a>
+                    <a class="dropdown-item" href="/haskell/">Haskell</a>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item mb-lg-0 drophover small-dropdown">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button"
+                  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Our Company</a>
+              <div class="dropdown-menu py-0 my-0 bg-blackish" aria-labelledby="navbarDropdown">
+                <div class="row">
+                  <div class="col-sm-12">
+                    <a class="dropdown-item" href="/about-us/#our-journey">Our Journey</a>
+                    <a class="dropdown-item" href="/about-us/#our-mission">Our Mission</a>
+                    <a class="dropdown-item" href="/about-us/#our-leaders">Our Leadership</a>
+                    <a class="dropdown-item" href="/about-us/#our-engineers">Our Engineers</a>
+                    <a class="dropdown-item" href="/about-us/#our-clients">Our Clients</a>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item mb-lg-0">
+              <a class="nav-link nav-cta mx-2" href="/contact-us/">Contact Us</a>
+            </li>
+
+            <li class="nav-item search-nav-item mb-lg-0 onlydesktop">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button"
+                  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-search" aria-hidden="true"></i></a>
+              <div class="dropdown-menu py-0 my-0 search-dropdown" aria-labelledby="navbarDropdown">
+                  <script async src="https://cse.google.com/cse.js?cx=011962549138852701404:zubvejdzvpo"></script>
+                  <div class="gcse-searchbox-only" data-resultsUrl="/search" data-newWindow="true" data-queryParameterName="search">
+              </div>
+            </li>
+
+            <li class="nav-item mb-lg-0 onlydesktop">
+              <a class="nav-link" href="tel:1(858)617-0430"><i class="fa fa-phone" aria-hidden="true"></i></a>
+            </li>
+
+
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+
+
+  <section class="top-sized text-light" style="background:url( /images/&#x2F;banner&#x2F;Haskell_head_new2_overlay.png );"><div class="pb-5">
+    <div class="container">
+    <div class="row">
+      <div class="col-sm-12">
+          <h1 class="display-4">Monad Transformers
+          </h1></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+  
+<div class="container py-3">
+  <p>Monads are a convenient way to to sequence computation with
+effects. Different monads can provide different kinds of effects:</p>
+<ul>
+<li><code>IO</code> allows world-changing side effects</li>
+<li><code>Identity</code> is a &quot;fake&quot; monad: it allows no side effects</li>
+<li><code>Reader</code> lets you access some environment value</li>
+<li><code>State</code> mocks a mutable variable</li>
+<li><code>Maybe</code> allows for early exit</li>
+<li><code>Either</code> allows for early exit with a value</li>
+</ul>
+<p>This has nothing to do with a monad transformer, just review. Let's
+talk about something totally different.</p>
+<h2 id="folds-with-early-termination">Folds with early termination</h2>
+<p>The typical left fold we've seen requires you to consume the entire
+list. However, in some cases, we may want to stop computation
+early. As a made up example: let's write a <code>sum</code> function that adds up
+all numbers until the first negative value:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> BangPatterns #-}
+sumTillNegative </span><span style="color:#859900;">::</span><span style="color:#657b83;"> [</span><span style="color:#268bd2;">Int</span><span style="color:#657b83;">] </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int
+</span><span style="color:#657b83;">sumTillNegative </span><span style="color:#859900;">=</span><span style="color:#657b83;">
+    go </span><span style="color:#6c71c4;">0
+  </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+    go </span><span style="color:#859900;">!</span><span style="color:#657b83;">total rest </span><span style="color:#859900;">=
+      case</span><span style="color:#657b83;"> rest </span><span style="color:#859900;">of
+        </span><span style="color:#b58900;">[] </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> total
+        x</span><span style="color:#859900;">:</span><span style="color:#657b83;">xs
+          </span><span style="color:#859900;">|</span><span style="color:#657b83;"> x </span><span style="color:#859900;">&lt; </span><span style="color:#6c71c4;">0     </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> total
+          </span><span style="color:#859900;">|</span><span style="color:#657b83;"> otherwise </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> go (total </span><span style="color:#859900;">+</span><span style="color:#657b83;"> x) xs
+
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">main </span><span style="color:#859900;">=</span><span style="color:#657b83;"> print </span><span style="color:#859900;">$</span><span style="color:#657b83;"> sumTillNegative [</span><span style="color:#6c71c4;">1</span><span style="color:#657b83;">, </span><span style="color:#6c71c4;">2</span><span style="color:#657b83;">, </span><span style="color:#6c71c4;">3</span><span style="color:#657b83;">, </span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1</span><span style="color:#657b83;">, </span><span style="color:#6c71c4;">4</span><span style="color:#657b83;">]
+</span></code></pre>
+<p>This works, but it violates all of our engineering principles of non
+code duplication. If we had to write a <code>productTillNegative</code>, the body
+would be almost exactly the same. We should instead factor our some
+helper function.</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> BangPatterns #-}
+foldTerminate </span><span style="color:#859900;">::</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">b </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Either b b</span><span style="color:#657b83;">) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">b </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> [</span><span style="color:#268bd2;">a</span><span style="color:#657b83;">] </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">b
+</span><span style="color:#657b83;">foldTerminate f </span><span style="color:#859900;">=</span><span style="color:#657b83;">
+    go
+  </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+    go </span><span style="color:#859900;">!</span><span style="color:#657b83;">accum rest </span><span style="color:#859900;">=
+      case</span><span style="color:#657b83;"> rest </span><span style="color:#859900;">of
+        </span><span style="color:#b58900;">[] </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> accum
+        x</span><span style="color:#859900;">:</span><span style="color:#657b83;">xs </span><span style="color:#859900;">-&gt;
+          case</span><span style="color:#657b83;"> f accum x </span><span style="color:#859900;">of
+            </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> accum&#39; </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> accum&#39; </span><span style="color:#93a1a1;">-- early termination
+            </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> accum&#39; </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> go accum&#39; xs
+
+</span><span style="color:#b58900;">sumTillNegative </span><span style="color:#859900;">::</span><span style="color:#657b83;"> [</span><span style="color:#268bd2;">Int</span><span style="color:#657b83;">] </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int
+</span><span style="color:#657b83;">sumTillNegative </span><span style="color:#859900;">=</span><span style="color:#657b83;">
+    foldTerminate go </span><span style="color:#6c71c4;">0
+  </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+    go total x
+      </span><span style="color:#859900;">|</span><span style="color:#657b83;"> x </span><span style="color:#859900;">&lt; </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> total
+      </span><span style="color:#859900;">|</span><span style="color:#657b83;"> otherwise </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> (total </span><span style="color:#859900;">+</span><span style="color:#657b83;"> x)
+
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">main </span><span style="color:#859900;">=</span><span style="color:#657b83;"> print </span><span style="color:#859900;">$</span><span style="color:#657b83;"> sumTillNegative [</span><span style="color:#6c71c4;">1</span><span style="color:#657b83;">, </span><span style="color:#6c71c4;">2</span><span style="color:#657b83;">, </span><span style="color:#6c71c4;">3</span><span style="color:#657b83;">, </span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1</span><span style="color:#657b83;">, </span><span style="color:#6c71c4;">4</span><span style="color:#657b83;">]
+</span></code></pre><h2 id="using-either-as-a-monad">Using Either as a monad</h2>
+<p>Our implementation internally uses the <code>Either</code> data type, and does
+explicit pattern matching on it. But we can take advantage of
+<code>Either</code>'s monad instance, using <code>do</code>-notation, and come up with
+something arguably slicker:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">foldTerminate </span><span style="color:#859900;">::</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">b </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Either b b</span><span style="color:#657b83;">) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">b </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> [</span><span style="color:#268bd2;">a</span><span style="color:#657b83;">] </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">b
+</span><span style="color:#657b83;">foldTerminate f accum0 list0 </span><span style="color:#859900;">=</span><span style="color:#657b83;">
+    either id id (go accum0 list0)
+  </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+    go </span><span style="color:#859900;">!</span><span style="color:#657b83;">accum rest </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+      (x, xs) </span><span style="color:#859900;">&lt;-
+        case</span><span style="color:#657b83;"> rest </span><span style="color:#859900;">of
+          </span><span style="color:#b58900;">[] </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> accum
+          x</span><span style="color:#859900;">:</span><span style="color:#657b83;">xs </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> (x, xs)
+      accum&#39; </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> f accum x
+      go accum&#39; xs
+</span></code></pre>
+<p>We no longer have to explicitly deal with an exit case: binding with a
+<code>Left</code> value automatically terminates the loop. Cool!</p>
+<h2 id="how-about-state">How about State?</h2>
+<p>Previously, we saw that you could implement a left fold using a
+<code>State</code> monad. This was the non-terminating variety of left fold. It
+looked like this:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">foldState </span><span style="color:#859900;">::</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">b </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">b</span><span style="color:#657b83;">) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">b </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> [</span><span style="color:#268bd2;">a</span><span style="color:#657b83;">] </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">b
+</span><span style="color:#657b83;">foldState f accum0 list0 </span><span style="color:#859900;">=</span><span style="color:#657b83;">
+    execState (mapM_ go list0) accum0
+  </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+    go x </span><span style="color:#859900;">=</span><span style="color:#657b83;"> modify&#39; (</span><span style="color:#859900;">\</span><span style="color:#657b83;">accum </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> f accum x)
+</span></code></pre>
+<p>We've seen a way to clean up a left fold using <code>State</code>, and a way to
+clean up terminating loop with <code>Either</code>. Can we do both at the same
+time? Try as we might, we won't be able to come up with a way to do
+this elegantly. The two monads simply don't compose nicely together.</p>
+<h2 id="the-stateeither-monad">The StateEither monad</h2>
+<p>We can fix this problem though! Let's define a new monad,
+<code>StateEither</code>, which combines the functionality of both <code>State</code> and
+<code>Either</code> together. We can define the type pretty easily:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">StateEither</span><span style="color:#657b83;"> s e a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">StateEither</span><span style="color:#657b83;">
+  { runStateEither </span><span style="color:#859900;">::</span><span style="color:#657b83;"> s </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> (s, </span><span style="color:#cb4b16;">Either</span><span style="color:#657b83;"> e a)
+  }
+  </span><span style="color:#859900;">deriving </span><span style="color:#cb4b16;">Functor
+</span></code></pre>
+<p>This says we take an initial state value, and return an updated state
+value, plus an <code>Either</code> result value. The expected functionality is
+that, when the result is <code>Left</code>, we stop processing. But when the
+result is <code>Right</code>, we continue. Let's write our <code>Applicative</code> and
+<code>Monad</code> instances:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#859900;">instance </span><span style="color:#268bd2;">Applicative</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">StateEither s e</span><span style="color:#657b83;">) </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  pure a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">StateEither</span><span style="color:#657b83;"> (</span><span style="color:#859900;">\</span><span style="color:#657b83;">s </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> (s, </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> a))
+  </span><span style="color:#cb4b16;">StateEither</span><span style="color:#657b83;"> ff </span><span style="color:#859900;">&lt;</span><span style="color:#657b83;">*</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">StateEither</span><span style="color:#657b83;"> fa </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">StateEither </span><span style="color:#859900;">$ \</span><span style="color:#657b83;">s0 </span><span style="color:#859900;">-&gt;
+    case</span><span style="color:#657b83;"> ff s0 </span><span style="color:#859900;">of</span><span style="color:#657b83;">
+      (s1, </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e) </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> (s1, </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e)
+      (s1, </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> f) </span><span style="color:#859900;">-&gt;
+        case</span><span style="color:#657b83;"> fa s1 </span><span style="color:#859900;">of</span><span style="color:#657b83;">
+          (s2, </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e) </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> (s2, </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e)
+          (s2, </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> a) </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> (s2, </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> (f a))
+
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Monad</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">StateEither s e</span><span style="color:#657b83;">) </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  return </span><span style="color:#859900;">=</span><span style="color:#657b83;"> pure
+  </span><span style="color:#cb4b16;">StateEither</span><span style="color:#657b83;"> f </span><span style="color:#859900;">&gt;&gt;=</span><span style="color:#657b83;"> g </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">StateEither </span><span style="color:#859900;">$ \</span><span style="color:#657b83;">s0 </span><span style="color:#859900;">-&gt;
+    case</span><span style="color:#657b83;"> f s0 </span><span style="color:#859900;">of</span><span style="color:#657b83;">
+      (s1, </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e) </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> (s1, </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e)
+      (s1, </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> x) </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> runStateEither (g x) s1
+</span></code></pre>
+<p>Plus some helper functions we were using from <code>State</code> before:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">execStateEither </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">StateEither s e a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">s </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">s
+</span><span style="color:#657b83;">execStateEither m </span><span style="color:#859900;">=</span><span style="color:#657b83;"> fst </span><span style="color:#859900;">.</span><span style="color:#657b83;"> runStateEither m
+
+</span><span style="color:#b58900;">modify&#39; </span><span style="color:#859900;">::</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">s </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Either e s</span><span style="color:#657b83;">) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">StateEither s e </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">modify&#39; f </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">StateEither </span><span style="color:#859900;">$ \</span><span style="color:#657b83;">s0 </span><span style="color:#859900;">-&gt;
+  case</span><span style="color:#657b83;"> f s0 </span><span style="color:#859900;">of
+    </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> (s0, </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e)
+    </span><span style="color:#cb4b16;">Right </span><span style="color:#859900;">!</span><span style="color:#657b83;">s1 </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> (s1, </span><span style="color:#cb4b16;">Right </span><span style="color:#b58900;">()</span><span style="color:#657b83;">)
+</span></code></pre>
+<p>With all of tha work in place, it becomes almost trivial to write our
+terminating fold:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">foldTerminate </span><span style="color:#859900;">::</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">b </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Either b b</span><span style="color:#657b83;">) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">b </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> [</span><span style="color:#268bd2;">a</span><span style="color:#657b83;">] </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">b
+</span><span style="color:#657b83;">foldTerminate f accum0 list0 </span><span style="color:#859900;">=</span><span style="color:#657b83;">
+    execStateEither (mapM_ go list0) accum0
+  </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+    go x </span><span style="color:#859900;">=</span><span style="color:#657b83;"> modify&#39; (</span><span style="color:#859900;">\</span><span style="color:#657b83;">accum </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> f accum x)
+</span></code></pre>
+<p>We've established three things:</p>
+<ul>
+<li>Monads can make it easier to implement some functions</li>
+<li>Composing monads isn't possible</li>
+<li>But manually defining the compositions <em>is</em> possible</li>
+</ul>
+<p>Besides the tediousness of it all, this works great. Homework
+exercise: go implement all possible combinations of:</p>
+<ul>
+<li><code>Reader</code></li>
+<li><code>State</code></li>
+<li><code>Either</code></li>
+<li><code>IO</code></li>
+</ul>
+<p>Have fun :)</p>
+<p>(Just kidding.)</p>
+<h2 id="reformulating-stateeither">Reformulating <code>StateEither</code></h2>
+<p>Let's play a little rewrite game. Remember, Haskell is a pure
+language, so you can always substitue expressions. Turns out you can
+also play this game at the type level, using type synonyms. Let's
+start with our original type, stripped down a bit:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">StateEither</span><span style="color:#657b83;"> s e a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">StateEither</span><span style="color:#657b83;"> (s </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> (s, </span><span style="color:#cb4b16;">Either</span><span style="color:#657b83;"> e a))
+</span></code></pre>
+<p>Let's also remember the type of <code>State</code>:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">State</span><span style="color:#657b83;"> s a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">State</span><span style="color:#657b83;"> (s </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> (s, a))
+</span></code></pre>
+<p>If you stare at those a bit, you'll see that they're <em>almost</em>
+identical, except we replace <code>a</code> with <code>Either e a</code> in
+<code>StateEither</code>. In fact, we can get away with this small rewrite:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">StateEither</span><span style="color:#657b83;"> s e a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">StateEither</span><span style="color:#657b83;"> (</span><span style="color:#cb4b16;">State</span><span style="color:#657b83;"> s (</span><span style="color:#cb4b16;">Either</span><span style="color:#657b83;"> e a))
+</span></code></pre>
+<p>You should convince yourself that this definition is <em>isomorphic</em> to
+the previous definition of <code>StateEither</code>. Now we're going to
+reimplement our previous example, but we're going to get to take a few
+shortcuts. Let's start with the data type and the <code>Applicative</code>
+instance:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">StateEither</span><span style="color:#657b83;"> s e a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">StateEither</span><span style="color:#657b83;">
+  { unStateEither </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">State</span><span style="color:#657b83;"> s (</span><span style="color:#cb4b16;">Either</span><span style="color:#657b83;"> e a)
+  }
+  </span><span style="color:#859900;">deriving </span><span style="color:#cb4b16;">Functor
+
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Applicative</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">StateEither s e</span><span style="color:#657b83;">) </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  pure a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">StateEither </span><span style="color:#859900;">$</span><span style="color:#657b83;"> return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> a
+  </span><span style="color:#cb4b16;">StateEither</span><span style="color:#657b83;"> ff </span><span style="color:#859900;">&lt;</span><span style="color:#657b83;">*</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">StateEither</span><span style="color:#657b83;"> fa </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">StateEither </span><span style="color:#859900;">$ do</span><span style="color:#657b83;">
+    ef </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> ff
+    </span><span style="color:#859900;">case</span><span style="color:#657b83;"> ef </span><span style="color:#859900;">of
+      </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e
+      </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> f </span><span style="color:#859900;">-&gt; do</span><span style="color:#657b83;">
+        ea </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> fa
+        </span><span style="color:#859900;">case</span><span style="color:#657b83;"> ea </span><span style="color:#859900;">of
+          </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e
+          </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> a </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Right </span><span style="color:#859900;">$</span><span style="color:#657b83;"> f a
+</span></code></pre>
+<p>Notice how we <em>never touch the state value</em>. Instead, we reuse the
+underlying <code>State</code>'s <code>Monad</code> instance via <code>do</code>-notation and <code>return</code>
+to implement our <code>Applicative</code> instance. All we worry about here is
+implementing the <code>Either</code> shortcut logic. Let's see if this translates
+into the <code>Monad</code> instance as well:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#859900;">instance </span><span style="color:#268bd2;">Monad</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">StateEither s e</span><span style="color:#657b83;">) </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  return </span><span style="color:#859900;">=</span><span style="color:#657b83;"> pure
+  </span><span style="color:#cb4b16;">StateEither</span><span style="color:#657b83;"> f </span><span style="color:#859900;">&gt;&gt;=</span><span style="color:#657b83;"> g </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">StateEither </span><span style="color:#859900;">$ do</span><span style="color:#657b83;">
+    ex </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> f
+    </span><span style="color:#859900;">case</span><span style="color:#657b83;"> ex </span><span style="color:#859900;">of
+      </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e
+      </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> x </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> unStateEither </span><span style="color:#859900;">$</span><span style="color:#657b83;"> g x
+</span></code></pre>
+<p>Sure enough it does! Finally, we get some help when implementing our
+<code>execStateEither</code> and <code>modify'</code> helper functions:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">execStateEither </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">StateEither s e a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">s </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">s
+</span><span style="color:#657b83;">execStateEither (</span><span style="color:#cb4b16;">StateEither</span><span style="color:#657b83;"> m) s </span><span style="color:#859900;">=</span><span style="color:#657b83;"> execState m s
+
+</span><span style="color:#b58900;">modify&#39; </span><span style="color:#859900;">::</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">s </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Either e s</span><span style="color:#657b83;">) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">StateEither s e </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">modify&#39; f </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">StateEither </span><span style="color:#859900;">$ do</span><span style="color:#657b83;">
+  s0 </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> get
+  </span><span style="color:#859900;">case</span><span style="color:#657b83;"> f s0 </span><span style="color:#859900;">of
+    </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e
+    </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> s1 </span><span style="color:#859900;">-&gt; do</span><span style="color:#657b83;">
+      put </span><span style="color:#859900;">$!</span><span style="color:#657b83;"> s1
+      return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Right </span><span style="color:#b58900;">()
+</span></code></pre>
+<p>And our program works exactly as it did before. Sweet.</p>
+<h2 id="just-state">Just State?</h2>
+<p>I'll repeat: in our instances above, we never made direct reference to
+the fact that we were using the <code>State</code> monad in particular. We just
+needed <em>some</em> monad instance. And then our <code>StateEither</code> thing comes
+along and transforms it into something with a bit more power: the
+ability to short-circuit. So... we have a monad... and then we
+transform it. I wonder what we'll call this thing...</p>
+<p>I know! A monad transformer! We just invented something which
+transforms an existing monad (<code>State</code> for now) with the <code>Either</code>
+monad's functionality.</p>
+<p>Again, let's look at our data type:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">StateEither</span><span style="color:#657b83;"> s e a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">StateEither</span><span style="color:#657b83;">
+  (</span><span style="color:#cb4b16;">State</span><span style="color:#657b83;"> s (</span><span style="color:#cb4b16;">Either</span><span style="color:#657b83;"> e a))
+</span></code></pre>
+<p>And instead of hardcoding <code>State</code> and <code>s</code>, let's take a type variable,
+called <code>m</code>, to represent whatever monad we're transforming:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">EitherT</span><span style="color:#657b83;"> e m a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">EitherT</span><span style="color:#657b83;">
+  m (</span><span style="color:#cb4b16;">Either</span><span style="color:#657b83;"> e a)
+</span></code></pre>
+<p>Convince yourself that, if you replace <code>m</code> with <code>State s</code>, these two
+types are isomorphic. We've called this <code>EitherT</code> because it's the
+either transformer. (NOTE: for hysterical raisins, in the actual
+libraries this is called <code>ExceptT</code>, which is a terrible name. Sorry
+about that.)</p>
+<p>We can still keep our special helper function <code>execStateEither</code>:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">execStateEither </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">EitherT e</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">State s</span><span style="color:#657b83;">) </span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">s </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">s
+</span><span style="color:#657b83;">execStateEither (</span><span style="color:#cb4b16;">EitherT</span><span style="color:#657b83;"> m) s </span><span style="color:#859900;">=</span><span style="color:#657b83;"> execState m s
+</span></code></pre>
+<p>We can also implement our <code>modify'</code> function:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">modify&#39; </span><span style="color:#859900;">::</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">s </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Either e s</span><span style="color:#657b83;">) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">EitherT e</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">State s</span><span style="color:#657b83;">) </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">modify&#39; f </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">EitherT </span><span style="color:#859900;">$ do</span><span style="color:#657b83;">
+  s0 </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> get
+  </span><span style="color:#859900;">case</span><span style="color:#657b83;"> f s0 </span><span style="color:#859900;">of
+    </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e
+    </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> s1 </span><span style="color:#859900;">-&gt; do</span><span style="color:#657b83;">
+      put </span><span style="color:#859900;">$!</span><span style="color:#657b83;"> s1
+      return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Right </span><span style="color:#b58900;">()
+</span></code></pre>
+<p><strong>NOTE</strong> When we get to mtl, we'll see that we didn't actual need to
+write this function, but never mind that for now.</p>
+<p>And now, besides changing the type name, our <code>Applicative</code> and <code>Monad</code>
+instances are the same as before, thanks to only using the <code>Monad</code>
+interface of <code>State</code>.</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#859900;">instance </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Applicative</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">EitherT e m</span><span style="color:#657b83;">) </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  pure a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">EitherT </span><span style="color:#859900;">$</span><span style="color:#657b83;"> return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> a
+  </span><span style="color:#cb4b16;">EitherT</span><span style="color:#657b83;"> ff </span><span style="color:#859900;">&lt;</span><span style="color:#657b83;">*</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">EitherT</span><span style="color:#657b83;"> fa </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">EitherT </span><span style="color:#859900;">$ do</span><span style="color:#657b83;">
+    ef </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> ff
+    </span><span style="color:#859900;">case</span><span style="color:#657b83;"> ef </span><span style="color:#859900;">of
+      </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e
+      </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> f </span><span style="color:#859900;">-&gt; do</span><span style="color:#657b83;">
+        ea </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> fa
+        </span><span style="color:#859900;">case</span><span style="color:#657b83;"> ea </span><span style="color:#859900;">of
+          </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e
+          </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> a </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Right </span><span style="color:#859900;">$</span><span style="color:#657b83;"> f a
+
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Monad</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">EitherT e m</span><span style="color:#657b83;">) </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  return </span><span style="color:#859900;">=</span><span style="color:#657b83;"> pure
+  </span><span style="color:#cb4b16;">EitherT</span><span style="color:#657b83;"> f </span><span style="color:#859900;">&gt;&gt;=</span><span style="color:#657b83;"> g </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">EitherT </span><span style="color:#859900;">$ do</span><span style="color:#657b83;">
+    ex </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> f
+    </span><span style="color:#859900;">case</span><span style="color:#657b83;"> ex </span><span style="color:#859900;">of
+      </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e
+      </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> x </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> runEitherT </span><span style="color:#859900;">$</span><span style="color:#657b83;"> g x
+</span></code></pre>
+<p>In <code>EitherT e m a</code>, we call the <code>m</code> parameter the <em>base monad</em>. For
+very good reasons we'll get to later, we always make the base monad
+type variable (<code>m</code>) the second-to-last variable in defining our
+type. We consider <code>EitherT</code> a transformer which is layered on top of
+the base monad.</p>
+<h2 id="helper-functions">Helper functions</h2>
+<p>Our previous implementation of <code>modify'</code> involved explicitly wrapping
+things up with the <code>EitherT</code> data constructor. That's not a pleasant
+way of interacting with transformers. Instead, we'll want to provide
+helper functions. There are two things we need to be able to do for
+implementing <code>modify'</code>:</p>
+<ul>
+<li>Perform actions from the base monad, namely the <code>State</code> monad in
+this case. We call this <em>lifting</em> the action.</li>
+<li>Cause a <code>Left</code> value to be returned, triggering an early exit.</li>
+</ul>
+<p>We can easily write such helper functions:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">exitEarly </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">e </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">EitherT e m a
+</span><span style="color:#657b83;">exitEarly e </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">EitherT </span><span style="color:#859900;">$</span><span style="color:#657b83;"> return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e
+
+</span><span style="color:#b58900;">lift </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">m a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">EitherT e m a
+</span><span style="color:#657b83;">lift action </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">EitherT </span><span style="color:#859900;">$</span><span style="color:#657b83;"> fmap </span><span style="color:#cb4b16;">Right </span><span style="color:#859900;">$</span><span style="color:#657b83;"> action
+</span></code></pre>
+<p>Then our <code>modify'</code> function turns into:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">modify&#39; </span><span style="color:#859900;">::</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">s </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Either e s</span><span style="color:#657b83;">) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">EitherT e</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">State s</span><span style="color:#657b83;">) </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">modify&#39; f </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+  s0 </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> lift get
+  </span><span style="color:#859900;">case</span><span style="color:#657b83;"> f s0 </span><span style="color:#859900;">of
+    </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> e </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> exitEarly e
+    </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> s1 </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> lift </span><span style="color:#859900;">$</span><span style="color:#657b83;"> put </span><span style="color:#859900;">$!</span><span style="color:#657b83;"> s1
+</span></code></pre>
+<p>Which is significantly simpler.</p>
+<h2 id="generalizing-lift">Generalizing <code>lift</code></h2>
+<p>As you've probably guessed, we're going to ultimately implement more
+transformers than just <code>EitherT</code>. Since lifting actions is the basic
+operation of all monad transformers, we want an easy way to do this
+across <em>all</em> transformers. To make this work, we're going to define a
+typeclass, <code>MonadTrans</code>, which provides the <code>lift</code> method:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#859900;">class </span><span style="color:#268bd2;">MonadTrans t </span><span style="color:#859900;">where
+  </span><span style="color:#b58900;">lift </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">m a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">t m a
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadTrans</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">EitherT e</span><span style="color:#657b83;">) </span><span style="color:#859900;">where
+  </span><span style="color:#93a1a1;">-- lift :: Monad m =&gt; m a -&gt; EitherT e m a
+</span><span style="color:#657b83;">  lift action </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">EitherT </span><span style="color:#859900;">$</span><span style="color:#657b83;"> fmap </span><span style="color:#cb4b16;">Right </span><span style="color:#859900;">$</span><span style="color:#657b83;"> action
+</span></code></pre>
+<p>Our definition of <code>lift</code> for <code>EitherT</code> remains unchanged. All we've
+done is generalize the type signature by replacing the concrete
+<code>EitherT e</code> with a type variable <code>t</code>. This is also why we always keep
+the last type variable the result type, and the second-to-last the
+base monad: it allows us to define this helper typeclass.</p>
+<p>The <code>MonadTrans</code> typeclass is defined in <code>Control.Monad.Trans.Class</code>,
+in the <code>transformers</code> package.</p>
+<h2 id="generalizing-modify">Generalizing modify'</h2>
+<p>Obviously the <code>modify'</code> function needs to know about the <code>State</code>
+monad, since it's explicitly using <code>get</code> and <code>put</code> actions. And
+currently, it's explicitly taking advantage of <code>EitherT</code> functionality
+as well. But let's try to generalize anyway, and get into the &quot;type
+astronaut&quot; world that quickly occurs when overusing monad
+transformers.</p>
+<p>The monad instance of <code>EitherT</code> already handles the short-circuit
+logic we're building into our <code>modify'</code>. We can generalize by, instead
+of returning an <code>Either e s</code> value from the provided helper function,
+letting the helper function simply run a monadic action. Let's see the
+implementation I have in mind first:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#657b83;">modifyM f </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+  s0 </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> lift get
+  s1 </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> f s0
+  lift </span><span style="color:#859900;">$</span><span style="color:#657b83;"> put </span><span style="color:#859900;">$!</span><span style="color:#657b83;"> s1
+</span></code></pre>
+<p>Very elegant: we lift our base monad actions, and allow <code>f</code> to perform
+actions of its own. Now let's look at the crazy type signature:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">modifyM
+  </span><span style="color:#859900;">::</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">MonadTrans t</span><span style="color:#657b83;">, </span><span style="color:#268bd2;">Monad</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">t</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">State s</span><span style="color:#657b83;">)))
+  </span><span style="color:#859900;">=&gt;</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">s </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">t</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">State s</span><span style="color:#657b83;">) </span><span style="color:#268bd2;">s</span><span style="color:#657b83;">)
+  </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">t</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">State s</span><span style="color:#657b83;">) </span><span style="color:#859900;">()
+</span></code></pre>
+<p>In order to use the <code>lift</code> function, we need to ensure that the <code>t</code>
+is, in fact, a monad transformer. Therefore, we say <code>MonadTrans t</code>. In
+order to use <code>do</code>-notation, we need to ensure that our transformer on
+top of our base monad (specifically <code>State</code> here) is a monad, so we
+say <code>Monad (t (State s))</code>. And then <code>t (State s)</code> in the rest of the
+signature is simply how we reference our monad.</p>
+<p>Then, in our call site, we replace <code>modify'</code> with <code>modifyM</code>, and
+instead of just an <code>Either</code> value, we wrap it up into an <code>EitherT</code>
+value. We'll define a helper function for that wrapping up:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">liftEither </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Either e a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">EitherT e m a
+</span><span style="color:#657b83;">liftEither </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">EitherT </span><span style="color:#859900;">.</span><span style="color:#657b83;"> return
+</span></code></pre>
+<p>And then rewrite <code>foldTerminate</code> to:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">foldTerminate </span><span style="color:#859900;">::</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">b </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Either b b</span><span style="color:#657b83;">) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">b </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> [</span><span style="color:#268bd2;">a</span><span style="color:#657b83;">] </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">b
+</span><span style="color:#657b83;">foldTerminate f accum0 list0 </span><span style="color:#859900;">=</span><span style="color:#657b83;">
+    execStateEither (mapM_ go list0) accum0
+  </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+    go x </span><span style="color:#859900;">=</span><span style="color:#657b83;"> modifyM (</span><span style="color:#859900;">\</span><span style="color:#657b83;">accum </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> liftEither </span><span style="color:#859900;">$</span><span style="color:#657b83;"> f accum x)
+</span></code></pre>
+<p>This certainly shows how powerful and general monad transformers can
+be. It's also starting to show some cognitive overhead. So let's make
+it one step more general.</p>
+<h2 id="mtl-style-typeclasses">mtl style typeclasses</h2>
+<p>We've established that not only can the <code>State</code> monad itself perform
+<code>get</code> and <code>put</code> actions, but any transformer layered on top of it can
+do so as well. The monad transformer library, or mtl, has a philosophy
+around generalizing this idea using typeclasses. Let's define a
+typeclass, called <code>MonadState</code>, for monad <em>stacks</em> which can perform
+state-like actions:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#859900;">class Monad </span><span style="color:#268bd2;">m</span><span style="color:#657b83;"> =&gt; </span><span style="color:#268bd2;">MonadState s m</span><span style="color:#657b83;"> | </span><span style="color:#268bd2;">m</span><span style="color:#657b83;"> -&gt; </span><span style="color:#268bd2;">s </span><span style="color:#859900;">where
+  </span><span style="color:#b58900;">get </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">m s
+  </span><span style="color:#b58900;">put </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">s </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m </span><span style="color:#859900;">()
+</span></code></pre>
+<p>This uses a new language extension we haven't seen before, called
+<em>functional dependencies</em>. This means that the type of the monad, <code>m</code>,
+determines the type of the state, <code>s</code>. We use this so that type
+inference continues to work nicely, and so that we can't define crazy
+things like &quot;this monad allows you to get and put both type <code>A</code> and
+type <code>B</code>.&quot;</p>
+<p>Anyway, defining an instance for <code>State</code> itself is trivial:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadState s</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">State s</span><span style="color:#657b83;">) </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  get </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">State</span><span style="color:#859900;">.</span><span style="color:#657b83;">get
+  put </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">State</span><span style="color:#859900;">.</span><span style="color:#657b83;">put
+</span></code></pre>
+<p>But we can also define an instance for <code>EitherT</code> over <code>State</code>:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadState s</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">EitherT e</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">State s</span><span style="color:#657b83;">)) </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  get </span><span style="color:#859900;">=</span><span style="color:#657b83;"> lift </span><span style="color:#cb4b16;">State</span><span style="color:#859900;">.</span><span style="color:#657b83;">get
+  put </span><span style="color:#859900;">=</span><span style="color:#657b83;"> lift </span><span style="color:#859900;">. </span><span style="color:#cb4b16;">State</span><span style="color:#859900;">.</span><span style="color:#657b83;">put
+</span></code></pre>
+<p>Or, we can be even more general, and define an instance for <code>EitherT</code>
+over any monad which is, itself, a <code>MonadState</code>:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadState s m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">MonadState s</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">EitherT e m</span><span style="color:#657b83;">) </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  get </span><span style="color:#859900;">=</span><span style="color:#657b83;"> lift get
+  put </span><span style="color:#859900;">=</span><span style="color:#657b83;"> lift </span><span style="color:#859900;">.</span><span style="color:#657b83;"> put
+</span></code></pre>
+<p>With this typeclass and these instances in hand, we can now simplify
+our <code>modifyM</code> function significantly:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">modifyM </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">MonadState s m </span><span style="color:#859900;">=&gt;</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">s </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m s</span><span style="color:#657b83;">) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">modifyM f </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+  s0 </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> get
+  s1 </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> f s0
+  put </span><span style="color:#859900;">$!</span><span style="color:#657b83;"> s1
+</span></code></pre>
+<p>Sweet! Also, as you can probably guess, the <code>MonadState</code> typeclass is
+already defined for us, in <code>Control.Monad.State.Class</code> from the <code>mtl</code>
+library.</p>
+<h2 id="state-is-a-transformer">State is a transformer</h2>
+<p>Well, sort of. The <code>State</code> monad we've been working with until now is,
+under the surface, defined as:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#859900;">type </span><span style="color:#cb4b16;">State</span><span style="color:#657b83;"> s </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">StateT</span><span style="color:#657b83;"> s </span><span style="color:#cb4b16;">Identity
+</span></code></pre>
+<p>By defining all of our concrete, pure monads in terms of transformers
+over the <code>Identity</code> monad, we get to implement the functionality only
+once.</p>
+<p>This is also why the <code>EitherT</code> transformer is instead called
+<code>ExceptT</code>. The author of the library was concerned that it would be
+confusing that <code>type State s = StateT s Identity</code>, <code>type Reader r = ReaderT r Identity</code>, but the same didn't apply for <code>Either</code>.</p>
+<h2 id="no-io-transformer">No IO transformer</h2>
+<p>Unlike most (if not all) of the other monads we've talked about, <code>IO</code>
+does not have a transformer variant. It must always be the base monad,
+with other capabilities layered on top of it. For example, <code>ReaderT AppConfig IO</code> is a common way to structure an application: you can
+perform <code>IO</code> actions, and you can get access to some app-wide config
+value.</p>
+<p>There is an mtl-style typeclass for <code>IO</code>, called creatively
+<code>MonadIO</code>. It's used quite a bit in the ecosystem, and looks like:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#859900;">class Monad </span><span style="color:#268bd2;">m</span><span style="color:#657b83;"> =&gt; </span><span style="color:#268bd2;">MonadIO m </span><span style="color:#859900;">where
+  </span><span style="color:#b58900;">liftIO </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m a
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadIO IO </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  liftIO </span><span style="color:#859900;">=</span><span style="color:#657b83;"> id
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadIO m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">MonadIO</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">EitherT e m</span><span style="color:#657b83;">) </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  liftIO </span><span style="color:#859900;">=</span><span style="color:#657b83;"> lift </span><span style="color:#859900;">.</span><span style="color:#657b83;"> liftIO
+</span></code></pre>
+<p>You can generalize many <code>IO</code>-specific functions to <code>MonadIO</code>, e.g.:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">readFileGeneral </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">MonadIO m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">FilePath </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m B</span><span style="color:#657b83;">.</span><span style="color:#268bd2;">ByteString
+</span><span style="color:#657b83;">readFileGeneral </span><span style="color:#859900;">=</span><span style="color:#657b83;"> liftIO </span><span style="color:#859900;">. </span><span style="color:#cb4b16;">B</span><span style="color:#859900;">.</span><span style="color:#657b83;">readFile
+</span></code></pre>
+<p><code>MonadIO</code> is defined in the <code>transformers</code> package in
+<code>Control.Monad.IO.Class</code>.</p>
+<p><strong>WARNING</strong> Next topic is significantly more advanced.</p>
+<p>One thing you <em>can't</em> automatically lift using <code>MonadIO</code> is functions
+that take an <code>IO</code> action as <em>input</em>, also known as <em>contravariant on
+<code>IO</code></em> or having <code>IO</code> in <em>negative position</em>. For example:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">catchAny </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO a </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">SomeException </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO a</span><span style="color:#657b83;">) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO a
+</span></code></pre>
+<p>This function cannot be generalized using <code>MonadIO</code>. Instead,
+something more powerful needs to come into play. This is a more
+advanced topic, but an example of this more powerful entity is
+<code>MonadUnliftIO</code>, which simplified looks like:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#859900;">class </span><span style="color:#268bd2;">MonadIO m</span><span style="color:#657b83;"> =&gt; </span><span style="color:#268bd2;">MonadUnliftIO m </span><span style="color:#859900;">where
+  </span><span style="color:#b58900;">askRunInIO </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">m</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">m a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO a</span><span style="color:#657b83;">)
+</span></code></pre>
+<p>This says &quot;I'm going to ask for a function which can convert an action
+in this monad stack into a simple <code>IO</code> action.&quot; Then I can use that to
+&quot;knock down&quot; the stacked actions to simple <code>IO</code> actions. This is why
+it's called <em>unlifting</em>: it does the opposite of the lift action. A
+simple implementation of <code>IO</code> is:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadUnliftIO IO </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  askRunInIO </span><span style="color:#859900;">=</span><span style="color:#657b83;"> return id
+</span></code></pre>
+<p>Then we can generalize our <code>catchAny</code> function:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">catchAnyGeneral </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">MonadUnliftIO m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">m a </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">SomeException </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m a</span><span style="color:#657b83;">) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m a
+</span><span style="color:#657b83;">catchAnyGeneral action onExc </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+  run </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> askRunInIO
+  liftIO </span><span style="color:#859900;">$</span><span style="color:#657b83;"> run action </span><span style="color:#859900;">`catchAny` \</span><span style="color:#657b83;">e </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> run (onExc e)
+</span></code></pre>
+<p>Two things to point out:</p>
+<ol>
+<li>Notice how <code>MonadUnliftIO</code> has <code>MonadIO</code> as a superclass. We can
+build this subclassing hierarchies, just like we do with
+<code>Functor</code>/<code>Applicative</code>/<code>Monad</code>, where we continuously add more
+restrictions and get more power.</li>
+<li>Try as you might, you won't be able to define an instance of
+<code>MonadUnliftIO</code> for <code>EitherT</code>, or a (valid) one for <code>StateT</code>. It's
+extremely limited in what it allows, by design. For a long
+explanation:
+<a href="https://www.snoyman.com/reveal/monad-transformer-state">slides</a>
+and <a href="https://www.youtube.com/watch?v=KZIN9f9rI34">video</a>.</li>
+</ol>
+<p><code>MonadUnliftIO</code> is defined in the <code>unliftio-core</code> package in
+<code>Control.Monad.IO.Unlift</code>. The sister package <code>unliftio</code> provides an
+<code>UnliftIO</code> module with <em>lots</em> of built in functionality, like
+exception handling, concurrency, and STM, all already generalized to
+either <code>MonadIO</code> or <code>MonadUnliftIO</code>.</p>
+<h2 id="exercises">Exercises</h2>
+<p>You'll want to refer to the documentation for transformers and mtl for
+these exercises:</p>
+<ul>
+<li><a href="https://www.stackage.org/lts-12.21/package/transformers-0.5.2.0">https://www.stackage.org/lts-12.21/package/transformers-0.5.2.0</a></li>
+<li><a href="https://www.stackage.org/lts-12.21/package/mtl-2.2.1">https://www.stackage.org/lts-12.21/package/mtl-2.2.1</a></li>
+</ul>
+<h3 id="exercise-1">Exercise 1</h3>
+<p>Define a monad transformer <code>ReaderT</code>, such that the following works:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#93a1a1;">-- Does not compile
+</span><span style="color:#657b83;">#</span><span style="color:#859900;">!/</span><span style="color:#657b83;">usr</span><span style="color:#859900;">/</span><span style="color:#657b83;">bin</span><span style="color:#859900;">/</span><span style="color:#657b83;">env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> DeriveFunctor #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.Trans.Class
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.IO.Class
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Functor.Identity
+
+type </span><span style="color:#cb4b16;">Reader</span><span style="color:#657b83;"> r </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ReaderT</span><span style="color:#657b83;"> r </span><span style="color:#cb4b16;">Identity
+
+</span><span style="color:#b58900;">runReader </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Reader r a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">r </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a
+</span><span style="color:#657b83;">runReader r </span><span style="color:#859900;">=</span><span style="color:#657b83;"> runIdentity </span><span style="color:#859900;">.</span><span style="color:#657b83;"> runReaderT r
+
+</span><span style="color:#b58900;">ask </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">ReaderT r m r
+</span><span style="color:#657b83;">ask </span><span style="color:#859900;">=</span><span style="color:#657b83;"> _
+
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">main </span><span style="color:#859900;">=</span><span style="color:#657b83;"> runReaderT main&#39; </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello World</span><span style="color:#839496;">&quot;
+
+</span><span style="color:#b58900;">main&#39; </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">ReaderT String IO </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">main&#39; </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+  lift </span><span style="color:#859900;">$</span><span style="color:#657b83;"> putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">I&#39;m going to tell you a message</span><span style="color:#839496;">&quot;</span><span style="color:#657b83;">
+  liftIO </span><span style="color:#859900;">$</span><span style="color:#657b83;"> putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">The message is:</span><span style="color:#839496;">&quot;</span><span style="color:#657b83;">
+  message </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> ask
+  lift </span><span style="color:#859900;">$</span><span style="color:#657b83;"> putStrLn message
+</span></code></pre><h3 id="exercise-2">Exercise 2</h3>
+<p>Create a terminating, <em>monadic</em> fold, which allows you to perform
+effects while stepping through the list. There are many different ways
+to do this, both with and without monad transformers.</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#657b83;">#</span><span style="color:#859900;">!/</span><span style="color:#657b83;">usr</span><span style="color:#859900;">/</span><span style="color:#657b83;">bin</span><span style="color:#859900;">/</span><span style="color:#657b83;">env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+
+</span><span style="color:#b58900;">foldTerminateM </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt;</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">b </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">Either b b</span><span style="color:#657b83;">)) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">b </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> [</span><span style="color:#268bd2;">a</span><span style="color:#657b83;">] </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m b
+</span><span style="color:#657b83;">foldTerminateM </span><span style="color:#859900;">=</span><span style="color:#657b83;"> _
+
+</span><span style="color:#b58900;">loudSumPositive </span><span style="color:#859900;">::</span><span style="color:#657b83;"> [</span><span style="color:#268bd2;">Int</span><span style="color:#657b83;">] </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO Int
+</span><span style="color:#657b83;">loudSumPositive </span><span style="color:#859900;">=</span><span style="color:#657b83;">
+    foldTerminateM go </span><span style="color:#6c71c4;">0
+  </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+    go total x
+      </span><span style="color:#859900;">|</span><span style="color:#657b83;"> x </span><span style="color:#859900;">&lt; </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+          putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Found a negative, stopping</span><span style="color:#839496;">&quot;</span><span style="color:#657b83;">
+          return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> total
+      </span><span style="color:#859900;">|</span><span style="color:#657b83;"> otherwise </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+          putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Non-negative, continuing</span><span style="color:#839496;">&quot;
+          </span><span style="color:#859900;">let</span><span style="color:#657b83;"> total&#39; </span><span style="color:#859900;">=</span><span style="color:#657b83;"> total </span><span style="color:#859900;">+</span><span style="color:#657b83;"> x
+          putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">New total: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span style="color:#657b83;"> show total&#39;
+          return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> total&#39;
+
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">main </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+  res </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> loudSumPositive [</span><span style="color:#6c71c4;">1</span><span style="color:#657b83;">, </span><span style="color:#6c71c4;">2</span><span style="color:#657b83;">, </span><span style="color:#6c71c4;">3</span><span style="color:#657b83;">, </span><span style="color:#859900;">-</span><span style="color:#6c71c4;">1</span><span style="color:#657b83;">, </span><span style="color:#6c71c4;">5</span><span style="color:#657b83;">]
+  putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Result: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span style="color:#657b83;"> show res
+</span></code></pre>
+<p>The output should be:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#657b83;">Non-negative, continuing
+New total: 1
+Non-negative, continuing
+New total: 3
+Non-negative, continuing
+New total: 6
+Found a negative, stopping
+Result: 6
+</span></code></pre>
+<p><strong>NOTE</strong> Don't be surprised if this exercise is difficult to implement
+with transformers. It's a tricky problem.</p>
+<h3 id="exercise-3">Exercise 3</h3>
+<p>The implementation of <code>ageInYear</code> below is unpleasant. Use <code>MaybeT</code> to
+clean it up.</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#657b83;">#</span><span style="color:#859900;">!/</span><span style="color:#657b83;">usr</span><span style="color:#859900;">/</span><span style="color:#657b83;">bin</span><span style="color:#859900;">/</span><span style="color:#657b83;">env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.Trans.Maybe
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Text.Read </span><span style="color:#657b83;">(</span><span style="color:#b58900;">readMaybe</span><span style="color:#657b83;">)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">System.IO
+
+</span><span style="color:#b58900;">prompt </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Read a </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">Maybe a</span><span style="color:#657b83;">)
+prompt question </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+  putStr question
+  putStr </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">: </span><span style="color:#839496;">&quot;</span><span style="color:#657b83;">
+  hFlush stdout
+  answer </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> getLine
+  return </span><span style="color:#859900;">$</span><span style="color:#657b83;"> readMaybe answer
+
+</span><span style="color:#b58900;">ageInYear </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">Maybe Int</span><span style="color:#657b83;">)
+ageInYear </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+  mbirthYear </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> prompt </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Birth year</span><span style="color:#839496;">&quot;
+  </span><span style="color:#859900;">case</span><span style="color:#657b83;"> mbirthYear </span><span style="color:#859900;">of
+    </span><span style="color:#cb4b16;">Nothing </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> return </span><span style="color:#cb4b16;">Nothing
+    Just</span><span style="color:#657b83;"> birthYear </span><span style="color:#859900;">-&gt; do</span><span style="color:#657b83;">
+      mfutureYear </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> prompt </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Future year</span><span style="color:#839496;">&quot;
+      </span><span style="color:#859900;">case</span><span style="color:#657b83;"> mfutureYear </span><span style="color:#859900;">of
+        </span><span style="color:#cb4b16;">Nothing </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> return </span><span style="color:#cb4b16;">Nothing
+        Just</span><span style="color:#657b83;"> futureYear </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Just </span><span style="color:#859900;">$</span><span style="color:#657b83;"> futureYear </span><span style="color:#859900;">-</span><span style="color:#657b83;"> birthYear
+
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">main </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+  mage </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> ageInYear
+  </span><span style="color:#859900;">case</span><span style="color:#657b83;"> mage </span><span style="color:#859900;">of
+    </span><span style="color:#cb4b16;">Nothing </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Some problem with input, sorry</span><span style="color:#839496;">&quot;
+    </span><span style="color:#cb4b16;">Just</span><span style="color:#657b83;"> age </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">In that year, age will be: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span style="color:#657b83;"> show age
+</span></code></pre><h3 id="exercise-4">Exercise 4</h3>
+<p>This example ties together the <code>ReaderT</code>+<code>IO</code> concept with the lenses
+we learned last week. Fix up the following program so that it
+compiles.</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#93a1a1;">-- Does not compile
+</span><span style="color:#657b83;">#</span><span style="color:#859900;">!/</span><span style="color:#657b83;">usr</span><span style="color:#859900;">/</span><span style="color:#657b83;">bin</span><span style="color:#859900;">/</span><span style="color:#657b83;">env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.Reader
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Lens.Micro
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Lens.Micro.Mtl </span><span style="color:#657b83;">(</span><span style="color:#b58900;">view</span><span style="color:#657b83;">) </span><span style="color:#93a1a1;">-- hint :)
+
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">LogLevel </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Debug </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Info
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Verbosity </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Quiet </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Verbose
+
+</span><span style="color:#b58900;">logFunction </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Verbosity </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">LogLevel </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">logFunction </span><span style="color:#cb4b16;">Quiet Debug</span><span style="color:#657b83;"> _ </span><span style="color:#859900;">=</span><span style="color:#657b83;"> return </span><span style="color:#b58900;">()</span><span style="color:#657b83;">
+logFunction _ _ str </span><span style="color:#859900;">=</span><span style="color:#657b83;"> putStrLn str
+
+</span><span style="color:#859900;">class </span><span style="color:#268bd2;">HasVerbosity env </span><span style="color:#859900;">where
+  </span><span style="color:#b58900;">verbosityL </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Lens</span><span style="color:#657b83;">&#39; </span><span style="color:#268bd2;">env Verbosity
+
+</span><span style="color:#b58900;">logDebug </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasVerbosity env </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">ReaderT env IO </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">logDebug msg </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+  verbosity </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> _
+  logFunction verbosity </span><span style="color:#cb4b16;">Debug</span><span style="color:#657b83;"> msg
+
+</span><span style="color:#b58900;">logInfo </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasVerbosity env </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">ReaderT env IO </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">logInfo </span><span style="color:#859900;">=</span><span style="color:#657b83;"> _
+
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">main </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+  putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">===</span><span style="color:#dc322f;">\n</span><span style="color:#2aa198;">Quiet</span><span style="color:#dc322f;">\n</span><span style="color:#2aa198;">===</span><span style="color:#dc322f;">\n</span><span style="color:#839496;">&quot;</span><span style="color:#657b83;">
+  _ inner </span><span style="color:#cb4b16;">Quiet</span><span style="color:#657b83;">
+  putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#dc322f;">\n\n</span><span style="color:#2aa198;">===</span><span style="color:#dc322f;">\n</span><span style="color:#2aa198;">Verbose</span><span style="color:#dc322f;">\n</span><span style="color:#2aa198;">===</span><span style="color:#dc322f;">\n</span><span style="color:#839496;">&quot;</span><span style="color:#657b83;">
+  _ inner </span><span style="color:#cb4b16;">Verbose
+
+</span><span style="color:#b58900;">inner </span><span style="color:#859900;">::</span><span style="color:#657b83;"> _
+inner </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+  logDebug </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This is debug level output</span><span style="color:#839496;">&quot;</span><span style="color:#657b83;">
+  logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This is info level output</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>This is the core idea behind <code>RIO</code>, which you can read more about at
+<a href="https://www.fpcomplete.com/blog/2017/07/the-rio-monad/">the RIO monad</a>.</p>
+<h3 id="exercise-5">Exercise 5</h3>
+<p>Implement a properly strict <code>WriterT</code>, including a <code>MonadWriter</code>
+instance, which internally looks like a <code>StateT</code>.</p>
+<h2 id="solutions">Solutions</h2>
+<h3 id="exercise-1-1">Exercise 1</h3>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#657b83;">#</span><span style="color:#859900;">!/</span><span style="color:#657b83;">usr</span><span style="color:#859900;">/</span><span style="color:#657b83;">bin</span><span style="color:#859900;">/</span><span style="color:#657b83;">env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> DeriveFunctor #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.Trans.Class
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.IO.Class
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Functor.Identity
+
+newtype </span><span style="color:#cb4b16;">ReaderT</span><span style="color:#657b83;"> r m a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ReaderT</span><span style="color:#657b83;"> { runReaderT </span><span style="color:#859900;">::</span><span style="color:#657b83;"> r </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> m a }
+  </span><span style="color:#859900;">deriving </span><span style="color:#cb4b16;">Functor
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Applicative</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">ReaderT r m</span><span style="color:#657b83;">) </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  pure x </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ReaderT </span><span style="color:#859900;">$ \</span><span style="color:#657b83;">_ </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> pure x
+  </span><span style="color:#cb4b16;">ReaderT</span><span style="color:#657b83;"> ff </span><span style="color:#859900;">&lt;</span><span style="color:#657b83;">*</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">ReaderT</span><span style="color:#657b83;"> fa </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ReaderT </span><span style="color:#859900;">$ \</span><span style="color:#657b83;">r </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> ff r </span><span style="color:#859900;">&lt;</span><span style="color:#657b83;">*</span><span style="color:#859900;">&gt;</span><span style="color:#657b83;"> fa r
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Monad</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">ReaderT r m</span><span style="color:#657b83;">) </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  return </span><span style="color:#859900;">=</span><span style="color:#657b83;"> pure
+  </span><span style="color:#cb4b16;">ReaderT</span><span style="color:#657b83;"> f </span><span style="color:#859900;">&gt;&gt;=</span><span style="color:#657b83;"> g </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ReaderT </span><span style="color:#859900;">$ \</span><span style="color:#657b83;">r </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> f r </span><span style="color:#859900;">&gt;&gt;=</span><span style="color:#657b83;"> flip runReaderT r </span><span style="color:#859900;">.</span><span style="color:#657b83;"> g
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadTrans</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">ReaderT r</span><span style="color:#657b83;">) </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  lift action </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ReaderT </span><span style="color:#859900;">$ \</span><span style="color:#657b83;">_ </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> action
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadIO m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">MonadIO</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">ReaderT r m</span><span style="color:#657b83;">) </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  liftIO </span><span style="color:#859900;">=</span><span style="color:#657b83;"> lift </span><span style="color:#859900;">.</span><span style="color:#657b83;"> liftIO
+
+</span><span style="color:#859900;">type </span><span style="color:#cb4b16;">Reader</span><span style="color:#657b83;"> r </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ReaderT</span><span style="color:#657b83;"> r </span><span style="color:#cb4b16;">Identity
+
+</span><span style="color:#b58900;">runReader </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Reader r a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">r </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a
+</span><span style="color:#657b83;">runReader r </span><span style="color:#859900;">=</span><span style="color:#657b83;"> runIdentity </span><span style="color:#859900;">.</span><span style="color:#657b83;"> runReaderT r
+
+</span><span style="color:#b58900;">ask </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">ReaderT r m r
+</span><span style="color:#657b83;">ask </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">ReaderT</span><span style="color:#657b83;"> pure
+
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">main </span><span style="color:#859900;">=</span><span style="color:#657b83;"> runReaderT main&#39; </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello World</span><span style="color:#839496;">&quot;
+
+</span><span style="color:#b58900;">main&#39; </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">ReaderT String IO </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">main&#39; </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+  lift </span><span style="color:#859900;">$</span><span style="color:#657b83;"> putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">I&#39;m going to tell you a message</span><span style="color:#839496;">&quot;</span><span style="color:#657b83;">
+  liftIO </span><span style="color:#859900;">$</span><span style="color:#657b83;"> putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">The message is:</span><span style="color:#839496;">&quot;</span><span style="color:#657b83;">
+  message </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> ask
+  lift </span><span style="color:#859900;">$</span><span style="color:#657b83;"> putStrLn message
+</span></code></pre><h3 id="exercise-2-1">Exercise 2</h3>
+<p>One solution: use <code>MaybeT</code> to terminate early, and keep the
+accumulator in a <code>StateT</code>:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.State.Strict
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.Trans.Maybe
+
+</span><span style="color:#b58900;">foldTerminateM </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt;</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">b </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">Either b b</span><span style="color:#657b83;">)) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">b </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> [</span><span style="color:#268bd2;">a</span><span style="color:#657b83;">] </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m b
+</span><span style="color:#657b83;">foldTerminateM f accum0 list0 </span><span style="color:#859900;">=</span><span style="color:#657b83;">
+    execStateT (runMaybeT </span><span style="color:#859900;">$</span><span style="color:#657b83;"> mapM_ go list0) accum0
+  </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+    go a </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+      accum0 </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> get
+      res </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> lift </span><span style="color:#859900;">$</span><span style="color:#657b83;"> lift </span><span style="color:#859900;">$</span><span style="color:#657b83;"> f accum0 a
+      </span><span style="color:#859900;">case</span><span style="color:#657b83;"> res </span><span style="color:#859900;">of
+        </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> accum </span><span style="color:#859900;">-&gt; do</span><span style="color:#657b83;">
+          put </span><span style="color:#859900;">$!</span><span style="color:#657b83;"> accum
+          </span><span style="color:#cb4b16;">MaybeT </span><span style="color:#859900;">$</span><span style="color:#657b83;"> return </span><span style="color:#cb4b16;">Nothing
+        Right</span><span style="color:#657b83;"> accum </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> put </span><span style="color:#859900;">$!</span><span style="color:#657b83;"> accum
+</span></code></pre>
+<p>Another possibility: use <code>ExceptT</code> and put the early terminate value
+in the <code>Left</code> value via <code>throwError</code>:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">foldTerminateM </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt;</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">b </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">Either b b</span><span style="color:#657b83;">)) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">b </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> [</span><span style="color:#268bd2;">a</span><span style="color:#657b83;">] </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m b
+</span><span style="color:#657b83;">foldTerminateM f accum0 list0 </span><span style="color:#859900;">=</span><span style="color:#657b83;">
+    fmap (either id id) </span><span style="color:#859900;">$</span><span style="color:#657b83;"> runExceptT </span><span style="color:#859900;">$</span><span style="color:#657b83;"> execStateT (mapM_ go list0) accum0
+  </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+    go a </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+      accum0 </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> get
+      res </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> lift </span><span style="color:#859900;">$</span><span style="color:#657b83;"> lift </span><span style="color:#859900;">$</span><span style="color:#657b83;"> f accum0 a
+      </span><span style="color:#859900;">case</span><span style="color:#657b83;"> res </span><span style="color:#859900;">of
+        </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> accum </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> throwError accum
+        </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> accum </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> put </span><span style="color:#859900;">$!</span><span style="color:#657b83;"> accum
+</span></code></pre>
+<p>Or, of course, just implement it without transformers at all:</p>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">foldTerminateM </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt;</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">b </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">Either b b</span><span style="color:#657b83;">)) </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">b </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> [</span><span style="color:#268bd2;">a</span><span style="color:#657b83;">] </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m b
+</span><span style="color:#657b83;">foldTerminateM f </span><span style="color:#859900;">=</span><span style="color:#657b83;">
+    go
+  </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+    go </span><span style="color:#859900;">!</span><span style="color:#657b83;">accum </span><span style="color:#b58900;">[] </span><span style="color:#859900;">=</span><span style="color:#657b83;"> return accum
+    go </span><span style="color:#859900;">!</span><span style="color:#657b83;">accum (a</span><span style="color:#859900;">:</span><span style="color:#657b83;">as) </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+      res </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> f accum a
+      </span><span style="color:#859900;">case</span><span style="color:#657b83;"> res </span><span style="color:#859900;">of
+        </span><span style="color:#cb4b16;">Left</span><span style="color:#657b83;"> accum&#39; </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> return accum&#39;
+        </span><span style="color:#cb4b16;">Right</span><span style="color:#657b83;"> accum&#39; </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> go accum&#39; as
+</span></code></pre>
+<p>Moral of the story: transformers don't always make life easier.</p>
+<h3 id="exercise-3-1">Exercise 3</h3>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#b58900;">ageInYear </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">Maybe Int</span><span style="color:#657b83;">)
+ageInYear </span><span style="color:#859900;">=</span><span style="color:#657b83;"> runMaybeT </span><span style="color:#859900;">$ do</span><span style="color:#657b83;">
+  birthYear </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">MaybeT </span><span style="color:#859900;">$</span><span style="color:#657b83;"> prompt </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Birth year</span><span style="color:#839496;">&quot;</span><span style="color:#657b83;">
+  futureYear </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">MaybeT </span><span style="color:#859900;">$</span><span style="color:#657b83;"> prompt </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Future year</span><span style="color:#839496;">&quot;</span><span style="color:#657b83;">
+  return </span><span style="color:#859900;">$</span><span style="color:#657b83;"> futureYear </span><span style="color:#859900;">-</span><span style="color:#657b83;"> birthYear
+</span></code></pre><h3 id="exercise-4-1">Exercise 4</h3>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#657b83;">#</span><span style="color:#859900;">!/</span><span style="color:#657b83;">usr</span><span style="color:#859900;">/</span><span style="color:#657b83;">bin</span><span style="color:#859900;">/</span><span style="color:#657b83;">env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.Reader
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Lens.Micro
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Lens.Micro.Mtl
+
+data </span><span style="color:#cb4b16;">LogLevel </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Debug </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Info
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Verbosity </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Quiet </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Verbose
+
+</span><span style="color:#b58900;">logFunction </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Verbosity </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">LogLevel </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">logFunction </span><span style="color:#cb4b16;">Quiet Debug</span><span style="color:#657b83;"> _ </span><span style="color:#859900;">=</span><span style="color:#657b83;"> return </span><span style="color:#b58900;">()</span><span style="color:#657b83;">
+logFunction _ _ str </span><span style="color:#859900;">=</span><span style="color:#657b83;"> putStrLn str
+
+</span><span style="color:#859900;">class </span><span style="color:#268bd2;">HasVerbosity env </span><span style="color:#859900;">where
+  </span><span style="color:#b58900;">verbosityL </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Lens</span><span style="color:#657b83;">&#39; </span><span style="color:#268bd2;">env Verbosity
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">HasVerbosity Verbosity </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  verbosityL </span><span style="color:#859900;">=</span><span style="color:#657b83;"> id
+
+</span><span style="color:#b58900;">logDebug </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasVerbosity env </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">ReaderT env IO </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">logDebug msg </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+  verbosity </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> view verbosityL
+  liftIO </span><span style="color:#859900;">$</span><span style="color:#657b83;"> logFunction verbosity </span><span style="color:#cb4b16;">Debug</span><span style="color:#657b83;"> msg
+
+</span><span style="color:#b58900;">logInfo </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasVerbosity env </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">ReaderT env IO </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">logInfo msg </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+  verbosity </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> view verbosityL
+  liftIO </span><span style="color:#859900;">$</span><span style="color:#657b83;"> logFunction verbosity </span><span style="color:#cb4b16;">Info</span><span style="color:#657b83;"> msg
+
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">main </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+  putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">===</span><span style="color:#dc322f;">\n</span><span style="color:#2aa198;">Quiet</span><span style="color:#dc322f;">\n</span><span style="color:#2aa198;">===</span><span style="color:#dc322f;">\n</span><span style="color:#839496;">&quot;</span><span style="color:#657b83;">
+  runReaderT inner </span><span style="color:#cb4b16;">Quiet</span><span style="color:#657b83;">
+  putStrLn </span><span style="color:#839496;">&quot;</span><span style="color:#dc322f;">\n\n</span><span style="color:#2aa198;">===</span><span style="color:#dc322f;">\n</span><span style="color:#2aa198;">Verbose</span><span style="color:#dc322f;">\n</span><span style="color:#2aa198;">===</span><span style="color:#dc322f;">\n</span><span style="color:#839496;">&quot;</span><span style="color:#657b83;">
+  runReaderT inner </span><span style="color:#cb4b16;">Verbose
+
+</span><span style="color:#b58900;">inner </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">ReaderT Verbosity IO </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">inner </span><span style="color:#859900;">= do</span><span style="color:#657b83;">
+  logDebug </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This is debug level output</span><span style="color:#839496;">&quot;</span><span style="color:#657b83;">
+  logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">This is info level output</span><span style="color:#839496;">&quot;
+</span></code></pre><h3 id="exercise-5-1">Exercise 5</h3>
+<pre style="background-color:#fdf6e3;">
+<code><span style="color:#657b83;">#</span><span style="color:#859900;">!/</span><span style="color:#657b83;">usr</span><span style="color:#859900;">/</span><span style="color:#657b83;">bin</span><span style="color:#859900;">/</span><span style="color:#657b83;">env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> FlexibleInstances #-}
+{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> MultiParamTypeClasses #-}
+{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> DeriveFunctor #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.Writer.Class
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.Trans.Class
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.IO.Class
+
+newtype </span><span style="color:#cb4b16;">WriterT</span><span style="color:#657b83;"> w m a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">WriterT</span><span style="color:#657b83;"> (w </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> m (a, w))
+  </span><span style="color:#859900;">deriving </span><span style="color:#cb4b16;">Functor
+
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Applicative</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">WriterT w m</span><span style="color:#657b83;">) </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  pure x </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">WriterT </span><span style="color:#859900;">$ \</span><span style="color:#657b83;">w </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> pure (x, w)
+  </span><span style="color:#cb4b16;">WriterT</span><span style="color:#657b83;"> f </span><span style="color:#859900;">&lt;</span><span style="color:#657b83;">*</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">WriterT</span><span style="color:#657b83;"> x </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">WriterT </span><span style="color:#859900;">$ \</span><span style="color:#657b83;">w0 </span><span style="color:#859900;">-&gt; do</span><span style="color:#657b83;">
+    (f&#39;, w1) </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> f w0
+    (x&#39;, w2) </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> x w1
+    pure (f&#39; x&#39;, w2)
+
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Monad</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">WriterT w m</span><span style="color:#657b83;">) </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  return </span><span style="color:#859900;">=</span><span style="color:#657b83;"> pure
+  </span><span style="color:#cb4b16;">WriterT</span><span style="color:#657b83;"> x </span><span style="color:#859900;">&gt;&gt;=</span><span style="color:#657b83;"> f </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">WriterT </span><span style="color:#859900;">$ \</span><span style="color:#657b83;">w0 </span><span style="color:#859900;">-&gt; do</span><span style="color:#657b83;">
+    (x&#39;, w1) </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> x w0
+    </span><span style="color:#859900;">let </span><span style="color:#cb4b16;">WriterT</span><span style="color:#657b83;"> f&#39; </span><span style="color:#859900;">=</span><span style="color:#657b83;"> f x&#39;
+    f&#39; w1
+
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadTrans</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">WriterT w</span><span style="color:#657b83;">) </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  lift f </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">WriterT </span><span style="color:#859900;">$ \</span><span style="color:#657b83;">w </span><span style="color:#859900;">-&gt; do</span><span style="color:#657b83;">
+    x </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> f
+    pure (x, w)
+
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadIO m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">MonadIO</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">WriterT w m</span><span style="color:#657b83;">) </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  liftIO </span><span style="color:#859900;">=</span><span style="color:#657b83;"> lift </span><span style="color:#859900;">.</span><span style="color:#657b83;"> liftIO
+
+</span><span style="color:#859900;">instance</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">Monad m</span><span style="color:#657b83;">, </span><span style="color:#268bd2;">Monoid w</span><span style="color:#657b83;">) </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">MonadWriter w</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">WriterT w m</span><span style="color:#657b83;">) </span><span style="color:#859900;">where</span><span style="color:#657b83;">
+  tell w2 </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">WriterT </span><span style="color:#859900;">$ \</span><span style="color:#657b83;">w1 </span><span style="color:#859900;">-&gt;</span><span style="color:#657b83;"> pure (</span><span style="color:#b58900;">()</span><span style="color:#657b83;">, w1 </span><span style="color:#859900;">`mappend`</span><span style="color:#657b83;"> w2)
+  pass (</span><span style="color:#cb4b16;">WriterT</span><span style="color:#657b83;"> f) </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">WriterT </span><span style="color:#859900;">$ \</span><span style="color:#657b83;">w0 </span><span style="color:#859900;">-&gt; do</span><span style="color:#657b83;">
+    ((a, f), w1) </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> f w0
+    pure (a, f w1)
+  listen (</span><span style="color:#cb4b16;">WriterT</span><span style="color:#657b83;"> m) </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">WriterT </span><span style="color:#859900;">$ \</span><span style="color:#657b83;">w0 </span><span style="color:#859900;">-&gt; do</span><span style="color:#657b83;">
+    (a, w) </span><span style="color:#859900;">&lt;-</span><span style="color:#657b83;"> m mempty
+    pure ((a, w), w0 </span><span style="color:#859900;">`mappend`</span><span style="color:#657b83;"> w)
+
+</span><span style="color:#b58900;">runWriterT </span><span style="color:#859900;">::</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">Monad m</span><span style="color:#657b83;">, </span><span style="color:#268bd2;">Monoid w</span><span style="color:#657b83;">) </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">WriterT w m a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m</span><span style="color:#657b83;"> (</span><span style="color:#268bd2;">a</span><span style="color:#657b83;">, </span><span style="color:#268bd2;">w</span><span style="color:#657b83;">)
+runWriterT (</span><span style="color:#cb4b16;">WriterT</span><span style="color:#657b83;"> f) </span><span style="color:#859900;">=</span><span style="color:#657b83;"> f mempty
+
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span style="color:#657b83;">main </span><span style="color:#859900;">=</span><span style="color:#657b83;"> pure </span><span style="color:#b58900;">()
+</span></code></pre><h2 id="further-monad-transformer-info-if-desired">Further monad transformer info (if desired)</h2>
+<ul>
+<li><a href="https://www.snoyman.com/reveal/monad-transformer-state">Monad transformer state</a></li>
+<li><a href="https://www.fpcomplete.com/blog/2017/07/announcing-new-unliftio-library/">Announcing new UnliftIO library</a></li>
+<li><a href="https://www.fpcomplete.com/blog/2017/07/the-rio-monad/">The RIO monad</a></li>
+</ul>
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-lg text-center logo-holder">
+          <img alt="Fp Complete White logo" class="footer-logo" src="/images/FPC_Logo_Straight_coral-white.png">
+          <div class="">© FP Complete. All Rights Reserved.</div>
+        </div>
+        <div class="col-sm">
+          <h3 class="font-weight-normal pt-4 pb-3 dark-coral-text">Contact Us</h3> 
+           <u>Corporate Office</u>
+          <p>8895 Towne Centre Dr 
+          <br>Suite 105-349 
+          <br>San Diego, Ca 92122</p>
+          <a href="tel:1(858)617-0430">+1 (858) 617-0430</a>
+          <br><br>
+          <a href="mailto:sales@fpcomplete.com">sales@fpcomplete.com</a>
+          </p>
+        </div>
+        <div class="col-sm">
+          <ul class="list-unstyled">
+            <li class="pt-4 pb-3"><h3 class="font-weight-normal dark-coral-text">Our Products</h3></li>
+            <li>
+              <ul class="list-unstyled">
+                <li><a href="/products/kube360">Kube360®</a></li>
+                <li><a href="/products/sekure360">SeKure360</a></li>
+                <li><a href="/products/konsole360">Konsole360</a></li>
+                <li><a href="/products/idiom">Idiom</a></li>                
+                <li><a href="/products/kafka-library">Kafka Library</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+        <div class="col-sm">
+          <ul class="list-unstyled">
+            <li class="pt-4 pb-3"><h3 class="font-weight-normal dark-coral-text">Our Services</h3></li>
+            <li>
+              <ul class="list-unstyled">
+                <li><a href="/services/#devops">Dev(Sec)Ops</a></li>
+                <li><a href="/services/#custom">Custom Engineering & Software Dev</a></li>
+                <li><a href="/services/#containerization">Containerization</a></li>
+                <li><a href="/services/#automation">Technology Process Automation</a></li>                
+                <li><a href="/services/#techcost">Technology Cost Optimization</a></li>
+                <li><a href="/services/#managedit">Managed IT Services & Training</a></li>
+                <li><a href="/services/#blockchain">Blockchain, Crypto, Distr. Ledgers</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div> 
+        <div class="col-sm">
+          <ul class="list-unstyled">
+            <li class="pt-4 pb-3"><h3 class="font-weight-normal dark-coral-text">Our Resources</h3></li>
+            <li>
+              <ul class="list-unstyled">
+                <li><a href="/devops/">DevOps (Best Practices)</a></li>
+                <li><a href="/blog/">Blog Posts</a></li>
+                <li><a href="/resources/case-studies/">Case Studies</a></li>
+                <li><a href="/resources/whitepaper/">White Papers</a></li>
+                <!--<li><a href="#">eBooks</a></li>
+                <li><a href="#">Podcasts</a></li>-->
+                <li><a href="/rust/">Rust</a></li>
+                <li><a href="/haskell/">Haskell</a></li>             
+              </ul>
+            </li>
+          </ul>
+        </div>
+        <div class="col-sm">
+          <ul class="list-unstyled">
+            <li class="pt-4 pb-3"><h3 class="font-weight-normal dark-coral-text">Our Company</h3></li>
+            <li>
+              <ul class="list-unstyled">
+                <li><a href="/about-us/#our-journey">Our Journey</a></li>
+                <li><a href="/about-us/#our-mission">Our Mission</a></li>
+                <li><a href="/about-us/#our-leaders">Our Leadership</a></li>
+                <li><a href="/about-us/#our-engineers">Our Engineers</a></li>
+                <li><a href="/about-us/#our-clients">Our Clients</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+  
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+</html>

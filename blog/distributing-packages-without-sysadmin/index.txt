@@ -1,0 +1,144 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Distributing our packages without a sysadmin
+
+By Michael Snoyman, May 13, 2015
+
+Share this     
+
+At FP Complete, we're no strangers to running complex web services. But we know from experience
+that the simplest service to maintain is one someone else is managing for you. A few days ago I
+described how secure package distribution with stackage-update and stackage-install works, focusing
+on the client side tooling. Today's blog post is about how we use Amazon S3, Github, and Travis CI
+to host all of this with (almost) no servers of our own (that caveat explained in the process).
+
+Making executables available
+
+We have two different Haskell tools needed to this hosting: hackage-mirror to copy the raw packages
+to Hackage, and all-cabal-hashes-tool to populate the raw cabal files with hash/package size
+information. But we don't want to have to compile this executables every time we call them.
+Instead, we'd like to simply download and run a precompiled executable.
+
+Like many other Github projects, these two utilize Travis CI to build and test the code every time
+a commit is pushed. But that's not all; using Travis's deployment capability, they also upload an
+executable to S3.
+
+Figuring out the details of making this work is a bit tricky, so it's easiest to just look at the
+.travis.yml file. For the security conscious: the trick is that Travis allows us to encrypt data so
+that no one but Travis can decrypt it. Then, Travis can decrypt and upload it to S3 for us.
+
+Result: a fully open, transparent process for executable building that can be reviewed by anyone in
+the community, without allowing private credentials to be leaked. Also, notice how none of our own
+servers needed to get involved.
+
+Running the executables
+
+We're going to leverage Travis yet again, and use it to run the executables it so politely
+generated for us. We'll use all-cabal-hashes as our demonstration, though all-cabal-packages works
+much the same way. We have an update.sh script which downloads and runs our executable, and then
+commits, signs, and pushes to Github. In order to sign and push, however, we need to have a GPG and
+SSH key, respectively.
+
+Once again, Travis's encryption capabilities come into play. In the .travis.yml file, we decrypt a
+tar file containing the GPG and SSH key, put them in the correct location, and also configure Git.
+Then we call out to the update.sh script. One wrinkle here is that Travis only supports having a
+single encrypted file per repo, which is why we have to tar together the two different keys, which
+is a minor annoyance.
+
+As before, we have processes running on completely open, auditable systems. Uploads are being made
+to providers we don't manage (either Amazon or Github). The only thing kept hidden are the secrets
+themselves (keys). And if the process ever fails, I get an immediate notification from Travis. So
+far, that's only happened when I was playing with the build or Hackage was unresponsive.
+
+Running regularly
+
+It wouldn't be very useful if these processes weren't run regularly. This is a perfect place for a
+cron job. Unfortunately, Travis doesn't yet support cron job, though they seem to be planning it
+for the future. In the meanwhile, we do have to run this on our own service. Fortunately, it's a
+simple job that just asks Travis to restart the last build it ran for each repository.
+
+To simplify even further, I run the Travis command line client from inside a Docker container, so
+that the only host system dependency is Docker itself. The wrapper script is:
+
+#!/bin/bash
+
+set -e
+set -x
+
+docker run --rm -v /home/ubuntu/all-cabal-files-internal.sh:/run.sh:ro bilge/travis-cli /run.sh
+
+The script that runs inside the Docker container is the following (token hidden to protect... well,
+me).
+
+#!/bin/bash
+
+set -ex
+
+travis login --skip-version-check --org --github-token XXXXXXXXX
+
+# Trigger the package mirroring first, since it's used by all-cabal-hashes
+BUILD=$(travis branches --skip-version-check -r commercialhaskell/all-cabal-packages | grep "^hackage" | awk "{ print \$2 }")
+BUILDNUM=${BUILD###}
+echo BUILD=$BUILD
+echo BUILDNUM=$BUILDNUM
+travis restart --skip-version-check -r commercialhaskell/all-cabal-packages $BUILDNUM
+
+BUILD=$(travis branches --skip-version-check -r commercialhaskell/all-cabal-files | grep "^hackage" | awk "{ print \$2 }")
+BUILDNUM=${BUILD###}
+echo BUILD=$BUILD
+echo BUILDNUM=$BUILDNUM
+travis restart --skip-version-check -r commercialhaskell/all-cabal-files $BUILDNUM
+
+# Put in a bit of a delay to allow the all-cabal-packages job to finish. If
+# not, no big deal, next job will pick up the change.
+sleep 30
+
+BUILD=$(travis branches --skip-version-check -r commercialhaskell/all-cabal-hashes | grep "^hackage" | awk "{ print \$2 }")
+BUILDNUM=${BUILD###}
+echo BUILD=$BUILD
+echo BUILDNUM=$BUILDNUM
+travis restart --skip-version-check -r commercialhaskell/all-cabal-hashes $BUILDNUM
+
+Conclusion
+
+Letting someone else deal with our file storage, file serving, executable building, and update
+process is a massive time saver. Now our sysadmins can stop dealing with these problems, and start
+solving complicated problems. The fact that everyone can inspect, learn from, and understand what
+our services are doing is another advantage. I encourage others to try out these kinds of
+deployments whenever possible.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

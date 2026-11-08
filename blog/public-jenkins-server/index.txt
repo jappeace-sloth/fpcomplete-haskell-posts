@@ -1,0 +1,104 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Announce: public Jenkins CI server
+
+By Emanuel Borsboom, August 1, 2016
+
+Share this     
+
+We have set up a new public Jenkins CI server for use with our open source projects. This server
+currently runs the Stack integration tests, and deploys to ci.haskell-lang.org and ci.stackage.org
+every time a commit is pushed to the master branch of their respective repositories.
+
+In the future, we also intend to set up Jenkins to run the Stack integration tests on all supported
+platforms (rather than only Linux) using additional Jenkins workers, and get it to run them for
+pull requests as well.
+
+While we use Travis CI, there are a couple of ways it does not meet our needs that Jenkins helps us
+with:
+
+  • For long builds, we hit the 50 minute job timeout. While a standard series of tests should not
+    exceed this amount of time, we also want to run more exhaustive integration tests which
+    sometimes take longer. We can let Travis run the standard tests on PRs, and then periodically
+    run the more extensive tests on Jenkins.
+
+  • Some projects need to build Docker images. While Travis does support this, it means enabling
+    the "standard" (non container-based) environment for jobs, which in turn does not support
+    caching builds for public projects. For Haskell projects in particular, working without a cache
+    means very long build times.
+
+  • Projects also need to push Docker images to a registry and deploy them to a Kubernetes cluster.
+    This requires exposing credentials to builds, which is impossible to secure when building code
+    that uses TemplateHaskell, which allows running arbitrary code during the build.
+
+For these projects, we continue to use Travis for quick feedback on PRs, but let Jenkins take care
+of the integration tests and deployments where we need more control over resource limitations and
+isolation of different build phases.
+
+We run all the builds and tests on ephemeral, isolated Jenkins workers using the Docker plugin.
+These workers do not have access to any credentials, so there is no risk of credentials "leaking"
+into build logs or otherwise being accessed inappropriately.
+
+For projects that need auto-deployment, the isolated build job stages the assets to be deployed,
+and then a separate deploy job is triggered if the build is successful. The deploy job runs on the
+Jenkins master which has access to required credentials, but it does not check out the project's
+source code from Github or run anything developer-provided. It only copies the built artifacts from
+the upstream job, builds and pushes a Docker image, and then updates a Kubernetes Deployment with
+the new image. Our public Jenkins server does not ever see any credentials for proprietary repos or
+mission-critical infrastructure, so even if security is breached it will have no effect beyond the
+CI system itself.
+
+For production deployments of open source applications, we have a separate private Jenkins server
+that builds from the prod branch of the Git repositories, and deploys to a separate cluster. We
+ensure that the prod branch is protected so that only project administrators can trigger a
+production deployment.
+
+We avoid using too many Jenkins-specific features. Essentially, we use Jenkins to perform
+triggering, notification and provide the build environment, but don't use Jenkins plugins to build
+Docker images or perform deployments. The Jenkins Docker plugin could commit an image after
+building and testing the code, but then we would have large images containing the whole build
+environment rather than minimal images containing only the application to deploy. We prefer instead
+to leave it to our own custom tooling that we can tailor to our needs and which can be run in many
+different environments so that we are not locked into Jenkins. A developer with access to the right
+credentials could, if necessary, perform the process easily from their own workstation by running
+the same build and deploy scripts as the Jenkins jobs run.
+
+The Jenkins servers themselves run on EC2, with all cloud infrastructure managed using Hashicorp's
+Terraform, and the instances managed using Red Hat's Ansible. The Kubernetes cluster is set up
+using CoreOS's kube-aws tool.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

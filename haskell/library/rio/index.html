@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>rio: A standard library</title>
+  <meta property="og:title" content="rio: A standard library">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;library&#x2F;rio&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+  
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+<section class="hero grid-bg">
+  <div class="container">
+    <h1>rio: A standard library
+    </h1></div>
+</section>
+
+
+
+  
+<div class="container py-3">
+  <p>Haskell is a powerful and flexible language. It allows you to solve
+common programming problems with a plethora of approaches. It is
+possible to almost unceasingly innovate in both library design and
+overall code design.</p>
+<p>On the other end of this spectrum, we have the libraries that ship
+with GHC, especially <code>base</code>. There is a strong sentiment for
+maintaining backwards compatibility and retaining workflows developed
+over the decades of the Haskell language. This includes some great
+stuff, but also some things many would consider design mistakes (such
+as partial functions).</p>
+<p>We're left with a world where there are arguably too many degrees of
+freedom when starting a new Haskell project, and too many points of
+failures by relying on dangerous code. Teams can easily spend
+significant time making basic architectural and library decisions on a
+new project. And for those relatively new to the Haskell ecosystem,
+it's all too easy to make choices with unknown costs, with those costs
+only showing themselves later.</p>
+<p>The overall goal of the documentation here is to help avoid these
+kinds of situations, by providing opinionated, well tested advice. The
+<code>rio</code> library is our best shot at codifying large parts of that
+advice.</p>
+<p>We'll document the details through the rest of this document. But in
+short: if you use the <code>RIO</code> module as a replacement for <code>Prelude</code> as
+demonstrated, you will automatically bypass many pitfalls in Haskell
+coding. By giving up some of the degrees of freedom granted by
+Haskell, you'll be able to focus instead on solving your actual coding
+challenge.</p>
+<h2 id="rio-quick-start"><code>rio</code> quick start</h2>
+<p>As usual, you'll need to depend on the <code>rio</code> library to use it. In a
+typical project, this will mean adding <code>rio</code> to your <code>package.yaml</code> or
+<code>.cabal</code> file's dependencies list. If using something like the <a href="https://tech.fpcomplete.com/haskell/tutorial/stack-script/">Stack
+script interpreter</a>, this will happen
+automatically. Next, you'll want to use the <code>RIO</code> module as your
+replacement prelude by adding the language extension:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span></code></pre>
+<p>You'll likely want to include some other commonly used extensions as
+well, like <code>OverloadedStrings</code>. You can find a <a href="https://github.com/commercialhaskell/rio/#language-extensions">list of recommended
+extensions</a>.</p>
+<p>Next, add an import of the <code>RIO</code> module:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span></code></pre>
+<p>When you need functionality for other data types like <code>ByteString</code> and
+<code>Text</code>, we recommend importing qualified from the <code>RIO</code> version of the
+module using the recommended qualified name. This avoids the need for
+modifying your <code>package.yaml</code> file for each new usage, ensures that
+only safe functions are imported by default, and ensures consistency
+across <code>rio</code>-using projects. For example:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">RIO.ByteString </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">B
+</span></code></pre>
+<p><strong>Exercise</strong> Not much to it, but to ensure your libraries are set up
+correctly, run this:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> runSimpleApp </span><span style="color:#859900;">$</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello World!</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<h2 id="a-standard-library">A standard library</h2>
+<p><code>rio</code>'s tag line is &quot;a standard library for Haskell.&quot; The idea is that
+the <em>actual</em> standard library for Haskell—the <code>base</code>
+package—leaves much to be desired. Very few real world
+applications use only <code>base</code>. There is a common set of functionality
+that is used by a large majority of applications. Standard libraries
+in other languages (such as Rust) are more &quot;batteried included.&quot; <code>rio</code>
+attempts to:</p>
+<ul>
+<li>Pull in the commonly used libraries in the rest of the ecosystem</li>
+<li>Remove some functionality in <code>base</code> and other libraries which we
+deem as a non-best practice (like partial functions)</li>
+<li>Overall avoid innovation (though we do have a bit of innovation in
+the library where necessary)</li>
+</ul>
+<p>That last point is part of what <a href="https://github.com/commercialhaskell/rio/issues/32">distinguishes <code>rio</code> from similar
+efforts</a>. Also,
+<code>rio</code> to some extent supersedes previous efforts like
+<a href="https://www.stackage.org/package/classy-prelude"><code>classy-prelude</code></a>,
+which attempted to use typeclass generalization instead of qualified
+imports. The Haskell community has overall decided on qualified
+imports and monomorphic functions; <code>rio</code> embraces this approach.</p>
+<h2 id="the-rio-type">The <code>RIO</code> type</h2>
+<p>One of the hallmarks of the <code>rio</code> package is, unsurprisingly, the
+<code>RIO</code> data type. You can fully use the library without embracing the
+<code>RIO</code> data type (see the &quot;lifting and unlifting&quot; section below). But
+we recommend trying out the <code>RIO</code> type as well.</p>
+<p>The <code>RIO</code> data type is based entirely on the <a href="https://tech.fpcomplete.com/blog/2017/06/readert-design-pattern/"><code>ReaderT</code> design
+pattern</a>. I
+won't rehash that blog post here. I will say that in many commercial
+projects the FP Complete team has worked on, using <code>RIO</code> has
+short-circuited long design discussions around monad transformer
+stacks. And conversely, projects we've assisted on which have used
+their own monad transformer or effects approaches have often spent
+significant time on designing and debugging.</p>
+<p>That said: this article isn't designed to convince you of anything,
+the aforementioned blog post is intended to do that! This article is
+intended to show you how to get stuff done. So if you're unconvinced,
+please suspend disbelief for now and continue with the rest of this
+tutorial.</p>
+<p>The <code>RIO</code> data type looks like this:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">newtype </span><span style="color:#cb4b16;">RIO</span><span> env a </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">RIO</span><span> (</span><span style="color:#cb4b16;">ReaderT</span><span> env </span><span style="color:#cb4b16;">IO</span><span> a)
+</span></code></pre>
+<p>Each time you see <code>RIO env a</code>, you can mentally convert it to <code>env -&gt; IO a</code>, or &quot;this thing has some input <code>env</code> and can perform arbitrary
+<code>IO</code> actions.&quot; This is deceptively simple, because this one approach
+allows us for a lot of flexibility.</p>
+<h3 id="simple-environments">Simple environments</h3>
+<p>Consider this trivial program that doesn't use <code>rio</code> at all:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#859900;">let</span><span> name </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;
+</span><span>  sayHello name
+</span><span>  sayGoodbye name
+</span><span>
+</span><span style="color:#b58900;">sayHello </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>sayHello name </span><span style="color:#859900;">=</span><span> putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello, </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> name
+</span><span>
+</span><span style="color:#b58900;">sayGoodbye </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>sayGoodbye name </span><span style="color:#859900;">=</span><span> putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Goodbye, </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> name
+</span></code></pre>
+<p>Fairly straightforward. But perhaps we find it tedious to manually
+pass around the name. In an example this short, that's a silly
+complaint, but as we'll see below in large applications with lots of
+context, it's a real concern. The <code>RIO</code> type allows us to handle this:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Prelude </span><span>(</span><span style="color:#b58900;">putStrLn</span><span>) </span><span style="color:#93a1a1;">-- we&#39;ll explain why we need this in logging
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#859900;">type </span><span style="color:#cb4b16;">Name </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">String
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#859900;">let</span><span> name </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;
+</span><span>  runRIO name </span><span style="color:#859900;">$ do
+</span><span>    sayHello
+</span><span>    sayGoodbye
+</span><span>
+</span><span style="color:#b58900;">sayHello </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO Name </span><span style="color:#859900;">()
+</span><span>sayHello </span><span style="color:#859900;">= do
+</span><span>  name </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  liftIO </span><span style="color:#859900;">$</span><span> putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello, </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> name
+</span><span>
+</span><span style="color:#b58900;">sayGoodbye </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO Name </span><span style="color:#859900;">()
+</span><span>sayGoodbye </span><span style="color:#859900;">= do
+</span><span>  name </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  liftIO </span><span style="color:#859900;">$</span><span> putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Goodbye, </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> name
+</span></code></pre>
+<p>For an example this size, the change isn't at all warranted. But it
+<em>does</em> demonstrate the basic pattern with <code>RIO</code>:</p>
+<ul>
+<li>Put commonly used data in an environment</li>
+<li>Use <code>ask</code> to get the environment</li>
+<li>use <code>liftIO</code> to run underlying <code>IO</code> actions</li>
+</ul>
+<p>Now let's make our example a little bit more compelling. We currently
+print to <code>stdout</code> by using <code>putStrLn</code>. Instead, I'd like to make the
+choice of output handle configurable. Without <code>RIO</code>, we could do this
+by having <code>sayHello</code> and <code>sayGoodbye</code> take a <code>Handle</code> as a parameter,
+e.g.:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">System.IO </span><span>(</span><span style="color:#b58900;">hPutStrLn</span><span>, </span><span style="color:#b58900;">stderr</span><span>)
+</span><span>
+</span><span style="color:#859900;">type </span><span style="color:#cb4b16;">Name </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">String
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#859900;">let</span><span> name </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;
+</span><span>  runRIO name </span><span style="color:#859900;">$ do
+</span><span>    sayHello stderr
+</span><span>    sayGoodbye stderr
+</span><span>
+</span><span style="color:#b58900;">sayHello </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Handle </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO Name </span><span style="color:#859900;">()
+</span><span>sayHello h </span><span style="color:#859900;">= do
+</span><span>  name </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  liftIO </span><span style="color:#859900;">$</span><span> hPutStrLn h </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello, </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> name
+</span><span>
+</span><span style="color:#b58900;">sayGoodbye </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Handle </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO Name </span><span style="color:#859900;">()
+</span><span>sayGoodbye h </span><span style="color:#859900;">= do
+</span><span>  name </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  liftIO </span><span style="color:#859900;">$</span><span> hPutStrLn h </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Goodbye, </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> name
+</span></code></pre>
+<p>But instead, we're going to be a bit fancier, and declare a proper
+application environment type:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">System.IO </span><span>(</span><span style="color:#b58900;">hPutStrLn</span><span>, </span><span style="color:#b58900;">stderr</span><span>)
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">App </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>  { appName </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">String
+</span><span>  , appHandle </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">Handle
+</span><span>  }
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#859900;">let</span><span> app </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>        { appName </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;
+</span><span>        , appHandle </span><span style="color:#859900;">=</span><span> stderr
+</span><span>        }
+</span><span>  runRIO app </span><span style="color:#859900;">$ do
+</span><span>    sayHello
+</span><span>    sayGoodbye
+</span><span>
+</span><span style="color:#b58900;">sayHello </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO App </span><span style="color:#859900;">()
+</span><span>sayHello </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#cb4b16;">App</span><span> name h </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  liftIO </span><span style="color:#859900;">$</span><span> hPutStrLn h </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello, </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> name
+</span><span>
+</span><span style="color:#b58900;">sayGoodbye </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO App </span><span style="color:#859900;">()
+</span><span>sayGoodbye </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#cb4b16;">App</span><span> name h </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  liftIO </span><span style="color:#859900;">$</span><span> hPutStrLn h </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Goodbye, </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> name
+</span></code></pre>
+<p>At this point, <code>RIO</code> is starting to look a little bit more compelling.</p>
+<p><strong>Exercise</strong> Define a helper function of type <code>String -&gt; RIO App ()</code>
+and use it in <code>sayHello</code> and <code>sayGoodbye</code> instead of calling
+<code>hPutStrLn</code> directly.</p>
+<p><strong>Solution</strong></p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">System.IO </span><span>(</span><span style="color:#b58900;">hPutStrLn</span><span>, </span><span style="color:#b58900;">stderr</span><span>)
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">App </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>  { appName </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">String
+</span><span>  , appHandle </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">Handle
+</span><span>  }
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#859900;">let</span><span> app </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>        { appName </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;
+</span><span>        , appHandle </span><span style="color:#859900;">=</span><span> stderr
+</span><span>        }
+</span><span>  runRIO app </span><span style="color:#859900;">$ do
+</span><span>    sayHello
+</span><span>    sayGoodbye
+</span><span>
+</span><span style="color:#b58900;">say </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO App </span><span style="color:#859900;">()
+</span><span>say msg </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#cb4b16;">App</span><span> _name h </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  liftIO </span><span style="color:#859900;">$</span><span> hPutStrLn h msg
+</span><span>
+</span><span style="color:#b58900;">sayHello </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO App </span><span style="color:#859900;">()
+</span><span>sayHello </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#cb4b16;">App</span><span> name _h </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  say </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello, </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> name
+</span><span>
+</span><span style="color:#b58900;">sayGoodbye </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO App </span><span style="color:#859900;">()
+</span><span>sayGoodbye </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#cb4b16;">App</span><span> name _h </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  say </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Goodbye, </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> name
+</span></code></pre>
+<h2 id="has-type-classes"><code>Has</code> type classes</h2>
+<p>Now we'd like to tell the user what time it is. We'll modify our
+program a bit further:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO.Time </span><span>(</span><span style="color:#b58900;">getCurrentTime</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">System.IO </span><span>(</span><span style="color:#b58900;">hPutStrLn</span><span>, </span><span style="color:#b58900;">stderr</span><span>)
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">App </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>  { appName </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">String
+</span><span>  , appHandle </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">Handle
+</span><span>  }
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#859900;">let</span><span> app </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>        { appName </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;
+</span><span>        , appHandle </span><span style="color:#859900;">=</span><span> stderr
+</span><span>        }
+</span><span>  runRIO app </span><span style="color:#859900;">$ do
+</span><span>    sayHello
+</span><span>    sayTime
+</span><span>    sayGoodbye
+</span><span>
+</span><span style="color:#b58900;">say </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO App </span><span style="color:#859900;">()
+</span><span>say msg </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#cb4b16;">App</span><span> _name h </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  liftIO </span><span style="color:#859900;">$</span><span> hPutStrLn h msg
+</span><span>
+</span><span style="color:#b58900;">sayHello </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO App </span><span style="color:#859900;">()
+</span><span>sayHello </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#cb4b16;">App</span><span> name _h </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  say </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello, </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> name
+</span><span>
+</span><span style="color:#b58900;">sayTime </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO App </span><span style="color:#859900;">()
+</span><span>sayTime </span><span style="color:#859900;">= do
+</span><span>  now </span><span style="color:#859900;">&lt;-</span><span> getCurrentTime
+</span><span>  say </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">The time is: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show now
+</span><span>
+</span><span style="color:#b58900;">sayGoodbye </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO App </span><span style="color:#859900;">()
+</span><span>sayGoodbye </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#cb4b16;">App</span><span> name _h </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  say </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Goodbye, </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> name
+</span></code></pre>
+<p>There's a bit of a problem here though. The <code>sayTime</code> action requires
+an <code>App</code> environment. However, it never actually uses the <code>appName</code>
+field. This can make it harder to use in a situation where there is no
+actual name. Also, if we wanted to define this in a library to be used
+in multiple projects, we'd have to hard-code this one specific
+application type, which wouldn't apply to many applications. (This
+also applies to our <code>say</code> function.) We need something more flexible.</p>
+<p>The approach we recommend in <code>rio</code> is to define helper <code>Has*</code>
+typeclasses, and define library functions in terms of those. I could
+describe the technique, but it's really much simpler to just
+demonstrate it:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO.Time </span><span>(</span><span style="color:#b58900;">getCurrentTime</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">System.IO </span><span>(</span><span style="color:#b58900;">hPutStrLn</span><span>, </span><span style="color:#b58900;">stderr</span><span>, </span><span style="color:#b58900;">stdout</span><span>)
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">App </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>  { appName </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">String
+</span><span>  , appHandle </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">Handle
+</span><span>  }
+</span><span>
+</span><span style="color:#859900;">class </span><span style="color:#268bd2;">HasHandle env </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#b58900;">getHandle </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">env </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Handle
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">HasHandle Handle </span><span style="color:#859900;">where
+</span><span>  getHandle </span><span style="color:#859900;">=</span><span> id
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">HasHandle App </span><span style="color:#859900;">where
+</span><span>  getHandle </span><span style="color:#859900;">=</span><span> appHandle
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#859900;">let</span><span> app </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>        { appName </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;
+</span><span>        , appHandle </span><span style="color:#859900;">=</span><span> stderr
+</span><span>        }
+</span><span>  runRIO app </span><span style="color:#859900;">$ do
+</span><span>    sayHello
+</span><span>    sayTime
+</span><span>    sayGoodbye
+</span><span>  </span><span style="color:#93a1a1;">-- Also works!
+</span><span>  runRIO stdout sayTime
+</span><span>
+</span><span style="color:#b58900;">say </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasHandle env </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO env </span><span style="color:#859900;">()
+</span><span>say msg </span><span style="color:#859900;">= do
+</span><span>  env </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  liftIO </span><span style="color:#859900;">$</span><span> hPutStrLn (getHandle env) msg
+</span><span>
+</span><span style="color:#b58900;">sayTime </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasHandle env </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">RIO env </span><span style="color:#859900;">()
+</span><span>sayTime </span><span style="color:#859900;">= do
+</span><span>  now </span><span style="color:#859900;">&lt;-</span><span> getCurrentTime
+</span><span>  say </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">The time is: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show now
+</span><span>
+</span><span style="color:#b58900;">sayHello </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO App </span><span style="color:#859900;">()
+</span><span>sayHello </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#cb4b16;">App</span><span> name _h </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  say </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello, </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> name
+</span><span>
+</span><span style="color:#b58900;">sayGoodbye </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO App </span><span style="color:#859900;">()
+</span><span>sayGoodbye </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#cb4b16;">App</span><span> name _h </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  say </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Goodbye, </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> name
+</span></code></pre>
+<p>We define the <code>HasHandle</code> typeclass, and then replace <code>App</code> in <code>say</code>
+and <code>sayTime</code> with a type variable <code>env</code>. Then we use the <code>getHandle</code>
+method instead of the <code>appHandle</code> accessor. Voila!</p>
+<p><strong>Exercise</strong> Define a new data type, <code>App2</code>, such that the following
+code works:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">let</span><span> app2 </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App2</span><span> { app2Handle </span><span style="color:#859900;">=</span><span> stdout, app2FavoriteColor </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">red</span><span style="color:#839496;">&quot;</span><span> }
+</span><span>runRIO app2 sayTime
+</span></code></pre>
+<p>Bonus points for writing a <code>sayFavoriteColor</code> action too.</p>
+<h3 id="boilerplate">Boilerplate</h3>
+<p>It's worth taking a break here to address an elephant in the
+room. Defining these typeclasses and providing instances is
+boilerplate. It's slightly tedious. The gut reaction of many
+Haskellers may be to find some way to automate around this, with some
+<code>Generic</code>s usage, or Template Haskell, or something else. I recommend
+against that for multiple reasons:</p>
+<ul>
+<li>The boilerplate here, amortized across a project, is really small</li>
+<li>This is the &quot;safe&quot; kind of boilerplate: the compiler will almost
+always prevent you from making a mistake</li>
+<li>The code above is obvious and easy to follow</li>
+<li>The code above compiles really quickly</li>
+</ul>
+<p>Again, this tutorial isn't about trying to convince anyone of
+anything. This is the recommended practice. I'm only including this
+section since it's such a common objection from Haskellers.</p>
+<p>Also, the next section makes the boilerplate slightly more
+annoying. So be it :).</p>
+<h2 id="lenses">Lenses</h2>
+<p>Let's say halfway through your application, you'd like to switch to a
+different output handle. You can do that to some extent with the
+above.</p>
+<p><strong>Exercise</strong> Make this code compile:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO.Time </span><span>(</span><span style="color:#b58900;">getCurrentTime</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">System.IO </span><span>(</span><span style="color:#b58900;">hPutStrLn</span><span>, </span><span style="color:#b58900;">stderr</span><span>, </span><span style="color:#b58900;">stdout</span><span>)
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">App </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>  { appName </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">String
+</span><span>  , appHandle </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">Handle
+</span><span>  }
+</span><span>
+</span><span style="color:#859900;">class </span><span style="color:#268bd2;">HasHandle env </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#b58900;">getHandle </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">env </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Handle
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">HasHandle Handle </span><span style="color:#859900;">where
+</span><span>  getHandle </span><span style="color:#859900;">=</span><span> id
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">HasHandle App </span><span style="color:#859900;">where
+</span><span>  getHandle </span><span style="color:#859900;">=</span><span> appHandle
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#859900;">let</span><span> app </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>        { appName </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;
+</span><span>        , appHandle </span><span style="color:#859900;">=</span><span> stderr
+</span><span>        }
+</span><span>  runRIO app </span><span style="color:#859900;">$ do
+</span><span>    switchHandle stdout sayHello
+</span><span>    sayTime
+</span><span>
+</span><span style="color:#b58900;">switchHandle </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Handle </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO App a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO App a
+</span><span>switchHandle h inner </span><span style="color:#859900;">=</span><span> _
+</span><span>
+</span><span style="color:#b58900;">say </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasHandle env </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO env </span><span style="color:#859900;">()
+</span><span>say msg </span><span style="color:#859900;">= do
+</span><span>  env </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  liftIO </span><span style="color:#859900;">$</span><span> hPutStrLn (getHandle env) msg
+</span><span>
+</span><span style="color:#b58900;">sayTime </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasHandle env </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">RIO env </span><span style="color:#859900;">()
+</span><span>sayTime </span><span style="color:#859900;">= do
+</span><span>  now </span><span style="color:#859900;">&lt;-</span><span> getCurrentTime
+</span><span>  say </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">The time is: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show now
+</span><span>
+</span><span style="color:#b58900;">sayHello </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO App </span><span style="color:#859900;">()
+</span><span>sayHello </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#cb4b16;">App</span><span> name _h </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  say </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello, </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> name
+</span></code></pre>
+<p><strong>Solution</strong> We can do this with a combination of <code>ask</code> and <code>runRIO</code>
+inside <code>switchHandle</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">switchHandle </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Handle </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO App a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO App a
+</span><span>switchHandle h inner </span><span style="color:#859900;">= do
+</span><span>  app </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  </span><span style="color:#859900;">let</span><span> app&#39; </span><span style="color:#859900;">=</span><span> app { appHandle </span><span style="color:#859900;">=</span><span> h }
+</span><span>  runRIO app&#39; inner
+</span></code></pre>
+<p>Unfortunately, we needed to hardcode <code>switchHandle</code> to work on the
+<code>App</code> data type instead of using the <code>HasHandle</code> typeclass. The reason
+for this is simple: the <code>HasHandle</code> typeclass provides the method
+<code>getHandle</code>, which allows us to <em>view</em> the <code>Handle</code>, but not <em>set</em>
+it. We could provide an additional <code>setHandle</code> method in the
+typeclass. If you'd like to do that as an exercise, feel
+free. However, we're going to jump straight ahead to the recommended
+solution: lenses.</p>
+<p>The basic concept of lenses is to package together a getter and setter
+for a field in a data structure. There is <em>lots</em> to discuss around
+lenses: deeply nested fields, composition, prisms/folds/traversals,
+laws, and more. This section is not a general tutorial on lenses, not
+by a long shot. Instead, we're going to demonstrate in a cookbook
+style how to use the subset of lenses necessary to effectively use
+<code>RIO</code>. Feel free to <a href="https://tech.fpcomplete.com/haskell/tutorial/lens/">read more about lens</a> in its
+tutorial.</p>
+<p>What we need is a lens that lets us peek from our big environment type
+into a <code>Handle</code>. This is <code>Lens' env Handle</code>. (The tick at the end of
+<code>Lens'</code> means &quot;simple lens,&quot; in that it doesn't change any type
+parameters. Again, see the tutorial above for more information.) We
+can replace <code>getHandle</code> in our typeclass with:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">class </span><span style="color:#268bd2;">HasHandle env </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#b58900;">handleL </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Lens</span><span>&#39; </span><span style="color:#268bd2;">env Handle
+</span></code></pre>
+<p>Defining the instance for <code>Handle</code> is pretty cute:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">instance </span><span style="color:#268bd2;">HasHandle Handle </span><span style="color:#859900;">where
+</span><span>  handleL </span><span style="color:#859900;">=</span><span> id
+</span></code></pre>
+<p>The <code>App</code> instance is a bit more involved. Since this is
+cookbook-style, I'll give you the code without deep
+explanation. You'll end up seeing this pattern often in <code>RIO</code> code.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">instance </span><span style="color:#268bd2;">HasHandle App </span><span style="color:#859900;">where
+</span><span>  handleL </span><span style="color:#859900;">=</span><span> lens appHandle (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x { appHandle </span><span style="color:#859900;">=</span><span> y })
+</span></code></pre>
+<p>Now we can modify our <code>switchHandle</code> function to work on any
+<code>HasHandle</code> instance:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">switchHandle </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasHandle env </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Handle </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO env a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO env a
+</span><span>switchHandle h inner </span><span style="color:#859900;">= do
+</span><span>  env </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  </span><span style="color:#859900;">let</span><span> env&#39; </span><span style="color:#859900;">=</span><span> set handleL h env
+</span><span>  runRIO env&#39; inner
+</span></code></pre>
+<p>And similarly we can modify the <code>say</code> function to use <code>handleL</code>
+instead of <code>getHandle</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">say </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasHandle env </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO env </span><span style="color:#859900;">()
+</span><span>say msg </span><span style="color:#859900;">= do
+</span><span>  env </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  </span><span style="color:#859900;">let</span><span> h </span><span style="color:#859900;">=</span><span> view handleL env
+</span><span>  liftIO </span><span style="color:#859900;">$</span><span> hPutStrLn h msg
+</span></code></pre>
+<p>Cool, but let's get a bit more clever on both of these. We can
+leverage the fact that <code>RIO</code> is a <code>MonadReader</code> instance and use the
+<code>local</code> function to modify the environment, and the <code>view</code> function to
+bypass the usage of <code>ask</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">switchHandle </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasHandle env </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Handle </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO env a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO env a
+</span><span>switchHandle h </span><span style="color:#859900;">=</span><span> local (set handleL h)
+</span><span>
+</span><span style="color:#b58900;">say </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasHandle env </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO env </span><span style="color:#859900;">()
+</span><span>say msg </span><span style="color:#859900;">= do
+</span><span>  h </span><span style="color:#859900;">&lt;-</span><span> view handleL
+</span><span>  liftIO </span><span style="color:#859900;">$</span><span> hPutStrLn h msg
+</span></code></pre>
+<p>Now we're cooking with gas!</p>
+<p><strong>Exercise</strong> Modify the program below, without changing the signature
+of <code>addLastName</code>, so that the output of the program is &quot;Hello, Alice
+Smith&quot;.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">System.IO </span><span>(</span><span style="color:#b58900;">hPutStrLn</span><span>, </span><span style="color:#b58900;">stderr</span><span>, </span><span style="color:#b58900;">stdout</span><span>)
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">App </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>  { appName </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">String
+</span><span>  , appHandle </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">Handle
+</span><span>  }
+</span><span>
+</span><span style="color:#859900;">class </span><span style="color:#268bd2;">HasHandle env </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#b58900;">handleL </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Lens</span><span>&#39; </span><span style="color:#268bd2;">env Handle
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">HasHandle App </span><span style="color:#859900;">where
+</span><span>  handleL </span><span style="color:#859900;">=</span><span> lens appHandle (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x { appHandle </span><span style="color:#859900;">=</span><span> y })
+</span><span>
+</span><span style="color:#859900;">class </span><span style="color:#268bd2;">HasName env </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#b58900;">nameL </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">env </span><span style="color:#93a1a1;">-- change this!
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">HasName App </span><span style="color:#859900;">where
+</span><span>  nameL </span><span style="color:#859900;">=</span><span> _
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#859900;">let</span><span> app </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>        { appName </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;
+</span><span>        , appHandle </span><span style="color:#859900;">=</span><span> stderr
+</span><span>        }
+</span><span>  runRIO app </span><span style="color:#859900;">$</span><span> addLastName sayHello
+</span><span>
+</span><span style="color:#b58900;">addLastName </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasName env </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">RIO env a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO env a
+</span><span>addLastName </span><span style="color:#859900;">=</span><span> _
+</span><span>
+</span><span style="color:#b58900;">say </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasHandle env </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO env </span><span style="color:#859900;">()
+</span><span>say msg </span><span style="color:#859900;">= do
+</span><span>  h </span><span style="color:#859900;">&lt;-</span><span> view handleL
+</span><span>  liftIO </span><span style="color:#859900;">$</span><span> hPutStrLn h msg
+</span><span>
+</span><span style="color:#b58900;">sayHello </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO App </span><span style="color:#859900;">()
+</span><span>sayHello </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#cb4b16;">App</span><span> name _h </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  say </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello, </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> name
+</span></code></pre>
+<p><strong>Solution</strong> We need a proper type for <code>nameL</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">class </span><span style="color:#268bd2;">HasName env </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#b58900;">nameL </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Lens</span><span>&#39; </span><span style="color:#268bd2;">env String
+</span></code></pre>
+<p>The typeclass instance for <code>App</code> is then fairly boilerplate:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">instance </span><span style="color:#268bd2;">HasName App </span><span style="color:#859900;">where
+</span><span>  nameL </span><span style="color:#859900;">=</span><span> lens appName (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x { appName </span><span style="color:#859900;">=</span><span> y })
+</span></code></pre>
+<p>Implementing <code>addLastName</code> can be done a few ways. Using <code>view</code> and
+<code>set</code>, it can look like this:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">addLastName </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasName env </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">RIO env a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO env a
+</span><span>addLastName inner </span><span style="color:#859900;">= do
+</span><span>  name </span><span style="color:#859900;">&lt;-</span><span> view nameL
+</span><span>  </span><span style="color:#859900;">let</span><span> name&#39; </span><span style="color:#859900;">=</span><span> name </span><span style="color:#859900;">++ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;"> Smith</span><span style="color:#839496;">&quot;
+</span><span>  env </span><span style="color:#859900;">&lt;-</span><span> ask
+</span><span>  </span><span style="color:#859900;">let</span><span> env&#39; </span><span style="color:#859900;">=</span><span> set nameL name&#39; env
+</span><span>  runRIO env&#39; inner
+</span></code></pre>
+<p>Instead of the <code>ask</code> and <code>runRIO</code> calls, we can instead use <code>local</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">addLastName </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasName env </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">RIO env a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO env a
+</span><span>addLastName inner </span><span style="color:#859900;">= do
+</span><span>  name </span><span style="color:#859900;">&lt;-</span><span> view nameL
+</span><span>  </span><span style="color:#859900;">let</span><span> name&#39; </span><span style="color:#859900;">=</span><span> name </span><span style="color:#859900;">++ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;"> Smith</span><span style="color:#839496;">&quot;
+</span><span>  local (set nameL name&#39;) inner
+</span></code></pre>
+<p>Or, we can introduce a new lens function, <code>over</code>, which combines both
+<code>view</code> and <code>set</code>.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">addLastName </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasName env </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">RIO env a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO env a
+</span><span>addLastName </span><span style="color:#859900;">=</span><span> local (over nameL (</span><span style="color:#859900;">++ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;"> Smith</span><span style="color:#839496;">&quot;</span><span>))
+</span></code></pre>
+<p>Personally, I find the name &quot;modify&quot; a bit more intuitive, but
+<code>modify</code> was already taken by the <code>mtl</code> library when lens was written.</p>
+<h2 id="logging">Logging</h2>
+<p>Way, way, way above you may have noticed that we had to import
+<code>putStrLn</code> from <code>Prelude</code>. Why is such a basic, vital function not
+exposed from the <code>RIO</code> module itself? The first reason is that it is
+<em>inefficient</em>, being built on top of <code>String</code>s. But if that was the
+only concern, we could simply export a more efficient version built on
+top of a better data type.</p>
+<p>This is part of a deeper <a href="https://github.com/commercialhaskell/rio/issues/5">design
+decision</a> of
+<code>rio</code>. In general, we claim that there are basically two categories of
+console output:</p>
+<ul>
+<li>User targeted, textual output. We generally call this
+<em>logging</em>. This needs to take into account things like the console's
+character encoding.</li>
+<li>Machine targeted output, either textual or binary. In either case,
+this kind of output should <em>not</em> take into account the console's
+character encoding, but instead provide consistent output across
+systems.</li>
+</ul>
+<p>This concept likely deserves a deeper explanation in the <code>rio</code>
+context. The best I can give for now is a link to the <a href="https://www.snoyman.com/blog/2016/12/beware-of-readfile">beware of
+<code>readFile</code></a>
+blog post, which captures much of the idea.</p>
+<p>The <code>putStrLn</code> function blurs the line between these two
+concepts. This isn't specific to <code>putStrLn</code>; most standard libraries
+in most languages somewhat blur this line. In <code>rio</code>, we try to be more
+explicit. And so we have a set of logging functions.</p>
+<p>Let's first see a working example, and then break it!</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> runSimpleApp </span><span style="color:#859900;">$</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello World!</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>The <code>runSimpleApp</code> function sets up an environment (called
+<code>SimpleApp</code>) and calls <code>runRIO</code> on it. Let's see what happens if we
+have a dummy environment instead:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> runRIO </span><span style="color:#b58900;">() </span><span style="color:#859900;">$</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello World!</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>On my machine, we get the error message:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>Main.hs:8:20: error:
+</span><span>    • No instance for (HasLogFunc ()) arising from a use of ‘logInfo’
+</span><span>    • In the second argument of ‘($)’, namely ‘logInfo &quot;Hello World!&quot;’
+</span><span>      In the expression: runRIO () $ logInfo &quot;Hello World!&quot;
+</span><span>      In an equation for ‘main’:
+</span><span>          main = runRIO () $ logInfo &quot;Hello World!&quot;
+</span></code></pre>
+<p>The logging system in <code>rio</code> is—hopefully
+unsurprisingly—built on top of all that <code>Has*</code> lens stuff we
+just finished discussing. It's telling us that the environment we've
+selected—<code>()</code>—does not provide a logging
+function. Cool. Let's break this in a slightly different way:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello World!</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>Now the error message is obscured a bit:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>Main.hs:8:8: error:
+</span><span>    • No instance for (MonadReader env0 IO)
+</span><span>        arising from a use of ‘logInfo’
+</span><span>    • In the expression: logInfo &quot;Hello World!&quot;
+</span><span>      In an equation for ‘main’: main = logInfo &quot;Hello World!&quot;
+</span></code></pre>
+<p>We'll get into understanding this a bit more in the next section on
+lifting and unlifting. Let's break things in one more way:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#93a1a1;">-- turn this off {-# LANGUAGE OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> runSimpleApp </span><span style="color:#859900;">$</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello World!</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>Now we get the error message:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>Main.hs:8:31: error:
+</span><span>    • Couldn&#39;t match expected type ‘Utf8Builder’
+</span><span>                  with actual type ‘[Char]’
+</span><span>    • In the first argument of ‘logInfo’, namely ‘&quot;Hello World!&quot;’
+</span><span>      In the second argument of ‘($)’, namely ‘logInfo &quot;Hello World!&quot;’
+</span><span>      In the expression: runSimpleApp $ logInfo &quot;Hello World!&quot;
+</span></code></pre>
+<p>Remember how we said that <code>String</code> (aka <code>[Char]</code>) was an inefficient
+choice? The logging functions in <code>rio</code> agree, and instead use a
+<code>Utf8Builder</code> typeclass. This is built on top of a bytestring
+<code>Builder</code>, and demands that the bytes are UTF-8 encoded. <code>rio</code>'s
+logging system then ensures that the bytes are converted to the
+appropriate character encoding when sending to the console. For the
+common case of UTF-8 consoles, this is cheap and efficient, exactly
+what we want!</p>
+<p>In addition to <code>logInfo</code>, there are also <code>logDebug</code>, <code>logWarn</code>,
+<code>logError</code>, and others.</p>
+<p><strong>Exercise</strong> Guess the output of the following, and then run the
+program.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> runSimpleApp </span><span style="color:#859900;">$ do
+</span><span>  logDebug </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Debug</span><span style="color:#839496;">&quot;
+</span><span>  logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Info</span><span style="color:#839496;">&quot;
+</span><span>  logWarn </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Warn</span><span style="color:#839496;">&quot;
+</span><span>  logError </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Error</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>By default, <code>runSimpleApp</code> will use a non-verbose log function, which
+does not include debug-level output. So our output is:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>Info
+</span><span>Warn
+</span><span>Error
+</span></code></pre>
+<p>If we want to get verbose logging with <code>runSimpleApp</code>, we can use the
+<code>RIO_VERBOSE</code> environment variable. Here's some example output:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ export RIO_VERBOSE=1
+</span><span>$ ./Main.hs
+</span><span>2019-03-10 10:07:54.721114: [debug] Debug
+</span><span>@(/Users/michael/Desktop/Main.hs:9:3)
+</span><span>2019-03-10 10:07:54.722156: [info] Info
+</span><span>@(/Users/michael/Desktop/Main.hs:10:3)
+</span><span>2019-03-10 10:07:54.722210: [warn] Warn
+</span><span>@(/Users/michael/Desktop/Main.hs:11:3)
+</span><span>2019-03-10 10:07:54.722270: [error] Error
+</span><span>@(/Users/michael/Desktop/Main.hs:12:3)
+</span></code></pre>
+<p>Note that this not only enables debug-level messages, but also prints
+timestamps, the log level, and the source location where the log
+message was sent from. Neat!</p>
+<h3 id="bypassing-simpleapp">Bypassing <code>SimpleApp</code></h3>
+<p><code>SimpleApp</code> is a nice shortcut for writing simple
+applications. However, you'll often want to have more control of what
+the log function should be, and will likely want to define your own
+application environment. So instead of using <code>runSimpleApp</code>, let's
+define our own <code>App</code> type. We'll go back to our &quot;say hello&quot; example
+above.</p>
+<p><strong>Exercise</strong> Make the code below compile by adding necessary
+instances. It won't run correctly yet, we'll handle that next.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">App </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>  { appLogFunc </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">LogFunc
+</span><span>  , appName </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">Utf8Builder
+</span><span>  }
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> runApp sayHello
+</span><span>
+</span><span style="color:#b58900;">runApp </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO App a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO a
+</span><span>runApp </span><span style="color:#859900;">=</span><span> error </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">we&#39;ll do this next</span><span style="color:#839496;">&quot;
+</span><span>
+</span><span style="color:#b58900;">sayHello </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO App </span><span style="color:#859900;">()
+</span><span>sayHello </span><span style="color:#859900;">= do
+</span><span>  name </span><span style="color:#859900;">&lt;-</span><span> view </span><span style="color:#859900;">$</span><span> to appName
+</span><span>  logInfo </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello, </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;</span><span> name
+</span></code></pre>
+<p><strong>Solution</strong> The error message we get with this code is:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#cb4b16;">Main</span><span style="color:#859900;">.</span><span>hs</span><span style="color:#859900;">:</span><span style="color:#6c71c4;">21</span><span style="color:#859900;">:</span><span style="color:#6c71c4;">3</span><span style="color:#859900;">:</span><span> error</span><span style="color:#859900;">:
+</span><span>    • </span><span style="color:#cb4b16;">No </span><span style="color:#859900;">instance </span><span style="color:#268bd2;">for</span><span> (</span><span style="color:#268bd2;">HasLogFunc App</span><span>) </span><span style="color:#268bd2;">arising from a use of</span><span> ‘</span><span style="color:#268bd2;">logInfo</span><span>’
+</span></code></pre>
+<p>If we add just this:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">instance </span><span style="color:#268bd2;">HasLogFunc App
+</span></code></pre>
+<p>we get the warning:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>Main.hs:12:10: warning: [-Wmissing-methods]
+</span><span>    • No explicit implementation for
+</span><span>        ‘logFuncL’
+</span><span>    • In the instance declaration for ‘HasLogFunc App’
+</span><span>   |
+</span><span>12 | instance HasLogFunc App
+</span><span>   |          ^^^^^^^^^^^^^^
+</span></code></pre>
+<p>The proper implementation is:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">instance </span><span style="color:#268bd2;">HasLogFunc App </span><span style="color:#859900;">where
+</span><span>  logFuncL </span><span style="color:#859900;">=</span><span> lens appLogFunc (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x { appLogFunc </span><span style="color:#859900;">=</span><span> y })
+</span></code></pre>
+<p>I told you there'd be some boilerplate and that pattern would keep
+popping up!</p>
+<p>Alright, running this code doesn't work, since we haven't actually
+implemented <code>runApp</code>. Let's get this a small step closer:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">runApp </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO App a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO a
+</span><span>runApp inner </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#859900;">let</span><span> app </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>        { appLogFunc </span><span style="color:#859900;">=</span><span> error </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">not available</span><span style="color:#839496;">&quot;
+</span><span>        , appName </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;
+</span><span>        }
+</span><span>  runRIO app inner
+</span></code></pre>
+<p>But we still don't have a <code>LogFunc</code>. We can cheat in two easy
+ways. First, it turns out that there's a <code>Monoid</code> instance for
+<code>LogFunc</code>. This will both compile and run successfully:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">runApp </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO App a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO a
+</span><span>runApp inner </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#859900;">let</span><span> app </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>        { appLogFunc </span><span style="color:#859900;">=</span><span> mempty
+</span><span>        , appName </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;
+</span><span>        }
+</span><span>  runRIO app inner
+</span></code></pre>
+<p>However, the result isn't what we want: there's no output! Not
+surprising when you consider what an &quot;empty log function&quot; probably
+looks like. Another way we can cheat is to abuse <code>runSimpleApp</code>.</p>
+<p><strong>Exercise</strong> Get this code to compile:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">runApp </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO App a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO a
+</span><span>runApp inner </span><span style="color:#859900;">=</span><span> runSimpleApp </span><span style="color:#859900;">$ do
+</span><span>  logFunc </span><span style="color:#859900;">&lt;-</span><span> _
+</span><span>  </span><span style="color:#859900;">let</span><span> app </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>        { appLogFunc </span><span style="color:#859900;">=</span><span> logFunc
+</span><span>        , appName </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;
+</span><span>        }
+</span><span>  runRIO app inner
+</span></code></pre>
+<p><strong>Solution</strong> We want to steal the log function from the <code>SimpleApp</code>
+type. We can use:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>logFunc </span><span style="color:#859900;">&lt;-</span><span> view logFuncL
+</span></code></pre>
+<p>Alright, enough playing around. How do we actually create a log
+function?!? We go through a two-stage process:</p>
+<ol>
+<li>Create a <code>LogOptions</code> value which defines the options we want for
+the log function</li>
+<li>Use <code>withLogFunc</code> to create a <code>LogFunc</code> from the <code>LogOptions</code></li>
+</ol>
+<p>This is similar to what is known as the &quot;builder pattern&quot; in the Java
+world. <a href="https://www.stackage.org/haddock/lts/rio/RIO.html#v:withLogFunc">The
+Haddocks</a>
+describe how to do this. <strong>Exercise</strong> Go ahead and take a stab at
+implementing <code>runApp</code> without cheating with <code>mempty</code> or
+<code>runSimpleApp</code>.</p>
+<p><strong>Solution</strong> Here's a fully working example.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">App </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>  { appLogFunc </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">LogFunc
+</span><span>  , appName </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">Utf8Builder
+</span><span>  }
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">HasLogFunc App </span><span style="color:#859900;">where
+</span><span>  logFuncL </span><span style="color:#859900;">=</span><span> lens appLogFunc (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x { appLogFunc </span><span style="color:#859900;">=</span><span> y })
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> runApp sayHello
+</span><span>
+</span><span style="color:#b58900;">runApp </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO App a </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO a
+</span><span>runApp inner </span><span style="color:#859900;">= do
+</span><span>  logOptions&#39; </span><span style="color:#859900;">&lt;-</span><span> logOptionsHandle stderr </span><span style="color:#cb4b16;">False
+</span><span>  </span><span style="color:#859900;">let</span><span> logOptions </span><span style="color:#859900;">=</span><span> setLogUseTime </span><span style="color:#cb4b16;">True </span><span style="color:#859900;">$</span><span> setLogUseLoc </span><span style="color:#cb4b16;">True</span><span> logOptions&#39;
+</span><span>  withLogFunc logOptions </span><span style="color:#859900;">$ \</span><span>logFunc </span><span style="color:#859900;">-&gt; do
+</span><span>    </span><span style="color:#859900;">let</span><span> app </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>          { appLogFunc </span><span style="color:#859900;">=</span><span> logFunc
+</span><span>          , appName </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;
+</span><span>          }
+</span><span>    runRIO app inner
+</span><span>
+</span><span style="color:#b58900;">sayHello </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO App </span><span style="color:#859900;">()
+</span><span>sayHello </span><span style="color:#859900;">= do
+</span><span>  name </span><span style="color:#859900;">&lt;-</span><span> view </span><span style="color:#859900;">$</span><span> to appName
+</span><span>  logInfo </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello, </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;</span><span> name
+</span></code></pre>
+<p><strong>Exercise</strong> Play around with setting other log settings.</p>
+<p><strong>Exercise</strong> Generalize <code>runApp</code> so that it doesn't mention <code>IO</code> in
+the type signature.</p>
+<p><strong>Exercise</strong> Modify <code>sayHello</code> so that it doesn't mention <code>App</code> in the
+signature. Hint: you'll need to define a new typeclass.</p>
+<p>If you've gotten this far and understand what's going on:
+congratulations! You have enough of a grasp of the <code>RIO</code> type to write
+real world applications with it!</p>
+<h2 id="lifting-and-unlifting">Lifting and unlifting</h2>
+<p>Let's rewind to an error message we saw way above. The following code:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello World</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>Produces the error message:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>Main.hs:8:8: error:
+</span><span>    • No instance for (MonadReader env0 IO)
+</span><span>        arising from a use of ‘logInfo’
+</span><span>    • In the expression: logInfo &quot;Hello World&quot;
+</span><span>      In an equation for ‘main’: main = logInfo &quot;Hello World&quot;
+</span></code></pre>
+<p>From what we've learned so far, this may be a surprising error
+message. You may have instead expected something like:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>Main.hs:9:8: error:
+</span><span>    • Couldn&#39;t match expected type ‘IO ()’
+</span><span>                  with actual type ‘RIO env0 ()’
+</span></code></pre>
+<p>That's certainly clearer. And that's exactly the error message you
+would get if <code>logInfo</code> had the type signature:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">logInfo </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasLogFunc env </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Utf8Builder </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">RIO env </span><span style="color:#859900;">()
+</span></code></pre>
+<p>But in reality, it doesn't. Instead, the type signature is the more
+complex:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">logInfo </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">MonadIO m</span><span>, </span><span style="color:#268bd2;">MonadReader env m</span><span>, </span><span style="color:#268bd2;">HasLogFunc env</span><span>) </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Utf8Builder </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m </span><span style="color:#859900;">()
+</span></code></pre>
+<p>(Plus some stuff about <code>HasCallStack</code> which we're ignoring.) The
+latter is a generalization of the former, and allows <code>logInfo</code> to be
+used in monads besides <code>RIO</code> itself. This is a design decision in the
+<code>rio</code> library to allow <code>rio</code> to be used more generally, in cases where
+the user isn't fully bought in to the <code>RIO</code> data type.</p>
+<p>It's always possible to convert from <code>RIO</code>-specific functions to more
+general functions based on <code>mtl</code>-style typeclasses like <code>MonadIO</code> and
+<code>MonadReader</code>. This is what the <code>liftRIO</code> function does:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> runSimpleApp sayHello
+</span><span>
+</span><span style="color:#b58900;">sayHelloRIO </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasLogFunc env </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">RIO env </span><span style="color:#859900;">()
+</span><span>sayHelloRIO </span><span style="color:#859900;">=</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello World!</span><span style="color:#839496;">&quot;
+</span><span>
+</span><span style="color:#b58900;">sayHello </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">MonadReader env m</span><span>, </span><span style="color:#268bd2;">MonadIO m</span><span>, </span><span style="color:#268bd2;">HasLogFunc env</span><span>) </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">m </span><span style="color:#859900;">()
+</span><span>sayHello </span><span style="color:#859900;">=</span><span> liftRIO sayHelloRIO
+</span></code></pre>
+<p>Going the other way is even easier, since <code>RIO</code> is an instance of
+<code>MonadIO</code> and <code>MonadReader</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">sayHelloRIO </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">HasLogFunc env </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">RIO env </span><span style="color:#859900;">()
+</span><span>sayHelloRIO </span><span style="color:#859900;">=</span><span> sayHello
+</span><span>
+</span><span style="color:#b58900;">sayHello </span><span style="color:#859900;">::</span><span> (</span><span style="color:#268bd2;">MonadReader env m</span><span>, </span><span style="color:#268bd2;">MonadIO m</span><span>, </span><span style="color:#268bd2;">HasLogFunc env</span><span>) </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">m </span><span style="color:#859900;">()
+</span><span>sayHello </span><span style="color:#859900;">=</span><span> logInfo </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello World!</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p><code>liftRIO</code> and <code>MonadIO</code> do not work for all cases. Specifically, they
+are limited to cases where the <code>m</code> appears in <em>positive position</em>. If
+they appear in <em>negative position</em>, you'll need to use the
+<code>MonadUnliftIO</code> typeclass. Instead of discussing that in detail here,
+please <a href="https://tech.fpcomplete.com/haskell/library/unliftio/">see the tutorial on <code>unliftio</code></a>. And in
+case you're wondering: yes, <code>RIO</code> is an instance of
+<code>MonadUnliftIO</code>.</p>
+<p>With this in mind: you can use the <code>rio</code> library in code even where
+you're not using the <code>RIO</code> data type. The functions all generalize
+nicely. Our recommendation is to base your code around <code>RIO</code>, since
+the <code>ReaderT</code> design pattern bypasses a lot of wasted time. But if
+you're not bought in, or you've got some other constraints (like
+legacy code) that force your hand, feel free to use <code>rio</code> anyway.</p>
+<p>One final point. When should your type signatures use the <code>RIO</code> data
+type, versus using <code>MonadIO</code>/<code>MonadUnliftIO</code>/<code>MonadReader</code>? Our
+recommendation is to stick to <code>RIO</code> unless you know you'll need
+something more general. Error messages are much nicer with using <code>RIO</code>
+directly, and it's much faster to type. You don't need to get into
+wasted time thinking about whether you want <code>MonadIO</code> or
+<code>MonadUnliftIO</code>. And it's easy enough to convert from <code>RIO</code> to the
+typeclass-based approach (see example below).</p>
+<p>One counterexample would be if you're writing a general purpose
+library that is supposed to support more use cases. That's the case of
+<code>rio</code> itself. In that case, bite the bullet and use the more verbose
+type signatures.</p>
+<h3 id="unlifting-rio">Unlifting RIO</h3>
+<p>Getting all of the types correct for unlifting a <code>RIO</code> usage can be a
+bit tricky. As a cookbook example:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> pure </span><span style="color:#b58900;">()
+</span><span>
+</span><span>withLoggedBinaryFileRIO
+</span><span>  </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">HasLogFunc</span><span> env
+</span><span>  </span><span style="color:#859900;">=&gt; </span><span style="color:#cb4b16;">FilePath
+</span><span>  </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">IOMode
+</span><span>  </span><span style="color:#859900;">-&gt;</span><span> (</span><span style="color:#cb4b16;">Handle </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">RIO</span><span> env a)
+</span><span>  </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">RIO</span><span> env a
+</span><span>withLoggedBinaryFileRIO fp iomode inner </span><span style="color:#859900;">= do
+</span><span>  logDebug </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">About to open </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;</span><span> fromString fp
+</span><span>  withBinaryFile fp iomode </span><span style="color:#859900;">$ \</span><span>h </span><span style="color:#859900;">-&gt;
+</span><span>    inner h </span><span style="color:#859900;">`finally`</span><span> logDebug (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Finished using: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;&gt;</span><span> fromString fp)
+</span><span>
+</span><span>withLoggedBinaryFile
+</span><span>  </span><span style="color:#859900;">::</span><span> (</span><span style="color:#cb4b16;">MonadUnliftIO</span><span> m, </span><span style="color:#cb4b16;">MonadReader</span><span> env m, </span><span style="color:#cb4b16;">HasLogFunc</span><span> env)
+</span><span>  </span><span style="color:#859900;">=&gt; </span><span style="color:#cb4b16;">FilePath
+</span><span>  </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">IOMode
+</span><span>  </span><span style="color:#859900;">-&gt;</span><span> (</span><span style="color:#cb4b16;">Handle </span><span style="color:#859900;">-&gt;</span><span> m a)
+</span><span>  </span><span style="color:#859900;">-&gt;</span><span> m a
+</span><span>withLoggedBinaryFile fp iomode inner </span><span style="color:#859900;">=
+</span><span>  withRunInIO </span><span style="color:#859900;">$ \</span><span>run </span><span style="color:#859900;">-&gt;
+</span><span>  run </span><span style="color:#859900;">$</span><span> liftRIO </span><span style="color:#859900;">$</span><span> withLoggedBinaryFileRIO fp iomode </span><span style="color:#859900;">$ \</span><span>h </span><span style="color:#859900;">-&gt;
+</span><span>  liftIO </span><span style="color:#859900;">$</span><span> run (inner h)
+</span></code></pre>
+<p>The pattern is:</p>
+<ul>
+<li>Use <code>withRunInIO</code> to get a function to convert <code>m a</code> actions to <code>IO a</code> actions</li>
+<li>Use <code>run . liftRIO</code> to convert from a <code>RIO</code> action to an <code>IO</code> action</li>
+<li>Use <code>liftIO . run</code> to convert from an <code>m a</code> inner action to a <code>RIO</code>
+action</li>
+</ul>
+<p>Not the easiest code in the world, but hopefully not something you'll
+be doing too often.</p>
+<h2 id="monad-transformers">Monad transformers</h2>
+<p>One thing worth pointing out is that, when fully embracing <code>RIO</code>, you
+won't use monad transformers very often. Instead of a transformer,
+your application will overall live in the <code>RIO</code> monad. Instead of, for
+example, a <code>MonadLogger</code> typeclass and <code>LoggingT</code> transformers, you
+have the <code>HasLogFunc</code> typeclass. This is all encapsulated in the
+<code>ReaderT</code> design pattern. More information on the advantages of
+avoiding monad transformers is available in the talk <a href="https://www.youtube.com/watch?v=KZIN9f9rI34">Everything you
+didn't want to know about monad transformer
+state</a>
+(<a href="https://www.snoyman.com/reveal/monad-transformer-state">slides</a> also
+available).</p>
+<p>That's not to say that transformers are <em>never</em> used in <code>rio</code>. In
+small parts of the codebase, it can be useful to use something like
+<code>StateT</code>, for example. And it's quite common to combine something like
+<code>ConduitT</code> and <code>RIO</code>. But for large-scale usage across the whole
+application: avoid the transformers.</p>
+<h2 id="exception-handling">Exception handling</h2>
+<p>The <code>rio</code> library exports exception handling functions. These
+functions are different from those in <code>Control.Exception</code> in two ways:</p>
+<ul>
+<li>They use <code>MonadIO</code> and <code>MonadUnliftIO</code> instead of hard-coding <code>IO</code></li>
+<li>They have better handling of asynchronous exceptions</li>
+</ul>
+<p>Instead of rehashing this information here, please <a href="https://tech.fpcomplete.com/haskell/tutorial/exceptions/">read the exception
+handling tutorial</a>.</p>
+<h2 id="module-hierarchy">Module hierarchy</h2>
+<p>The module hierarchy in <code>rio</code> is fairly simple, and <a href="https://www.stackage.org/package/rio">reading the
+Stackage page</a> will give you a
+list of available modules. The structure is:</p>
+<ul>
+<li>Everything lives under <code>RIO</code></li>
+<li>Everything under <code>RIO.Prelude</code> is reexported by <code>RIO</code> itself</li>
+<li>Partial functions (those which throw exceptions on some input) are
+exported by <code>RIO.X.Partial</code></li>
+<li>Unsafe functions (those which can segfault on some input) are exported by <code>RIO.X.Unsafe</code></li>
+<li>All modules that should be imported qualified indicate that at the
+top of the module documentation, and provide a recommended qualified
+name</li>
+</ul>
+<h2 id="related-libraries">Related libraries</h2>
+<p><code>rio</code> reexports functionality from many other libraries. Instead of
+including that documentation here, the tutorials on this site use
+<code>rio</code> versions of the libraries wherever possible. So please continue
+with the documentation at:</p>
+<ul>
+<li><a href="https://tech.fpcomplete.com/haskell/tutorial/string-types/">bytestring and text</a></li>
+<li><a href="https://tech.fpcomplete.com/haskell/library/containers/">containers</a></li>
+<li><a href="https://tech.fpcomplete.com/haskell/library/stm/">stm</a></li>
+<li><a href="https://tech.fpcomplete.com/haskell/library/async/">async</a></li>
+<li><a href="https://tech.fpcomplete.com/haskell/library/vector/">vector</a></li>
+<li><a href="https://tech.fpcomplete.com/haskell/library/typed-process/">typed-process</a> (though see caveat below.md)</li>
+<li><a href="https://tech.fpcomplete.com/haskell/tutorial/exceptions/">Exception handling</a></li>
+<li><a href="https://tech.fpcomplete.com/haskell/library/unliftio/">unliftio</a></li>
+<li><a href="https://tech.fpcomplete.com/haskell/tutorial/mutable-variables/">Mutable variables</a></li>
+</ul>
+<h2 id="when-to-use-rio">When to use <code>rio</code>?</h2>
+<p>Previously, and with other prelude replacements, we've given the
+recommendation &quot;use in applications, not libraries.&quot; That's no longer
+the case with <code>rio</code>. <code>rio</code> is a recommended library for all use
+cases. It's likely that over the next few years, more libraries on
+Hackage will begin depending on <code>rio</code>. Stay tuned!</p>
+<h2 id="the-rio-stack-template">The <code>rio</code> Stack template</h2>
+<p>There's a Stack template available for <code>rio</code> which ties together
+options parsing, setting up logging and external process running, and
+a test suite. You can get it with <code>stack new projectname rio</code>.</p>
+<h2 id="running-external-processes">Running external processes</h2>
+<p>The external process code for <code>rio</code> mostly works exactly as the
+<a href="https://tech.fpcomplete.com/haskell/library/typed-process/">typed-process library</a>. However, there are
+two important changes:</p>
+<ul>
+<li>There's a <code>HasProcessContext</code> typeclass which allows for things like
+modifying environment variables, caching the results of some
+expensive operations, and changing the subdirectory.</li>
+<li>The type signature of <code>proc</code> is modified to allow for logging how
+long a process runs for.</li>
+</ul>
+<p>The following program demonstrates how to run a program who's
+arguments are given on the command line.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO.Process
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">System.Environment
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">System.Exit
+</span><span>
+</span><span style="color:#93a1a1;">-- Here comes the boilerplate!
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">App </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>  { appLogFunc </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">LogFunc
+</span><span>  , appProcessContext </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">ProcessContext
+</span><span>  }
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">HasLogFunc App </span><span style="color:#859900;">where
+</span><span>  logFuncL </span><span style="color:#859900;">=</span><span> lens appLogFunc (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x { appLogFunc </span><span style="color:#859900;">=</span><span> y })
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">HasProcessContext App </span><span style="color:#859900;">where
+</span><span>  processContextL </span><span style="color:#859900;">=</span><span> lens appProcessContext (</span><span style="color:#859900;">\</span><span>x y </span><span style="color:#859900;">-&gt;</span><span> x { appProcessContext </span><span style="color:#859900;">=</span><span> y })
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#93a1a1;">-- more boilerplate, could use runSimpleApp instead
+</span><span>  lo </span><span style="color:#859900;">&lt;-</span><span> logOptionsHandle stderr </span><span style="color:#cb4b16;">True
+</span><span>  pc </span><span style="color:#859900;">&lt;-</span><span> mkDefaultProcessContext
+</span><span>  withLogFunc lo </span><span style="color:#859900;">$ \</span><span>lf </span><span style="color:#859900;">-&gt;
+</span><span>    </span><span style="color:#859900;">let</span><span> app </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">App
+</span><span>          { appLogFunc </span><span style="color:#859900;">=</span><span> lf
+</span><span>          , appProcessContext </span><span style="color:#859900;">=</span><span> pc
+</span><span>          }
+</span><span>     </span><span style="color:#859900;">in</span><span> runRIO app run
+</span><span>
+</span><span style="color:#b58900;">run </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">RIO App </span><span style="color:#859900;">()
+</span><span>run </span><span style="color:#859900;">= do
+</span><span>  args </span><span style="color:#859900;">&lt;-</span><span> liftIO getArgs
+</span><span>  </span><span style="color:#859900;">case</span><span> args </span><span style="color:#859900;">of
+</span><span>    </span><span style="color:#b58900;">[] </span><span style="color:#859900;">-&gt; do
+</span><span>      logError </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">You need to provide a command to run</span><span style="color:#839496;">&quot;
+</span><span>      liftIO exitFailure
+</span><span>    x</span><span style="color:#859900;">:</span><span>xs </span><span style="color:#859900;">-&gt;</span><span> proc x xs runProcess_
+</span></code></pre>
+<h2 id="final-exercise">Final exercise</h2>
+<p>Use <code>stack new myproject rio</code> to create a new project. Then modify it
+to run <code>git ls-files -z</code> in a directory specified on the command line,
+and print out all of the <code>.md</code> files.</p>
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#4a392b262f390a2c3a2925273a262f3e2f64292527" targe="_blank"><span class="__cf_email__" data-cfemail="0271636e6771426472616d6f726e6776672c616d6f">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

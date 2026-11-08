@@ -1,0 +1,221 @@
+[fp-complet]
+
+Blog Technology Haskell Rust DevOps
+
+Emacs and our API
+
+By Chris Done, published December 18, 2013
+
+NOTE Since FP Haskell Center has been retired, this content is no longer relevant.
+
+Over the past month I've been working on integrating access to our IDE functionality from Emacs.
+The official page for our API and Emacs support (no longer available) documents how to install it
+and configure it. Here, I'm going to cover what's been implemented, how you can use it in detail,
+and what's planned for the future.
+
+For this first release of Emacs support, we weren't sure what features would be a good starting
+point. That lead to deciding that we'd essentially cover what is supported in the packages ghc-mod
+and hdevtools, so that our package would serve as a sort of drop-in replacement for those.
+Afterwards, we'll make incremental updates to the Emacs support.
+
+Here's a rundown of the features.
+
+Type Information
+
+A very useful feature is to get the type of a given identifier. To do that, we simply place the
+cursor on the identifier and run C-c C-t. What pops up below is a suave buffer listing all known
+types for this identifier in this position.
+
+We can see that the monomorphic type for print is Value -> IO () and the polymorphic type is Show a
+=> a -> IO (). The types are also syntax highlighted using haskell-mode's highlighter. It also
+gives us the parent expressions, too.
+
+Basic Type Info
+
+We can close the pop-up buffer by hitting q inside it, as in all Emacs help buffers. Or just C-x 1.
+
+Rather than just identifiers, we can also select a region and run the same command, revealing the
+type of the expression that we selected. A little preview of the expression is given below and its
+type:
+
+Region Type Info
+
+Not only expressions can be queried for their types; patterns can be, too! Syntactical!
+
+Pattern Type Info
+
+If you only want to see what the simple Haddock version of an identifier is, you can use C-c C-i on
+an identifier to get the type reported by Hoogle. This will simply print the type in the
+minibuffer. It's not a common use-case, but it's sometimes necessary.
+
+Go to definition
+
+The common and indispensable task of jumping to the definition of a project-local identifier in
+Emacs is normally done with tags. Tags are a trivial plain-text database of identifiers and their
+source locations that you are supposed to update regularly. But it's unreliable.
+
+With our API, jumping to the definition just works, everywhere. If you want to jump to a local
+definition in a where clause, you can go ahead and do that in fpco-mode with the normal M-.
+binding:
+
+Goto Where
+
+You can also jump to names defined from patterns! Jumping isn't limited to names defined in
+declarations:
+
+Goto Pattern
+
+If you use M-. on an identifier which is imported from an external externally, it will jump to the
+import line from where it is imported (optionally, disable with M-x customize-group fpco-mode), and
+it will report what module it is defined in and what package:
+
+Goto External
+
+Of course, jumping to other files in the project works too.
+
+Documentation of identifier
+
+I particularly like this feature. To display the Haddock documentation of an identifier, simply put
+your cursor over it and hit C-c C-d. You will get a pop-up buffer containing a syntax highlighted
+and formatted version of the documentation:
+
+Haddocks
+
+Algebraic!
+
+The documentation is formatted within 60 columns using Emacs's fill-paragraph. The link to the web
+version of the same documentation isn't clickable yet. I think more work can be done on getting a
+nice Haddock docs viewer in Emacs, so that we don't have to leave Emacs. Never leave Emacs. Never!
+
+Auto-complete
+
+There is an auto-complete module for Emacs which does all things completion. We use this library
+and simply provide a source of input for it. What we get out is a very nice search-as-you-type
+popup:
+
+Autocomplete
+
+This triggers on an idle timer. You're free to configure auto-complete more to your likings if
+you're an experienced Emacs user. We simply provide a reliable source of input for it.
+
+Type checking
+
+Like the auto-completion feature, we re-use an existing Emacs library that does the job well:
+flycheck. Therefore fpco-mode simply provides a checker for flycheck to use. Flycheck responds to
+different things and is configurable. But in the default setup, it responds to movement of the
+cursor and changes to the buffer.
+
+What we end up with is very nice fringe annotations and underlines for when we mess up:
+
+Flycheckerror
+
+Additional to these in-buffer annotations, flycheck also displays a count of FlyC:errors/warnings
+in the modeline. That's this thing here:
+
+Minibuffer-Errors
+
+If I move my cursor to that error (I can do that by hitting C-x `, which is the standard Emacs way
+of jumping to compile errors), I can see in the minibuffer the actual error message:
+
+Err
+
+If I'm the kind of person—and I am—who likes to see a list of errors, like when invoking ghc or
+ghci, then I can use the flycheck command C-c ! l (all flycheck commands start with C-c !) to get
+an error list.
+
+Flycheckerrors
+
+Needless to say, flycheck has many ways of interacting with it and getting information.
+
+Our checking mode also includes suggestions from the HLint package as warnings. For example:
+
+Hlint-Warnings
+
+Here you can see that the messages are only suggestions, but are given to flycheck and presented in
+the same way as any other compiler message. At present, it's not possible to disable HLint
+suggestions, but we'll add support for that.
+
+Hoogle mode
+
+An experimental mode that isn't quite fleshed out, but that I thought people might find useful in
+its current state is Hoogle mode.
+
+Launch it by running M-x fpco/hoogle-mode and then just type normal Hoogle searches in the box
+below:
+
+Hoogle-Buffer
+
+The results are displayed similar to the haddock popup, syntax highlighted with their package and
+module. Another way to get this to launch is to use a prefix argument with the normal C-c C-d to
+get documentation of an identifier: C-u C-c C-d
+
+This will prompt for a hoogle search query and open up the hoogle buffer automatically with the
+search prefilled.
+
+How it all works
+
+The architecture of this setup is the following:
+
+FP Complete Servers — fpco-api start — Your Editor
+
+Meaning:
+
+  • The FP Complete servers are the same servers that the web IDE talks to directly. These are
+    running remotely on www.fpcomplete.com.
+  • fpco-api start is the start command of the fpco-api tool that we provide. This runs locally on
+    your computer. It talks to our obscure asynchronous Fay API so that you as an editor hacker
+    don't have to. It also sheilds users from having to change anything when we change our internal
+    API. See the official page for documentation on getting it (no longer available).
+  • Your editor connects to the local running fpco-api and makes queries and gets back responses in
+    JSON.
+
+You have a local copy of your project that you open with Emacs, but when you save buffers, a hook
+automatically sends that to the FP Complete servers for recompilation.
+
+Here is an example. If you're using Emacs, then M-x fpco/start will start the following process in
+a comint buffer:
+
+$ fpco-api start --agent Emacs
+
+This will host (by default) on port 1990 (yay, Haskell!). You can configure the port in your ~
+/.fpco-api configuration file.
+
+You need to know the ID of your project. You can get that with:
+
+$ fpco-api emacs-config http://www.fpcomplete.com/user/test/z12-1
+
+This writes a .dir-locals.el file, which will contain something like (fpco-pid . 247). 247 is our
+project ID. Now we can make direct queries to the fpco-api server directly.
+
+Here's how to get autocompletions:
+
+$ echo | nc localhost 1990
+{"tag":"MsgAutoComplete","contents":[247,"src/Main.hs","getC"]}
+D^
+{"tag":"ReplyCompletions","contents":["getChanContents",
+"getChar","getContents","getCurrentRoute"]}
+
+Here's how to get the type info of an expression:
+
+$ echo | nc localhost 1990
+{"tag":"MsgTypeInfo","contents":[247,"src/Main.hs",11,11,11,22]}
+D^
+{"tag":"ReplyTypeInfo","contents":[[11,11,11,22,"getContents",
+"IO String"],[11,11,11,30,"getContents \u003e\u003e= run","IO ()"]]}
+
+For now, integrators can use the existing Emacs implementation as a reference implementation
+(fpco-mode.el). The source for fpco-api can be browsed on Hackage.
+
+Future support
+
+Things that are not currently supported in Emacs are:
+
+  • Running processes / web applications.
+  • Deploying applications.
+  • Renaming/deleting files.
+  • Stylish haskell.
+
+For those you'll have to go into the web IDE for now.
+
+2012-2019 FP Complete Corp. Subscribe to the RSS feed.
+

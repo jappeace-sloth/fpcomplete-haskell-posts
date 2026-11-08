@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Stack&#x27;s New Extensible Snapshots</title>
+  <meta property="og:title" content="Stack&#x27;s New Extensible Snapshots">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="The next release of Stack will include a major overhaul to how snapshots and dependencies are managed.">
+  <meta property="og:description" content="The next release of Stack will include a major overhaul to how snapshots and dependencies are managed.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;stacks-new-extensible-snapshots&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Stack&#x27;s New Extensible Snapshots</h1>
+      
+      <p id="page-description">By Michael Snoyman, July 13, 2017</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Stack%27s%20New%20Extensible%20Snapshots https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;stacks-new-extensible-snapshots&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;stacks-new-extensible-snapshots&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;stacks-new-extensible-snapshots&#x2F;&amp;title=Stack%27s%20New%20Extensible%20Snapshots"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;stacks-new-extensible-snapshots&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p><b>NOTE</b> This blog post made the rounds last week before the
+branch was actually merged and the post was still on a review
+server. I'm officially publishing it as the <a href=
+"https://github.com/commercialhaskell/stack/pull/3249">pull request
+is now merged</a>.</p>
+<p>There is a collection of features in Stack that have been added
+in bit by bit, as opposed to being designed into a cohesive whole
+from the start. The features work, but could be a bit better. We've
+known for a while that, instead of putting in place strategic
+fixes, a more general refactoring of the core dependency management
+logic was in order. I'm happy to announce that these changes have
+landed in the master branch, and will be part of the next major
+release of Stack.</p>
+<p>I'd like to motivate the limitations in Stack that encouraged
+this change, discuss the new system, mention some potential future
+changes, and share a few thoughts on the (very pleasant) Haskell
+refactoring process itself.</p>
+<p><b>NOTE</b> These features have <i>not currently been
+released</i>, so don't try using them in a stable Stack executable.
+If you'd like to test them out (and I'd certainly appreciate the
+extra testing), you can run <code>stack upgrade --git</code> to
+build a Stack executable from the master branch.</p>
+<h2 id="motivation">Motivation</h2>
+<p>Consider this fairly standard snippet of a stack.yaml file:</p>
+<pre><code class="yaml">resolver: lts-8.12
+packages:
+- ./site1
+- ./site2
+- location:
+    git: https://github.com/yesodweb/yesod
+    commit: 7038ae6317cb3fe4853597633ba7a40804ca9a46
+  extra-dep: true
+  subdirs:
+  - yesod-core
+  - yesod-bin
+extra-deps:
+- html-conduit-1.2.1.1</code></pre>
+<p>This is leveraging a number of features of Stack right off the
+bat:</p>
+<ul>
+<li>Using an LTS Haskell snapshot to capture a consistent set of
+dependencies</li>
+<li>Specify multiple <i>project packages</i>, in this case
+<code>site1</code> and <code>site2</code>.</li>
+<li>Specify an extra dependency from a Git repository.</li>
+<li>Specify multiple subdirectories for a Git repository to
+directly support "megarepos".</li>
+<li>Specify an extra dependency from the upstream package index
+(which is Hackage unless you've done something weird).</li>
+</ul>
+<p>This is great, but there's a bit of pain involved in this:</p>
+<ul>
+<li>My personal pet peeve: that <code>extra-dep: true</code> for
+the Git repo. Because of how features were added, we included Git
+repos together with "project packages," and then added a hack to
+explicitly state that they should be treated as dependencies (so
+that <code>stack test</code>, for example, won't build their
+dependencies). This feels weird.</li>
+<li>We <i>also</i> have this <code>extra-deps</code> stanza, which
+accepts package name/version combos, but <i>doesn't</i> accept Git
+repos (or HTTP(S) tarballs, which are also supported in the
+<code>packages</code> section).</li>
+<li>As Hackage cabal file revisions become more common, it's taking
+away a level of reproducibility that <code>extra-deps</code> cannot
+specify the exact revision of a package we'd like to use.</li>
+<li>The <code>subdirs</code> feature is nice, but it's weird that
+it's not more directly connected to the Git repo information
+(notice how it's a level up).</li>
+<li>I've specified <code>yesod-bin</code> as an extra-dep, which
+provides an executable named <code>yesod</code>. Ideally, if one of
+my packages specified a dependency on that executable, Stack would
+automatically build the <code>yesod-bin</code> package. While this
+logic works for LTS Haskell and Stackage Nightly snapshots, it
+<i>doesn't</i> work for these extra-deps.</li>
+<li>Specifying dependencies like this inside the
+<code>stack.yaml</code> file makes them local to just the project
+I'm working on. There are advantages to this approach regarding
+disk space (which I won't get into here), but there's a big
+downside: I can't share precompiled libraries between projects that
+are defined this way. I'd like to be able to recapture that sharing
+ability.</li>
+<li>And more generally: why can't I just define this customized
+version of <code>lts-8.12</code> and share it among multiple
+projects, possibly even from an immutable URL?</li>
+</ul>
+<p>As you can see, the problems aren't insurmountable, but they are
+annoyances, and they seem to overlap quite a bit.</p>
+<h2 id="updated-syntax">Updated syntax</h2>
+<p>Let's rewrite that <code>stack.yaml</code> file to be a little
+bit more straightforward:</p>
+<pre><code class="yaml">resolver: lts-8.12
+packages:
+- ./site1
+- ./site2
+extra-deps:
+- html-conduit-1.2.1.1@sha256:de32ca4d6df94a7c027a11db1b2e32ef1a7ccfe0565923f24528613ade821343
+- git: https://github.com/yesodweb/yesod
+  commit: 7038ae6317cb3fe4853597633ba7a40804ca9a46
+  subdirs:
+  - yesod-core
+  - yesod-bin</code></pre>
+<p>The first thing to notice is that the <code>packages</code>
+value is now just a list of the actual code in our project, not the
+dependencies.</p>
+<p>Next, we still have <code>html-conduit-1.2.1.1</code> coming
+from Hackage. But we have this funny <code>@sha256:...</code> bit
+at the end. This is a hash of the cabal file contents we want to
+use. This gives us much stronger guarantees of reproducibility than
+we had previously. Instead of getting whatever most recent version
+happens to be available, you'll get an exact cabal file. This
+feature has been present for a while in Stackage snapshots, but
+hasn't been accessible for local dependencies.</p>
+<p>Next, we've moved the Git repo information out of
+<code>packages</code> and into <code>extra-deps</code> where it
+logically belongs. We also no longer need that extra
+<code>location</code> key. We had that so that we could also define
+<code>extra-dep</code> and <code>subdirs</code> keys. We now
+instead put the <code>subdirs</code> key next to the
+<code>git</code> and <code>commit</code> keys, and don't need
+<code>extra-dep</code> at all (since it's implied by being within
+<code>extra-deps</code>).</p>
+<p>Behind the scenes, the code managing these things has changed
+drastically. Most importantly for our discussion here, Stack now
+uses the same code paths for loading up snapshots and loading up
+package information within the <code>stack.yaml</code> file. In
+addition to just being a good practice for keeping us sane, this
+means that build tool detection now works for project packages and
+dependencies too.</p>
+<p>This answers a good deal of our points above (hold off for the
+last two when we get to custom snapshots).</p>
+<h3 id="four-package-locations">Four package locations</h3>
+<p>That probably seemed like a bit of a jumble, so let's start
+over. Every package has a <i>location</i>, which tells Stack where
+to get it from. Stack supports for different package locations:</p>
+<ul>
+<li><b>Local file path</b>, like <code>./site1</code> above</li>
+<li><b>Package index</b>, specified version a package name, version
+number, and optional cabal file hash. You're probably wondering
+"why not just call it Hackage?" The reason is that you can extend
+your list of package indices to augment or override Hackage (such
+as to use a corporate package repository). That's why we use the
+general term.</li>
+<li><b>Git or Mercurial repo</b>, specified by a repo URL, a
+commit, and an optional list of subdirectories within the repo to
+look for packages. If omitted, Stack will look in the root of the
+repo.</li>
+<li><b>HTTP(S) URL</b>, which isn't demonstrated above, but which
+is just a standard <code>http(s)://</code> URL pointing to a
+tarball.</li>
+</ul>
+<p>All four of these have been supported in Stack since (almost)
+its inception. The differences now are that:</p>
+<ul>
+<li><code>extra-deps</code> now supports all four forms</li>
+<li>
+<p><code>packages</code> still supports local file paths, Git
+repos, and HTTP(S) URLs, but for the latter two requires you to
+explicitly state <code>extra-dep:</code> as either
+<code>true</code> or <code>false</code>. We'll discuss this a bit
+more below. There are two reasons package index location isn't
+supported here:</p>
+<ul>
+<li>It wasn't supported previously, and is an illogical thing to
+do: you would never have a situation of working on a package pulled
+from the index. If you want to do that, you should probably clone
+the source of that package (such as with a Git submodule).</li>
+<li>It could introduce ambiguities in parsing between a package
+index and a filepath (imagine you have a local directory
+<code>foo-1.2.3</code>). We've allowed this ambiguity to exist in
+<code>extra-deps</code>; if you have such a filepath, you can
+always preface it with <code>./</code>.</li>
+</ul>
+</li>
+</ul>
+<p>This is all well and good, but isn't much more than a cosmetic
+improvement (though, in my opinion, it's a very nice cosmetic
+improvement). But this gets much cooler with custom snapshots.</p>
+<h2 id="custom-snapshots">Custom snapshots</h2>
+<p>Stack has had some support for custom snapshots for a while, but
+it's never been fully implemented, since we've been waiting for
+this extensible snapshot concept to land. Since most people aren't
+very familiar with custom snapshots today, I'm not going to compare
+and contrast, but instead just jump in to explaining how they work
+now.</p>
+<p>Stack configurations always discuss a <i>resolver</i>, which
+specifies a GHC version, a set of additional packages, build flags,
+and some other pieces of metadata. You've probably seen a few kinds
+of resolvers until now:</p>
+<ul>
+<li><code>lts-8.12</code>, using LTS Haskell</li>
+<li><code>nightly-2017-07-01</code>, using Stackage Nightly</li>
+<li><code>ghc-8.0.2</code>, using a specific GHC version without
+any extra packages available</li>
+</ul>
+<p>Custom snapshots answer a simple question: what if I want to
+define my own snapshot which isn't LTS Haskell or Stackage Nightly?
+And that's really all they are: a format for defining your own
+snapshots like Stackage does. However, they've got a number of cool
+features that Stackage snapshots don't:</p>
+<ul>
+<li>They are <i>extensible</i> (thus the whole blog post name): you
+can define a parent snapshot for any snapshot and inherit its
+settings.</li>
+<li>You can use all four types of package locations when defining a
+custom snapshot. Say you have a package that isn't ready to be
+released to Hackage, or is only for your internal team to use. You
+can stick it in a tarball on a webserver, or in a Git repo, and
+refer to it just as you would from <code>extra-deps</code> in your
+<code>stack.yaml</code> file.</li>
+<li>Unlike defining packages in <code>stack.yaml</code>, packages
+built in a custom snapshot can be shared in the package cache and
+reused between projects.</li>
+</ul>
+<p>Let's see how this would modify our <code>stack.yaml</code> from
+above. First, I'm going to define a <code>my-snapshot.yaml</code>
+file:</p>
+<pre><code class="yaml">resolver: lts-8.12
+name: my-snapshot # For user display only
+packages:
+- html-conduit-1.2.1.1@sha256:de32ca4d6df94a7c027a11db1b2e32ef1a7ccfe0565923f24528613ade821343
+- git: https://github.com/yesodweb/yesod
+  commit: 7038ae6317cb3fe4853597633ba7a40804ca9a46
+  subdirs:
+  - yesod-core
+  - yesod-bin</code></pre>
+<p>Notice how I've kept the same <code>resolver</code> value here.
+What I'm stating is that I'd like my snapshot to start off with the
+same GHC version and package set defined in <code>lts-8.12</code>,
+and then add new packages. Next, I've copied my entire
+<code>extra-deps</code> section in here, and called it
+<code>packages</code> instead (since these are the packages that
+actually make up the snapshot, not some extra dependencies added on
+top).</p>
+<p>Note that, because a custom snapshot is intended to contain
+immutable package data, it does <i>not</i> support local filepaths
+as package location, as these are expected to change over time.</p>
+<p>Now the <code>stack.yaml</code> file:</p>
+<pre><code class="yaml">resolver: my-snapshot.yaml
+packages:
+- ./site1
+- ./site2</code></pre>
+<p>Instead of a Stackage snapshot or compiler version, my
+<code>resolver</code> now gives the path to the snapshot config
+file. This can be a file path, or an HTTP(S) URL. The
+<code>packages</code> section stayed the same, but my
+<code>extra-deps</code> is no longer necessary: all of my
+dependencies are now defined within the custom snapshot.</p>
+<p>And in case anyone wants to get cheeky: yes, a custom snapshot
+can put another custom snapshot in its <code>resolver</code> field.
+You can layer these things up as many layers as you'd like. Have
+fun!</p>
+<p>Just to summarize, Stack supports three different kinds of
+resolver values:</p>
+<ul>
+<li>A compiler name</li>
+<li>A Stackage snapshot name (LTS or Nightly)</li>
+<li>A custom snapshot</li>
+</ul>
+<h2 id="where39s-the-global-package-information">Where's the global
+package information?</h2>
+<p>Global packages are those packages which are shipped with GHC
+itself (or at least end up in its global database). A funny
+question I bet many people never thought about is: where are global
+packages defined? Are they in the snapshot, or does Stack look them
+up from GHC itself? There are advantages both way:</p>
+<ul>
+<li>If it comes from the snapshot, it may be wrong. For example, do
+you have the <code>Win32</code> or <code>unix</code> package?</li>
+<li>If it comes from GHC itself, then Stack can't do a <code>stack
+init</code> without first installing every GHC version it wants to
+test compatibility with.</li>
+</ul>
+<p>Previously, global information came from the Stackage snapshots.
+But both because of the "possibly incorrect" reason, and because it
+would be a royal pain to define all of the global packages in each
+custom snapshot file, Stack now does something different:</p>
+<ul>
+<li>When you use <code>stack init</code> or <code>stack new</code>
+(which implicitly calls <code>stack init</code>), Stack will rely
+on <i>global hints</i> present in a snapshot as a good guess about
+which packages GHC provides.</li>
+<li>When you're ready to start building your code against a
+specific GHC version, Stack will query GHC's global database.</li>
+</ul>
+<h2 id="choosing-between-stack.yaml-and-custom-snapshot">Choosing
+between stack.yaml and custom snapshot</h2>
+<p>You may be conflicted about whether you should add extra
+dependencies into a stack.yaml file (as you've probably done until
+now) or define a custom snapshot. My answers may change over time
+with experience, but here are some good guesses:</p>
+<ul>
+<li>If you're making lots of rapid iterations over the dependencies
+(e.g., testing five different versions of a package), use
+extra-deps. You will avoid Stack having to create separate snapshot
+databases and do a bunch of "copying precompiled package"
+stuff.</li>
+<li>If you're using the same modified sets in many projects, use a
+custom snapshot</li>
+<li>If you're changing a package deep in the dependency hierarchy
+(like <code>mtl</code> or <code>stm</code>), make a custom snapshot
+to try and save work (though I'm not sure if my logic is sound
+here)</li>
+</ul>
+<h2 id="things-we39ve-lost">Things we've lost</h2>
+<p>Besides the potential for some kind of breaking change in
+behavior to have crept in (<b>NOTE</b> please help me by testing
+against your projects!), the only lost features I'm aware of
+are:</p>
+<ul>
+<li>The custom snapshot configuration has changed significantly.
+Since very few people are using it, and it was always an
+experimental feature, this is probably an acceptable
+trade-off.</li>
+<li>We no longer have support for subdirs on tarballs and index
+packages. This is because the feature just doesn't make sense, and
+was only accidentally present. (We <i>do</i> have support for
+filepath locations, which is equally silly, but was also trivial to
+add support for and made one of the integration tests happy.)</li>
+</ul>
+<h2 id="future-changes">Future changes</h2>
+<p>Here's my biggest feature for consideration: making the project
+packages <i>only</i> support filepaths. I can think of no logical
+case where we'd want to support HTTP(S) or Git repos as "project
+packages" (meaning things that run tests, for instance). In my
+ideal world:</p>
+<ul>
+<li>The <code>packages</code> key would accept a list of
+filepaths</li>
+<li>The <code>extra-deps</code> key would accept exactly what it
+does now</li>
+<li>Everyone could transition from their current <code>extra-dep:
+true</code> syntax over the next few versions before we remove the
+old support</li>
+</ul>
+<p>I'm not normally in favor of breaking backwards compatibility in
+Stack, but miscategorized extra deps has resulted in much
+confusion, so I'd be happy to see it go, even if it requires
+rewriting <code>stack.yaml</code> files over time.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Stack%27s%20New%20Extensible%20Snapshots https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;stacks-new-extensible-snapshots&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;stacks-new-extensible-snapshots&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;stacks-new-extensible-snapshots&#x2F;&amp;title=Stack%27s%20New%20Extensible%20Snapshots"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;07&#x2F;stacks-new-extensible-snapshots&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#b2c1d3ded7c1f2d4c2d1dddfc2ded7c6d79cd1dddf" targe="_blank"><span class="__cf_email__" data-cfemail="f685979a9385b6908695999b869a938293d895999b">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

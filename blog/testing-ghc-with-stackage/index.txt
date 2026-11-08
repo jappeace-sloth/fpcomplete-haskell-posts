@@ -1,0 +1,109 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Testing GHC with Stackage
+
+By Michael Snoyman, February 22, 2016
+
+Share this     
+
+For the past few release of GHC (I think 7.10.2 and 7.10.3), I've tried to help out with the
+testing effort by using Stackage Nightly as a "stress test." Stackage Nightly provides a large
+(1810 at last count) collection of real-world Haskell packages to test compatibility. For minor
+version upgrades of GHC, this stress test is especially good, since virtually no packages should
+stop working with a minor version bump (besides things like conflicting identifier or module
+names). The test does end up providing quite a few false positives for a new major GHC release, but
+it still quite informative.
+
+Until now, each time I ran the test was a manual procedure. It didn't take that much time to set
+up, but (1) did take some non-zero part of my time, and (2) made it impossible for others to run
+this test (or even automate it) without my help. I got this set up as the ghc-rc-stackage project
+on Github, and I wanted to put up a post explaining how to use it in case GHC developers or testers
+want to play around with this.
+
+Quickstart instructions
+
+From a Linux machine with Docker installed, run the following from any directory:
+
+docker pull fpco/ghc-rc-stackage
+docker run --rm -it \
+  -v `pwd`/build:/build -v `pwd`/fake-home:/fake-home \
+  -e USERID=`id -u` \
+  fpco/ghc-rc-stackage \
+  /stackage/build.sh
+
+This will populate a build subdirectory with various content, include binary artifacts, generated
+documentation, and most important, build logs. Those will be present in build/logs/nightly. Pay
+attention to the console output to see which packages failed so you know which logs to pay
+attention to.
+
+This script will try to build the most recent Stackage Nightly snapshot with the current GHC
+release candidate selected for the repo (at time of writing, this is GHC 8.0.1 rc2).
+
+Diving deeper
+
+In order to perform these builds, we have a Docker image that contains:
+
+  • An Ubuntu base system
+  • A bunch of system libraries needed for building Stackage packages
+  • The relevant GHC release candidate
+  • The stack and stackage-curator binaries necessary for running a Stackage build
+  • A script (/stackage/build.sh) that downloads the YAML configuration for the most recent
+    Stackage Nightly and calls the stackage-curator executable with appropriate command line
+    arguments to kick off the build.
+
+The docker run line above does some magic to bind-mount appropriate directories and set the USERID
+environment variable used by that script, which will in turn be used to set appropriate
+permissions.
+
+Modifying
+
+Making local modifications to this setup is easy, just:
+
+  • clone the Github repository
+  • modify the Dockerfile and build.sh as desired
+  • run docker build --tag fpco/ghc-rc-stackage .
+  • run the same docker run command from above
+
+These steps are covered in the project's README.md
+
+Improving
+
+This is intended to provide basic functionality. The only planned enhancements I have for this
+right now are bumping the links for future release candidates in the future. As usual, if you have
+ideas for improvement, pull requests are very much welcome!
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

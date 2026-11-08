@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Pattern matching</title>
+  <meta property="og:title" content="Pattern matching">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Pattern matching is a central feature of some programming languages, notably both Rust and Haskell. But patterns may be even more central than you realize. We&#x27;ll look at some details in this post.">
+  <meta property="og:description" content="Pattern matching is a central feature of some programming languages, notably both Rust and Haskell. But patterns may be even more central than you realize. We&#x27;ll look at some details in this post.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;pattern-matching&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Pattern matching</h1>
+      
+      <p id="page-description">By Michael Snoyman, December 14, 2020</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Pattern%20matching https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;pattern-matching&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;pattern-matching&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;pattern-matching&#x2F;&amp;title=Pattern%20matching"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;pattern-matching&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  <p>I first started writing Haskell about 15 years ago. My learning curve for the language was haphazard at best. In many cases, I learnt concepts by osmosis, and only later learned the proper terminology and details around them. One of the prime examples of this is pattern matching. Using a <code>case</code> expression in Haskell, or a <code>match</code> expression in Rust, always felt natural. But it took years to realize that patterns appeared in other parts of the languages than just these expressions, and what terms like <em>irrefutable</em> meant.</p>
+<p>It's quite possible most Haskellers and Rustaceans will consider this content obvious. But maybe there are a few others like me out there who never had a chance to realize how ubiquitous patterns are in these languages. This post may also be a fun glimpse into either Haskell or Rust if you're only familiar with one of the languages.</p>
+<h2 id="language-references">Language references</h2>
+<p>Both Haskell and Rust have language references available online. The caveats are that the Rust reference is marked as incomplete, and the Haskell language reference is for Haskell2010, which GHC does not strictly adhere to. That said, both are readily understandable and complete enough to get a very good intuition. If you've never looked at either of these documents, I highly recommend having a peek.</p>
+<ul>
+<li><a href="https://www.haskell.org/onlinereport/haskell2010/haskellch3.html#x8-580003.17">Haskell 2010 Language Report, section 3.17 Pattern Matching</a></li>
+<li><a href="https://doc.rust-lang.org/stable/reference/patterns.html#range-patterns">Rust language reference, Patterns</a></li>
+</ul>
+<h2 id="case-and-match">case and match</h2>
+<p>The first place most of us hear the term &quot;pattern matching&quot; is in Haskell's <code>case</code> expression, or Rust's <code>match</code> expression. And it makes perfect sense here. We can provide multiple <em>patterns</em>, typically based on a data constructor/variant, and the language will match the most appropriate one. Slightly tying in with <a href="https://tech.fpcomplete.com/blog/error-handling-is-hard/">my previous post on errors</a>, let's look at a common example: pattern matching on an <code>Either</code> value in Haskell.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">mightFail </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Either String Int
+</span><span>
+</span><span>main </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">case</span><span> mightFail </span><span style="color:#859900;">of
+</span><span>        </span><span style="color:#cb4b16;">Left</span><span> err </span><span style="color:#859900;">-&gt;</span><span> putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Error occurred: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> err
+</span><span>        </span><span style="color:#cb4b16;">Right</span><span> x </span><span style="color:#859900;">-&gt;</span><span> putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Successful result: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show x
+</span></code></pre>
+<p>Or a <code>Result</code> value in Rust:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">might_fail</span><span>() -&gt; </span><span style="color:#859900;">Result</span><span>&lt;</span><span style="color:#268bd2;">i32</span><span>, </span><span style="color:#859900;">String</span><span>&gt; { </span><span style="color:#859900;">... </span><span>}
+</span><span>
+</span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#859900;">match might_fail</span><span>() {
+</span><span>        </span><span style="color:#859900;">Err</span><span>(err) </span><span style="color:#859900;">=&gt; println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Error occurred: </span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, err),
+</span><span>        </span><span style="color:#859900;">Ok</span><span>(x) </span><span style="color:#859900;">=&gt; println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Successful result: </span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, x),
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>I think most programmers, even those unfamiliar with these languages, could intuit to some extent what these expressions do. <code>mightFail</code> and <code>might_fail()</code> return some kind of value. The value may be in multiple different &quot;states.&quot; The patterns match, and we branch our behavior depending on which state. Easy enough.</p>
+<p>Already here, though, there's an important detail many of us gloss over. Or at least I did. Our patterns not only <em>match a constructor</em>, they also <em>bind a variable</em>. In the examples above, we bind the variables <code>err</code> and <code>x</code> to values contained by the data constructors. And that's pretty interesting, because both Haskell and Rust <em>also</em> use <code>let</code> bindings for defining variables. I wonder if there's some kind of connection there.</p>
+<p><em>Narrator: there was a connection</em></p>
+<h2 id="functions-in-haskell">Functions in Haskell</h2>
+<p>Haskell immediately adds a curve ball (in a good way) to this story. Let's take a classic recursive definition of a factorial function (note: this isn't a <em>good</em> definition since it has a space leak).</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">fact </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int
+</span><span>fact i </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">case</span><span> i </span><span style="color:#859900;">of
+</span><span>        </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">-&gt; </span><span style="color:#6c71c4;">1
+</span><span>        _ </span><span style="color:#859900;">-&gt;</span><span> i * fact (i </span><span style="color:#859900;">- </span><span style="color:#6c71c4;">1</span><span>)
+</span></code></pre>
+<p>This feels a bit verbose. We capture the variable <code>i</code>, only to immediately pattern match on it. We also have a <em>new</em> kind of pattern, <code>_</code>. When I first learned Haskell, I thought of <code>_</code> as &quot;a variable I don't care about.&quot; But it's actually more specialized than this: a wildcard pattern, something which matches anything. (We'll get into what variables match later.)</p>
+<p>Anyway, to make this kind of code a bit terser, Haskell offers a different way of writing this function:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">fact </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">Int
+</span><span>fact </span><span style="color:#6c71c4;">0 </span><span style="color:#859900;">= </span><span style="color:#6c71c4;">1
+</span><span>fact i </span><span style="color:#859900;">=</span><span> i * fact (i </span><span style="color:#859900;">- </span><span style="color:#6c71c4;">1</span><span>)
+</span></code></pre>
+<p>These two versions of the code are identical. It's just a syntactic trick. Let's see another more interesting syntactic trick.</p>
+<h2 id="what-about-let">What about let?</h2>
+<p>We use <code>let</code> expressions (and <code>let</code> bindings in <code>do</code>-notation) in Haskell to create new variables, e.g.:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>main </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">let</span><span> name </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;
+</span><span>     </span><span style="color:#859900;">in</span><span> putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello, </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> name
+</span></code></pre>
+<p>And we do the same with <code>let</code> statements in Rust:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> name = </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;</span><span>;
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello, </span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, name);
+</span><span>}
+</span></code></pre>
+<p>But here's where we begin to get a bit fancy. We already saw that we can bind variables in <code>case</code> and <code>match</code> expressions. Does that mean we can do away with the <code>let</code>s? Yes we can!</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>main </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">case </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">of
+</span><span>        name </span><span style="color:#859900;">-&gt;</span><span> putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello, </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> name
+</span></code></pre>
+<p>And</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#859900;">match </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot; </span><span>{
+</span><span>        name </span><span style="color:#859900;">=&gt; println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello, </span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, name)
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>This isn't <em>good</em> code per se. In fact, <code>cargo clippy</code> will complain about it. But it does hint at the fact that there's a deeper connection between two constructs. And the connection is this: the left hand side of the equals sign in a <code>let</code> statement/expression/binding is a <em>pattern</em>.</p>
+<h2 id="ditch-the-case-ditch-the-match">Ditch the case! Ditch the match!</h2>
+<p>Alright, so we can technically get rid of <code>let</code>s if we wanted to (which we don't). Can we get rid of the <code>case</code> expressions in Haskell? The real answer is &quot;definitely not.&quot; But interestingly, this code compiles!</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">mightFail </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Either String Int
+</span><span>mightFail </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Left </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">It failed</span><span style="color:#839496;">&quot;
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">let </span><span style="color:#cb4b16;">Right</span><span> x </span><span style="color:#859900;">=</span><span> mightFail
+</span><span>     </span><span style="color:#859900;">in</span><span> putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Successful result: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show x
+</span></code></pre>
+<p>As mentioned, we can put a pattern on the left hand side of the equals sign. And we've done just that here. But what on Earth does this code <em>do</em>? As you can see, the <code>mightFail</code> expression will evaluate to a <code>Left</code> value. But our pattern only matches on <code>Right</code> values! Running this code gives us:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>Main.hs:10:9-27: Non-exhaustive patterns in Right x
+</span></code></pre>
+<p>Haskell is a non-strict language. Performing this binding is allowed. But evaluating the result of this binding blows up.</p>
+<p>Rust, however, <strong>is</strong> a strict language. We can do something very similar in Rust:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let </span><span style="color:#859900;">Ok</span><span>(x) = </span><span style="color:#859900;">might_fail</span><span>();
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Successful result: </span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, x);
+</span><span>}
+</span></code></pre>
+<p>But this code won't even compile:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>error[E0005]: refutable pattern in local binding: `Err(_)` not covered
+</span><span>...
+</span><span>    = note: `let` bindings require an &quot;irrefutable pattern&quot;, like a `struct` or an `enum` with only one variant
+</span><span>    = note: for more information, visit https://doc.rust-lang.org/book/ch18-02-refutability.html
+</span><span>    = note: the matched value is of type `std::result::Result&lt;i32, std::string::String&gt;`
+</span><span>help: you might want to use `if let` to ignore the variant that isn&#39;t matched
+</span></code></pre>
+<p>Let's dive into those &quot;exhaustive&quot; and &quot;refutable&quot; concepts, and then round out this post with a glance at where else patterns appear in these languages.</p>
+<p>Side note: it's true that the Haskell code above compiles. However, if you turn on the <a href="https://ghc.gitlab.haskell.org/ghc/doc/users_guide/using-warnings.html#ghc-flag--Wincomplete-uni-patterns"><code>-Wincomplete-uni-patterns</code> warning</a>, you'll get a warning about this. I personally think this warning should be included in <code>-Wall</code>.</p>
+<h2 id="refutable-and-irrefutable-exhaustive-and-non-exhaustive">Refutable and irrefutable, exhaustive and non-exhaustive</h2>
+<p>This topic is quite a bit more complicated in Haskell due to non-strictness. How matching works in the presence of &quot;bottom&quot; or undefined values is an entire extra wrench of complication. I'm going to ignore those cases entirely here. If you're interested in more information on this, my article <a href="https://tech.fpcomplete.com/haskell/tutorial/all-about-strictness/">All about strictness</a> discusses some of these points.</p>
+<p>Some patterns will <em>always</em> match a value. The simplest example of this is a wildcard. In fact, that's basically its definition. Quoting the Rust reference:</p>
+<blockquote>
+<p>The <em>wildcard pattern</em> (an underscore symbol) matches any value.</p>
+</blockquote>
+<p>And fortunately for us, things behave exactly the same way in Haskell.</p>
+<p>Another pattern that matches any value given is variable. <code>let x = blah</code> is a valid binding, regardless of what <code>blah</code> is. Both of these are known as <em>irrefutable</em> patterns.</p>
+<p>By contrast, some patterns are refutable. They are patterns that only match some possible cases of the value, not all. The simplest example is the one we saw before: matching on one of many data constructors/variants in a data type (Haskell) or enum (Rust).</p>
+<p>Contrasting yet again: if you have a <code>struct</code> in Rust, or a Rust <code>enum</code> with only variant, or a Haskell <code>data</code> with only one data constructor, or a Haskell <code>newtype</code>, the pattern will always match. That is, of course, assuming any patterns nested within will <em>also</em> always match. To demonstrate, this pattern match is irrefutable:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">data </span><span style="color:#cb4b16;">Foo </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Foo Bar
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Bar </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Baz Int
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">let </span><span style="color:#cb4b16;">Foo</span><span> (</span><span style="color:#cb4b16;">Baz</span><span> x) </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Foo</span><span> (</span><span style="color:#cb4b16;">Baz </span><span style="color:#6c71c4;">5</span><span>)
+</span><span>     </span><span style="color:#859900;">in</span><span> putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">x == </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show x
+</span></code></pre>
+<p>However, if I add another data constructor to <code>Bar</code>, it becomes refutable:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">data </span><span style="color:#cb4b16;">Foo </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Foo Bar
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Bar </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Baz Int </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">Bin Char
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">let </span><span style="color:#cb4b16;">Foo</span><span> (</span><span style="color:#cb4b16;">Baz</span><span> x) </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Foo</span><span> (</span><span style="color:#cb4b16;">Bin </span><span style="color:#839496;">&#39;</span><span style="color:#2aa198;">c</span><span style="color:#839496;">&#39;</span><span>)
+</span><span>     </span><span style="color:#859900;">in</span><span> putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">x == </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show x
+</span></code></pre>
+<p>In both Haskell and Rust, tuples behave like data types with one constructor, and therefore as long as the patterns inside of them are irrefutable, they are irrefutable too.</p>
+<p>The final case I want to point out is <em>literal patterns</em>. Literal patterns are very much refutable. This code thankfully does not compile:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let </span><span style="color:#839496;">&#39;</span><span style="color:#2aa198;">x</span><span style="color:#839496;">&#39; </span><span>= </span><span style="color:#839496;">&#39;</span><span style="color:#2aa198;">a</span><span style="color:#839496;">&#39;</span><span>;
+</span><span>}
+</span></code></pre>
+<p>But the really interesting thing for someone not used to pattern matching is that you can do this at all! We've already done pattern matching on literal values above, in our definition of <code>fact</code>. It's very convenient to be able to build up complex case/match expressions using literal syntax (like list/slice syntax).</p>
+<p>Alright, let's see a few more examples of where patterns are used in these languages, then tie it up.</p>
+<h2 id="function-arguments">Function arguments</h2>
+<p>Function arguments are patterns in both languages. In Haskell we saw that you can use <em>refutable</em> patterns, and provide multiple function clauses. The same doesn't apply to Rust functions. You'll need to use an irrefutable pattern in the function, and then do some pattern matching or other kind of branching in the body of the functions. For example, the poorly written <code>fact</code> function can be rewritten in Rust as:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">fact</span><span>(</span><span style="color:#268bd2;">i</span><span>: </span><span style="color:#268bd2;">u32</span><span>) -&gt; </span><span style="color:#268bd2;">u32 </span><span>{
+</span><span>    </span><span style="color:#859900;">if</span><span> i == </span><span style="color:#6c71c4;">0 </span><span>{
+</span><span>        </span><span style="color:#6c71c4;">1
+</span><span>    } </span><span style="color:#859900;">else </span><span>{
+</span><span>        i * </span><span style="color:#859900;">fact</span><span>(i - </span><span style="color:#6c71c4;">1</span><span>)
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">5! == </span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#859900;">fact</span><span>(</span><span style="color:#6c71c4;">5</span><span>));
+</span><span>}
+</span></code></pre>
+<p>Perhaps more interestingly in both languages, you can use a pattern matching a data structure in the function argument. For example, in Rust:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">struct </span><span style="color:#b58900;">Person </span><span>{
+</span><span>    </span><span style="color:#268bd2;">name</span><span>: String,
+</span><span>    </span><span style="color:#268bd2;">age</span><span>: </span><span style="color:#268bd2;">u32</span><span>,
+</span><span>}
+</span><span>
+</span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">greet</span><span>(Person { name, age }: </span><span style="color:#859900;">&amp;</span><span>Person) {
+</span><span>    </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{}</span><span style="color:#2aa198;"> is </span><span style="color:#cb4b16;">{}</span><span style="color:#2aa198;"> years old</span><span style="color:#839496;">&quot;</span><span>, name, age);
+</span><span>}
+</span><span>
+</span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> alice = Person {
+</span><span>        name: </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;</span><span>.</span><span style="color:#859900;">to_owned</span><span>(),
+</span><span>        age: </span><span style="color:#6c71c4;">30</span><span>,
+</span><span>    };
+</span><span>    </span><span style="color:#859900;">greet</span><span>(</span><span style="color:#859900;">&amp;</span><span>alice);
+</span><span>}
+</span></code></pre>
+<p>Or in Haskell, using positional instead of named fields:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">data </span><span style="color:#cb4b16;">Person </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Person String Int
+</span><span>
+</span><span style="color:#b58900;">greet </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Person </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>greet (</span><span style="color:#cb4b16;">Person</span><span> name age) </span><span style="color:#859900;">=</span><span> putStrLn </span><span style="color:#859900;">$</span><span> name </span><span style="color:#859900;">++ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;"> is </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show age </span><span style="color:#859900;">++ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;"> years old</span><span style="color:#839496;">&quot;
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=</span><span> greet </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Person </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot; </span><span style="color:#6c71c4;">30
+</span></code></pre>
+<h2 id="closures-functions-and-lambdas">Closures, functions, and lambdas</h2>
+<p>The arguments to closures (Rust) and lambdas (Haskell) are patterns. That means we can match on irrefutable things like tuples fairly easily:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let </span><span style="color:#b58900;">greet </span><span style="color:#859900;">= </span><span>|(</span><span style="color:#268bd2;">name</span><span>, </span><span style="color:#268bd2;">age</span><span>)| </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{}</span><span style="color:#2aa198;"> is </span><span style="color:#cb4b16;">{}</span><span style="color:#2aa198;"> years old</span><span style="color:#839496;">&quot;</span><span>, name, age);
+</span><span>    </span><span style="color:#859900;">greet</span><span>((</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot;</span><span>, </span><span style="color:#6c71c4;">30</span><span>));
+</span><span>}
+</span></code></pre>
+<p>The big difference is that, in Rust, the pattern must be irrefutable. This is again due to strictness. The following code will compile in Haskell, but fail at runtime:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#859900;">let</span><span> mylambda </span><span style="color:#859900;">= \</span><span>(</span><span style="color:#cb4b16;">Right</span><span> x) </span><span style="color:#859900;">-&gt;</span><span> putStrLn x
+</span><span>     </span><span style="color:#859900;">in</span><span> mylambda (</span><span style="color:#cb4b16;">Left </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Error!</span><span style="color:#839496;">&quot;</span><span>)
+</span></code></pre>
+<p>Again, <code>-Wincomplete-uni-patterns</code> will warn about this. But again, it's not on by default.</p>
+<p>By contrast, in Rust, the equivalent code will fail to compile:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let </span><span style="color:#b58900;">myclosure </span><span style="color:#859900;">= </span><span>|Ok(</span><span style="color:#268bd2;">x</span><span>): Result&lt;</span><span style="color:#268bd2;">i32</span><span>, </span><span style="color:#859900;">&amp;</span><span>str&gt;| </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, x);
+</span><span>    </span><span style="color:#859900;">myclosure</span><span>(</span><span style="color:#859900;">Err</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello</span><span style="color:#839496;">&quot;</span><span>));
+</span><span>}
+</span></code></pre>
+<p>This produces:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>error[E0005]: refutable pattern in function argument: `Err(_)` not covered
+</span></code></pre>
+<p>And if you're wondering: I needed to add the explicit <code>: Result&lt;i32, &amp;str&gt;</code> type annotation to help type inference get to that error message. Without it, it just complained that it couldn't infer the type of <code>x</code>.</p>
+<h2 id="if-let-while-let-and-for-rust">if let, while let, and for (Rust)</h2>
+<p>The <code>if let</code> and <code>while let</code> expressions are all about refutable pattern matches. &quot;Only do this if the pattern matches&quot; and &quot;keep doing this while the pattern matches.&quot; <code>if let</code> looks something like this:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> result: </span><span style="color:#859900;">Result</span><span>&lt;(), </span><span style="color:#859900;">String</span><span>&gt; = </span><span style="color:#859900;">Err</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Something happened</span><span style="color:#839496;">&quot;</span><span>.</span><span style="color:#859900;">to_owned</span><span>());
+</span><span>    </span><span style="color:#859900;">if </span><span style="color:#268bd2;">let </span><span style="color:#859900;">Err</span><span>(e) = result {
+</span><span>        </span><span style="color:#859900;">eprintln!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Something went wrong: </span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, e);
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>And with <code>while let</code>, you can make something close to a <code>for</code> loop:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let </span><span style="color:#586e75;">mut</span><span> iter = </span><span style="color:#6c71c4;">1</span><span style="color:#859900;">..</span><span>=</span><span style="color:#6c71c4;">10</span><span>;
+</span><span>    </span><span style="color:#859900;">while </span><span style="color:#268bd2;">let </span><span style="color:#859900;">Some</span><span>(i) = iter.</span><span style="color:#859900;">next</span><span>() {
+</span><span>        </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">i == </span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, i);
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>And speaking of <code>for</code> loops, the left hand side of the <code>in</code> keyword is a pattern. This can be really nice for cases like destructuring the tuple generated by the <code>enumerate()</code> method:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#859900;">for </span><span>(idx, c) </span><span style="color:#859900;">in </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Hello, world!</span><span style="color:#839496;">&quot;</span><span>.</span><span style="color:#859900;">chars</span><span>().</span><span style="color:#859900;">enumerate</span><span>() {
+</span><span>        </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#cb4b16;">{}</span><span style="color:#2aa198;">: </span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, idx, c);
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>The patterns in a <code>for</code> loop must be irrefutable. This code won't compile:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> array = [</span><span style="color:#859900;">Ok</span><span>(</span><span style="color:#6c71c4;">1</span><span>), </span><span style="color:#859900;">Ok</span><span>(</span><span style="color:#6c71c4;">2</span><span>), </span><span style="color:#859900;">Err</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">something</span><span style="color:#839496;">&quot;</span><span>), </span><span style="color:#859900;">Ok</span><span>(</span><span style="color:#6c71c4;">3</span><span>)];
+</span><span>    </span><span style="color:#859900;">for Ok</span><span>(x) </span><span style="color:#859900;">in &amp;</span><span>array {
+</span><span>        </span><span style="color:#859900;">println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">x == </span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, x);
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>Instead, if you want to exit the <code>for</code> loop at the first <code>Err</code> value, you would need to do something like this:</p>
+<pre data-lang="rust" style="background-color:#fdf6e3;color:#657b83;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#268bd2;">fn </span><span style="color:#b58900;">main</span><span>() {
+</span><span>    </span><span style="color:#268bd2;">let</span><span> array = [</span><span style="color:#859900;">Ok</span><span>(</span><span style="color:#6c71c4;">1</span><span>), </span><span style="color:#859900;">Ok</span><span>(</span><span style="color:#6c71c4;">2</span><span>), </span><span style="color:#859900;">Err</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">something</span><span style="color:#839496;">&quot;</span><span>), </span><span style="color:#859900;">Ok</span><span>(</span><span style="color:#6c71c4;">3</span><span>)];
+</span><span>    </span><span style="color:#859900;">for</span><span> x </span><span style="color:#859900;">in &amp;</span><span>array {
+</span><span>        </span><span style="color:#859900;">match</span><span> x {
+</span><span>            </span><span style="color:#859900;">Ok</span><span>(x) </span><span style="color:#859900;">=&gt; println!</span><span>(</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">x == </span><span style="color:#cb4b16;">{}</span><span style="color:#839496;">&quot;</span><span>, x),
+</span><span>            </span><span style="color:#859900;">Err</span><span>(</span><span style="color:#859900;">_</span><span>) </span><span style="color:#859900;">=&gt; break</span><span>,
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<h2 id="where-they-re-used">Where they're used</h2>
+<p>This was not intended to be a complete explanation of all examples of patterns in these languages. However, for a bit of completeness, let me quote the Haskell language specification for where patterns are part of the language:</p>
+<blockquote>
+<p>Patterns appear in lambda abstractions, function definitions, pattern bindings, list comprehensions, do expressions, and case expressions. However, the first five of these ultimately translate into case expressions, so defining the semantics of pattern matching for case expressions is sufficient.</p>
+</blockquote>
+<p>And similarly for Rust:</p>
+<blockquote>
+<ul>
+<li>let declarations</li>
+<li>Function and closure parameters</li>
+<li>match expressions</li>
+<li>if let expressions</li>
+<li>while let expressions</li>
+<li>for expressions</li>
+</ul>
+</blockquote>
+<p>There are also more advanced examples of patterns that I haven't touched on at all. Reference patterns in Rust would be relevant here, as would lazy patterns in Haskell.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>I hoped this gave a little bit of insight into the value of patterns. For me, the important takeaway is:</p>
+<ul>
+<li>Patterns appear in lots of places</li>
+<li>The difference between refutable and irrefutable patterns</li>
+<li>There are some places where you must use irrefutable patterns</li>
+<li>There are some places where Haskell lets you use refutable patterns, but you shouldn't</li>
+<li>Variable binding is just one special case of patterns</li>
+</ul>
+<p>If you're interested in learning more about either Haskell or Rust, check out our <a href="https://tech.fpcomplete.com/haskell/syllabus/">Haskell syllabus</a> or our <a href="https://tech.fpcomplete.com/rust/crash-course/">Rust Crash Course</a>. FP Complete also offers both corporate and public training classes on both Haskell and Rust. If you're interested in learning more, please <a href="https://tech.fpcomplete.com/contact-us/">contact us for details</a>.</p>
+<div class="text-center">
+<a class="button-coral" href="/training/">Learn about Rust training</a>
+</div>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Pattern%20matching https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;pattern-matching&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;pattern-matching&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;pattern-matching&#x2F;&amp;title=Pattern%20matching"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;pattern-matching&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#3142505d5442715741525e5c415d5445541f525e5c" targe="_blank"><span class="__cf_email__" data-cfemail="2350424f4650634553404c4e534f4657460d404c4e">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

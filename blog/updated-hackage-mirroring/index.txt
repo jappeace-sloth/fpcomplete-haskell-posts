@@ -1,0 +1,163 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Updated Hackage mirroring
+
+By Michael Snoyman, September 27, 2016
+
+Share this     
+
+As we've discussed on this blog before, FP Complete has been running a Hackage mirror for quite a
+few years now. In addition to a straight S3-based mirror of raw Hackage content, we've also been
+running some Git repos providing the same content in an arguably more accessible format (
+all-cabal-files, all-cabal-hashes, and all-cabal-metadata).
+
+In the past, we did all of this mirroring using Travis, but had to stop doing so a few months back.
+Also, a recent revelation showed that the downloads we were making were not as secure as I'd
+previously believed (due to lack of SSL between the Hackage server and its CDN). Finally, there's
+been off-and-on discussion for a while about unifying on one Hackage mirroring tool. After some
+discussion among Duncan, Herbert, and myself, all of these goals ended up culminating in this
+mailing list post
+
+This blog post details the end result of these efforts: where code is running, where it's running,
+how secret credentials are handled, and how we monitor the whole thing.
+
+Code
+
+One of the goals here was to use the new hackage-security mechanism in Hackage to validate the
+package tarballs and cabal file index downloaded from Hackage. This made it natural to rely on
+Herbert's hackage-mirror-tool code, which supports downloads, verification, and uploading to S3.
+There were a few minor hiccups getting things set up, but overall it was surprisingly easy to
+integrate, especially given that Herbert's code had previously never been used against Amazon S3
+(it had been used against the Dreamhost mirror).
+
+I made a few downstream modifications to the codebase to make it compatible with officially
+released versions of Cabal, Stackify it, and in the process generate Docker images. I also included
+a simple shell script for running the tool in a loop (based on Herbert's README instructions). The
+result is the snoyberg/hackage-mirror-tool Docker image.
+
+After running this image (we'll get to how it's run later), we have a fully populated S3 mirror of
+Hackage guaranteeing a consistent view of Hackage (i.e., all package tarballs are available,
+without CDN caching issues in place). The next step is to use this mirror to populated the Git
+repositories. We already have all-cabal-hashes-tool and all-cabal-metadata-tool for updating the
+appropriate repos, and all-cabal-files is just a matter of running a tar xf on the tarball
+containing .cabal files. Putting all of this together, I set up the all-cabal-tool repo,
+containing:
+
+  • run-inner.sh will:
+      □ Grab the 01-index.tar.gz file from the S3 mirror
+      □ Update the all-cabal-files repo
+      □ Use git archive in that repo to generate and update the 00-index.tar.gz file*
+      □ Update the all-cabal-hashes and all-cabal-metadata repos using the appropriate tools
+  • run.sh uses the hackage-watcher to run run-inner.sh each time a new version of 01-index.tar.gz
+    is available. It's able to do a simple ETag check, saving on bandwidth, disk IO, and CPU usage.
+  • Dockerfile pulls in all of the relevant tools and provides a commercialhaskell/all-cabal-tool
+    Docker image
+  • You may notice some other code in that repo. I did have intention of rewriting the Bash scripts
+    and other Haskell code into a single Haskell executable for simplicity, but didn't get around
+    to it yet. If anyone's interested in taking up the mantle on that, let me know.
+
+* About this 00/01 business: 00-index.tar.gz is the original package format, without
+hackage-security, and is used by previous cabal-install releases, as well as Stack and possibly
+some other tools too. hackage-mirror-tool does not mirror this file since it has no security
+information, so generating it from the known-secure 01-index.tar.gz file (via the all-cabal-files
+repo) seemed the best option.
+
+In setting up these images, I decided to split them into two pieces instead of combining them so
+that the straight Hackage mirroring bits would remain unaffected by the rest of the code, since the
+Hackage mirror (as we'll see later) will be available for users outside of the all-cabal* set of
+repos.
+
+At the end of this, you can see that we're no longer using the original hackage-mirror code that
+powered the FP Complete S3 mirror for years. Unification achieved!
+
+Kubernetes
+
+As I mentioned, we previously ran all of this mirroring code on Travis, but had to move off of it.
+Anyone who's worked with me knows that I hate being a system administrator, so it was a painful few
+months where I had to run this code myself on an EC2 machine I set up personally. Fortunately, FP
+Complete runs a Kubernetes cluster these days, and that means I don't need to be a system
+administrator :). As mentioned, I packaged up all of the code above in two Docker images, so
+running them on Kubernetes is very straightforward.
+
+For the curious, I've put the Kubernetes deployment configurations in a Gist.
+
+Credentials
+
+We have a few different credentials that need to be shared with these Docker containers:
+
+  • AWS credentials for uploading
+  • GPG key for signing tags
+  • SSH key for pushing to Github
+
+One of the other nice things about Kubernetes (besides allowing me to not be a sysadmin) is that it
+has built-in secrets support. I obviously won't be sharing those files with you, but if you look at
+the deployment configs I shared before, you can see how they are being referenced.
+
+Monitoring
+
+One annoyance I've had in the past is, if there's a bug in the scripts or some system problem,
+mirroring will stop for many hours before I become aware of it. I was determined to not let that be
+a problem again. So I put together the Hackage Mirror status page. It compares the last upload date
+from Hackage itself against the last modified time on various S3 artifacts, as well as the last
+commit for the Git repos. If any of the mirrors fall more than an hour behind Hackage itself, it
+returns a 500 status code. That's not technically the right code to use, but it does mean that
+normal HTTP monitoring/alerting tools can be used to watch that page and tell me if anything has
+gone wrong.
+
+Official Hackage mirror
+
+With the addition of the new hackage-security metadata files to our S3 mirror, one nice benefit is
+that the FP Complete mirror is now an official Hackage mirror, and can be used natively by
+cabal-install without having to modify any configuration files. Hopefully this will be useful to
+end users.
+
+And strangely enough, just as I finished this blog post, I got my first "mirrors out of sync" 500
+error message ever, proving that the monitoring itself works (even if the mirroring had a bug).
+
+What's next?
+
+Hopefully nothing! I've spent quite a bit more time on this in the past few weeks than I'd hoped,
+but I'm happy with the end result. I feel confident that the mirroring processes will run reliably,
+I understand and trust the security model from end to end, and there's less code and machines to
+maintain overall.
+
+Thank you!
+
+Many thanks to Duncan and Herbert for granting me access to the private Hackage server to work
+around CDN caching issues, and to Herbert for the help and quick fixes with hackage-mirror-tool.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

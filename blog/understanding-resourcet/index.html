@@ -1,0 +1,1695 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Understanding ResourceT</title>
+  <meta property="og:title" content="Understanding ResourceT">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="The ResourceT monad transformer allows you to acquire resources with exception safety. This post demonstrates from the ground up when you need it and how it works.">
+  <meta property="og:description" content="The ResourceT monad transformer allows you to acquire resources with exception safety. This post demonstrates from the ground up when you need it and how it works.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;06&#x2F;understanding-resourcet&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Understanding ResourceT</h1>
+      
+      <p id="page-description">By Michael Snoyman, June 19, 2017</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Understanding%20ResourceT https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;06&#x2F;understanding-resourcet&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;06&#x2F;understanding-resourcet&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;06&#x2F;understanding-resourcet&#x2F;&amp;title=Understanding%20ResourceT"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;06&#x2F;understanding-resourcet&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>This blog post came out of two unrelated sets of questions I
+received last week about usage of the <a href=
+"https://www.stackage.org/package/resourcet">resourcet</a> library.
+For those unfamiliar with it, the library is often used in
+combination with the Conduit streaming data library; basically
+every <a href=
+"https://haskell-lang.org/library/conduit">conduit</a> <a href=
+"https://www.snoyman.com/reveal/conduit-yesod#/">tutorial</a> will
+quickly jump into usage of the resourcet library.</p>
+<p>Instead of just teaching you how to use the library, this post
+will demonstrate why you need it and how it works internally, to
+help you avoid some of the potential pitfalls of the library. And
+stay tuned in the next week or two for a fun debugging storing
+around resourcet, bracket, and monad-control.</p>
+<p>Anyway, back to our topic. To start off, consider some code to
+read a file and print its size:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-8.12 script</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">B</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">IO</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">bs</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">myReadFile</span> <span class=
+"hs-str">"/usr/share/dict/words"</span>
+  <span class="hs-varid">print</span> <span class=
+"hs-varop">$</span> <span class="hs-conid">B</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">length</span> <span class="hs-varid">bs</span>
+
+<span class="hs-definition">myReadFile</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">FilePath</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">B</span><span class=
+"hs-varop">.</span><span class="hs-conid">ByteString</span>
+<span class="hs-definition">myReadFile</span> <span class=
+"hs-varid">fp</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">withBinaryFile</span> <span class=
+"hs-varid">fp</span> <span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class=
+"hs-conid">ReadMode</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">h</span> <span class="hs-keyglyph">-&gt;</span>
+  <span class=
+"hs-comment">-- Highly inefficient, use a builder instead</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">loop</span> <span class=
+"hs-varid">front</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+        <span class="hs-varid">next</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">hGetSome</span> <span class=
+"hs-varid">h</span> <span class="hs-num">4096</span>
+        <span class="hs-keyword">if</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">null</span> <span class="hs-varid">next</span>
+          <span class="hs-keyword">then</span> <span class=
+"hs-varid">return</span> <span class="hs-varid">front</span>
+          <span class="hs-keyword">else</span> <span class=
+"hs-varid">loop</span> <span class="hs-varop">$</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">append</span> <span class=
+"hs-varid">front</span> <span class="hs-varid">next</span>
+   <span class="hs-keyword">in</span> <span class=
+"hs-varid">loop</span> <span class="hs-conid">B</span><span class=
+"hs-varop">.</span><span class="hs-varid">empty</span></pre>
+<p>However, this is highly inefficient: it reads the entire
+contents of the file into memory at once, when we don't need that.
+Instead, let's calculate that in a streaming fashion:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-8.12 script</span>
+<span class="hs-comment">{-# LANGUAGE BangPatterns #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">B</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">IO</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">len</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">myFileLength</span> <span class=
+"hs-str">"/usr/share/dict/words"</span>
+  <span class="hs-varid">print</span> <span class=
+"hs-varid">len</span>
+
+<span class=
+"hs-comment">-- Yes, there's hFileSize... ignore that</span>
+<span class="hs-definition">myFileLength</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">FilePath</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">myFileLength</span> <span class=
+"hs-varid">fp</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">withBinaryFile</span> <span class=
+"hs-varid">fp</span> <span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class=
+"hs-conid">ReadMode</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">h</span> <span class="hs-keyglyph">-&gt;</span>
+  <span class="hs-keyword">let</span> <span class=
+"hs-varid">loop</span> <span class="hs-varop">!</span><span class=
+"hs-varid">total</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+        <span class="hs-varid">next</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">hGetSome</span> <span class=
+"hs-varid">h</span> <span class="hs-num">4096</span>
+        <span class="hs-keyword">if</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">null</span> <span class="hs-varid">next</span>
+          <span class="hs-keyword">then</span> <span class=
+"hs-varid">return</span> <span class="hs-varid">total</span>
+          <span class="hs-keyword">else</span> <span class=
+"hs-varid">loop</span> <span class="hs-varop">$</span> <span class=
+"hs-varid">total</span> <span class=
+"hs-varop">+</span> <span class="hs-conid">B</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">length</span> <span class="hs-varid">next</span>
+   <span class="hs-keyword">in</span> <span class=
+"hs-varid">loop</span> <span class="hs-num">0</span></pre>
+<p>Notice that in both of these implementations, we've used
+<code>withBinaryFile</code> to open the file in such a way that the
+handle will be closed when we're done with it, regardless of
+whether an exception is thrown.</p>
+<h2 id="introduce-continuations">Introduce continuations</h2>
+<p>But it's pretty unforunate that we've coupled together our file
+read logic with the logic that consumes the file. Let's make an
+abstraction similar to conduit to address that. We'll have an
+action which returns the next chunk of data from the file, and the
+following action to perform.</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-8.12 script</span>
+<span class="hs-comment">{-# LANGUAGE BangPatterns #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">B</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">IO</span>
+
+<span class="hs-keyword">data</span> <span class=
+"hs-conid">IOSource</span> <span class="hs-varid">a</span>
+  <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">IOChunk</span> <span class=
+"hs-varid">a</span> <span class="hs-layout">(</span><span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">IOSource</span> <span class=
+"hs-varid">a</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span>
+  <span class="hs-keyglyph">|</span> <span class=
+"hs-conid">IODone</span>
+
+<span class="hs-definition">sourceHandle</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span><span class="hs-varop">.</span><span class=
+"hs-conid">Handle</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">IOSource</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span><span class="hs-layout">)</span>
+<span class="hs-definition">sourceHandle</span> <span class=
+"hs-varid">h</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-keyword">do</span>
+  <span class="hs-varid">next</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">hGetSome</span> <span class=
+"hs-varid">h</span> <span class="hs-num">4096</span>
+  <span class="hs-varid">return</span> <span class=
+"hs-varop">$</span>
+    <span class="hs-keyword">if</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">null</span> <span class="hs-varid">next</span>
+      <span class="hs-keyword">then</span> <span class=
+"hs-conid">IODone</span>
+      <span class="hs-keyword">else</span> <span class=
+"hs-conid">IOChunk</span> <span class=
+"hs-varid">next</span> <span class="hs-layout">(</span><span class=
+"hs-varid">sourceHandle</span> <span class=
+"hs-varid">h</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">sourceFile</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">FilePath</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">IOSource</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span><span class="hs-layout">)</span>
+<span class="hs-definition">sourceFile</span> <span class=
+"hs-varid">fp</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">withBinaryFile</span> <span class=
+"hs-varid">fp</span> <span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class=
+"hs-conid">ReadMode</span> <span class=
+"hs-varid">sourceHandle</span>
+
+<span class="hs-definition">sourceLength</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">IOSource</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">sourceLength</span> <span class=
+"hs-keyglyph">=</span>
+    <span class="hs-varid">loop</span> <span class=
+"hs-num">0</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">loop</span> <span class=
+"hs-varop">!</span><span class="hs-varid">total</span> <span class=
+"hs-varid">mnext</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+      <span class="hs-varid">next</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">mnext</span>
+      <span class="hs-keyword">case</span> <span class=
+"hs-varid">next</span> <span class="hs-keyword">of</span>
+        <span class="hs-conid">IOChunk</span> <span class=
+"hs-varid">bs</span> <span class=
+"hs-varid">mnext'</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">loop</span> <span class="hs-layout">(</span><span class=
+"hs-varid">total</span> <span class=
+"hs-varop">+</span> <span class="hs-conid">B</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">length</span> <span class="hs-varid">bs</span><span class="hs-layout">)</span> <span class="hs-varid">mnext'</span>
+        <span class="hs-conid">IODone</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">return</span> <span class="hs-varid">total</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">len</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">sourceLength</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">sourceFile</span> <span class=
+"hs-str">"/usr/share/dict/words"</span>
+  <span class="hs-varid">print</span> <span class=
+"hs-varid">len</span></pre>
+<p>Our <code>IOSource</code> is essentially a slimmed-down conduit
+which can't consume any input, only produce output. That's good
+enough for proving our point. The <code>sourceHandle</code>
+function has the same basic structure to what we were doing in our
+first two code examples: read a chunk of data, see if it's null,
+and if not, we return that chunk and then keep going. We then do a
+trivial wrapping up of <code>sourceHandle</code> with
+<code>sourceFile</code>, which uses the same
+<code>withBinaryFile</code> we had before. Finally,
+<code>sourceLength</code> just grabs the successive chunks from a
+given <code>IOSource</code> and counts the total bytes.</p>
+<p>There's a major bug in this program. Try to spot it. Think
+through the control flow of this program. I encourage you to
+actually figure it out for yourself instead of just continuing to
+my explanation below.</p>
+<p><b>Hint 1</b> This isn't a subtle exception-handling bug, it
+makes the program above completely broken in all cases (except,
+interestingly, the case of an empty file). You will never get a
+valid result, besides the empty file case.</p>
+<p><b>Hint 2</b> The output when I run this program is
+<code>/usr/share/dict/words: hGetBufSome: illegal operation (handle
+is closed)</code>.</p>
+<p><b>Explanation</b> When we enter the <code>sourceFile</code>
+function, we first call <code>withBinaryFile</code>. This opens up
+a file handle. We hand this file handle to
+<code>sourceHandle</code>, which reads the first chunk of data from
+the file, and returns an <code>IOChunk</code> value containing that
+chunk and a <i>continuation</i>, or instruction on what to do next.
+This continuation is an <code>IO</code> action, and it refers to
+that file handle we were given by <code>sourceFile</code>. (This
+bit is vital.) We then return this <code>IOChunk</code> value from
+<code>sourceHandle</code> to <code>sourceFile</code>. Inside
+<code>sourceFile</code>, we now trigger the cleanup bit of
+<code>withBinaryFile</code>, which closes the handle, and then
+return the <code>IOChunk</code> value back to the caller.</p>
+<p>When we consume that <code>IOChunk</code> value, we will proceed
+to perform that continuation we were handed back. That continuation
+refers to the previously opened file handle, and will try to read
+from it. See the problem? <i>We've already closed it!</i> There is
+nothing we can do with it anymore.</p>
+<h2 id="explicit-close">Explicit close</h2>
+<p>Let's try rewriting this to delay the closing of the file handle
+until the handle is fully consumed. Also, let's replace our
+<code>sourceLength</code> function with a new function: it tells us
+what the first byte in the file is. I've also added a
+<code>putStrLn</code> to tell us when we're closing the file
+handle.</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-8.12 script</span>
+<span class="hs-comment">{-# LANGUAGE BangPatterns #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">B</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">IO</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Word</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Word8</span><span class="hs-layout">)</span>
+
+<span class="hs-keyword">data</span> <span class=
+"hs-conid">IOSource</span> <span class="hs-varid">a</span>
+  <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">IOChunk</span> <span class=
+"hs-varid">a</span> <span class="hs-layout">(</span><span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">IOSource</span> <span class=
+"hs-varid">a</span><span class="hs-layout">)</span><span class=
+"hs-layout">)</span>
+  <span class="hs-keyglyph">|</span> <span class=
+"hs-conid">IODone</span>
+
+<span class="hs-definition">sourceHandle</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span><span class="hs-varop">.</span><span class=
+"hs-conid">Handle</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">IOSource</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span><span class="hs-layout">)</span>
+<span class="hs-definition">sourceHandle</span> <span class=
+"hs-varid">h</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-keyword">do</span>
+  <span class="hs-varid">next</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">hGetSome</span> <span class=
+"hs-varid">h</span> <span class="hs-num">4096</span>
+  <span class="hs-keyword">if</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">null</span> <span class="hs-varid">next</span>
+    <span class="hs-keyword">then</span> <span class=
+"hs-keyword">do</span>
+      <span class="hs-varid">putStrLn</span> <span class=
+"hs-str">"Closing file handle"</span>
+      <span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">hClose</span> <span class="hs-varid">h</span>
+      <span class="hs-varid">return</span> <span class=
+"hs-conid">IODone</span>
+    <span class="hs-keyword">else</span> <span class=
+"hs-varid">return</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-conid">IOChunk</span> <span class=
+"hs-varid">next</span> <span class="hs-layout">(</span><span class=
+"hs-varid">sourceHandle</span> <span class=
+"hs-varid">h</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">sourceFile</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">FilePath</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">IOSource</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span><span class="hs-layout">)</span>
+<span class="hs-definition">sourceFile</span> <span class=
+"hs-varid">fp</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">h</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">IO</span><span class="hs-varop">.</span><span class=
+"hs-varid">openBinaryFile</span> <span class=
+"hs-varid">fp</span> <span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class="hs-conid">ReadMode</span>
+  <span class="hs-varid">sourceHandle</span> <span class=
+"hs-varid">h</span>
+
+<span class="hs-definition">firstByte</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">IOSource</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Maybe</span> <span class=
+"hs-conid">Word8</span><span class="hs-layout">)</span>
+<span class="hs-definition">firstByte</span> <span class=
+"hs-varid">mnext</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">next</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">mnext</span>
+  <span class="hs-varid">return</span> <span class=
+"hs-varop">$</span>
+    <span class="hs-keyword">case</span> <span class=
+"hs-varid">next</span> <span class="hs-keyword">of</span>
+      <span class="hs-conid">IOChunk</span> <span class=
+"hs-varid">bs</span> <span class=
+"hs-sel">_mnext'</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Just</span> <span class="hs-varop">$</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">head</span> <span class="hs-varid">bs</span>
+      <span class="hs-conid">IODone</span>             <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Nothing</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">mbyte</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">firstByte</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">sourceFile</span> <span class=
+"hs-str">"/usr/share/dict/words"</span>
+  <span class="hs-varid">print</span> <span class=
+"hs-varid">mbyte</span></pre>
+<p>OK, take a guess at the output. In particular, will our file
+handle be closed, and why?</p>
+<p>It turns out that, when dealing with continuations, there is no
+way to guarantee that your continuation will ever get called. In
+our case, we're only interested in reading the first chunk of data
+from the file, and want to ignore the rest. As a result, our
+cleanup code will never get called. This doesn't even get into the
+fact that, if an exception is thrown, we have no exception handler
+in place to perform cleanup. The moral of the story:</p>
+<blockquote>
+<p>Continuation based approaches, like conduit or
+<code>ContT</code>, cannot guarantee that cleanup code will be
+run.</p>
+</blockquote>
+<p>(Side note: conduit actually adds a concept called
+<i>finalizers</i> to address the non-exception case and to ensure
+cleanup happens promptly. But that's not our topic today.)</p>
+<p>So what's the right way to write this code? You have to use
+<code>withBinaryFile</code> <i>outside</i> of your
+<code>sourceHandle</code> call entirely, like this:</p>
+<pre><span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">mbyte</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">IO</span><span class="hs-varop">.</span><span class=
+"hs-varid">withBinaryFile</span> <span class=
+"hs-str">"/usr/share/dict/words"</span> <span class=
+"hs-conid">IO</span><span class="hs-varop">.</span><span class=
+"hs-conid">ReadMode</span>
+         <span class="hs-varop">$</span> <span class=
+"hs-keyglyph">\</span><span class="hs-varid">h</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">firstByte</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">sourceHandle</span> <span class="hs-varid">h</span>
+  <span class="hs-varid">print</span> <span class=
+"hs-varid">mbyte</span></pre>
+<h2 id="why-this-is-bad">Why this is bad</h2>
+<p>Firstly, there's an aesthetic argument again the above code. A
+function like <code>sourceFile</code> is convenient, elegant, and
+simple to teach. Telling people that they need to open their file
+handles first can be confusing. But this isn't the only problem.
+Let's consider a few more complicated cases:</p>
+<ol>
+<li>I want to create an <code>IOSource</code> that reads from two
+files, not just one. Ideally, we would only keep one file handle
+open at a time. If you follow through on the
+<code>withBinaryFile</code> approach above, you'd realize you need
+to open up both files before you get started. This is a performance
+problem of using too many resources.</li>
+<li>Suppose you want to read a file, and each line in that file
+will tell you a new file to open and stream from. In this case, we
+won't know statically how many files to open, or even <i>which</i>
+files to open. Since these facts are dynamically determined, our
+<code>withBinaryFile</code> approach <i>won't work at all</i>.</li>
+<li>If the previous example seems a bit far-fetched, that's
+<i>exactly</i> the case when doing a deep directory traversal. We
+start with a top level directory, and for each entry, may or may
+not need to open up a new directory handle, depending on whether
+it's a directory or not.</li>
+</ol>
+<p>In other words: this approach is a bit cumbersome to use,
+resource-inefficient, and prevents some programs from being written
+at all. We need something better.</p>
+<h2 id="why-withbinaryfile-works">Why withBinaryFile works</h2>
+<p>The reason that <code>withBinaryFile</code> solves our problems
+is that it lives <i>outside</i> of our continuation framework. It
+is not subject to the whims of whether a specific continuation will
+or will not be called. It lives in <code>IO</code> directly, and we
+know how to install a cleanup function which will always be called,
+regardless of whether an exception is thrown or not. Specifically:
+we can just use <code>bracket</code>.</p>
+<p>We need some way to pair the control that <code>bracket</code>
+provides from outside our continuation with the dynamic allocations
+we want to perform inside our continuations.</p>
+<h2 id="a-simplified-resourcet">A simplified ResourceT</h2>
+<p>In order to make this work, we'll implement a simplified version
+of <code>ResourceT</code>. We'll keep a list of file handles that
+need to be closed. But since we need to be able to update that list
+dynamically from within our continuation code, this will be a
+mutable list (wrapped in an <code>IORef</code>). Also, for
+simplicity, we'll make it <code>ResourceIO</code> instead of a
+proper monad transformer.</p>
+<p>Note that, by sticking to just a list of file handles, we've
+simplified our work significantly. File handles can be closed
+multiple times, and closing a file handle is not supposed to throw
+an exception itself (though it can in some corner cases; we're
+ignoring that). The actual code for <code>ResourceT</code> ensures
+that cleanups only happen one time and explicitly deals with
+exceptions from cleanup code.</p>
+<pre><span class="hs-comment">{-# LANGUAGE DeriveFunctor #-}</span>
+<span class="hs-keyword">module</span> <span class=
+"hs-conid">ResourceIO</span>
+  <span class="hs-layout">(</span> <span class=
+"hs-conid">ResourceIO</span>
+  <span class="hs-layout">,</span> <span class=
+"hs-varid">runResourceIO</span>
+  <span class="hs-layout">,</span> <span class=
+"hs-varid">openBinaryFile</span>
+  <span class="hs-layout">)</span> <span class=
+"hs-keyword">where</span>
+
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">IORef</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">IO</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Exception</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Monad</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Monad</span><span class=
+"hs-varop">.</span><span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class="hs-conid">Class</span>
+
+<span class="hs-keyword">newtype</span> <span class=
+"hs-conid">ResourceIO</span> <span class=
+"hs-varid">a</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">ResourceIO</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">IORef</span> <span class="hs-keyglyph">[</span><span class="hs-conid">IO</span><span class="hs-varop">.</span><span class="hs-conid">Handle</span><span class="hs-keyglyph">]</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">IO</span> <span class="hs-varid">a</span><span class="hs-layout">)</span>
+  <span class="hs-keyword">deriving</span> <span class=
+"hs-conid">Functor</span>
+
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">Applicative</span> <span class=
+"hs-conid">ResourceIO</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">pure</span> <span class=
+"hs-varid">x</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">ResourceIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-keyword">_</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">return</span> <span class="hs-varid">x</span>
+  <span class="hs-layout">(</span><span class=
+"hs-varop">&lt;*&gt;</span><span class=
+"hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">ap</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-conid">ResourceIO</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">return</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">pure</span>
+  <span class="hs-conid">ResourceIO</span> <span class=
+"hs-varid">f</span> <span class=
+"hs-varop">&gt;&gt;=</span> <span class=
+"hs-varid">g</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">ResourceIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">ref</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">x</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">f</span> <span class="hs-varid">ref</span>
+    <span class="hs-keyword">let</span> <span class=
+"hs-conid">ResourceIO</span> <span class=
+"hs-varid">g'</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-varid">g</span> <span class=
+"hs-varid">x</span>
+    <span class="hs-varid">g'</span> <span class=
+"hs-varid">ref</span>
+<span class="hs-keyword">instance</span> <span class=
+"hs-conid">MonadIO</span> <span class=
+"hs-conid">ResourceIO</span> <span class="hs-keyword">where</span>
+  <span class="hs-varid">liftIO</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">ResourceIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-sel">_ref</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-varid">m</span>
+
+<span class="hs-definition">runResourceIO</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">ResourceIO</span> <span class=
+"hs-varid">a</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span> <span class="hs-varid">a</span>
+<span class="hs-definition">runResourceIO</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ResourceIO</span> <span class=
+"hs-varid">inner</span><span class=
+"hs-layout">)</span> <span class="hs-keyglyph">=</span> <span class="hs-varid">bracket</span>
+  <span class="hs-layout">(</span><span class=
+"hs-varid">newIORef</span> <span class=
+"hs-conid">[]</span><span class="hs-layout">)</span>
+  <span class="hs-varid">cleanup</span>
+  <span class="hs-varid">inner</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">cleanup</span> <span class=
+"hs-varid">ref</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+      <span class="hs-varid">handles</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">readIORef</span> <span class="hs-varid">ref</span>
+      <span class="hs-varid">mapM_</span> <span class=
+"hs-conid">IO</span><span class="hs-varop">.</span><span class=
+"hs-varid">hClose</span> <span class="hs-varid">handles</span>
+
+<span class="hs-definition">openBinaryFile</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">FilePath</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">IO</span><span class="hs-varop">.</span><span class=
+"hs-conid">IOMode</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">ResourceIO</span> <span class=
+"hs-conid">IO</span><span class="hs-varop">.</span><span class=
+"hs-conid">Handle</span>
+<span class="hs-definition">openBinaryFile</span> <span class=
+"hs-varid">fp</span> <span class=
+"hs-varid">mode</span> <span class="hs-keyglyph">=</span> <span class="hs-conid">ResourceIO</span> <span class="hs-varop">$</span> <span class="hs-keyglyph">\</span><span class="hs-varid">ref</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">mask</span> <span class="hs-varop">$</span> <span class="hs-keyglyph">\</span><span class="hs-varid">restore</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">h</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">restore</span> <span class=
+"hs-varop">$</span> <span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">openBinaryFile</span> <span class=
+"hs-varid">fp</span> <span class="hs-varid">mode</span>
+  <span class="hs-varid">atomicModifyIORef'</span> <span class=
+"hs-varid">ref</span> <span class="hs-varop">$</span> <span class=
+"hs-keyglyph">\</span><span class="hs-varid">hs</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-layout">(</span><span class="hs-varid">h</span><span class=
+"hs-conop">:</span><span class="hs-varid">hs</span><span class=
+"hs-layout">,</span> <span class="hs-conid">()</span><span class=
+"hs-layout">)</span>
+  <span class="hs-varid">return</span> <span class=
+"hs-varid">h</span></pre>
+<p>Most of the code here is involved in implementing a
+<code>Monad</code>/<code>MonadIO</code> interface for
+<code>ResourceIO</code>. If you focus on
+<code>runResourceIO</code>, you'll see that, as promised, we're
+using <code>bracket</code>. We create our shared mutable reference,
+ensure that <code>cleanup</code> is called regardless of
+exceptions, and then run the user-provided action.</p>
+<p><code>openBinaryFile</code> demonstrates how we would allocate
+resources. We open the file, and immediately modify our list of
+open handles to include the newly opened handle. In the real
+<code>ResourceT</code>, this is generalized to <code>IO ()</code>
+actions to perform arbitrary cleanup.</p>
+<p>Side note: if you're confused about the usage of
+<code>mask</code> here, it's to deal with the possibility of
+asynchronous exceptions, and to make sure an exception is not
+thrown between the call to <code>openBinaryFile</code> and
+<code>atomicModifyIORef'</code>. Proper async exception handling is
+a complicated topic, which is why it's best to stick to library
+functions like <code>bracket</code> and libraries like <a href=
+"https://haskell-lang.org/library/safe-exceptions">safe-exceptions</a>
+that are designed to handle them.</p>
+<h2 id="using-it">Using it</h2>
+<p>We need to make some minor modifications to our program in order
+to use this. Firstly, we specialized <code>IOSource</code> to using
+<code>IO</code> actions only. We're now going to want this thing to
+run in <code>ResourceIO</code>, so let's add a type parameter to
+indicate the base monad (just like <code>ConduitM</code> has). And
+let's also call a spade a spade, and rename from
+<code>IOSource</code> to <code>ListT</code>. This is, after all,
+the correctly implemented list monad transformer. (Ignore the one
+from the transformers package, it's completely broken.)</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-8.12 script</span>
+<span class="hs-comment">{-# LANGUAGE BangPatterns #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">B</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">IO</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Word</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Word8</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">ResourceIO</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Monad</span><span class=
+"hs-varop">.</span><span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class="hs-conid">Class</span>
+
+<span class="hs-keyword">data</span> <span class=
+"hs-conid">ListT</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span>
+  <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">ConsT</span> <span class=
+"hs-varid">a</span> <span class="hs-layout">(</span><span class=
+"hs-varid">m</span> <span class="hs-layout">(</span><span class=
+"hs-conid">ListT</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+  <span class="hs-keyglyph">|</span> <span class=
+"hs-conid">NilT</span>
+
+<span class="hs-definition">sourceHandle</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadIO</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">IO</span><span class="hs-varop">.</span><span class=
+"hs-conid">Handle</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-layout">(</span><span class=
+"hs-conid">ListT</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">B</span><span class=
+"hs-varop">.</span><span class=
+"hs-conid">ByteString</span><span class="hs-layout">)</span>
+<span class="hs-definition">sourceHandle</span> <span class=
+"hs-varid">h</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">liftIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">next</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">hGetSome</span> <span class=
+"hs-varid">h</span> <span class="hs-num">4096</span>
+  <span class="hs-keyword">if</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">null</span> <span class="hs-varid">next</span>
+    <span class="hs-keyword">then</span> <span class=
+"hs-keyword">do</span>
+      <span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">hClose</span> <span class="hs-varid">h</span>
+      <span class="hs-varid">return</span> <span class=
+"hs-conid">NilT</span>
+    <span class="hs-keyword">else</span> <span class=
+"hs-varid">return</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-conid">ConsT</span> <span class="hs-varid">next</span> <span class="hs-layout">(</span><span class="hs-varid">sourceHandle</span> <span class="hs-varid">h</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">sourceFile</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">FilePath</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">ResourceIO</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ListT</span> <span class="hs-conid">ResourceIO</span> <span class="hs-conid">B</span><span class="hs-varop">.</span><span class="hs-conid">ByteString</span><span class="hs-layout">)</span>
+<span class="hs-definition">sourceFile</span> <span class=
+"hs-varid">fp</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">h</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">openBinaryFile</span> <span class=
+"hs-varid">fp</span> <span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class="hs-conid">ReadMode</span>
+  <span class="hs-varid">sourceHandle</span> <span class=
+"hs-varid">h</span>
+
+<span class="hs-definition">firstByte</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-varid">m</span> <span class="hs-layout">(</span><span class="hs-conid">ListT</span> <span class="hs-varid">m</span> <span class="hs-conid">B</span><span class="hs-varop">.</span><span class="hs-conid">ByteString</span><span class="hs-layout">)</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">m</span> <span class="hs-layout">(</span><span class="hs-conid">Maybe</span> <span class="hs-conid">Word8</span><span class="hs-layout">)</span>
+<span class="hs-definition">firstByte</span> <span class=
+"hs-varid">mnext</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">next</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">mnext</span>
+  <span class="hs-varid">return</span> <span class=
+"hs-varop">$</span>
+    <span class="hs-keyword">case</span> <span class=
+"hs-varid">next</span> <span class="hs-keyword">of</span>
+      <span class="hs-conid">ConsT</span> <span class=
+"hs-varid">bs</span> <span class=
+"hs-sel">_mnext'</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">Just</span> <span class="hs-varop">$</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">head</span> <span class="hs-varid">bs</span>
+      <span class="hs-conid">NilT</span>             <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-conid">Nothing</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">mbyte</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">runResourceIO</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">firstByte</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">sourceFile</span> <span class=
+"hs-str">"/usr/share/dict/words"</span>
+  <span class="hs-varid">print</span> <span class=
+"hs-varid">mbyte</span></pre>
+<p>Note that there's no longer any call with
+<code>withBinaryFile</code>, and we have all of the exception
+safety guarantees we want. We can even implement something which
+reads two files in sequence, and have the desired behavior of only
+having one file open at a time:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-8.12 script</span>
+<span class="hs-comment">{-# LANGUAGE BangPatterns #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">ByteString</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">B</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-keyword">qualified</span> <span class=
+"hs-conid">System</span><span class="hs-varop">.</span><span class=
+"hs-conid">IO</span> <span class=
+"hs-keyword">as</span> <span class="hs-conid">IO</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Word</span> <span class="hs-layout">(</span><span class=
+"hs-conid">Word8</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">ResourceIO</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Control</span><span class=
+"hs-varop">.</span><span class="hs-conid">Monad</span><span class=
+"hs-varop">.</span><span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class="hs-conid">Class</span>
+
+<span class="hs-keyword">data</span> <span class=
+"hs-conid">ListT</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span>
+  <span class="hs-keyglyph">=</span> <span class=
+"hs-conid">ConsT</span> <span class=
+"hs-varid">a</span> <span class="hs-layout">(</span><span class=
+"hs-varid">m</span> <span class="hs-layout">(</span><span class=
+"hs-conid">ListT</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span><span class="hs-layout">)</span>
+  <span class="hs-keyglyph">|</span> <span class=
+"hs-conid">NilT</span>
+
+<span class="hs-definition">appendListT</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class="hs-varid">m</span>
+            <span class="hs-keyglyph">=&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-layout">(</span><span class=
+"hs-conid">ListT</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span>
+            <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-layout">(</span><span class=
+"hs-conid">ListT</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span>
+            <span class="hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-layout">(</span><span class=
+"hs-conid">ListT</span> <span class=
+"hs-varid">m</span> <span class="hs-varid">a</span><span class=
+"hs-layout">)</span>
+<span class="hs-definition">appendListT</span> <span class=
+"hs-varid">left0</span> <span class=
+"hs-varid">right</span> <span class="hs-keyglyph">=</span>
+    <span class="hs-varid">loop</span> <span class=
+"hs-varid">left0</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">loop</span> <span class=
+"hs-varid">mnext</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+      <span class="hs-varid">next</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">mnext</span>
+      <span class="hs-keyword">case</span> <span class=
+"hs-varid">next</span> <span class="hs-keyword">of</span>
+        <span class="hs-conid">ConsT</span> <span class=
+"hs-varid">x</span> <span class=
+"hs-varid">mnext'</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">return</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-conid">ConsT</span> <span class="hs-varid">x</span> <span class="hs-varop">$</span> <span class="hs-varid">loop</span> <span class="hs-varid">mnext'</span>
+        <span class="hs-conid">NilT</span>           <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-varid">right</span>
+
+<span class="hs-definition">sourceHandle</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">MonadIO</span> <span class=
+"hs-varid">m</span> <span class=
+"hs-keyglyph">=&gt;</span> <span class=
+"hs-conid">IO</span><span class="hs-varop">.</span><span class=
+"hs-conid">Handle</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">m</span> <span class="hs-layout">(</span><span class=
+"hs-conid">ListT</span> <span class=
+"hs-varid">m</span> <span class="hs-conid">B</span><span class=
+"hs-varop">.</span><span class=
+"hs-conid">ByteString</span><span class="hs-layout">)</span>
+<span class="hs-definition">sourceHandle</span> <span class=
+"hs-varid">h</span> <span class="hs-keyglyph">=</span> <span class=
+"hs-varid">liftIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">next</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">hGetSome</span> <span class=
+"hs-varid">h</span> <span class="hs-num">4096</span>
+  <span class="hs-keyword">if</span> <span class=
+"hs-conid">B</span><span class="hs-varop">.</span><span class=
+"hs-varid">null</span> <span class="hs-varid">next</span>
+    <span class="hs-keyword">then</span> <span class=
+"hs-keyword">do</span>
+      <span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">hClose</span> <span class="hs-varid">h</span>
+      <span class="hs-varid">return</span> <span class=
+"hs-conid">NilT</span>
+    <span class="hs-keyword">else</span> <span class=
+"hs-varid">return</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-conid">ConsT</span> <span class="hs-varid">next</span> <span class="hs-layout">(</span><span class="hs-varid">sourceHandle</span> <span class="hs-varid">h</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">sourceFile</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">FilePath</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-conid">ResourceIO</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ListT</span> <span class="hs-conid">ResourceIO</span> <span class="hs-conid">B</span><span class="hs-varop">.</span><span class="hs-conid">ByteString</span><span class="hs-layout">)</span>
+<span class="hs-definition">sourceFile</span> <span class=
+"hs-varid">fp</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">h</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">openBinaryFile</span> <span class=
+"hs-varid">fp</span> <span class="hs-conid">IO</span><span class=
+"hs-varop">.</span><span class="hs-conid">ReadMode</span>
+  <span class="hs-varid">sourceHandle</span> <span class=
+"hs-varid">h</span>
+
+<span class="hs-definition">sourceLength</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Monad</span> <span class=
+"hs-varid">m</span> <span class="hs-keyglyph">=&gt;</span> <span class="hs-varid">m</span> <span class="hs-layout">(</span><span class="hs-conid">ListT</span> <span class="hs-varid">m</span> <span class="hs-conid">B</span><span class="hs-varop">.</span><span class="hs-conid">ByteString</span><span class="hs-layout">)</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-varid">m</span> <span class="hs-conid">Int</span>
+<span class="hs-definition">sourceLength</span> <span class=
+"hs-keyglyph">=</span>
+    <span class="hs-varid">loop</span> <span class=
+"hs-num">0</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">loop</span> <span class=
+"hs-varop">!</span><span class="hs-varid">total</span> <span class=
+"hs-varid">mnext</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+      <span class="hs-varid">next</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">mnext</span>
+      <span class="hs-keyword">case</span> <span class=
+"hs-varid">next</span> <span class="hs-keyword">of</span>
+        <span class="hs-conid">ConsT</span> <span class=
+"hs-varid">bs</span> <span class=
+"hs-varid">mnext'</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">loop</span> <span class="hs-layout">(</span><span class=
+"hs-varid">total</span> <span class=
+"hs-varop">+</span> <span class="hs-conid">B</span><span class=
+"hs-varop">.</span><span class=
+"hs-varid">length</span> <span class="hs-varid">bs</span><span class="hs-layout">)</span> <span class="hs-varid">mnext'</span>
+        <span class="hs-conid">NilT</span>            <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">return</span> <span class="hs-varid">total</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">len</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">runResourceIO</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">sourceLength</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">appendListT</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">sourceFile</span> <span class=
+"hs-str">"/usr/share/dict/words"</span><span class=
+"hs-layout">)</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">sourceFile</span> <span class=
+"hs-str">"/usr/share/dict/words"</span><span class=
+"hs-layout">)</span>
+  <span class="hs-varid">print</span> <span class=
+"hs-varid">len</span></pre>
+<h2 id="concurrency">Concurrency</h2>
+<p>If you looked in the code above, I used
+<code>atomicModifyIORef'</code> to add a new file handle to the
+cleanup queue. You may think that this means we're
+concurrency-friendly. However, we aren't at all. Let's start by
+adding a new function to our <code>ResourceIO</code> interface:</p>
+<pre><span class=
+"hs-definition">asyncResourceIO</span> <span class="hs-keyglyph">::</span> <span class="hs-conid">ResourceIO</span> <span class="hs-varid">a</span> <span class="hs-keyglyph">-&gt;</span> <span class="hs-conid">ResourceIO</span> <span class="hs-layout">(</span><span class="hs-conid">Async</span> <span class="hs-varid">a</span><span class="hs-layout">)</span>
+<span class="hs-definition">asyncResourceIO</span> <span class=
+"hs-layout">(</span><span class=
+"hs-conid">ResourceIO</span> <span class=
+"hs-varid">f</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-conid">ResourceIO</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">ref</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">async</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">f</span> <span class=
+"hs-varid">ref</span></pre>
+<p>This uses the <a href=
+"https://haskell-lang.org/library/async">async library</a> to fork
+a thread and provides an <code>Async</code> value to retrieve the
+value from that thread when it completes. Now let's naively use it
+in our <code>main</code> function:</p>
+<pre><span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">alen</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">runResourceIO</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">asyncResourceIO</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">sourceLength</span> <span class="hs-varop">$</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">sourceFile</span> <span class=
+"hs-str">"/usr/share/dict/words"</span><span class=
+"hs-layout">)</span>
+  <span class="hs-varid">putStrLn</span> <span class=
+"hs-str">"Do some other work in the main thread, may take a while..."</span>
+  <span class="hs-varid">threadDelay</span> <span class=
+"hs-num">100000</span>
+  <span class="hs-varid">len</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">wait</span> <span class="hs-varid">alen</span>
+  <span class="hs-varid">print</span> <span class=
+"hs-varid">len</span></pre>
+<p>With the ominous introduction I gave this, answer this question:
+do you think this is going to work? And why or why not?</p>
+<p>Let's step through what's going to happen here:</p>
+<ol>
+<li><code>runResourceIO</code> creates a mutable reference to hold
+onto file handles to be closed</li>
+<li><code>asyncResourceIO</code> forks a child thread</li>
+<li>Child thread opens up a file handle and adds it to the mutable
+reference of things to clean up</li>
+<li>Parent thread finishes forking the child thread, and (from
+within <code>runResourceIO</code>) calls the cleanup action,
+closing the file handle</li>
+<li>Child thread continues to do work, but throws an exception
+trying to read from the (now closed) file handle</li>
+</ol>
+<p>Actually, that's just one possible scenario. Another possibility
+is that the parent thread will call cleanup before the child thread
+grabs the file handle. In which case, the reads will succeed, but
+we'll have no guarantee that the file handle will be cleaned up. In
+other words, we have a race condition.</p>
+<p>This should stress the important of getting concurrency and
+<code>ResourceT</code> correct. We need to make sure that
+<code>runResourceT</code> does not close any resources that are
+still being consumed by child threads. One way to do that is to use
+the <a href=
+"https://www.stackage.org/haddock/lts-8.18/resourcet-1.1.9/Control-Monad-Trans-Resource.html#v:resourceForkIO">
+<code>resourceForkIO</code></a> function, which introduces a
+reference counting scheme to ensure that resources are only closed
+when <i>all</i> threads are done with them.</p>
+<p>Unfortunately, due to how the monad-control instances for
+<code>ResourceT</code> work, using concurrency functions from
+<code>lifted-base</code> or <code>lifted-async</code> will not use
+this reference counting behavior. Overall, my recommendation is:
+don't fork threads when inside <code>ResourceT</code> if you can
+avoid it.</p>
+<h2 id="other-ways-to-abuse-resourcet">Other ways to abuse
+ResourceT</h2>
+<p>There is no actual scoping of the resources you get from
+<code>ResourceT</code> to ensure that they are still alive. Such
+techniques do exist (e.g., <a href=
+"https://www.stackage.org/package/regions"><code>regions</code></a>),
+but the types are significantly more complicated, which is why the
+conduit ecosystem sticks to <code>ResourceT</code>.</p>
+<p>The simplest demonstration of breaking this is:</p>
+<pre><span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">h</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">runResourceIO</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">openBinaryFile</span> <span class=
+"hs-str">"/usr/share/dict/words"</span> <span class=
+"hs-conid">IO</span><span class="hs-varop">.</span><span class=
+"hs-conid">ReadMode</span>
+  <span class="hs-varid">len</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">sourceLength</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">sourceHandle</span> <span class="hs-varid">h</span>
+  <span class="hs-varid">print</span> <span class=
+"hs-varid">len</span></pre>
+<p>The handle we get back from <code>openBinaryFile</code> will be
+closed before we ever get a chance to pass it to
+<code>sourceHandle</code>. This code is just as broken as:</p>
+<pre><span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">h</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-conid">IO</span><span class="hs-varop">.</span><span class=
+"hs-varid">withBinaryFile</span> <span class=
+"hs-str">"/usr/share/dict/words"</span> <span class=
+"hs-conid">IO</span><span class="hs-varop">.</span><span class=
+"hs-conid">ReadMode</span> <span class="hs-varid">return</span>
+  <span class="hs-varid">len</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">sourceLength</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">sourceHandle</span> <span class="hs-varid">h</span>
+  <span class="hs-varid">print</span> <span class=
+"hs-varid">len</span></pre>
+<p>But for many, the latter is more obviously wrong. The rule: make
+sure that your <code>runResourceIO</code> call lives around the
+entire scope that the resources will be used in.</p>
+<p>As a more real-world example taken from a Twitter discussion,
+consider the following code that you might achieve by playing Type
+Tetris with Conduit:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-8.12 script</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Conduit</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">len</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">runConduit</span>
+       <span class="hs-varop">$</span> <span class=
+"hs-varid">transPipe</span> <span class=
+"hs-varid">runResourceT</span> <span class=
+"hs-layout">(</span><span class=
+"hs-varid">sourceFile</span> <span class=
+"hs-str">"/usr/share/dict/words"</span><span class=
+"hs-layout">)</span>
+      <span class="hs-varop">.|</span> <span class=
+"hs-varid">lengthCE</span>
+  <span class="hs-varid">print</span> <span class=
+"hs-varid">len</span></pre>
+<p><code>transPipe</code> applies some kind of a monad
+transformation at each step of the running of the given conduit. So
+each time we try to perform some action in <code>sourceFile</code>,
+we'll create a new mutable reference of cleanup actions, perform
+the action, and then immediately clean up the resources we
+allocated. In reality, we want those resources to persist through
+later continuations within the <code>sourceFile</code>. We would
+rewrite the code above to:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-8.12 script</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Conduit</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">len</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">runResourceT</span>
+       <span class="hs-varop">$</span> <span class=
+"hs-varid">runConduit</span>
+       <span class="hs-varop">$</span> <span class=
+"hs-varid">sourceFile</span> <span class=
+"hs-str">"/usr/share/dict/words"</span>
+      <span class="hs-varop">.|</span> <span class=
+"hs-varid">lengthCE</span>
+  <span class="hs-varid">print</span> <span class=
+"hs-varid">len</span></pre>
+<p>Or, since <code>runConduitRes = runResourceT .
+runConduit</code>:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">-- stack --resolver lts-8.12 script</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Conduit</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">len</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">runConduitRes</span>
+       <span class="hs-varop">$</span> <span class=
+"hs-varid">sourceFile</span> <span class=
+"hs-str">"/usr/share/dict/words"</span>
+      <span class="hs-varop">.|</span> <span class=
+"hs-varid">lengthCE</span>
+  <span class="hs-varid">print</span> <span class=
+"hs-varid">len</span></pre>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Understanding%20ResourceT https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;06&#x2F;understanding-resourcet&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;06&#x2F;understanding-resourcet&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;06&#x2F;understanding-resourcet&#x2F;&amp;title=Understanding%20ResourceT"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;06&#x2F;understanding-resourcet&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#bccfddd0d9cffcdaccdfd3d1ccd0d9c8d992dfd3d1" targe="_blank"><span class="__cf_email__" data-cfemail="a4d7c5c8c1d7e4c2d4c7cbc9d4c8c1d0c18ac7cbc9">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,184 @@
+[fp-complet]
+
+Blog Technology Haskell Rust DevOps
+
+Backporting bug fixes: Towards LTS Haskell
+
+By Michael Snoyman, published December 7, 2014
+
+The concept I'll be describing here is strongly related to GPS Haskell, something Mark, Duncan, and
+I started working on at ICFP. I'll expand on the relation to that project in the questions section
+below.
+
+There's a very simple, easily understood problem that I'm sure many of us writing software in
+Haskell have faced: we want to have a fixed API to write code against, but we also want to get bug
+fixes against our dependencies. (And dare I say it, possibly even some new features.) Currently,
+there's no easy way to do that. Curated systems like Stackage provide us with fixed API's to code
+against, but even to get the benefit of just one tiny new bug fix, we currently need to move over
+over to a brand new snapshot, providing a brand new API, which crucially, compared to the old API
+may include arbitrary breaking changes. (The same applies to Linux distributions like Debian and
+Nix, and to the Haskell Platform as well.)
+
+This is a well understood problem in a different context: Linux distributions themselves. What we
+have today in Stackage is akin to Debian unstable: a rolling release system where you update your
+entire environment to a new state of being. Each state of being is internally consistent, but may
+not be compatible with what you've done locally. In the case of Debian, your config files might
+break, for instance. In the case of Haskell, your program may no longer compile.
+
+By contrast, we have systems like Ubuntu Long Term Support (LTS). In an LTS release, bug fixes are
+backported to a stable version for an extended period of time. This allows users to have stability
+without stagnation. Over the next month, a few of us in the community will be working towards the
+goal of an experimental "LTS Haskell" kind of project, and hope to have it ready to start testing
+by January. This blog post is intended to describe how this will work, and encourage people to both
+provide feedback to improve the system, and to get involved in the project.
+
+The process
+
+On January 1, 2015, we're going to take the most recent Stackage unstable snapshot and promote it
+to be "LTS Haskell 1.0". It will have its own URL on stackage.org, and will be tracked in a Github
+repo. On a regular basis (tentatively: once a week), we'll take all of the packages in this
+snapshot and bump them to the newest version from Hackage with the same major version number (see
+"example bump" below). We'll then run the full Stackage build/test procedure on this new set of
+package versions. Once this passes, we'll release this as "LTS Haskell 1.1". That's the whole
+process.
+
+The significance of this is that every release in the 1.X series will have a backwards-compatible
+API with previous releases, in the same sense that we're used to with minor version bumps. That
+means that, barring issues of name collisions, your code will continue to compile with new
+releases. However, you will also get new features rolled out in minor version bumps of your
+dependencies and, more importantly, bug fixes that have been released.
+
+After a certain period of time (tentatively: three months, see questions below), we'll again take
+the newest unstable Stackage snapshot and call that LTS Haskell 2.0. There will be an overlap
+period where both LTS Haskell 1 and 2 are supported (tentatively: one month), and then LTS Haskell
+1 will be retired in favor of LTS Haskell 2. This will give users a chance to upgrade to a new
+supported release. Note that even after being retired, the old snapshots will still be available
+for use, the only question is whether bugfixes will still be backported.
+
+Example bump
+
+To clarify the bump procedure, consider the following fictitious set of packages in LTS Haskell
+1.0:
+
+  • foo-2.4.1
+  • bar-3.2.2
+  • baz-5.1.9
+
+After 1.0 is released, the following releases are made to Hackage:
+
+  • foo-2.4.1.1 is released with a bug fix
+  • bar-3.2.3 is released with a new feature, which doesn't break backwards compatibility
+  • baz-5.2.0 is released, which is a breaking change
+
+In our bumping procedure, we would replace foo-2.4.1 with foo-2.4.1.1, since it has the same major
+version number. Similarly, bar-3.2.2 would be bumped to 3.2.3. However, baz-5.1.9 would not be
+bumped to baz-5.2.0, since that introduces a breaking API change. (baz's author, however, would be
+able to make a baz-5.1.9.1 or baz-5.1.10 release, and those would be included in the next bump.)
+
+Design goals
+
+There are two primary design goals underlying this simple process.
+
+ 1. We want the smallest change possible for users, and the smallest amount of work to be created
+    for library authors. To use LTS Haskell, you would just modify your remote-repo, like you do
+    today to use Stackage. (And hopefully in the future, even that will be simplified, once changes
+    are adopted by the Haskell Platform and Hackage.) Library authors already release their code to
+    Hackage with bugfixes. Instead of making them go through a process to get their changes
+    adopted, we will automatically include them.
+
+ 2. We want to make the process as automatic as possible. The process listed above allows a new LTS
+    Haskell candidate to be produced with zero human intervention (though some massaging may be
+    necessary for funny situations on Hackage, see questions section below). Making the process
+    automatic makes it that much easier to provide regular releases.
+
+Note that these design goals are built around what's made Stackage such a successful project:
+minimal author dependencies, simple user story, and automation. I believe we can recreate that
+success, with even greater benefit now.
+
+A request to library authors
+
+There is one change that library authors can make that would improve the experience: support the
+current LTS Haskell major version of your packages, and provide bug fixes for them. That means
+that, if you're the maintainer of foo, LTS Haskell has foo-1.2.1, you've release foo-1.3.0, and a
+bug is discovered in both the 1.2 and 1.3 versions, please fix the bug with both a foo-1.2.1.1 and
+foo-1.3.0.1 release. This not only helps LTS Haskell users, but library users in general looking to
+avoid unnecessary API changes.
+
+Questions
+
+This sounds a lot like GPS Haskell. What's the difference? It should sound very similar; the goal
+of this project is to be a testing ground for what GPS Haskell will become. GPS Haskell involves
+multiple moving parts: Stackage, the Haskell Platform, and Hackage. It's difficult to coordinate
+work among all those parts and keep stability. Stackage is well set up to support experiments like
+this by having the multiple snapshot concept built in. The goal is to try out this idea, shake out
+the flaws, and hopefully when we've stabilized it, the Haskell Platform and Hackage will be ready
+to adopt it.
+
+Ubuntu LTS doesn't allow new features to be added. Why are you allowing new features in addition to
+bugfixes? I'll admit that I originally argued against adding new features, while Mark was in favor
+of it. Ultimately, I changed my mind for two reasons: I saw people asking for this exact thing to
+be present in Stackage, and allowing backporting of new features eases the maintenance burden of
+library authors considerably, which is an incredible selling point. If there's demand in the future
+for a bugfix-only version of this, I'd be very much open to exploring the idea. But I think it's
+pragmatic to start initial investigation with this.
+
+Is LTS Haskell a separate project from Stackage? I'd describe it more as an extension of Stackage,
+with the goal to ultimately expand to multiple projects: Stackage, the Haskell Platform, and
+Hackage. Said another way: on a code level, this is clearly an extension of the Stackage tooling.
+But ideologically, it's trying to adopt the best features of all three of those projects in a way
+that all of them will be able to take advantage.
+
+Why such short support windows? The strawmen of three months between releases and a one month grace
+period are ridiculously short support windows. The reason I propose them is because- like I
+mentioned in the design goals- we want the smallest delta from how people work today. Right now,
+there is no concept of stable versions, and we're trying to introduce it. Starting off with a more
+standard support window of something like two years would be a radical shift in how library users
+and authors operate today. Three months is very short, but it's long enough for us to test the
+process. As time goes on, we should have serious community discussions on how long a support window
+we should have. (I, for one, am fully in favor of extending it well beyond three months.)
+
+What kind of funny Hackage situations do you mean above? I mentioned above that manual intervention
+may sometimes be necessary. Consider the following situation: foo-1.1 depends on bar-1.1, and both
+are included in LTS Haskell 1.0. bar-1.2 is then released, which by the rules stated above, will
+not be included in LTS Haskell 1.1. foo-1.1.1 is also released, which should be included. However,
+suppose that foo-1.1.1 has a lower bound bar >= 1.2. Even though foo itself isn't changing its API,
+it's demanding an API change for another package. In this case, we'd have to disallow foo-1.1.1
+from being included in LTS Haskell 1.1. I'm not sure if we'll be able to automate this kind of
+detection.
+
+As a side note, I've long considered this a shortcoming of the Package Versioning Policy's stance
+on when version bumps are required, and have debated proposing a change. I'm still debating that
+proposal, but wouldn't object if someone else wants to make that proposal instead.
+
+How does this affect Linux distributions? It doesn't necessarily affect them at all. However, LTS
+Haskell could be a very interesting set of packages for Linux distros to track, for all the same
+reasons given above regarding backported bugfixes. In this sense, you can think of LTS Haskell as
+having multiple delivery mechanisms. We're experimenting with one delivery mechanism via
+stackage.org now; we can have future delivery mechanisms via Debian, Fedora, Nix, and even with
+direct support in Hackage/cabal-install.
+
+What can I do to help? The areas that jump to mind are:
+
+  • Discuss on the Stackage mailing list, Reddit discussions, etc, to flesh out ideas and shake out
+    flaws early
+  • Test the snapshots, especially on Mac and Windows
+  • This is a project for the community. Once the initial code gets written, improving the code
+    base is as easy as submitting a pull request!
+  • Get more packages into Stackage over the next month, so that LTS Haskell 1.0 is as complete as
+    possible.
+
+Do you have any more details? I originally wrote a two-part blog post with much more detail, but
+got feedback that the content was a bit too dense, so I rewrote the content in the format here.
+There's still lots of information present in those blog posts that may be of interest to some, so
+I've posted them as a Github Gist in case they're useful to anyone. (Note: I'm not aware of
+contradictions between that Gist and this post. If there are contradictions, this post takes
+precedence.)
+
+What does this blog post have to do with the recent Stackage survey? Nothing directly, yet. The
+survey is intended to help gather more information about how people are using Stackage, and to help
+us make more informed decisions with future Stackage and LTS Haskell work. This blog post was
+written before I posted the survey, and has not incorporated the survey results in any way. Stay
+tuned for more information about those results in a separate blog post.
+
+2012-2019 FP Complete Corp. Subscribe to the RSS feed.
+

@@ -1,0 +1,389 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Stack Security GnuPG Keys
+
+By Tim Dysinger, May 5, 2016
+
+Share this     
+
+Introduction
+
+We are introducing a method of verifying Haskell packages with OpenPGP signatures. The initial code
+to sign your packages has been included in Stack as an experimental feature for some time. We are
+going to be improving it and included verification options soon. However, we need signatures from
+package authors before verification is useful.
+
+The first step in submitting package signatures is to create a secure OpenPGP key for yourself and
+publish it. This post will walk you through creating an offline master OpenPGP key-set with GnuPG.
+
+If you've never used GPG before and need to generate a secure set of keys, then continue reading.
+
+If you already have GPG keys that you are happy with, continue to 'Signing Packages with Stack'
+towards the bottom of this article.
+
+GPG Keys
+
+Choosing a version of GPG
+
+There are 3 main flavors of GnuPG:
+
+  • 1.4 (AKA "gpg") - Old - Super stable (11 years old) & limited features
+  • 2.0 (AKA "gpg2") - Stable - Most people use this for personal encryption
+  • 2.1 (AKA "gpg2") - Modern - Latest features: ECC support, Tor, TOFU, etc
+
+It is recommended by the GnuPG project version to use the Stable GPG-2 release (2.0). I've included
+instructions for using GPG 1.4 but I don't recommend using such an old version unless you have no
+choice. I've also included instructions for GnuPG 2.1 because I use it personally and find the new
+features useful.
+
+  • Windows - https://www.gpg4win.org/download.html
+  • OS X
+      □ GPG 2.0 is available as part of GPG Suite which is an easy download from https://
+        gpgtools.org (recommended). (Bonus: GPG Suite adds GPG e-mail for the Apple Mail app).
+        (Note: If you install GPG Suite click "Cancel" when prompted to generate a key through
+        their GUI. We'll go through this step below at the command line.)
+      □ GnuPG 2.0 is available through Homebrew as well if you prefer.
+  • Linux/BSD - GnuPG 2.x is available as a package for your favorite Linux flavor. (Bonus: Add
+    Engimail while you are at it for easy GPG e-mail.)
+
+Offline machine for GPG key management
+
+Ideally your offline keys will never be on a machine connected to the outside world. The offline
+box will be the place where you keep your master key, manage your keys & sign other keys. This
+assures that you can always revoke keys and recover if your online machine(s) are somehow
+compromised.
+
+To have an offline box you'll need two "machines". These can just be the same machine if you
+utilize a "live" Linux USB/DVD boot drive and a USB stick for the "sneaker net".
+
+We'll follow the same procedure to generate your keys, even if you don't want to use an offline
+machine to generate them. It's highly recommended using an offline master though and keeping secure
+backups. It's the least hassle for everyone else in your "web of trust" in an event where keys are
+compromised.
+
+With an offline master key, if your laptop is compromised, you can just revoke the compromised
+sub-keys, create new sub-keys and publish them. If you get into the situation where your master key
+is compromised, you will have to revoke all your keys, approach people about your new keys & going
+through the process of reestablishing trust with people in your web-of-trust.
+
+Configuration
+
+Setup $GNUPGHOME directory
+
+umask 077
+export GNUPGHOME=$HOME/.gnupg ; # default location but env var rules
+mkdir -p $GNUPGHOME
+
+Install the secure key-server certificate (Ubuntu/Debian):
+
+mkdir -p /usr/local/share/ca-certificates/
+curl -s https://sks-keyservers.net/sks-keyservers.netCA.pem \
+    | sudo tee /usr/local/share/ca-certificates/sks-keyservers.netCA.crt
+sudo update-ca-certificates
+
+Put some or all of the following in your $GNUPGHOME/gpg.conf file: (taken from the riseup.net best
+gpg practices page)
+
+no-emit-version
+no-comments
+keyid-format 0xlong
+with-fingerprint
+list-options show-uid-validity
+verify-options show-uid-validity
+use-agent
+keyserver hkps://hkps.pool.sks-keyservers.net
+# or less secure: keyserver hkp://pool.sks-keyservers.net
+keyserver-options no-honor-keyserver-url
+keyserver-options include-revoked
+personal-cipher-preferences AES256 AES192 AES CAST5
+personal-digest-preferences SHA512 SHA384 SHA256 SHA224
+cert-digest-algo SHA512
+default-preference-list SHA512 SHA384 SHA256 SHA224 AES256 AES192 AES CAST5 ZLIB BZIP2 ZIP Uncompressed
+
+Key Generation
+
+Master Key
+
+Public and Secret
+
+ 1. Generate Key
+
+    GPG 1.4
+
+    gpg --expert --gen-key
+
+    GPG 2.0
+
+    gpg2 --expert --gen-key
+
+    GPG 2.1
+
+    gpg2 --expert --full-gen-key
+
+      □ Pick the "RSA" and "set your own capabilities" option
+      □ Turn off everything until it just says "Certify" then continue
+      □ Select the bit count. I pick 4000 for RSA because it's big but it's also not a power of 2
+        (like everyone else picks.)
+      □ Select the expiration period. I picked 1 year.
+      □ Pick a good pass-phrase that you can remember but would take a computer a long time to
+        guess.
+ 2. Backup Your Keys
+
+    GPG 1.4
+
+    gpg --armor --export            > $GNUPGHOME/public.asc
+    gpg --armor --export-secret-key > $GNUPGHOME/secret.asc
+
+    GPG 2.0 or 2.1
+
+    gpg2 --armor --export            > $GNUPGHOME/public.asc
+    gpg2 --armor --export-secret-key > $GNUPGHOME/secret.asc
+
+ 3. Try Recovering Your Keys
+
+    Delete your public and secret key and re-import them.
+
+    GPG 1.4
+
+    gpg --delete-secret-key <KEYID>
+    gpg --delete-key <KEYID>
+    gpg --import $GNUPGHOME/public.asc $GNUPGHOME/secret.asc
+    gpg --expert --edit-key <KEYID>
+
+    GPG 2.0 & 2.1
+
+    gpg2 --delete-secret-key <KEYID>
+    gpg2 --delete-key <KEYID>
+    gpg2 --import $GNUPGHOME/public.asc $GNUPGHOME/secret.asc
+    gpg2 --expert --edit-key <KEYID>
+
+      □ Type trust [Return] to give your self "ultimate" trust.
+      □ Type save [Return] to save your changes to the key.
+
+Sub-keys
+
+ 1. Generate Keys
+
+    Start by editing your key again.
+
+    GPG 1.4
+
+    gpg --expert --edit-key <KEYID>
+
+    GPG 2.0 or 2.1
+
+    gpg2 --expert --edit-key <KEYID>
+
+    Create a Signing Sub-key:
+
+      □ Type addkey [Return]
+      □ Pick the "RSA" and "set your own capabilities" option
+      □ Turn off everything until it just says "Sign" then continue
+
+    Create an Encryption Sub-key:
+
+      □ Type addkey [Return]
+      □ Pick the "RSA" and "set your own capabilities" option
+      □ Turn off everything until it just says "Encrypt" then continue
+
+    Create an Authentication Sub-key:
+
+      □ Type addkey [Return]
+      □ Pick the "RSA" and "set your own capabilities" option
+      □ Add the "Authenticate" capability then continue
+      □ Turn off everything until it just says "Authenticate" then continue
+      □ Type save [Return] to save and exit
+
+    Now try encrypting and signing stuff with your keys.
+
+    GPG 1.4
+
+    echo 'hello'    | gpg --armor --clearsign | gpg --verify
+    echo 'sekrats!' | gpg --armor --encrypt   | gpg --decrypt
+
+    GPG 2.0 or 2.1
+
+    echo 'hello'    | gpg2 --armor --clearsign | gpg2 --verify
+    echo 'sekrats!' | gpg2 --armor --encrypt   | gpg2 --decrypt
+
+ 2. Backup Keys
+
+    GPG 1.4
+
+    gpg --armor --export                > $GNUPGHOME/public.asc
+    gpg --armor --export-secret-keys    > $GNUPGHOME/secret.asc
+    gpg --armor --export-secret-subkeys > $GNUPGHOME/subkey.asc
+
+    GPG 2.0 or 2.1
+
+    gpg2 --armor --export                > $GNUPGHOME/public.asc
+    gpg2 --armor --export-secret-keys    > $GNUPGHOME/secret.asc
+    gpg2 --armor --export-secret-subkeys > $GNUPGHOME/subkey.asc
+
+ 3. Try Recovery
+
+    Delete your public and secret key and re-import the offline keys (the full set).
+
+    GPG 1.4
+
+    gpg --delete-secret-key <KEYID>
+    gpg --delete-key <KEYID>
+    gpg --import $GNUPGHOME/public.asc $GNUPGHOME/secret.asc
+    gpg --expert --edit-key <KEYID>
+
+    GPG 2.0 or 2.1
+
+    gpg2 --delete-secret-key <KEYID>
+    gpg2 --delete-key <KEYID>
+    gpg2 --import $GNUPGHOME/public.asc $GNUPGHOME/secret.asc
+    gpg2 --expert --edit-key <KEYID>
+
+     1. Type trust [Return] to give your self "ultimate" trust.
+     2. Type save [Return] to save your changes to the key.
+
+    Now try encrypting and signing stuff with your keys.
+
+    GPG 1.4
+
+    echo 'hello'    | gpg --armor --clearsign | gpg --verify
+    echo 'sekrats!' | gpg --armor --encrypt   | gpg --decrypt
+
+    GPG 2.0 or 2.1
+
+    echo 'hello'    | gpg2 --armor --clearsign | gpg2 --verify
+    echo 'sekrats!' | gpg2 --armor --encrypt   | gpg2 --decrypt
+
+Switching Secret Key Sets
+
+Using your offline secret keys
+
+Delete your secret keys and re-import the offline secret keys (the full set).
+
+GPG 1.4
+
+gpg --delete-secret-key <KEYID>
+gpg --import $GNUPGHOME/secret.asc
+
+GPG 2.0 or 2.1
+
+gpg2 --delete-secret-key <KEYID>
+gpg2 --import $GNUPGHOME/secret.asc
+
+With the full set in use (offline only of course!) you can import your buddy's keys, sign them and
+trust them. Use gpg –import and gpg –export to move keys around to/from USB drives to/from your
+online machine.
+
+If you list your secret keys you should see a plain "sec" next to your key. This indicates a full
+secret key is present. You may now manage keys and sign other keys.
+
+GPG 1.4
+
+gpg --list-secret-keys
+
+GPG 2.0 or 2.1
+
+gpg2 --list-secret-keys
+
+Using your online secret keys
+
+Delete your secret keys and re-import the online secret keys (the subset).
+
+GPG 1.4
+
+gpg --delete-secret-key <KEYID>
+gpg --import $GNUPGHOME/subkey.asc
+
+GPG 2.0 or 2.1
+
+gpg2 --delete-secret-key <KEYID>
+gpg2 --import $GNUPGHOME/subkey.asc
+
+You won't be able to sign other people's keys or create/revoke keys with this key-set. (This is a
+good thing in case your online machine and it's subkeys are compromised later.)
+
+If you list your secret keys you should see a "sec#" next to your key. The '#' indicates that the
+secret is missing for your master key. If you are following good practices, from now on, it will
+only be available on your offline computer.
+
+GPG 1.4
+
+gpg --list-secret-keys
+
+GPG 2.0 or 2.1
+
+gpg2 --list-secret-keys
+
+Signing Packages with Stack
+
+Now that we have our online secret keys ready, we can sign our Hackage-bound packages with Stack.
+There are currently two methods to sign keys in Stack. The first is to sign your package while
+uploading (the default). Just perform an upload as you might have in the past.
+
+stack upload
+
+This will upload your package to Hackage just like it did before. After that finishes it will GPG
+detach-sign the package and send that signature to sig-service. This service just collects
+signatures & periodically commits them to sig-archive. Later we will use these signatures and our
+web of trust to verify package contents as they download with stack.
+
+If you don't want to sign for some reason. You can just skip the signature by adding a flag.
+
+stack upload --no-signature
+
+Another way to sign is to create an sdist file. If you add a flag you can publish a signature at
+the same time.
+
+stack sdist --sign
+
+For those package authors out there with more than a few packages to sign, we have written a simple
+tool to bulk sign all your packages published to Hackage. It's called sig-tool.
+
+To bootstrap you need to run the following:
+
+cd sig-tool
+stack install
+stack exec -- sig-tool setup <myHackageUser>
+
+This will download all of your packages to the current directory & generate a manifest with SHA256
+sums for all the releases. You should inspect the files to make sure they are correct at this
+stage. You can sign all of the releases or you can trim the manifest file if you like.
+
+To begin signing run the following:
+
+stack exec -- sig-tool sign
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

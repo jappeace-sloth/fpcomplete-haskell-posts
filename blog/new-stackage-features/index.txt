@@ -1,0 +1,102 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+New Stackage features
+
+By Chris Done, October 20, 2014
+
+Share this     
+
+We have two new updates to Stackage: providing cabal.config files and including Haddock
+documentation.
+
+Haddock documentation on snapshots
+
+Now all new exclusive snapshots will have haddock links, which you can access via the following
+steps:
+
+  • Go to the stackage.org home page.
+  • Choose an exclusive snapshot.
+  • On the snapshot page will be a link in the menu entitled Haddocks.
+
+That link will be to an index page from which you can view documentation of all packages included
+in the snapshot. This means you can generally view everything in one place, on one high
+availability service.
+
+Using Stackage without changing your repo
+
+The recommended way to use Stackage is to simply change your remote-repo field in your .cabal/
+config file and run cabal update. Henceforth your dependencies will be resolved from Stackage,
+which is backed by high availability Amazon S3 storage servers, and you will have successful build
+plans, compilation and passing tests. Hurrah!
+
+Try Haskell and the upcoming Haskell.org homepage were both developed with Stackage. This meant I
+could just specify the Stackage snapshot to use in the README and then the next time I want to
+upgrade I can just update the snapshot version to get a fresh working build plan.
+
+The issue some people are facing is that they cannot change this remote-repo field, either because
+they're using a cabal sandbox, which doesn't support this yet, or because they just don't want to.
+
+The solution to this, in my experience, has been for me to manually go and run cabal freeze in a
+project I've already built to get the cabal.config file and then give these people that file.
+
+Now, it's automated via a cabal.config link on snapshot pages:
+
+For new developers working on an application who want to use Stackage, they can do something like
+this:
+
+$ cabal sandbox init
+$ curl https://www.stackage.org/<stackage version>/cabal.config > cabal.config
+$ cabal install --only-dep
+
+Which will install their dependencies from Hackage. We can't guarantee this will always work -- as
+Stackage snapshots sometimes will have a manual patch in the package to make it properly build with
+other packages, but otherwise it's as good as using Stackage as a repo.
+
+A cabal freeze output in cabal.config will contain base and similar packages which are tied to the
+minor GHC version (e.g. GHC 7.8.2 vs GHC 7.8.3 have different base numbers), so if you get a
+cabal.config and you get a dependencies error about base, you probably need to open up the
+cabal.config and remove the line with the base constraint. Stackage snapshots as used as repos do
+not have this constraint (it will use whichever base your GHC major version uses).
+
+Another difference is that cabal.config is more like an “inclusive” Stackage snapshot -- it
+includes packages not known to build together, unlike “exclusive” snapshots which only contain
+packages known to build and pass tests together. Ideally every package you need to use (directly or
+indirectly) will come from an exclusive snapshot. If not, it's recommended that you submit the
+package name to Stackage, and otherwise inclusive snapshots or cabal.config are the fallbacks you
+have at your disposal.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

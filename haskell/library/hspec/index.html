@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>hspec: Testing framework</title>
+  <meta property="og:title" content="hspec: Testing framework">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;library&#x2F;hspec&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+  
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+<section class="hero grid-bg">
+  <div class="container">
+    <h1>hspec: Testing framework
+    </h1></div>
+</section>
+
+
+
+  
+<div class="container py-3">
+  <p>Hspec is a testing framework. It provides a friendly DSL for defining
+tests. It supports writing various kind of tests including unit,
+integration and property
+testing. <a href="https://github.com/feuerbach/tasty">tasty</a> is another
+popular testing framework for Haskell.</p>
+<h2 id="get-started">Get started</h2>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ stack new mylib rio --resolver lts-13.28
+</span><span>$ cd mylib
+</span><span>$ stack test
+</span><span>...
+</span><span>mylib&gt; Test suite mylib-test passed
+</span></code></pre>
+<p>Woohoo, let's kick this off</p>
+<h2 id="test-driven-development">Test driven development</h2>
+<p>Create an <code>src/Reverse.hs</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#859900;">module Reverse
+</span><span>  ( </span><span style="color:#b58900;">myReverse
+</span><span>  ) </span><span style="color:#859900;">where
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span>
+</span><span style="color:#b58900;">myReverse </span><span style="color:#859900;">::</span><span> [</span><span style="color:#268bd2;">a</span><span>] </span><span style="color:#859900;">-&gt;</span><span> [</span><span style="color:#268bd2;">a</span><span>]
+</span><span>myReverse </span><span style="color:#859900;">=</span><span> undefined
+</span></code></pre>
+<h3 id="unit-testing">Unit Testing</h3>
+<p>Create <code>test/ReverseSpec.hs</code></p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">module ReverseSpec where
+</span><span>
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Test.Hspec
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Test.Hspec.QuickCheck
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Reverse
+</span><span>
+</span><span style="color:#b58900;">spec </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Spec
+</span><span>spec </span><span style="color:#859900;">= do
+</span><span>  describe </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">myReverse</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">$ do
+</span><span>    it </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">handles empty lists</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">$</span><span> myReverse </span><span style="color:#b58900;">[] </span><span style="color:#859900;">`shouldBe`</span><span> (</span><span style="color:#b58900;">[] </span><span style="color:#859900;">::</span><span> [</span><span style="color:#cb4b16;">Int</span><span>])
+</span></code></pre>
+<p>And now run in a terminal:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ stack test --file-watch --fast
+</span></code></pre>
+<p>It fails, of course:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>Failures:
+</span><span>  src/Reverse.hs:10:13: 
+</span><span>  1) Reverse.myReverse handles empty lists
+</span><span>       uncaught exception: ErrorCall
+</span><span>       Prelude.undefined
+</span><span>       CallStack (from HasCallStack):
+</span><span>         error, called at libraries/base/GHC/Err.hs:78:14 in base:GHC.Err
+</span><span>         undefined, called at src/Reverse.hs:10:13 in mylib-0.1.0.0-FCBjIqB4mhCEtNQa5Mn13e:Reverse
+</span></code></pre>
+<p>Fix it...</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">myReverse </span><span style="color:#859900;">::</span><span> [</span><span style="color:#268bd2;">a</span><span>] </span><span style="color:#859900;">-&gt;</span><span> [</span><span style="color:#268bd2;">a</span><span>]
+</span><span>myReverse </span><span style="color:#b58900;">[] </span><span style="color:#859900;">= </span><span style="color:#b58900;">[]
+</span></code></pre>
+<p>Tests pass. Add another test...</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>    it </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">reverses hello</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">$</span><span> myReverse </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">hello</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">`shouldBe` </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">olleh</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<p>It breaks, add more code:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>myReverse (x</span><span style="color:#859900;">:</span><span>xs) </span><span style="color:#859900;">=</span><span> myReverse xs </span><span style="color:#859900;">++</span><span> [x]
+</span></code></pre>
+<h3 id="property-testing">Property testing</h3>
+<p>Yay! Let's add a property:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>prop </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">double reverse is id</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">$ \</span><span>list </span><span style="color:#859900;">-&gt;
+</span><span>    myReverse (myReverse list) </span><span style="color:#859900;">`shouldBe`</span><span> (list </span><span style="color:#859900;">::</span><span> [</span><span style="color:#cb4b16;">Int</span><span>])
+</span></code></pre>
+<p>That's inefficient, let's create a better reverse function. Again,
+TDD:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#93a1a1;">-- code
+</span><span style="color:#b58900;">betterReverse </span><span style="color:#859900;">::</span><span> [</span><span style="color:#268bd2;">a</span><span>] </span><span style="color:#859900;">-&gt;</span><span> [</span><span style="color:#268bd2;">a</span><span>]
+</span><span>betterReverse </span><span style="color:#859900;">=</span><span> undefined
+</span><span>
+</span><span style="color:#93a1a1;">-- test
+</span><span>describe </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">betterReverse</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">$ do
+</span><span>  prop </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">behaves the same as myReverse</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">$ \</span><span>list </span><span style="color:#859900;">-&gt;
+</span><span>    betterReverse list </span><span style="color:#859900;">`shouldBe`</span><span> myReverse (list </span><span style="color:#859900;">::</span><span> [</span><span style="color:#cb4b16;">Int</span><span>])
+</span></code></pre>
+<p><strong>Notice</strong> Remember to export the <code>betterReverse</code> function at top of the code file.</p>
+<p><strong>Exercise</strong> Why is <code>myReverse</code> slow, and how can you make it faster?</p>
+<p>Real buggy code I wrote by mistake...</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">betterReverse </span><span style="color:#859900;">::</span><span> [</span><span style="color:#268bd2;">a</span><span>] </span><span style="color:#859900;">-&gt;</span><span> [</span><span style="color:#268bd2;">a</span><span>]
+</span><span>betterReverse </span><span style="color:#859900;">=
+</span><span>    loop </span><span style="color:#b58900;">[]
+</span><span>  </span><span style="color:#859900;">where
+</span><span>    loop res </span><span style="color:#b58900;">[] </span><span style="color:#859900;">= </span><span style="color:#b58900;">[]
+</span><span>    loop res (x</span><span style="color:#859900;">:</span><span>xs) </span><span style="color:#859900;">=</span><span> loop (x</span><span style="color:#859900;">:</span><span>res) xs
+</span></code></pre>
+<p>Test suite catches me!</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>  test/ReverseSpec.hs:16:7: 
+</span><span>  1) Reverse.betterReverse behaves the same as myReverse
+</span><span>       Falsifiable (after 4 tests and 3 shrinks):
+</span><span>         [0]
+</span><span>       expected: [0]
+</span><span>        but got: []
+</span></code></pre>
+<p>OK, let's fix the code:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">betterReverse </span><span style="color:#859900;">::</span><span> [</span><span style="color:#268bd2;">a</span><span>] </span><span style="color:#859900;">-&gt;</span><span> [</span><span style="color:#268bd2;">a</span><span>]
+</span><span>betterReverse </span><span style="color:#859900;">=
+</span><span>    loop </span><span style="color:#b58900;">[]
+</span><span>  </span><span style="color:#859900;">where
+</span><span>    loop res </span><span style="color:#b58900;">[] </span><span style="color:#859900;">=</span><span> res
+</span><span>    loop res (x</span><span style="color:#859900;">:</span><span>xs) </span><span style="color:#859900;">=</span><span> loop (x</span><span style="color:#859900;">:</span><span>res) xs
+</span></code></pre>
+<p>Hurrah!</p>
+<h2 id="let-s-play-with-vector">Let's play with vector</h2>
+<p>First let's add a <code>vector</code> dependency to <code>package.yaml</code>:</p>
+<pre data-lang="yaml" style="background-color:#fdf6e3;color:#657b83;" class="language-yaml "><code class="language-yaml" data-lang="yaml"><span>- </span><span style="color:#2aa198;">vector &gt;= 0.12.0.3
+</span></code></pre>
+<p>New <code>Reverse.hs</code> will now look like that:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude #-}
+</span><span style="color:#859900;">module Reverse
+</span><span>  ( </span><span style="color:#b58900;">myReverse
+</span><span>  , </span><span style="color:#b58900;">betterReverse
+</span><span>  , </span><span style="color:#b58900;">vectorReverse
+</span><span>  , </span><span style="color:#b58900;">uvectorReverse
+</span><span>  , </span><span style="color:#b58900;">svectorReverse
+</span><span>  ) </span><span style="color:#859900;">where
+</span><span>
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">RIO
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">RIO.Vector </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">V
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">RIO.Vector.Boxed </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">VB
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">RIO.Vector.Storable </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">VS
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">RIO.Vector.Unboxed </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">VU
+</span><span style="color:#cb4b16;">import qualified </span><span style="color:#859900;">Data.Vector.Generic.Mutable </span><span style="color:#cb4b16;">as </span><span style="color:#859900;">VM
+</span><span>
+</span><span style="color:#b58900;">myReverse </span><span style="color:#859900;">::</span><span> [</span><span style="color:#268bd2;">a</span><span>] </span><span style="color:#859900;">-&gt;</span><span> [</span><span style="color:#268bd2;">a</span><span>]
+</span><span>myReverse </span><span style="color:#b58900;">[] </span><span style="color:#859900;">= </span><span style="color:#b58900;">[]
+</span><span>myReverse (x</span><span style="color:#859900;">:</span><span>xs) </span><span style="color:#859900;">=</span><span> myReverse xs </span><span style="color:#859900;">++</span><span> [x]
+</span><span>
+</span><span style="color:#b58900;">betterReverse </span><span style="color:#859900;">::</span><span> [</span><span style="color:#268bd2;">a</span><span>] </span><span style="color:#859900;">-&gt;</span><span> [</span><span style="color:#268bd2;">a</span><span>]
+</span><span>betterReverse </span><span style="color:#859900;">=
+</span><span>    loop </span><span style="color:#b58900;">[]
+</span><span>  </span><span style="color:#859900;">where
+</span><span>    loop res </span><span style="color:#b58900;">[] </span><span style="color:#859900;">=</span><span> res
+</span><span>    loop res (x</span><span style="color:#859900;">:</span><span>xs) </span><span style="color:#859900;">=</span><span> loop (x</span><span style="color:#859900;">:</span><span>res) xs
+</span><span>
+</span><span>vectorReverseGeneric
+</span><span>  </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span style="color:#cb4b16;">Vector</span><span> v a
+</span><span>  </span><span style="color:#859900;">=&gt;</span><span> [a]
+</span><span>  </span><span style="color:#859900;">-&gt;</span><span> v a
+</span><span>vectorReverseGeneric input </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">V</span><span style="color:#859900;">.</span><span>create </span><span style="color:#859900;">$ do
+</span><span>  </span><span style="color:#859900;">let</span><span> len </span><span style="color:#859900;">=</span><span> length input
+</span><span>  v </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">VM</span><span style="color:#859900;">.</span><span>new len
+</span><span>  </span><span style="color:#859900;">let</span><span> loop </span><span style="color:#b58900;">[]</span><span> idx </span><span style="color:#859900;">=</span><span> assert (idx </span><span style="color:#859900;">== -</span><span style="color:#6c71c4;">1</span><span>) (return v)
+</span><span>      loop (x</span><span style="color:#859900;">:</span><span>xs) idx </span><span style="color:#859900;">= do
+</span><span>        </span><span style="color:#cb4b16;">VM</span><span style="color:#859900;">.</span><span>unsafeWrite v idx x
+</span><span>        loop xs (idx </span><span style="color:#859900;">- </span><span style="color:#6c71c4;">1</span><span>)
+</span><span>  loop input (len </span><span style="color:#859900;">- </span><span style="color:#6c71c4;">1</span><span>)
+</span><span style="color:#b58900;">{-# INLINEABLE vectorReverseGeneric #-}
+</span><span>
+</span><span style="color:#b58900;">vectorReverse </span><span style="color:#859900;">::</span><span> [</span><span style="color:#268bd2;">a</span><span>] </span><span style="color:#859900;">-&gt;</span><span> [</span><span style="color:#268bd2;">a</span><span>]
+</span><span>vectorReverse </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">VB</span><span style="color:#859900;">.</span><span>toList </span><span style="color:#859900;">.</span><span> vectorReverseGeneric
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">INLINE</span><span style="color:#b58900;"> vectorReverse #-}
+</span><span>
+</span><span style="color:#b58900;">svectorReverse </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">VS</span><span>.</span><span style="color:#268bd2;">Storable a </span><span style="color:#859900;">=&gt;</span><span> [</span><span style="color:#268bd2;">a</span><span>] </span><span style="color:#859900;">-&gt;</span><span> [</span><span style="color:#268bd2;">a</span><span>]
+</span><span>svectorReverse </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">VS</span><span style="color:#859900;">.</span><span>toList </span><span style="color:#859900;">.</span><span> vectorReverseGeneric
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">INLINE</span><span style="color:#b58900;"> svectorReverse #-}
+</span><span>
+</span><span style="color:#b58900;">uvectorReverse </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">VU</span><span>.</span><span style="color:#268bd2;">Unbox a </span><span style="color:#859900;">=&gt;</span><span> [</span><span style="color:#268bd2;">a</span><span>] </span><span style="color:#859900;">-&gt;</span><span> [</span><span style="color:#268bd2;">a</span><span>]
+</span><span>uvectorReverse </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">VU</span><span style="color:#859900;">.</span><span>toList </span><span style="color:#859900;">.</span><span> vectorReverseGeneric
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">INLINE</span><span style="color:#b58900;"> uvectorReverse #-}
+</span></code></pre>
+<p>Awesome, but are they working as advertised ? Let's find out!</p>
+<p>Add few properties which compares the result with the implemention of
+<code>reverse</code> function in the standard libray:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>describe &quot;compare with Data.List reverse&quot; $ do
+</span><span>  prop &quot;vectorReverse&quot; $ \list -&gt;
+</span><span>    vectorReverse list `shouldBe` (reverse (list :: [Int]))
+</span><span>  prop &quot;svectorReverse&quot; $ \list -&gt;
+</span><span>    svectorReverse list `shouldBe` (reverse (list :: [Int]))
+</span><span>  prop &quot;uvectorReverse&quot; $ \list -&gt;
+</span><span>    uvectorReverse list `shouldBe` (reverse (list :: [Int]))
+</span></code></pre>
+<p>And yeah, all the tests passes fine!</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>  compare with Data.List reverse
+</span><span>    vectorReverse
+</span><span>      +++ OK, passed 100 tests.
+</span><span>    svectorReverse
+</span><span>      +++ OK, passed 100 tests.
+</span><span>    uvectorReverse
+</span><span>      +++ OK, passed 100 tests.
+</span></code></pre>
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#b5c6d4d9d0c6f5d3c5d6dad8c5d9d0c1d09bd6dad8" targe="_blank"><span class="__cf_email__" data-cfemail="2b584a474e586b4d5b4844465b474e5f4e05484446">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Casa and Stack</title>
+  <meta property="og:title" content="Casa and Stack">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Last week, we spoke about our new Content Addressable Storage Archive system. In this post, we&#x27;ll be discussing how this affects Haskell tooling.">
+  <meta property="og:description" content="Last week, we spoke about our new Content Addressable Storage Archive system. In this post, we&#x27;ll be discussing how this affects Haskell tooling.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;casa-and-stack&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Casa and Stack</h1>
+      
+      <p id="page-description">By Chris Done, December 16, 2019</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Casa%20and%20Stack https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;casa-and-stack&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;casa-and-stack&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;casa-and-stack&#x2F;&amp;title=Casa%20and%20Stack"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;casa-and-stack&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  <p>This post is aimed at Haskellers who are roughly aware of how build
+infrastructure works for Haskell.</p>
+<p>But the topic may have general audience outside of the Haskell
+community, so this post will briefly describe each part of the
+infrastructure from the bottom up: compiling modules, building and
+configuring packages, to downloading and storing those packages
+online.</p>
+<p>This post is a semi-continuation from <a href="https://tech.fpcomplete.com/blog/casa/">last week's post on
+Casa</a>.</p>
+<h2 id="ghc">GHC</h2>
+<p>GHC is the de facto standard Haskell compiler. It knows how to load
+packages and compile files, and produce binary libraries and
+executables. It has a small database of installed packages, with a
+simple command-line interface for registering and querying them:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ ghc-pkg register yourpackage
+</span><span>$ ghc-pkg list
+</span></code></pre>
+<p>Apart from that, it doesn't know anything else about how to build
+packages or where to get them.</p>
+<h2 id="cabal">Cabal</h2>
+<p>Cabal is the library which builds Haskell packages from a .cabal file
+package description, which consists of a name, version, package
+dependencies and build flags. To build a Haskell package, you create a
+file (typically <code>Setup.hs</code>), with contents roughly like:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#cb4b16;">import </span><span style="color:#859900;">Distribution.Simple </span><span style="color:#93a1a1;">-- from the Cabal library
+</span><span>main </span><span style="color:#859900;">=</span><span> defaultMain
+</span></code></pre>
+<p>This (referred to as a &quot;Simple&quot; build), creates a program that you can
+run to configure, build and install your package.</p>
+<pre data-lang="shell" style="background-color:#fdf6e3;color:#657b83;" class="language-shell "><code class="language-shell" data-lang="shell"><span>$ ghc Setup.hs
+</span><span>$ ./Setup configure # Checks dependencies via ghc-pkg
+</span><span>$ ./Setup build # Compiles the modules with GHC
+</span><span>$ ./Setup install # Runs the register step via ghc-pkg
+</span></code></pre>
+<p>This file tends to be included in the source repository of your
+package. And modern package build tools tend to create this file
+automatically if it doesn't already exist. The reason the build system
+works like this is so that you can have custom build setups: you can
+make pre/post build hooks and things like that.</p>
+<p>But the Cabal library doesn't download packages or manage projects
+consisting of multiple packages, etc.</p>
+<h2 id="hackage">Hackage</h2>
+<p><a href="https://hackage.haskell.org/">Hackage</a> is an online archive of
+versioned package tarballs. Anyone can upload packages to this
+archive, where the package must have a version associated with it, so
+that you can later download a specific instance of the package that
+you want, e.g. <code>text-1.2.4.0</code>. Each package is restricted to a set of
+maintainers (such as the author) who is able to upload to it.</p>
+<p>The Hackage admins and authors are able to revise the .cabal package
+description without publishing a new version, and regularly do. These
+new revisions supersede previous revisions of the cabal files, while
+the original revisions still remain available if specifically
+requested (if supported by tooling being used).</p>
+<h2 id="cabal-install">cabal-install</h2>
+<p>There is a program called <code>cabal-install</code> which is able to download
+packages from Hackage automatically and does some constraint solving
+to produce a build plan. A <em>build plan</em> is when the tool picks what
+versions of package dependencies your package needs to build.</p>
+<p>It might look like:</p>
+<ul>
+<li>base-4.12.0.0</li>
+<li>bytestring-0.10.10.0</li>
+<li>your-package-0.0</li>
+</ul>
+<p>Version bounds (&lt;2.1 and &gt;1.3) are used by <code>cabal-install</code> as
+heuristics to do the solving. It isn't actually known whether any of
+these packages build together, or that the build plan will
+succeed. It's a best guess.</p>
+<p>Finally, once it has a build plan, it uses both GHC and the Cabal
+library to build Haskell packages, by creating the aforementioned
+<code>Setup.hs</code> automatically if it doesn't already exist, and running the
+<code>./Setup configure</code>, build, etc. step.</p>
+<h2 id="stackage">Stackage</h2>
+<p>As mentioned, the build plans produced by <code>cabal-install</code> are a best
+guess based on constraint solving of version bounds. There is a matrix
+of possible build plans, and the particular one you get may be
+entirely novel, that no one has ever tried before. Some call this
+&quot;version hell&quot;.</p>
+<p>To rectify this situation, <a href="https://www.stackage.org/">Stackage</a> is a
+&quot;stable Hackage&quot; service, which
+<a href="https://www.fpcomplete.com/blog/2014/05/stackage-server">publishes known subsets of Hackage that are <em>known</em> to build and pass tests together</a>,
+called snapshots. There are nightly snapshots published, and long-term
+snapshots called lts-1.0, lts-2.2, etc. which tend to steadily roll
+along with the GHC release cycle. These LTS releases are intended to
+be what people put in source control for their projects.</p>
+<p>The Stackage initiative has been running since it was announced
+<a href="https://www.yesodweb.com/blog/2012/11/stable-vetted-hackage">in 2012</a>.</p>
+<h2 id="stack">stack</h2>
+<p>The <code>stack</code> program was created to specifically make reproducible
+build plans based on Stackage. Authors include a <code>stack.yaml</code> file in their
+project root, which looks like this:</p>
+<pre data-lang="yaml" style="background-color:#fdf6e3;color:#657b83;" class="language-yaml "><code class="language-yaml" data-lang="yaml"><span style="color:#268bd2;">snapshot</span><span>: </span><span style="color:#2aa198;">lts-1.2
+</span><span style="color:#268bd2;">packages</span><span>: [</span><span style="color:#2aa198;">mypackage1</span><span>, </span><span style="color:#2aa198;">mypackage2</span><span>]
+</span></code></pre>
+<p>This tells <code>stack</code> that:</p>
+<ol>
+<li>We want to use the <code>lts-1.2</code> snapshot, therefore any package
+dependencies that we need for this project will come from there.</li>
+<li>That within this directory, there are two package directories that
+we want to build.</li>
+</ol>
+<p>The snapshot also indicates which version of GHC is used to build that
+snapshot; so <code>stack</code> also automatically downloads, installs and
+manages the GHC version for the user. GHC releases tend to come out
+every 6 months to one year, depending on scheduling, so it's common to
+have several GHC versions installed on your machine at once. This is
+handled transparently out of the box with <code>stack</code>.</p>
+<p>Additionally, we can add extra dependencies for when we have patched
+versions of upstream libraries, which happens a lot in the fast-moving
+world of Haskell:</p>
+<pre data-lang="yaml" style="background-color:#fdf6e3;color:#657b83;" class="language-yaml "><code class="language-yaml" data-lang="yaml"><span style="color:#268bd2;">snapshot</span><span>: </span><span style="color:#2aa198;">lts-1.2
+</span><span style="color:#268bd2;">packages</span><span>: [</span><span style="color:#2aa198;">mypackage1</span><span>, </span><span style="color:#2aa198;">mypackage2</span><span>]
+</span><span style="color:#268bd2;">extra-deps</span><span>: [</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">bifunctors-5.5.4</span><span style="color:#839496;">&quot;</span><span>]
+</span></code></pre>
+<p>The build plan for Stack is easy: the snapshot is already a build
+plan. We just need to add our source packages and extra dependencies
+on top of the pristine build plan.</p>
+<p>Finally, once it has a build plan, it uses both GHC and the Cabal
+library to build Haskell packages, by creating the aforementioned
+<code>Setup.hs</code> automatically if it doesn't already exist, and running the
+<code>./Setup configure</code>, build, etc. step.</p>
+<h2 id="pantry">Pantry</h2>
+<p>Since new revisions of cabal files can be made available at any time,
+a package identifier like <code>bifunctors-5.5.4</code> is not reproducible. Its
+meaning can change over time as new revisions become available. In
+order to get reproducible build plans, we have to track &quot;revisions&quot;
+such as <code>bifunctors-5.5.4@rev:1</code>.</p>
+<p>Stack has a library called Pantry to store all of this package
+metadata into an sqlite database on the developer's machine. It does
+so in
+<a href="https://en.wikipedia.org/wiki/Content-addressable_storage">a content-addressable way</a>
+(CAS),
+so that every variation on version and revision of a package has a
+unique SHA256 cryptographic hash summarising both the .cabal package
+description, and the complete contents of the package.</p>
+<p>This lets Stackage be exactly precise. Stackage snapshots used to look
+like this:</p>
+<pre data-lang="yaml" style="background-color:#fdf6e3;color:#657b83;" class="language-yaml "><code class="language-yaml" data-lang="yaml"><span style="color:#268bd2;">packages</span><span>:
+</span><span>- </span><span style="color:#268bd2;">hackage</span><span>: </span><span style="color:#2aa198;">List-0.5.2
+</span><span>- </span><span style="color:#268bd2;">hackage</span><span>: </span><span style="color:#2aa198;">ListLike-4.2.1
+</span><span>...
+</span></code></pre>
+<p>Now it looks like this:</p>
+<pre data-lang="yaml" style="background-color:#fdf6e3;color:#657b83;" class="language-yaml "><code class="language-yaml" data-lang="yaml"><span style="color:#268bd2;">packages</span><span>:
+</span><span>- </span><span style="color:#268bd2;">hackage</span><span>: </span><span style="color:#2aa198;">ALUT-2.4.0.3@sha256:ab8c2af4c13bc04c7f0f71433ca396664a4c01873f68180983718c8286d8ee05,4118
+</span><span>  </span><span style="color:#268bd2;">pantry-tree</span><span>:
+</span><span>    </span><span style="color:#268bd2;">size</span><span>: </span><span style="color:#6c71c4;">1562
+</span><span>    </span><span style="color:#268bd2;">sha256</span><span>: </span><span style="color:#2aa198;">c9968ebed74fd3956ec7fb67d68e23266b52f55b2d53745defeae20fbcba5579
+</span><span>- </span><span style="color:#268bd2;">hackage</span><span>: </span><span style="color:#2aa198;">ANum-0.2.0.2@sha256:c28c0a9779ba6e7c68b5bf9e395ea886563889bfa2c38583c69dd10aa283822e,1075
+</span><span>  </span><span style="color:#268bd2;">pantry-tree</span><span>:
+</span><span>    </span><span style="color:#268bd2;">size</span><span>: </span><span style="color:#6c71c4;">355
+</span><span>    </span><span style="color:#268bd2;">sha256</span><span>: </span><span style="color:#2aa198;">ba7baa3fadf0a733517fd49c73116af23ccb2e243e08b3e09848dcc40de6bc90
+</span></code></pre>
+<p>So we're able to CAS identify the .cabal file by a hash and length,</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>ALUT-2.4.0.3@sha256:ab8c2af4c13bc04c7f0f71433ca396664a4c01873f68180983718c8286d8ee05,4118
+</span></code></pre>
+<p>And we're able to CAS identify the contents of the package:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>pantry-tree:
+</span><span>  size: 355
+</span><span>  sha256: ba7baa3fadf0a733517fd49c73116af23ccb2e243e08b3e09848dcc40de6bc90
+</span></code></pre>
+<p>Additionally, each and every file within the package is
+CAS-stored. The &quot;pantry-tree&quot; refers to a list of CAS hash-len keys
+(which is also serialised to a binary blob and stored in the same CAS
+store as the files inside the tarball themselves). With every file
+stored, we remove a lot of duplication that we had storing a whole
+tarball for every single variation of a package.</p>
+<p>Parenthetically, the <code>01-index.tar</code> that Hackage serves up with all
+the latest <code>.cabal</code> files and revisions has to be downloaded <em>every
+time</em>. As this file is quite large this is slow and wasteful.</p>
+<p>Another side point: Hackage Security is not needed or consulted for
+this. CAS already allows us to know in advance whether what we are
+receiving is correct or not, as stated elsewhere.</p>
+<p>When switching to a newer snapshot, lots of packages will be updated,
+but within each package, only a few files will have changed. Therefore
+we only need to download those few files that are different. However,
+to achieve that, we need an online service capable of serving up those
+blobs by their SHA256...</p>
+<h2 id="enter-casa">Enter Casa</h2>
+<p>As announced in our <a href="https://tech.fpcomplete.com/blog/casa/">casa</a> post, Casa stands for
+&quot;content-addressable storage archive&quot;, and also means &quot;home&quot; in
+romance languages, and it is an online service we're announcing to
+store packages in a content-addressable way.</p>
+<p>Now, the same process which produces Stackage snapshots, can also:</p>
+<ul>
+<li>Download all package versions and revisions from Hackage, and store
+them in a Pantry database.</li>
+<li>Download all Stackage snapshots, and store them in the same Pantry
+database.</li>
+<li>All the unique CAS blobs stored in the pantry database are then
+pushed to Casa, completing the circle.</li>
+</ul>
+<p>Stack can now download all its assets needed to build a package from
+Casa:</p>
+<ul>
+<li>Stackage snapshots.</li>
+<li>Cabal files.</li>
+<li>Individual package files.</li>
+</ul>
+<p>Furthermore, the snapshot format of Stackage supports specifying
+locations other than Hackage, such as a git repository at a given
+commit, or a URL with a tarball. These would also be automatically
+pushed to Casa, and Stack would download them from Casa automatically
+like any other package. Parenthetically, Stackage does not currently
+include packages from outside of Hackage, but Stack's custom
+snapshots--which use the same format--do support that.</p>
+<h2 id="internal-company-casas">Internal Company Casas</h2>
+<p>Companies often run their own Hackage on their own network (or
+IP-limited public server) and upload their custom packages to it, to
+be used by everyone in the company.</p>
+<p>With the advent of Stack, this became less needed because it's trivial
+to fork any package on GitHub and then link to the Git repo in a
+stack.yaml. Plus, it's more reproducible, because you refer to a hash
+rather than a mutable version. Combined with the additional
+Pantry-based SHA256+length described above, you don't have to trust
+GitHub to serve the right content, either.</p>
+<p>The <a href="https://github.com/fpco/casa">Casa repository is here</a> which
+includes both the server and a (Haskell) client library with which you
+can push arbitrary files to the casa service. Additionally, to
+populate your Casa server with everything from a given snapshot, or
+all of Hackage, you can use <code>casa-curator</code> from the
+<a href="https://github.com/commercialhaskell/curator">curator</a> repo, which is
+what we use ourselves.</p>
+<p>If you're a company interested in running your own Casa server, please
+<a href="/cdn-cgi/l/email-protection#e4878c968d97808b8a81a48294878b899488819081ca878b89">contact us</a>. Or, if you'd like to
+discuss the possibility of caching packages in binary form and
+therefore skipping the build step altogther, please
+<a href="/cdn-cgi/l/email-protection#1f7c776d766c7b70717a5f796f7c70726f737a6b7a317c7072">contact us</a>. Also
+<a href="/cdn-cgi/l/email-protection#3d5e554f544e595253587d5b4d5e52504d51584958135e5250">contact us</a> if you would like to
+discuss storing GHC binary releases into Casa and have Stack pull from
+it, to allow for a completely Casa-enabled toolchain.</p>
+<h2 id="summary">Summary</h2>
+<p>Here's what we've brought to Haskell build infrastructure:</p>
+<ul>
+<li>Reliable, reproducible referring to packages and their files.</li>
+<li>De-duplication of package files; fewer things to download, on your
+dev machine or on CI.</li>
+<li>An easy to use and rely on server.</li>
+<li>A way to run an archive of your own that is trivial to run.</li>
+</ul>
+<p>When you upgrade to Stack <code>master</code> or the next release of Stack, you
+will automatically be using the Casa server.</p>
+<p>We believe this CAS architecture has use in other language ecosystems,
+not just Haskell. See the <a href="https://tech.fpcomplete.com/blog/casa/">Casa</a> post for more details.</p>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Casa%20and%20Stack https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;casa-and-stack&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;casa-and-stack&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;casa-and-stack&#x2F;&amp;title=Casa%20and%20Stack"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;casa-and-stack&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#493a28252c3a092f392a262439252c3d2c672a2624" targe="_blank"><span class="__cf_email__" data-cfemail="2d5e4c41485e6d4b5d4e42405d41485948034e4240">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Haskell and Rust</title>
+  <meta property="og:title" content="Haskell and Rust">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Learn more about how the Rust programming language shares many of the advantages offered by Haskell such as a strong type system, great tooling, polymorphism, immutability, concurrency, and great software testing methodologies.  Rust is a good choice when you need to squeeze in extra performance.">
+  <meta property="og:description" content="Learn more about how the Rust programming language shares many of the advantages offered by Haskell such as a strong type system, great tooling, polymorphism, immutability, concurrency, and great software testing methodologies.  Rust is a good choice when you need to squeeze in extra performance.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;11&#x2F;haskell-and-rust&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Haskell and Rust</h1>
+      
+      <p id="page-description">By Chris Allen, November 26, 2018</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Haskell%20and%20Rust https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;11&#x2F;haskell-and-rust&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;11&#x2F;haskell-and-rust&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;11&#x2F;haskell-and-rust&#x2F;&amp;title=Haskell%20and%20Rust"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;11&#x2F;haskell-and-rust&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>FP Complete is known for our best-in-class DevOps automation
+tooling in addition to Haskell. We use industry standards like
+Kubernetes and Docker. We’re always looking for new developments in
+software that help us empower our clients.</p>
+<p>Rust is an up-and-coming programming language whose history
+starts in 2010. Rust has much overlap in its strengths with
+Haskell. We are impressed with Rust’s tooling, library ecosystem,
+and the community behind all of it. We’re also keenly interested in
+incorporating Rust into our work more and more.</p>
+<p>Haskell has served FP Complete very well throughout its history,
+but it isn’t ideal in all circumstances. Haskell works
+exceptionally well as an application language, especially for web
+applications and networked servers. Haskell has seen productive use
+in everything from financial technology to non-profit web
+platforms. We believe Haskell excels when you want to be able to
+maintain quality and maintainability without compromising developer
+productivity.</p>
+<h2>Haskell and Rust are the same</h2>
+<p>Haskell and Rust have shared goals and design priorities. Those
+overlapping priorities align well with what we value at FP
+Complete:</p>
+<ul>
+<li>
+<p>Better, cheaper, more automatic correctness assurances through
+types and tooling. Both Haskell and Rust have sum types,
+polymorphism, type inference, type classes (Rust’s traits),
+associated types, and <del>accidental</del> turing-completeness in
+their type system. Both languages are immutable-by-default and
+avoid mutation of shared references. Concurrent programs, in
+particular, are less costly and easier to get right in Haskell and
+Rust.</p>
+</li>
+<li>
+<p>Quality assurance by leveraging multiple software testing
+methodologies.</p>
+</li>
+<li>
+<p>Maintaining a strong performance and concurrency story so that
+your prototypes can be extended and built upon rather than binned
+and replaced.</p>
+</li>
+<li>
+<p>See our post about whether <a href=
+"/blog/2018/10/is-rust-functional" rel="noopener" target=
+"_blank">Rust is functional</a> to see how Haskell and Rust compare
+in that dimension.</p>
+</li>
+</ul>
+<h3>Sum types</h3>
+<p>Here’s an example of structures being alike in Haskell and
+Rust:</p>
+<ul>
+<li>Haskell:</li>
+</ul>
+<pre><code class="language-haskell">data Maybe a =
+    Nothing
+  | Just a
+
+defaultOne :: Maybe Int -&gt; Int
+defaultOne Nothing = 1
+defaultOne (Just n) = n
+</code></pre>
+<ul>
+<li>Roughly the same in Rust:</li>
+</ul>
+<pre><code class="language-rust">pub enum Option&lt;T&gt; {
+    None,
+    Some(T),
+}
+
+pub fn default_one(v: &amp;Option&lt;i64&gt;) -&gt; i64 {
+    match v {
+        None =&gt; 1,
+        Some(n) =&gt; *n,
+    }
+}
+</code></pre>
+<p>You should uppercase type variables when writing Rust. In
+Haskell, they’re always lowercase. Lifetimes start with a single
+quote and are lowercase in Rust.</p>
+<h3>Polymorphism</h3>
+<pre><code class=
+"language-haskell">maybeEither :: Maybe a -&gt; Either String a
+maybeEither Nothing = Left "The value was missing!"
+maybeEither (Just v) = Right v
+</code></pre>
+<pre><code class=
+"language-rust">pub fn optional_result&lt;T&gt;(v: Option&lt;T&gt;) -&gt; Result&lt;T, String&gt; {
+    match v {
+        None =&gt; Err("The value was missing!".to_string()),
+        Some(x) =&gt; Ok(x),
+    }
+}
+</code></pre>
+<p>Here we didn’t need to know the type of the values inside the
+<code>Maybe</code> or <code>Option</code> type. Instead, we left
+them polymorphic.</p>
+<h3>Type classes or traits</h3>
+<p>I pulled this example from the second edition of <a href=
+"https://doc.rust-lang.org/book/second-edition/ch10-02-traits.html"
+rel="noopener" target="_blank">The Rust Programming
+Language</a>:</p>
+<pre><code class="language-rust">pub trait Summary {
+    fn summarize(&amp;self) -&gt; String;
+}
+
+pub struct Article {
+    pub headline: String,
+    pub location: String,
+    pub author: String,
+    pub content: String,
+}
+
+impl Summary for Article {
+    fn summarize(&amp;self) -&gt; String {
+        format!("{}, by {} ({})", self.headline, self.author, self.location)
+    }
+}
+</code></pre>
+<p>Here’s my version of the example in Haskell:</p>
+<pre><code class="language-haskell">import Text.Printf
+
+class Summary a where
+  summarize :: a -&gt; String
+
+data Article =
+  Article {
+    headline :: String
+  , location :: String
+  , author :: String
+  , content :: String
+  }
+
+instance Summary Article where
+  summarize (Article headline location author _) =
+    printf "%s, by %s (%s)" headline author location
+</code></pre>
+<h3>Associated types</h3>
+<p>A vacuous example to demonstrate the facility:</p>
+<pre><code class="language-haskell">class Hello a where
+  type Return a
+  helloWorld :: a -&gt; Return
+</code></pre>
+<pre><code class="language-rust">trait Hello {
+    type Return;
+    fn hello_world(&amp;self) -&gt; Self::Return;
+}</code></pre>
+<h2>Haskell and Rust are different</h2>
+<p>Haskell is going to be stronger when you need maximum
+productivity when going from a prototype to a production-ready
+system that can nimbly handle functional and infrastructural
+changes. Rust can be a better choice when you can plan a bit more
+and are willing to sacrifice some productivity for better
+performance or because your project requires a fully capable
+systems language.</p>
+<ul>
+<li>
+<p>GHC Haskell has green threads built into the runtime system.
+Green threads make it much easier to write concurrent programs that
+“just work.” GHC’s green-threaded runtime is a large amount of code
+and is not always the fastest way to do things. GHC’s runtime works
+well for the common-case: web servers and networked applications.
+GHC can fall short of being ideal elsewhere.</p>
+</li>
+<li>
+<p>Rust avoids a runtime entirely and does all of this at a library
+level. The most common library for <a href=
+"https://en.wikipedia.org/wiki/C10k_problem" rel="noopener" target=
+"_blank">solving the c10k problem</a> in Rust is <a href=
+"https://tokio.rs/" rel="noopener" target="_blank">tokio</a>.
+Here’s an example of a simple echo server in Rust using
+<code>tokio</code>:</p>
+</li>
+</ul>
+<pre><code class="language-rust">extern crate tokio;
+
+use tokio::prelude::*;
+use tokio::net::TcpListener;
+use tokio::io::copy;
+
+pub fn main() -&gt; Result&lt;(), Box&lt;std::error::Error&gt;&gt; {
+    let addr = "127.0.0.1:3000".parse()?;
+    let listen_socket = TcpListener::bind(&amp;addr)?;
+    let server = listen_socket
+        .incoming()
+        .map_err(|e| eprintln!("Error accepting socket: {}", e))
+        .for_each(|socket| {
+            let (reader, writer) = socket.split();
+            let handle_conn =
+                copy(reader, writer)
+                .map(|copy_info| println!("Finished, bytes copied: {:?}", copy_info))
+                .map_err(|e| {
+                    eprintln!("Error echoing: {}", e);
+                })
+                ;
+            tokio::spawn(handle_conn)
+        })
+        ;
+    tokio::run(server);
+    Ok(())
+}
+</code></pre>
+<p>Now the same in Haskell:</p>
+<pre><code class="language-haskell">#!/usr/bin/env stack
+-- stack --resolver lts-12.9 script
+
+{-# LANGUAGE OverloadedStrings #-}
+
+module Echo where
+
+import Data.Streaming.Network (bindPortTCP)
+import qualified Network.Socket as N
+import qualified Network.Socket.ByteString as NB
+import Control.Concurrent (forkIO)
+import Control.Exception (bracket)
+import Control.Monad (forever)
+
+main :: IO ()
+main = bracket
+  (bindPortTCP 3000 "127.0.0.1")
+  N.close
+  $ \listenSocket -&gt; forever $ do
+    (socket, _addr) &lt;- N.accept listenSocket
+    forkIO $ forever $ do
+      bs &lt;- NB.recv socket 4096
+      NB.sendAll socket bs
+</code></pre>
+<ul>
+<li>You must work through more noise dealing with these details in
+Rust, but you get more fine-grained control in exchange.</li>
+</ul>
+<p>Here’s an example in Haskell using <a href=
+"https://www.stackage.org/haddock/lts-12.18/base-4.11.1.0/Control-Concurrent.html#v:forkIOWithUnmask"
+rel="noopener" target="_blank">forkIOWithUnmask</a>:</p>
+<pre><code class=
+"language-haskell">-- From https://www.fpcomplete.com/blog/2018/04/async-exception-handling-haskell
+import Control.Concurrent
+import Control.Exception
+import System.IO
+
+main :: IO ()
+main = do
+  hSetBuffering stdout LineBuffering
+  putStrLn "Acquire in main thread"
+  tid &lt;- uninterruptibleMask_ $ forkIOUnmask $ \unmask -&gt;
+    unmask (putStrLn "use in child thread" &gt;&gt; threadDelay maxBound)
+      `finally` putStrLn "cleanup in child thread"
+  killThread tid -- built on top of throwTo
+  putStrLn "Exiting the program"
+</code></pre>
+<p>GHC Haskell’s runtime also lets you cancel long running CPU
+tasks, which is notoriously tricky elsewhere. <a href=
+"https://www.stackage.org/haddock/lts-12.14/base-4.11.1.0/Control-Exception.html#v:throwTo">
+<code>throwTo</code></a> and <a href=
+"https://www.stackage.org/haddock/lts-12.14/base-4.11.1.0/Control-Concurrent.html#v:killThread">
+<code>killThread</code></a> are the most common means of doing
+so.</p>
+<p>Doing something equivalent in Rust requires writing cooperative
+threading behavior into the threads you want to be able to
+kill:</p>
+<pre><code class="language-rust">use std::thread;
+use std::time::Duration;
+use std::sync::mpsc::{self, TryRecvError};
+use std::io::{self, BufRead};
+
+fn main() {
+    println!("Acquire in main thread");
+    let (tx, rx) = mpsc::channel();
+    thread::spawn(move || {
+        loop {
+            println!("use in child thread");
+            // You can't do blocking operations like this in Rust.
+            // It won't reach the `rx.try_recv()` or match
+            // thread::sleep(Duration::from_millis(std::u64::MAX));
+            match rx.try_recv() {
+                Ok(_) | Err(TryRecvError::Disconnected) =&gt; {
+                    println!("Terminating.");
+                    break;
+                }
+                Err(TryRecvError::Empty) =&gt; {}
+            }
+        }
+    });
+    let _ = tx.send(());
+    println!("Exiting the program");
+}
+</code></pre>
+<p>However, this cooperation means you can’t ever block
+indefinitely in your Rust code, or your thread could stay stuck for
+the entire lifespan of your process. In GHC Haskell, your code
+automatically yields control to the runtime whenever it allocates
+memory. The strength of Haskell here is that you get the ability to
+preempt or kill threads without doing unspeakable violence to your
+code’s control flow.</p>
+<p>Rust has some hard design limitations which are reasonable for
+what it prioritizes. Haskell, Java, Python, Ruby, and JS also have
+garbage collection. Rust does edge into the same territory, but
+Rust has a specific mission to be a better systems language.
+Targeting core systems applications means Rust is more directly
+comparable to C and C++. The Rust core team does their utmost to
+incorporate modern programming language design. The phrase the Rust
+team members like to use is that they’re trying to make the best
+90’s era programming language they can. I think this is maybe
+under-selling it a little, but it’s a far sight better than the 60s
+and 70s vintage PL design available elsewhere.</p>
+<p>Rust is stronger for systems programming, embedded, game
+development, and high-performance computing. Rust is more reliably
+performant than Haskell, relying less on compiler magic and more on
+zero-cost abstractions. This emphasis means that the designers try
+to introduce as much programming convenience as possible where it
+won’t involuntarily reduce performance. Rust’s <a href=
+"https://doc.rust-lang.org/std/iter/trait.Iterator.html" rel=
+"noopener" target="_blank">Iterators</a> is an excellent example of
+this. Haskell tries to obtain some of these benefits with the use
+of developer-written <a href=
+"https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.130.2170&amp;rep=rep1&amp;type=pdf"
+rel="noopener" target="_blank">rewrite rules</a> which are
+notoriously brittle and hard to debug.</p>
+<h2>The juice is worth the squeeze</h2>
+<p>The learning curve of both Haskell and Rust is worthwhile. They
+are both platforms that you can invest deeply into for robust
+infrastructure and applications that perform well. On top of that,
+their respective type systems and idioms enable developers to move
+faster once they’re comfortable.</p>
+<h1>Both are great choices</h1>
+<p>Both languages and their associated ecosystems can make normal
+software development dramatically more tractable and scalable. If
+you’re interested in Haskell or Rust, please check out some of our
+other blog posts on these great platforms:</p>
+<ul>
+<li><a href="/haskell" rel="noopener" target=
+"_blank">Summary of Haskell</a></li>
+<li><a href="/rust" rel="noopener" target=
+"_blank">Summary of Rust</a></li>
+<li><a href="/tags/haskell" rel="noopener" target=
+"_blank">Our blog posts on Haskell</a></li>
+<li><a href="/tags/rust" rel="noopener" target="_blank">Our
+blog posts on Rust</a></li>
+</ul>
+<p>If you’d like help evaluating Haskell, Rust, or other
+technologies such as Kubernetes and Docker, <a href=
+"/contact-us">please contact us!</a> We are capable of taking your
+software projects from planning and scoping through project
+management, implementation, operations, and maintenance.</p>
+<p><a href="/contact-us">Contact us!</a></p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Haskell%20and%20Rust https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;11&#x2F;haskell-and-rust&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;11&#x2F;haskell-and-rust&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;11&#x2F;haskell-and-rust&#x2F;&amp;title=Haskell%20and%20Rust"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;11&#x2F;haskell-and-rust&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#ec9f8d80899fac8a9c8f83819c80899889c28f8381" targe="_blank"><span class="__cf_email__" data-cfemail="7a091b161f093a1c0a1915170a161f0e1f54191517">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta charset="UTF-8">
+        <title>GHC 7.8, transformers 0.3, and lenient lower bounds</title>
+        
+        <meta name="description" content=".">
+        
+        <link rel="stylesheet" type="text/css" href="/default.css">
+        <link rel="stylesheet" type="text/css" href="/css/style.css">
+        <link href="/rss.xml" type="application/rss+xml" rel="alternate" title="tech.fpcomplete.com rss feed">
+
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'UA-36928035-3');
+        </script>
+
+        
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/zenburn.min.css">
+
+
+    </head>
+    <body>
+    <div class="container">
+      <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
+        <h5 class="my-0 mr-md-auto font-weight-normal">
+          <a href="/">
+              <img src="/images/fp-complete-logo-small.png">
+          </a>
+        </h5>
+          <nav class="my-2 my-md-0 mr-md-3">
+              <a class="p-2 text-dark" href="/blog">Blog</a>
+              <a class="p-2 text-dark" href="/tech">Technology</a>
+              <a class="p-2 text-dark" href="/haskell">Haskell</a>
+              <a class="p-2 text-dark" href="/rust">Rust</a>
+              <a class="p-2 text-dark" href="/devops">DevOps</a>
+          </nav>
+      </div>
+          
+
+        <main>
+          
+
+<h1>GHC 7.8, transformers 0.3, and lenient lower bounds</h1>
+<p class="byline">By Michael Snoyman, published May 12, 2014</p>
+
+<article>
+
+  
+    
+    <p>In the Stackage maintainer's agreement, there's a section about
+keeping your package compatible with the newest versions of all
+dependencies. What the maintainer's agreement doesn't (yet) discuss
+is when it's important to be compatible with old versions of a
+package. The reasons for this are not immediately obvious,
+especially as it affects a smaller subset of the Hackage author
+population. This blog post will cover some of the reasons for this
+goal.</p>
+<p>The original impetus for writing this was to get one specific
+message across: <b>please continue supporting
+transformers-0.3.0.0</b>! For the explanation of why, please keep
+reading.</p>
+<h2 id="non-upgradeable-packages">Non-upgradeable packages</h2>
+<p>The simplest case to discuss is packages like base and
+template-haskell. Not only are these packages shipped with GHC, but
+they cannot be upgraded. As a result, if you have a package that
+says <code>base &gt;= 4.7</code>, it will only work with GHC 7.8
+and later. Users who are still using 7.6 (or 7.4... or earlier...
+yes, those people <i>do</i> in fact exist) will have no means of
+using your package.</p>
+<p>That of course brings up a question of how many versions of GHC
+you want to support. I'd highly recommend always supporting the
+most recent Haskell Platform release, as many users (especially
+Windows users) stick to that. Going back an extra version as well
+isn't a bad idea either, especially as some distributions (e.g.,
+Ubuntu) tend to ship relatively old GHC versions.</p>
+<h2 id="upgradeable-ghc-shipped-packages">Upgradeable, GHC-shipped
+packages</h2>
+<p>This issue is more subtle. In addition to non-upgradeable
+packages, GHC includes a number of packages which <i>can</i> be
+installed separately, resulting in one copy of the package in your
+global database, and one in your user database. (Yes, you can also
+install into the global database, but I'm covering the common case
+here.) Examples of these packages are bytestring, binary, and
+containers.</p>
+<p>The first problem with this is that it can lead to end-user
+confusion. How many of you have tried working in GHCi, or just
+compiling code with <code>ghc --make</code>, and gotten a message
+along the lines of "Could not match type ByteString with
+ByteString"? That usually comes from two versions of a package
+being available.</p>
+<p>Now that's just a bit of an annoyance, and building your code
+with cabal will almost always avoid it. But there's a second, more
+serious problem. Some of these upgradeable packages are in turn
+depended upon by non-upgradeable packages. For example,
+template-haskell depends on containers. As a result, imagine if you
+try to use containers 0.5 and template-haskell when on GHC 7.4.
+Since template-haskell depends on containers-0.4.2.1, you'll run
+into issues.</p>
+<p>Another problem is the ghc package (aka GHC-the-library). With
+GHC 7.8.2, I have the following dependencies for the installed ghc
+package:</p>
+<pre><code>depends: Cabal-1.18.1.3-9a922a1eb7c28f3b842ec080141cce40
+         array-0.5.0.0-9f212a0e8caa74d931af75060b4de2ab
+         base-4.7.0.0-018311399e3b6350d5be3a16b144df9b
+         bin-package-db-0.0.0.0-1742af7e25e78544d39ad66b24fbcc26
+         bytestring-0.10.4.0-7de5230c6d895786641a4de344336838
+         containers-0.5.5.1-19036437a266c66c860794334111ee93
+         directory-1.2.1.0-a0555efb610606fd4fd07cd3bba0eac2
+         filepath-1.3.0.2-15473fd51668a6d87ee97211624eb8aa
+         hoopl-3.10.0.1-2477f10040d16e4625a4a310015c7bb6
+         hpc-0.6.0.1-6b2f98032f6f0d7ac5618b78a349a835
+         process-1.2.0.0-eaf7dde3bcb1e88fafb7f0f02d263145
+         template-haskell-2.9.0.0-dcc8c210fb02937e104bc1784d7b0f06
+         time-1.4.2-b47642c633af921325b5eb4d5824b9de
+         transformers-0.3.0.0-7df0c6cd5d27963d53678de79b98ed66
+         unix-2.7.0.1-23f79f72106a0fbca2437feb33a4e846</code></pre>
+<p>So if I try to use- for example- transformers 0.4.1.0 and a
+package requiring ghc at the same time, I'll run into a conflict.
+And there are actually a large number of such packages; just
+doctest has <a href=
+"http://packdeps.haskellers.com/reverse/doctest">over 100
+dependencies</a>.</p>
+<h2 id="haskell-platform">Haskell Platform</h2>
+<p>The last reason is the one I hear the most pushback about from
+package authors. The Haskell Platform pegs users at specific
+versions of dependencies. For example, the most recent HP release
+pegs text at 0.11.3.1. Now imagine that you write a package that
+depends on <code>text &gt;= 1.0</code>. A user with the Haskell
+Platform installed will likely get warnings from cabal when
+installing your package about conflicting versions of text, and
+possibly breaking other packages that depend on it.</p>
+<p>I can tell you what I've personally done about this situation.
+For my open source packages, I make sure to keep compatibility with
+the Haskell Platform released version of a package. Sometimes this
+<i>does</i> lead to some ugliness. Two examples are:</p>
+<ul>
+<li>streaming-commons has to have a copy of some of the streaming
+text code, since it was not available before text 1.1. (And due to
+an issue with cabal, <a href=
+"https://github.com/fpco/text-stream-decode/issues/1">we can't even
+conditionally include the code</a>.)</li>
+<li>In chunked-data, I wasn't able to rely upon the <a href=
+"http://hackage.haskell.org/package/text-1.1.1.2/docs/Data-Text-IO.html#v:hGetChunk">
+hGetChunk</a> function, and instead needed to use CPP to include a
+far less efficient backup approach when using older versions of
+text.</li>
+</ul>
+<p>In the Stackage project, I run versions of the build both with
+and without Haskell Platform constraints. There are actually a
+whole slew of conditionals in the version selection which say "if
+you're using HP, then use this older version of a dependency."
+However, as time goes on, more and more packages are simply not
+supporting the HP-pegged versions of packages anymore.</p>
+<h2 id="future-changes">Future changes</h2>
+<p>I'm not commenting here on the value of HP-pegged versions, but
+simply pointing out a reality: if you want your users to have a
+good experience, <i>especially</i> Windows users, it's probably a
+good idea to keep compatibility with the older HP-provided
+versions. I also think the ramifications of the HP approach really
+need to be discussed by the community, it seems like there's not
+much discussion going on about the impact of the HP.</p>
+<p>Also, regarding the packages shipped with GHC: there have
+certainly been discussions about improving this situation. I know
+that removing the Cabal dependency from ghc has been discussed, and
+would certainly improve the situation somewhat. If others want to
+kick off a conversation on improving things, I'd be happy to
+participate, but I frankly don't have any concrete ideas on how to
+make things better right now.</p>
+
+
+  
+
+</article>
+
+
+        </main>
+
+        <div id="footer">
+          <p>
+            2012-2019 FP Complete Corp.
+            Subscribe to the
+            <a href="https://tech.fpcomplete.com/rss.xml">RSS feed</a>.
+          </p>
+        </div>
+      </div> <!-- .container -->
+      
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+    </body>
+</html>

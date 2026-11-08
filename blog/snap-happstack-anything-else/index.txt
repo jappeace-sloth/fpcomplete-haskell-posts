@@ -1,0 +1,125 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Snap, Happstack and anything else
+
+By Michael Snoyman, August 5, 2013
+
+Share this     
+
+One of our primary goals when designing the School of Haskell was making it convenient to write up
+tutorials on web development. As I’m sure many people can guess, I personally think that web
+development is an important domain to give proper coverage to. And for those of you on our beta
+program, you’ve probably already seen that this web support extends to our IDE as well.
+
+Since we’ve published a few tutorials on using Yesod, some people got the impression that our
+system supported only one web framework. I'm here to tell you that, on the contrary, we have first
+class support for the two other most popular Haskell web frameworks and, in addition, explain how
+our system supports web applications, and why we made the technical decisions we did.
+
+So let's get started easily. Mike Meyer, our senior support engineer, has written up a very
+straight-forward tutorial (defunct) demonstrating how to run Snap and Happstack applications in the
+SoH. The short description is that we provide a package called web-fpco that provides some wrapper
+functions to launch your code in our environment. The FP Haskell Center (FPHC) library set provides
+a full complement of Happstack and Snap dependencies, so you should be able to just change a few
+import statements and run your existing applications on our system.
+
+But that really begs the question: what's the magic behind the scenes? The only real trick is that
+we need to know which port the application will receive HTTP requests on, and then set up reverse
+HTTP proxying to forward requests from the outside world to that user application. One approach
+would be to standardize on some specific port number, or allow the user to annotate a program to
+let FPHC know which port to reverse proxy to. However, that leads to two issues:
+
+  • There would be no way to run two servers in the same network stack. This isn't actually a
+    problem for us at the moment, since each user is given his/her own network stack. But it does
+    limit our ability to scale things in the future.
+  • What happens when you relaunch an application? If for some reason the old version of your code
+    didn't die (e.g., it double-forked) and is still holding onto the old socket, you will still be
+    talking to the old version.
+
+Instead, we went with the opposite approach: FPHC sets the PORT environment variable when running
+user code to tell the application which port number it should listen on. This is a technique I've
+used in that past, and is how both the Yesod development server and the Keter deployment system
+work. (And yes, we could bikeshed on the actual name of the environment variable...) So if you look
+at the source code for web-fpco, you'll notice that all it does is check for the PORT variable and
+then call out to the standard functions for Snap and Happstack.
+
+FPHC sets one additional environment variable: APPROOT gives the base URL for the application, so
+that you can generate absolute URLs from your application. The approot consists of the scheme and
+domain name; for FP Complete's main site, the approot would be https://www.fpcomplete.com (note the
+lack of trailing slash).
+
+There was one other approach I considered (I think Gregory Collins first mentioned it to me):
+systemd style socket activation. Essentially, FPHC would create a listening socket for the
+application, dup2 it to a well-known file descriptor like 3, and then start the application, which
+would then start accepting connections from that file descriptor. There are a few reasons we ended
+up going with the PORT environment variable approach instead:
+
+  • When using the School of Haskell tutorials, or the IDE built-in running of code, we use a
+    GHCi-style execution model. Due to the way the interpreted code is run, it would be very
+    difficult to implement socket activation. Our deployment system, on the other hand, could
+    handle this just fine. However, we want the development and deployment of applications to be as
+    similar to each other as possible to simplify the testing cycle for users writing code.
+  • Our IDE automatically detects whether a piece of code runs a web interface or not, by checking
+    if it is listening on the PORT it was assigned. If FPHC started listening on the port for you,
+    we'd have no ability to do that. Additionally, our deployment server checks if an application
+    has started up properly based on whether it can answer HTTP requests. With the PORT approach,
+    we can simply check if the port is being listened on. With socket activation, we'd have to make
+    a full HTTP request.
+  • Existing web frameworks do not have built-in support for socket activation, while they do have
+    support for setting arbitrary port numbers. I'm fairly certain this would be trivial to add to
+    Warp, and I'd imagine the same is true for Snap and Happstack, but it would make the barrier to
+    entry for writing a web app on our system just a little bit higher.
+
+I think our system makes it easy to get up and running with web development in Haskell. And since
+the underpinnings are so simple, it would even be possible to develop your own web server on FPHC.
+As a trivial example, here's a network-conduit-based snippet that will answer a single HTTP
+request.
+
+{-# LANGUAGE OverloadedStrings #-}
+import Data.Conduit
+import Data.Conduit.Network
+import System.Environment
+
+main :: IO ()
+main = do
+    port <- fmap read $ getEnv "PORT"
+    runTCPServer (serverSettings port HostAny) $ \appData -> do
+        appSource appData $$ await -- grab and ignore the request from the client
+        yield "HTTP/1.0 200 OK\r\nContent-Type: text/plain\r\n\r\nHello World!!!\r\n"
+            $$ appSink appData
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

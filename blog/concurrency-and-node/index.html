@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta charset="UTF-8">
+        <title>Concurrency and Node</title>
+        
+        <meta name="description" content="Is Haskell better at I&#x2F;O than node.js? We think so. FP Complete compares concurrency approaches in node.js&#x2F;Javascript with Haskell to make the case.">
+        
+        <link rel="stylesheet" type="text/css" href="/default.css">
+        <link rel="stylesheet" type="text/css" href="/css/style.css">
+        <link href="/rss.xml" type="application/rss+xml" rel="alternate" title="tech.fpcomplete.com rss feed">
+
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'UA-36928035-3');
+        </script>
+
+        
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/zenburn.min.css">
+
+
+    </head>
+    <body>
+    <div class="container">
+      <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
+        <h5 class="my-0 mr-md-auto font-weight-normal">
+          <a href="/">
+              <img src="/images/fp-complete-logo-small.png">
+          </a>
+        </h5>
+          <nav class="my-2 my-md-0 mr-md-3">
+              <a class="p-2 text-dark" href="/blog">Blog</a>
+              <a class="p-2 text-dark" href="/tech">Technology</a>
+              <a class="p-2 text-dark" href="/haskell">Haskell</a>
+              <a class="p-2 text-dark" href="/rust">Rust</a>
+              <a class="p-2 text-dark" href="/devops">DevOps</a>
+          </nav>
+      </div>
+          
+
+        <main>
+          
+
+<h1>Concurrency and Node</h1>
+<p class="byline">By Andrew Rademacher, published December  7, 2016</p>
+
+<article>
+
+  
+    
+    <p><i>Example code can be found <a href=
+"https://github.com/AndrewRademacher/fpco-article-examples/tree/master/concurrency-and-node">
+here</a>.</i></p>
+<p>When Node.JS first came onto the scene it successfully
+popularized the event-loop. Ryan Dahl correctly identified a
+serious problem with the way that I/O is generally handled in
+concurrent environments. Many web servers, for example achieve
+concurrency by creating a new thread for every connection. In most
+platforms, this comes at a substantial cost. The default stack size
+in Java is 512KB, which means that if you have 1000 concurrent
+connections, your program will consume half a gigabyte of memory
+just for stack space. Additionally, forking threads in most systems
+costs an enormous amount of time, as does performing a context
+switch between two threads.</p>
+<p>To address these issues, Node.JS uses a single thread with an
+event-loop. In this way, Node can handle 1000s of concurrent
+connections without any of the traditional detriments associated
+with threads. There is essentially no memory overhead
+per-connection, and there is no context switching.</p>
+<p>When compared to traditional threading architectures, this is
+exactly the right approach to handling concurrency. In fact,
+Erlang's OTP libraries function in a very similar way. Each actor
+has a queue of messages, and only processes a single message at a
+time. Only after fully processing one message does it move on to
+the next.</p>
+<p>However, this programming model imposes some extreme costs when
+it comes to the legibility of code. Consider the following two
+examples.</p>
+<pre><code class="javascript">var request = require('request');
+
+request('http://example.com/random-number', function (error, response, body) {
+  if (!error &amp;& response.statusCode === 200) {
+    console.log(JSON.parse(body));
+  }
+});</code></pre>
+<pre><code class="javascript">var request = require('request');
+
+var response = request('http://example.com/random-number');
+
+if (response.statusCode === 200) {
+  console.log(JSON.parse(response.body));
+}</code></pre>
+<p>In the first example we see what an HTTP request would typically
+look like in Node. In the second we see what it could be like if
+Node had threads.</p>
+<p>As a direct result of the event-loop, we have lost the ability
+to express a program as a linear series of steps. Which becomes
+even more important were we to need to make many I/O calls in the
+same function.</p>
+<pre><code class=
+"javascript">request('http://example.com/random-number', function(error, response1, body) {
+  request('http://example.com/random-number', function(error, response2, body) {
+    request('http://example.com/random-number', function(error, response3, body) {
+        ...
+    });
+  });
+});</code></pre>
+<p>versus:</p>
+<pre><code class=
+"javascript">var response1 = request('http://example.com/random-number');
+var response2 = request('http://example.com/random-number');
+var response3 = request('http://example.com/random-number');</code></pre>
+<p>Which leads to the 'callback hell' that we all know and hate.
+Part of the bill-of-goods we accept when using Node is that in
+exchange for better time and space characteristics, we lose the
+thread as an abstraction.</p>
+<h3 id="what-is-the-value-of-a-thread">What is the value of a
+thread</h3>
+<p>It is important to keep in mind that a thread isn't just a
+primitive for dealing with concurrency. It is also a powerful
+abstraction to make the existence of latency invisible to the
+developer.</p>
+<pre><span class=
+"hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Aeson</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Network</span><span class=
+"hs-varop">.</span><span class="hs-conid">HTTP</span><span class=
+"hs-varop">.</span><span class="hs-conid">Simple</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Network</span><span class=
+"hs-varop">.</span><span class="hs-conid">HTTP</span><span class=
+"hs-varop">.</span><span class="hs-conid">Types</span><span class=
+"hs-varop">.</span><span class="hs-conid">Status</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+  <span class="hs-varid">res</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class=
+"hs-varid">httpJSON</span> <span class=
+"hs-str">"http://httpbin.org/get"</span>
+  <span class="hs-keyword">if</span> <span class=
+"hs-varid">getResponseStatus</span> <span class=
+"hs-varid">res</span> <span class="hs-varop">==</span> <span class=
+"hs-varid">status200</span>
+    <span class="hs-keyword">then</span> <span class=
+"hs-varid">print</span> <span class=
+"hs-varop">$</span> <span class="hs-layout">(</span><span class=
+"hs-varid">getResponseBody</span> <span class=
+"hs-varid">res</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Value</span><span class="hs-layout">)</span>
+    <span class="hs-keyword">else</span> <span class=
+"hs-varid">error</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">show</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">getResponseStatus</span> <span class=
+"hs-varid">res</span></pre>
+<p>Looking at the code above we notice a characteristic difference
+about it when compared to the asynchronous JavaScript examples
+above. There are no callbacks. When we say <code>response &lt;- get
+...</code>, the program will halt until we get a response back from
+the server. We have written a piece of code that is linear, from
+step-to-step, and the underlying system knows that the server on
+the other end will take time to respond and handles it
+accordingly.</p>
+<p>This is possible because a thread keeps track of the state
+belonging to an ongoing computation. By tracking that state, a
+thread can halt and resume a computation arbitrarily. In the event
+of I/O, a thread will halt a computation while the I/O is
+occurring, and only resume when a response comes back. Giving your
+program the appearance of having no delay.</p>
+<p>A thread, therefore, is both a way of running multiple
+computations concurrently and also accounting for the asynchronous
+nature of I/O. By not exposing this abstraction to the developer,
+two huge drawbacks exist in Node as a concurrency-oriented
+platform.</p>
+<h3 id="in-node.js-concurrency-can-only-occur-when-adjacent-to-io">
+In Node.JS concurrency can only occur when adjacent to I/O</h3>
+<p>Node.JS only exposes one primary thread to a program. While it
+may spawn new threads under the hood to deal with input buffers,
+you don't have any control over them. As a result, you cannot write
+a program that takes advantage of multiple cores in a machine. The
+result is that your program will only be able to perform two
+actions concurrently if at least one of them is bounded by I/O.</p>
+<p>To demonstrate, we have setup an example that you can download
+alongside this article. It is linked to at the top of the article.
+Once you have downloaded the example, look in the
+<code>README.md</code> for the "Local vs. Remote Test"
+instructions.</p>
+<p>We start by defining a web server that supports a slow
+operation. In our case, generating Fibonacci numbers by the most
+naive implementation. Then we define two tests in Node.JS and two
+tests in Haskell. Using each language's native <code>async</code>
+libraries to attempt to acquire multiple Fibonacci numbers
+concurrently. In each language one test times how long it takes to
+concurrently request two Fibonacci numbers from our web server, the
+other times how long it takes to do the same operation locally. All
+tests are also run without the <code>async</code> library for
+comparison.</p>
+<table class="table table-striped">
+<tbody>
+<tr>
+<th>Test Name</th>
+<th>Without Async Time</th>
+<th>With Async Time</th>
+<th>Async / No Async</th>
+</tr>
+<tr>
+<th>Node - Local</th>
+<td>6.439s</td>
+<td>6.306s</td>
+<td>0.979</td>
+</tr>
+<tr>
+<th>Node - Remote</th>
+<td>4.391s</td>
+<td>2.500s</td>
+<td>0.569</td>
+</tr>
+<tr>
+<th>Haskell - Local</th>
+<td>3.849s</td>
+<td>2.487s</td>
+<td>0.646</td>
+</tr>
+<tr>
+<th>Haskell - Remote</th>
+<td>4.117s</td>
+<td>2.521s</td>
+<td>0.612</td>
+</tr>
+</tbody>
+</table>
+<p>Taking a look at the first row in our table, we find that
+Node.JS when attempting to concurrently compute two Fibonacci
+numbers is unable to give us any time savings in spite of the tests
+being run on a multi-core machine.</p>
+<pre><code class="javascript">    return async.parallel([
+        (callback) =&gt; {
+            x = getFibs(43);
+            callback();
+        },
+        (callback) =&gt; {
+            y = getFibs(44);
+            callback();
+        }
+    ]).then(() =&gt; {</code></pre>
+<p>Even when the functions to generate numbers are run inside
+<code>async.parallel</code> they are unable to run concurrently.
+This is because the Node.JS event-loop only allows one callback to
+be executed at any given time. So instead of running the two
+callbacks defined above in parallel, they are run sequentially. If
+we make I/O calls inside our callbacks, as we do in the <code>Node
+- Remote</code> test, the system is able to issue both requests to
+a web server concurrently.</p>
+<pre><code class="javascript">    return async.parallel([
+        (callback) =&gt; {
+            request('http://localhost:8080/api/fibs/43')
+                .then((xStr) =&gt; {
+                    x = JSON.parse(xStr).fibResult;
+                    callback();
+                });
+        },
+        (callback) =&gt; {
+            request('http://localhost:8080/api/fibs/44')
+                .then((yStr) =&gt; {
+                    y = JSON.parse(yStr).fibResult;
+                    callback();
+                });
+        }
+    ]).then(() =&gt; {</code></pre>
+<h3 id=
+"in-node.js-concurrent-computations-starve-each-other-of-resources">
+In Node.JS concurrent computations starve each other of
+resources</h3>
+<p>This inability to handle multiple computations at the same time
+hampers Node.JS even in its intended use case as a web server. The
+phenomenon is referred to as "starvation" and we can demonstrate it
+by reversing our previous tests.</p>
+<p>To run the demonstration code, download the example project
+linked at the top of the article. Then look in the
+<code>README.md</code> for instructions on the "Starvation
+Test."</p>
+<p>In this demonstration we setup a web server in each language.
+The web server contains two routes. The first route is a very fast
+computation, calculating the square of the input number. The second
+route is a very slow computation, calculating the Nth Fibonacci
+number based on the input. We then constructed a program that could
+perform two tests against each web server.</p>
+<p>In the first test, labeled "Fast Only," the test program counts
+the number of requests the each server can respond to in 5 seconds;
+using only the fast route. In the second test, labeled "Fast with
+Slow", the test program makes one request to the slow route, then
+counts how many requests to the fast route it can respond to in 5
+seconds.</p>
+<p>To make this demonstration as compelling as possible, we have
+also disabled threading in the Haskell run-time system on the
+Haskell web server. The result is that the Haskell server will only
+be able to use its internal thread model. It will not be able to
+create additional operating system threads, and it will not be able
+to take advantage of more than one core.</p>
+<table class="table table-striped">
+<tbody>
+<tr>
+<th>Test Name</th>
+<th>Request Throughput (higher is better)</th>
+</tr>
+<tr>
+<th>Node - Fast Only</th>
+<td>572</td>
+</tr>
+<tr>
+<th>Node - Fast with Slow</th>
+<td>114</td>
+</tr>
+<tr>
+<th>Haskell - Fast Only</th>
+<td>591</td>
+</tr>
+<tr>
+<th>Haskell - Fast with Slow</th>
+<td>589</td>
+</tr>
+</tbody>
+</table>
+<p>The results are quite striking. From Haskell's baseline of 591,
+having a background computation only reduced the throughput by 2
+requests; which is likely smaller than our margin of error. Node.JS
+on the other hand was reduced from its baseline to one fifth
+capacity.</p>
+<p>The difference here is stark because in Node.JS's execution
+model, the moment it receives a request on the slow route it must
+fully complete the computation for that route before it can begin
+on a new request. There is no I/O action taking place which will
+allow the server to jump to processing a new request.</p>
+<p>In contrast, Haskell can preempt threads in execution. Which
+means that when the Haskell server is chugging along on the slow
+request, and a request on the fast route comes in, it can jump over
+and process it. Then returning to the slow request while the
+network is delivering the fast request's response back to a
+client.</p>
+<h3 id=
+"haskell-does-not-suffer-from-traditional-threading-overheads">
+Haskell does not suffer from traditional threading overheads</h3>
+<p>When Ryan Dahl originally presented Node, his biggest concern
+with threaded systems was their memory consumption. He pointed to
+an example of Apache versus Nginx to show that Nginx had a
+massively lighter footprint because of its event-loop architecture
+(whereas Apache used one thread per connection). The difference in
+memory usage was at least an order of magnitude as the connection
+count increased.</p>
+<p>To demonstrate that Haskell's threading architecture does not
+suffer this problem, we have constructed one final example, again
+available at the repository linked above. Look in the
+<code>README.md</code> for "Thread Spawn".</p>
+<p>In this example we create 100,000 threads each with a 'start'
+and 'stop' MVar; which is Haskell's equivalent to a locked
+variable. We then issue a start command on each start MVar, wait
+three seconds, and finally issue a stop commend on each end
+MVar.</p>
+<p>When we run the program, we do so with threading enabled, and
+with the <code>-s</code> option on the run-time system; which gives
+us the following output.</p>
+<pre><code>stack exec -- haskell-thread-spawn +RTS -sout
+Created 100000 threads.
+Destroyed 100000 threads.
+cat out
+/home/andrew/src/fpcomplete/fpco-article-examples/concurrency-and-node/.stack-work/install/x86_64-linux-dkda49f7ca9b244180d3cfb1987cbc9743/lts-7.11/8.0.1/bin/haskell-thread-spawn +RTS -N -sout
+     137,593,048 bytes allocated in the heap
+     405,750,472 bytes copied during GC
+      77,103,392 bytes maximum residency (11 sample(s))
+      10,891,144 bytes maximum slop
+             165 MB total memory in use (0 MB lost due to fragmentation)
+
+                                     Tot time (elapsed)  Avg pause  Max pause
+  Gen  0       104 colls,   104 par    0.332s   0.082s     0.0008s    0.0186s
+  Gen  1        11 colls,    10 par    0.620s   0.147s     0.0134s    0.0425s
+
+  Parallel GC work balance: 28.08% (serial 0%, perfect 100%)
+
+  TASKS: 18 (1 bound, 17 peak workers (17 total), using -N8)
+
+  SPARKS: 0 (0 converted, 0 overflowed, 0 dud, 0 GC'd, 0 fizzled)
+
+  INIT    time    0.000s  (  0.001s elapsed)
+  MUT     time    0.312s  (  3.110s elapsed)
+  GC      time    0.952s  (  0.229s elapsed)
+  EXIT    time    0.000s  (  0.003s elapsed)
+  Total   time    1.316s  (  3.343s elapsed)
+
+  Alloc rate    441,003,358 bytes per MUT second
+
+  Productivity  27.7% of total user, 10.9% of total elapsed
+
+gc_alloc_block_sync: 104599
+whitehole_spin: 0
+gen[0].sync: 504
+gen[1].sync: 2465</code></pre>
+<p>Looking near the top of the output, we see that Haskell's
+run-time system was able to create 100,000 threads while only using
+165 megabytes of memory. We are roughly consuming 1.65 kilobytes
+per thread. So an average web server, which might see 2,000
+concurrent connections at the top end, would expect to use only 3
+megabytes of memory for being multi-threaded.</p>
+<h2 id="why-haskell">Why Haskell</h2>
+<p>Node and Haskell both offer a solution to the traditional woes
+of using threading in a web server. They both allow you to deal
+with very high numbers of concurrent connections without a huge
+memory overhead. However, Haskell doesn't impose an additional
+burden on the design of your software to accomplish that goal. You
+don't have to worry about routes that take varying amounts of time.
+You don't have to dump long-running tasks off to an event queue.
+You don't have to spawn multiple processes to utilize multiple
+cores of a machine.</p>
+<p>We've only just barely scratched the surface of what you can do
+with Haskell. If you're interested in learning more, please
+<a href="/haskell-syllabus">check out our Haskell Syllabus</a> for
+a recommended learning route. There's also lots of content on the
+<a href="https://haskell-lang.org/get-started">haskell-lang get
+started page</a>.</p>
+<p>FP Complete also provides corporate and group webinar training
+sessions. Please <a href="/training">check out our training
+page</a> for more information, or see our <a href=
+"/consulting">consulting page</a> for how we can help your team
+succeed with devops and functional programming.</p>
+<p class="text-center"><a class="btn btn-primary" href=
+"/index">Contact FP Complete</a></p>
+
+
+  
+
+</article>
+
+
+        </main>
+
+        <div id="footer">
+          <p>
+            2012-2019 FP Complete Corp.
+            Subscribe to the
+            <a href="https://tech.fpcomplete.com/rss.xml">RSS feed</a>.
+          </p>
+        </div>
+      </div> <!-- .container -->
+      
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+    </body>
+</html>

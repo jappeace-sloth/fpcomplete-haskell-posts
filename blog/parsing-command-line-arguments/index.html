@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Parsing command line arguments</title>
+  <meta property="og:title" content="Parsing command line arguments">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Learn about our recommendations on how to reliably parse command line arguments into commands, arguments, flags, configuration, settings, and instructions.">
+  <meta property="og:description" content="Learn about our recommendations on how to reliably parse command line arguments into commands, arguments, flags, configuration, settings, and instructions.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;12&#x2F;parsing-command-line-arguments&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Parsing command line arguments</h1>
+      
+      <p id="page-description">By Tom Sydney Kerckhove, December 28, 2017</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Parsing%20command%20line%20arguments https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;12&#x2F;parsing-command-line-arguments&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;12&#x2F;parsing-command-line-arguments&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;12&#x2F;parsing-command-line-arguments&#x2F;&amp;title=Parsing%20command%20line%20arguments"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;12&#x2F;parsing-command-line-arguments&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>There are many ways to make programs that use settings to
+customise their behavior. In this post, we provide an overview of
+these methods and some best practices.</p>
+<h2>Different approaches to passing settings</h2>
+<h3>Settings as global state versus passing settings as an
+argument</h3>
+<p>The first distinction to make is between passing settings as an
+argument to the operating part of your program, or to make settings
+part of the global state that is available to the entire
+program.</p>
+<p>In pseudocode, the difference looks like this:</p>
+<pre><code>% Passing settings as an argument
+main () {
+ settings =: getSettings(getArgs())
+ myMain(settings)
+}
+
+myMain (settings) {
+ if (settings.shouldIDoSomething) {
+    doSomething()
+  }
+}</code></pre>
+<p>versus:</p>
+<pre><code>% Settings in the global state
+global settings =: getSettings(getArgs())
+
+main () {
+  myMain()
+}
+
+myMain () {
+  if (settings.shouldIDoSomething) {
+    doSomething()
+  }
+}</code></pre>
+<p>The <a href=
+"https://commons.apache.org/proper/commons-cli/index.html">Commons
+CLI (Java)</a> and <a href=
+"https://hackage.haskell.org/package/optparse-applicative">Optparse
+Applicative</a> libraries are examples of the former. The <a href=
+"https://gflags.github.io/gflags/">gflags (C++)</a> library is an
+example of the latter.</p>
+<p>The advantage of using settings as global state is that any part
+of your program has access to them. The disadvantage of passing
+settings as arguments is that you may have to refactor your
+program, should you wish to add some customization, to give the
+appropriate part access to the settings.</p>
+<p>The disadvantages of using settings as global state are
+numerous:</p>
+<ul>
+<li>The size of the relevant state is increased globally as you
+make more settings that can be configured.</li>
+<li>This is not testable without setting the global variables
+before running a test.</li>
+<li>You cannot run the same program twice with different arguments
+in an automated fashion without setting global variables in between
+the runs.</li>
+<li>The settings become available to all parts of your program,
+even the parts that should be parametric in the settings.</li>
+</ul>
+<h3>Mutable versus immutable settings</h3>
+<p>A second distinction is between allowing or disallowing the
+mutation of settings after building them. If mutating settings is
+not allowed, we call the settings&nbsp;<a href=
+"/blog/2017/02/immutability-docker-haskells-st-type">immutable</a>.</p>
+<p>In pseudo code, the question is whether this should be
+allowed:</p>
+<p>settings.poolSize += 1</p>
+<p>The <a href=
+"https://commons.apache.org/proper/commons-cli/index.html">Commons
+CLI (Java)</a> and <a href=
+"https://hackage.haskell.org/package/optparse-applicative">
+Optparse applicative (Haskell)</a> are examples of libraries that
+treat settings as immutable objects. On the other hand, the
+<a href="https://pymotw.com/2/optparse/">optparse (Python)</a>
+library is an example of a library that provides mutable
+settings.</p>
+<p>Why are mutable settings a bad idea?</p>
+<ul>
+<li>You cannot assume that settings do not change throughout
+execution.</li>
+<li>If settings are a mutable resource, they have to be locked to
+prevent race conditions.</li>
+</ul>
+<p><img alt="Immutable Object -Small.jpg" sizes=
+"(max-width: 320px) 100vw, 320px" src=
+"/images/hubspot/fac28017da42f5c472b9bd0c7a32a5056b29742df0f0ac2dbc18305c25891ccd.jpeg"
+srcset=
+"/images/hubspot/242cfe25fbdca3f64d8b13da0f78eb909fbc8e1b3a8fa7b7f5a666f93b7d1bbd.jpeg 160w, /images/hubspot/fac28017da42f5c472b9bd0c7a32a5056b29742df0f0ac2dbc18305c25891ccd.jpeg 320w, /images/hubspot/330b43e02851e2efc9ebdcc6a34f34d7d65a1bfc1fee7f51302984b597a568f4.jpeg 480w, /images/hubspot/3b060825f4f65764b3d2345384ec98817de0531731881c6ca73028fa4bc32f24.jpeg 640w, /images/hubspot/0a0b71c6b9dc3d2bbd298645a92dec090a6a9d6ed102e60304dd0fccabc4a3b1.jpeg 800w, /images/hubspot/e674f2349004ee1422c27f121f251ada5e1d2df3048de511c020c201b92a19f3.jpeg 960w"
+style=
+"display: block; margin-left: auto; margin-right: auto; width: 320px;"
+width="320"></p>
+<h3>Purely functional versus impure argument parsing</h3>
+<p>The next distinction is describes whether the argument parsing
+operates on a list of strings, or gathers the given program
+arguments from global state.</p>
+<pre><code>% Parsing given arguments:
+settings =: parseArgs(getArgs())</code></pre>
+<p>versus:</p>
+<pre>
+<code>% Letting the argument parsing get the arguments from global state:
+settings =: parseArgs()
+
+parseArgs () {
+  args = getArgs()
+  [...]
+}</code></pre>
+<p>Why is impure parsing a bad idea?</p>
+<ul>
+<li>You can never assume that the parser does not access any global
+state like the environment variables</li>
+<li>Testing becomes harder because you have to set the program
+arguments from within the test instead of just passing a list of
+strings to the parser.</li>
+<li>Because settings are a global resource, this means parsing
+cannot be concurrent (also relevant for testing).</li>
+</ul>
+<h3>Passing settings as-is versus pre-processing settings</h3>
+<p>Command-line arguments are usually not the only way a user would
+want to customize the behaviour of your program. A user may want
+also want to use the process environment and configuration files.
+In this case, the actual settings that a program will use will
+depend on multiple pieces of information.</p>
+<p>The difference here, in pseudo code, looks as follows:</p>
+<pre><code>% Pre-processing argumnets
+arguments =: parseArgs(getArgs())
+settings =: gatherSettings(arguments)
+myMain(settings)
+
+gatherSettings (arguments) {
+  s =: settings.new()
+  environment =: getEnvironment
+  s.doSomething =: arguments.doSomething
+ ‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑|| environment.get("DO_SOMETHING")
+  return s
+}
+
+myMain () {
+  if (settings.doSomething) {
+    doSomething()
+  }
+}</code></pre>
+<p>versus</p>
+<pre><code>% Using arguments as-is
+
+arguments =: parseArgs(getArgs())
+myMain(arguments)
+
+myMain () {
+  environment =: getEnvironment
+  if (arguments.doSomething || environment.get("DO_SOMETHING")) {
+    doSomething()
+  }
+}
+
+</code></pre>
+<p>Why is 'passing settings as-is' a bad idea:</p>
+<ul>
+<li>Either no flexibility in conditional settings, or pollution of
+supposed-to-be irrelevant settings.</li>
+<li>No separation of concerns between the 'deciding what the
+settings should be' and 'using the settings'.</li>
+</ul>
+<h2>Standardised meaning of some words:</h2>
+<p>Because the naming of some relevant terms can be confusing, here
+are some proposed standard definitions:</p>
+<ul>
+<li>Real constant: A fixed constant in the program that is
+universal accross programs e.g. 'decimalBase = 10',
+'multiplicativeIdentityForNumbers = 1'</li>
+<li>Configuration Constant: A fixed constant in the program that
+dictates functionality e.g. approximationIterations = 6</li>
+<li>Program name: The name of the executable being called. This may
+be relevant to functionality. e.g. 'git'</li>
+<li>Command-line Arguments: Anything passed on the command-line as
+the list of strings</li>
+<li>Command: The specific action indication passed as the arguments
+e.g. find and its specific arguments and options like the query
+Note that not every program (needs to) use commands.</li>
+<li>Options: Any optional argument, they mostly start with -- or -
+and are followed by the argument. e.g. --message='I made a git
+commit, yay!'</li>
+<li>Flags: Usually only binary options, but could also be any
+option or even everything except the command; The argument values
+that are comon to all commands and/or relevant in further option
+parsing e.g. --verbose</li>
+<li>Environment variable: A single variable in the environment that
+is available to a process. e.g. DATABASE_SECRET</li>
+<li>Environment: The mapping of environment variables e.g.
+[PORT=8000, DATABASE_SECRET=hunter2]</li>
+<li>Configuration: The total of all file system state that
+configures your program: mostly files e.g. A file config.yaml, its
+existence, and its contents: `exclude-extensions: .hi'</li>
+<li>Settings: The values that the program actually uses to decide
+what it will do. In certain contextst, this can also mean: The
+non-action-specific settings. I.e. global settings e.g. a boolean
+representing --verbose</li>
+<li>Dispatch: The description of the chosen action and
+action-specific settings e.g. a value that represents the intention
+to run the 'find' part of the program and all the relevant
+action-specific settings</li>
+</ul>
+<h2>General tips:</h2>
+<h3>General</h3>
+<p>Ideally, anything configurable should be configurable in the
+configuration file, the environment variables and command-line
+options. This allows users to choose the way they configure the
+program.</p>
+<p>Command-line options should override the environment variables,
+and they should override the config files. The reasoning is that
+the ease of overriding should be proportional to its ephemerality
+such that settings are always chosen on purpose.</p>
+<p>Make all data involved in the optparse process printable. (i.e.
+do not store functions instead of data) This ensures that you can
+write property tests for anything involving that data.</p>
+<h3>Constants</h3>
+<p>Wherever possible, use real constants defined by a library
+instead of defining them yourself. e.g. SECONDS_IN_AN_HOUR This
+turns the library into a single source of truth.</p>
+<p>Do not define constants as constants if it's not really a
+constant. You probably want to be able to configure those. e.g.
+NB_DB_CONNECTIONS</p>
+<p>Conversely: Do not make real constants configurable. e.g. Do not
+make --decimal-base=INT# and option You will save yourself a world
+of headaches.</p>
+<p style="text-align: left;">Leave magic numbers if they're part of
+a formula and you would just refer back to the formula e.g.
+discriminant = b ^ 2 - 4 * a * c instead of D = b ^
+EXPONENT_OF_B_IN_DISCRIMINANT_FORMULA -
+FACTOR_OF_SECOND_TERM_IN_DISCRIMINANT_FORMULA * a * c.</p>
+<h3>Arguments and Options</h3>
+<p>Use kebab-case for option names. It integrates well with the
+dashes in front of them.</p>
+<p>Use the standard format for arguments:</p>
+<ul>
+<li>Use a single dash - for short (one character options).</li>
+<li>Use a double dash -- for long options. Use kebab case names
+that look-like-this for long options.</li>
+<li>Do not use a single dash for long options. E.g. -force instead
+of --force or -f.</li>
+</ul>
+<p>Do not use - in front of commands. I.e my-grep find instead of
+my-grep --find (GPG famously does this wrong.) There are exactly
+two exceptions to this rule: --help and --version. In a perfect
+world, we would have my-grep help instead of my-grep --help, but
+these two have become such standard practice that they cannot be
+ignored. Going against this convention will only cause
+headaches.</p>
+<p>Do not make arguments that look like options required. I.e.
+greet hello --name Richard The - in front of an option is a great
+way to distinguish between optional and required arguments.</p>
+<p>Do not use short flags if they're not obvious. I.e.: -f for
+--force, but not -l for --files-with-matches (actual example from
+grep) Short flags are annoying enough to use as-is, their mnemonic
+should at least make sense.</p>
+<h3>Environment variables</h3>
+<p>Use UPPER_CASE names for your environment variables. Some
+programmers even think that you cannot use lower case variables in
+environment variables. Let us use this assumption to prevent
+headaches.</p>
+<p>Because the environment has just one global namespace, you
+should prefix your environment variables with the name of your
+program: LD_LIBRARY_PATH. This way there can never be confusion as
+to which program the variable is for.</p>
+<h3>Configuration</h3>
+<p>Make sure config files are human-readable. A binary config file
+is not a config file, it is a data file. Config files are made for
+humans to edit, so make them readable for humans.</p>
+<p>Make sure config files are modular. Sharing parts of your config
+can be a great way to reduce the total amount of configuration that
+a user has to manage.</p>
+<p>Put config files in a considerate place.
+~/.config/my-program.cfg instead of ~/.my-programrc.cfg There are
+dedicated libraries in most languages that will help you to
+decide.</p>
+<p>Make the location of your config file override-able with a flag
+(i.e. --config-file) A user should not have to replace a file to
+change the configuration. Instead, they should be able to choose a
+different config file on a granular basis.</p>
+<p>Consider looking for configuration files in more than one
+(sensible) location. This can be great for the user experience. See
+stack that looks recursively upwards, so that a user does not have
+to think about where they run the command.</p>
+<p>Stick with standard configuration formats: YAML, JSON, INI.
+Refrain from inventing your own format. This will make third party
+tooling a lot easier to build.</p>
+<h3>If you liked this post you may also like:</h3>
+<ul>
+<li><a href="/blog/2013/02/announcing-case-studies" rel=
+"">Commercial Haskell Use - Case Studies</a></li>
+<li><a href="/blog/2016/09/data-haskell" rel="">Working with Data
+in Haskell</a></li>
+<li><a href="/blog/2017/08/exiting-haskell-process" rel="">Exiting
+a Haskell Process</a></li>
+</ul>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Parsing%20command%20line%20arguments https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;12&#x2F;parsing-command-line-arguments&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;12&#x2F;parsing-command-line-arguments&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;12&#x2F;parsing-command-line-arguments&#x2F;&amp;title=Parsing%20command%20line%20arguments"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2017&#x2F;12&#x2F;parsing-command-line-arguments&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#3b485a575e487b5d4b5854564b575e4f5e15585456" targe="_blank"><span class="__cf_email__" data-cfemail="582b39343d2b183e283b373528343d2c3d763b3735">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Practical Haskell: Simple File Mirror (Part 2)</title>
+  <meta property="og:title" content="Practical Haskell: Simple File Mirror (Part 2)">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;practical-haskell-simple-file-mirror-2&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Practical Haskell: Simple File Mirror (Part 2)</h1>
+      
+      <p id="page-description">By Michael Snoyman, September 21, 2016</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Practical%20Haskell%3A%20Simple%20File%20Mirror%20%28Part%202%29 https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;practical-haskell-simple-file-mirror-2&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;practical-haskell-simple-file-mirror-2&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;practical-haskell-simple-file-mirror-2&#x2F;&amp;title=Practical%20Haskell%3A%20Simple%20File%20Mirror%20%28Part%202%29"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;practical-haskell-simple-file-mirror-2&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>This is part 2 of a three part series. If you haven't seen it
+already, I'd recommend starting with <a href=
+"/blog/2016/09/practical-haskell-simple-file-mirror-1">the first
+part</a>, which covers communication protocols and streaming of
+data. This second part will cover network communication and some
+basic concurrency in Haskell.</p>
+<h2 id="simple-http-client">Simple HTTP client</h2>
+<p>We saw previously how to send and receive binary data using the
+conduit library. We're going to build on this with a conduit-aware
+network library. This first example will make a very simplistic,
+hard-coded HTTP request and send the entire response from the
+server to standard output.</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --resolver nightly-2016-09-10 --install-ghc runghc --package classy-prelude-conduit</span>
+
+<span class="hs-comment">{-# LANGUAGE NoImplicitPrelude #-}</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">ClassyPrelude</span><span class=
+"hs-varop">.</span><span class="hs-conid">Conduit</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Conduit</span><span class=
+"hs-varop">.</span><span class="hs-conid">Network</span> <span class="hs-layout">(</span><span class="hs-varid">runTCPClient</span><span class="hs-layout">,</span> <span class="hs-varid">appSource</span><span class="hs-layout">,</span> <span class="hs-varid">appSink</span><span class="hs-layout">,</span> <span class="hs-varid">clientSettings</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">runTCPClient</span> <span class=
+"hs-varid">settings</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">appData</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">yield</span> <span class=
+"hs-varid">request</span> <span class=
+"hs-varop">$$</span> <span class=
+"hs-varid">appSink</span> <span class="hs-varid">appData</span>
+    <span class="hs-varid">appSource</span> <span class=
+"hs-varid">appData</span> <span class=
+"hs-varop">$$</span> <span class="hs-varid">stdoutC</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">settings</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">clientSettings</span> <span class=
+"hs-num">80</span> <span class="hs-str">"httpbin.org"</span>
+
+<span class="hs-definition">request</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">ByteString</span>
+<span class="hs-definition">request</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">encodeUtf8</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">unlines</span>
+    <span class="hs-keyglyph">[</span> <span class=
+"hs-str">"GET /get?foo=bar&amp;baz=bin HTTP/1.1"</span>
+    <span class="hs-layout">,</span> <span class=
+"hs-str">"Host: httpbin.org"</span>
+    <span class="hs-layout">,</span> <span class=
+"hs-str">"User-Agent: Practical Haskell"</span>
+    <span class="hs-layout">,</span> <span class=
+"hs-str">"Connection: close"</span>
+    <span class="hs-layout">,</span> <span class="hs-str">""</span>
+    <span class="hs-keyglyph">]</span></pre>
+<p>The <code>runTCPClient</code> creates the actual TCP connection,
+and provides access to it via the <code>appData</code> value. This
+value allows us to send data to the server (via
+<code>appSink</code>) and get data from the server (via
+<code>appSource</code>). We can also get information about the
+connection such as the locally used port number, which we're not
+using in this example.</p>
+<p>We've hard-coded a <code>settings</code> value that states we
+should connect to host <code>httpbin.org</code>* on port 80. We've
+also hard-coded an HTTP request body, which is thoroughly
+uninteresting.</p>
+<p>Once our connection has been established, we send our hard-coded
+request to the server with <code>yield request $$ appSink
+appData</code>. When that's complete, we stream all data from the
+server to standard output with <code>appSource appData $$
+stdoutC</code>.</p>
+<p>The output from this looks very much like you'd expect it
+to:</p>
+<pre><code>HTTP/1.1 200 OK
+Server: nginx
+Date: Wed, 21 Sep 2016 07:38:30 GMT
+Content-Type: application/json
+Content-Length: 224
+Connection: close
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Credentials: true
+
+{
+  "args": {
+    "baz": "bin",
+    "foo": "bar"
+  },
+  "headers": {
+    "Host": "httpbin.org",
+    "User-Agent": "Practical Haskell"
+  },
+  "origin": "31.210.186.0",
+  "url": "https://httpbin.org/get?foo=bar&amp;baz=bin"
+}</code></pre>
+<p>* Side note: anyone playing with HTTP client software should
+definitely check out <a href="https://httpbin.org/">httpbin.org</a>,
+it's a great resource.</p>
+<h3 id="upgrading-to-tls">Upgrading to TLS</h3>
+<p>On a small tangent, it's trivial to adapt the above program to
+work over secure HTTPS instead of plaintext HTTP. All we need to do
+is:</p>
+<ul>
+<li>Use the <code>Data.Conduit.Network.TLS</code> module from the
+network-conduit-tls library</li>
+<li>Swap <code>runTLSClient</code> for <code>runTCPClient</code>,
+and <code>tlsClientConfig</code> for
+<code>clientSettings</code></li>
+<li>Change port 80 to port 443</li>
+</ul>
+<p>The code looks as follows. To convince yourself that this is
+real: go ahead and run it and see what the <code>url</code> value
+in the response body looks like.</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">{- stack --resolver nightly-2016-09-10 --install-ghc runghc
+     --package classy-prelude-conduit
+     --package network-conduit-tls
+-}</span>
+
+<span class="hs-comment">{-# LANGUAGE NoImplicitPrelude #-}</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">ClassyPrelude</span><span class=
+"hs-varop">.</span><span class="hs-conid">Conduit</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Conduit</span><span class=
+"hs-varop">.</span><span class="hs-conid">Network</span> <span class="hs-layout">(</span><span class="hs-varid">appSink</span><span class="hs-layout">,</span> <span class="hs-varid">appSource</span><span class="hs-layout">)</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Conduit</span><span class=
+"hs-varop">.</span><span class="hs-conid">Network</span><span class="hs-varop">.</span><span class="hs-conid">TLS</span> <span class="hs-layout">(</span><span class="hs-varid">runTLSClient</span><span class="hs-layout">,</span> <span class="hs-varid">tlsClientConfig</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">runTLSClient</span> <span class=
+"hs-varid">settings</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">appData</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">yield</span> <span class=
+"hs-varid">request</span> <span class=
+"hs-varop">$$</span> <span class=
+"hs-varid">appSink</span> <span class="hs-varid">appData</span>
+    <span class="hs-varid">appSource</span> <span class=
+"hs-varid">appData</span> <span class=
+"hs-varop">$$</span> <span class="hs-varid">stdoutC</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">settings</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">tlsClientConfig</span> <span class=
+"hs-num">443</span> <span class="hs-str">"httpbin.org"</span>
+
+<span class="hs-definition">request</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">ByteString</span>
+<span class="hs-definition">request</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">encodeUtf8</span> <span class=
+"hs-varop">$</span> <span class="hs-varid">unlines</span>
+    <span class="hs-keyglyph">[</span> <span class=
+"hs-str">"GET /get?foo=bar&amp;baz=bin HTTP/1.1"</span>
+    <span class="hs-layout">,</span> <span class=
+"hs-str">"Host: httpbin.org"</span>
+    <span class="hs-layout">,</span> <span class=
+"hs-str">"User-Agent: Practical Haskell"</span>
+    <span class="hs-layout">,</span> <span class=
+"hs-str">"Connection: close"</span>
+    <span class="hs-layout">,</span> <span class="hs-str">""</span>
+    <span class="hs-keyglyph">]</span></pre>
+<h2 id="echo-server">Echo server</h2>
+<p>Let's play with the server side of things. We're going to
+implement an echo server, which will receive a chunk of data from
+the client and then send it right back.</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --resolver nightly-2016-09-10 --install-ghc runghc --package classy-prelude-conduit</span>
+
+<span class="hs-comment">{-# LANGUAGE NoImplicitPrelude #-}</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">ClassyPrelude</span><span class=
+"hs-varop">.</span><span class="hs-conid">Conduit</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Conduit</span><span class=
+"hs-varop">.</span><span class="hs-conid">Network</span> <span class="hs-layout">(</span><span class="hs-varid">appSink</span><span class="hs-layout">,</span> <span class="hs-varid">appSource</span><span class="hs-layout">,</span> <span class="hs-varid">runTCPServer</span><span class="hs-layout">,</span> <span class="hs-varid">serverSettings</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span>
+    <span class="hs-varid">runTCPServer</span> <span class=
+"hs-varid">settings</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">appData</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">appSource</span> <span class=
+"hs-varid">appData</span> <span class=
+"hs-varop">$$</span> <span class=
+"hs-varid">appSink</span> <span class="hs-varid">appData</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">settings</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">serverSettings</span> <span class=
+"hs-num">4200</span> <span class="hs-str">"*"</span></pre>
+<p>This listens on port 4200, on all network interfaces
+(<code>"*"</code>). We start our server with
+<code>runTCPServer</code>, which grabs a listening socket and waits
+for connections. For each connection, it forks a new thread, and
+runs the provided application. In this case, our application is
+trivial: we connect the source to the sink, automatically piping
+data from the connection back to itself.</p>
+<p>To stress a point above: this is a fully multithreaded server
+application. You can make multiple <code>telnet</code> connections
+to the server and interact with each of them independently. This is
+a lot of bang for very little buck.</p>
+<p>For those of you concerned about the inefficiency of forking a
+new thread for each incoming connection: Haskell's runtime is built
+on top of <i>green threads</i>, making the act of forking very
+cheap. There are more details available in a talk I gave on
+"Haskell for fast, concurrent, robust services" (<a href="https://youtu.be/6bkWvfI7QDQ">video
+link</a>).</p>
+<h2 id="full-duplex">Full duplex</h2>
+<p>The examples so far have all been <i>half duplex</i>, meaning
+they have always been either sending or receiving data. Let's
+implement a full duplex application: a simple telnet client
+replacement. We need to wait for any input from standard input,
+while at the same time waiting for any input from the socket. We're
+going to take advantage of Haskell threading to handle this case
+too:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --resolver nightly-2016-09-10 --install-ghc runghc --package classy-prelude-conduit</span>
+
+<span class="hs-comment">{-# LANGUAGE NoImplicitPrelude #-}</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">ClassyPrelude</span><span class=
+"hs-varop">.</span><span class="hs-conid">Conduit</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Conduit</span><span class=
+"hs-varop">.</span><span class="hs-conid">Network</span> <span class="hs-layout">(</span><span class="hs-varid">appSink</span><span class="hs-layout">,</span> <span class="hs-varid">appSource</span><span class="hs-layout">,</span> <span class="hs-varid">runTCPClient</span><span class="hs-layout">,</span> <span class="hs-varid">clientSettings</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">runTCPClient</span> <span class=
+"hs-varid">settings</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">appData</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-varid">race_</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">stdinC</span> <span class=
+"hs-varop">$$</span> <span class=
+"hs-varid">appSink</span> <span class=
+"hs-varid">appData</span><span class="hs-layout">)</span>
+    <span class="hs-layout">(</span><span class=
+"hs-varid">appSource</span> <span class=
+"hs-varid">appData</span> <span class=
+"hs-varop">$$</span> <span class=
+"hs-varid">stdoutC</span><span class="hs-layout">)</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">settings</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">clientSettings</span> <span class=
+"hs-num">4200</span> <span class="hs-str">"localhost"</span></pre>
+<p>The <code>race_</code> function is a wonderful helper for
+concurrency, which says "run these two actions, see which one
+finishes first, kill the other one, and ignore any results (the
+<code>_</code> at the end of the name)." It has a sibling function,
+<code>concurrently</code>, for running two things until they both
+complete. You can implement a surprisingly large number of common
+concurrency solutions using just these two functions. For more
+information, see <a href=
+"https://haskell-lang.org/library/async">the library package
+tutorial on haskell-lang.org</a>.</p>
+<p>You may be terrified of the performance characteristics of this:
+we've introduced two blocking threads, when theoretically
+callback-based I/O would be far more efficient! Not to worry: in
+Haskell, the runtime system uses a fully callback based system
+under the surface, using whatever system calls are relevant for
+your operating system. When a Haskell green thread makes a
+"blocking" I/O call, what actually happens is the runtime puts the
+thread to sleep, installs a callback handler to wait for data to be
+available, and when the callback is triggered, wakes the green
+thread up again.</p>
+<p>The details of the Haskell runtime are well described in the
+paper <a href="https://medusa.teodesian.net/docs/computing/hask035-voellmy.pdf">
+Mio: A High-Performance Multicore IO Manager for GHC</a>.
+Fortunately, for most real world cases, you can write the naive,
+easy-to-conceptualize I/O operations based on blocking semantics,
+and automatically get the great performance you'd want from
+event/callback based system calls.</p>
+<h2 id="client-and-server-in-same-process">Client and server in
+same process</h2>
+<p>Just to prove that we can: let's throw our client and server
+into a single process, using the same concurrency approach we've
+had until now.</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class=
+"hs-comment">-- stack --resolver nightly-2016-09-10 --install-ghc runghc --package classy-prelude-conduit</span>
+
+<span class="hs-comment">{-# LANGUAGE NoImplicitPrelude #-}</span>
+<span class="hs-comment">{-# LANGUAGE OverloadedStrings #-}</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">ClassyPrelude</span><span class=
+"hs-varop">.</span><span class="hs-conid">Conduit</span>
+<span class="hs-keyword">import</span> <span class=
+"hs-conid">Data</span><span class="hs-varop">.</span><span class=
+"hs-conid">Conduit</span><span class=
+"hs-varop">.</span><span class="hs-conid">Network</span> <span class="hs-layout">(</span><span class="hs-varid">appSink</span><span class="hs-layout">,</span> <span class="hs-varid">appSource</span><span class="hs-layout">,</span> <span class="hs-varid">runTCPClient</span><span class="hs-layout">,</span> <span class="hs-varid">clientSettings</span><span class="hs-layout">,</span> <span class="hs-varid">runTCPServer</span><span class="hs-layout">,</span> <span class="hs-varid">serverSettings</span><span class="hs-layout">)</span>
+
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">race_</span> <span class=
+"hs-varid">server</span> <span class="hs-varid">client</span>
+
+<span class="hs-definition">server</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">server</span> <span class=
+"hs-keyglyph">=</span>
+    <span class="hs-varid">runTCPServer</span> <span class=
+"hs-varid">settings</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">appData</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">appSource</span> <span class=
+"hs-varid">appData</span> <span class=
+"hs-varop">$$</span> <span class=
+"hs-varid">appSink</span> <span class="hs-varid">appData</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">settings</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">serverSettings</span> <span class=
+"hs-num">4200</span> <span class="hs-str">"*"</span>
+
+<span class="hs-definition">client</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">client</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class=
+"hs-comment">-- Sleep for 1 second (1 million microsecond) to give the server a</span>
+    <span class=
+"hs-comment">-- chance to start up. There are definitely better ways to do</span>
+    <span class=
+"hs-comment">-- this, but this is good enough for our example.</span>
+    <span class="hs-varid">threadDelay</span> <span class=
+"hs-num">1000000</span>
+
+    <span class="hs-varid">runTCPClient</span> <span class=
+"hs-varid">settings</span> <span class=
+"hs-varop">$</span> <span class="hs-keyglyph">\</span><span class=
+"hs-varid">appData</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-varid">race_</span>
+        <span class="hs-layout">(</span><span class=
+"hs-varid">stdinC</span> <span class=
+"hs-varop">$$</span> <span class=
+"hs-varid">appSink</span> <span class=
+"hs-varid">appData</span><span class="hs-layout">)</span>
+        <span class="hs-layout">(</span><span class=
+"hs-varid">appSource</span> <span class=
+"hs-varid">appData</span> <span class=
+"hs-varop">$$</span> <span class=
+"hs-varid">stdoutC</span><span class="hs-layout">)</span>
+  <span class="hs-keyword">where</span>
+    <span class="hs-varid">settings</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">clientSettings</span> <span class=
+"hs-num">4200</span> <span class="hs-str">"localhost"</span></pre>
+<p>This isn't a particularly <i>useful</i> application
+(<code>stdinC $$ stdoutC</code> would do the same thing without
+wasting a network connection), but it does show how easy it is to
+combine various pieces of code in Haskell for concurrent
+applications.</p>
+<h2 id="next-time-on-practical-haskell">Next time on Practical
+Haskell</h2>
+<p>We've so far figured out how to deal with our simple file
+mirror's communication protocol, and how to do network
+communication. All that's left is combining these two things
+together and wrapping it up with a command line interface. Stay
+tuned!</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Practical%20Haskell%3A%20Simple%20File%20Mirror%20%28Part%202%29 https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;practical-haskell-simple-file-mirror-2&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;practical-haskell-simple-file-mirror-2&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;practical-haskell-simple-file-mirror-2&#x2F;&amp;title=Practical%20Haskell%3A%20Simple%20File%20Mirror%20%28Part%202%29"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;09&#x2F;practical-haskell-simple-file-mirror-2&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#f685979a9385b6908695999b869a938293d895999b" targe="_blank"><span class="__cf_email__" data-cfemail="8ffceee3eafccfe9ffece0e2ffe3eafbeaa1ece0e2">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

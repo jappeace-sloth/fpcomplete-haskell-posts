@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Transformations on Applicative Concurrent Computations</title>
+  <meta property="og:title" content="Transformations on Applicative Concurrent Computations">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="We wrote a data type called Conc, which provides for more efficient concurrent computations. Come read how you can use this in your Haskell code today!">
+  <meta property="og:description" content="We wrote a data type called Conc, which provides for more efficient concurrent computations. Come read how you can use this in your Haskell code today!">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;transformations-on-applicative-concurrent-computations&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Transformations on Applicative Concurrent Computations</h1>
+      
+      <p id="page-description">By Román González, January 27, 2020</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Transformations%20on%20Applicative%20Concurrent%20Computations https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;transformations-on-applicative-concurrent-computations&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;transformations-on-applicative-concurrent-computations&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;transformations-on-applicative-concurrent-computations&#x2F;&amp;title=Transformations%20on%20Applicative%20Concurrent%20Computations"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;transformations-on-applicative-concurrent-computations&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  <p>When deciding which language to use to solve challenges that require heavy concurrent algorithms, it's hard to not consider Haskell. Its immutable and persistent data structures reduce the introduction of accidental complexity, and the GHC runtime facilitates the creation of thousands of (green) threads without having to worry as much about the memory and performance costs.</p>
+<p>The epitome of Haskell's concurrent API is the <code>async</code> package, which provides higher-order functions (e.g. <a href="https://www.stackage.org/haddock/lts-12.24/async-2.2.1/Control-Concurrent-Async.html#v:race"><code>race</code></a>, <a href="https://www.stackage.org/haddock/lts-12.24/async-2.2.1/Control-Concurrent-Async.html#v:mapConcurrently"><code>mapConcurrently</code></a>, etc.) that allow us to run <code>IO</code> sub-routines and combine their results in various ways while executing concurrently. It also offers the type  <a href="https://www.stackage.org/haddock/lts-12.24/async-2.2.1/Control-Concurrent-Async.html#t:Concurrently"><code>Concurrently</code></a> which allows developers to give normal sub-routines concurrent properties, and also provides <code>Applicative</code> and <code>Alternative</code>  instances that help in the creation of values from composing smaller sub-routines.</p>
+<p>In this blog post, we will discuss some of the drawbacks of using the <a href="https://www.stackage.org/haddock/lts-12.24/async-2.2.1/Control-Concurrent-Async.html#t:Concurrently"><code>Concurrently</code></a> type when composing sub-routines. Then we will show how we can overcome these shortcomings by taking advantage of the structural nature of the <code>Applicative</code> and <code>Alternative</code> typeclasses; re-shaping and optimizing the execution of a tree of sub-routines.</p>
+<p>And, if you simply want to get these performance advantages in your Haskell code today, you can cut to the chase and begin using the new <a href="https://www.stackage.org/haddock/lts-12.24/unliftio-0.2.9.0/UnliftIO-Async.html#t:Conc"><code>Conc</code></a> datatype we've introduced in <a href="https://www.stackage.org/lts-12.24/package/unliftio-0.2.9.0"><code>unliftio</code> 0.2.9.0</a>.</p>
+<h2 id="the-drawbacks-of-concurrently">The drawbacks of <code>Concurrently</code></h2>
+<p>Getting started with <code>Concurrently</code> is easy. We can wrap an <code>IO a</code> sub-routine with the <code>Concurrently</code> constructor, and then we can compose async values using the map (<code>&lt;$&gt;</code>), apply (<code>&lt;*&gt;</code>), and alternative (<code>&lt;|&gt;</code>) operators. An example might be:</p>
+<pre data-lang="Haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-Haskell "><code class="language-Haskell" data-lang="Haskell"><span style="color:#b58900;">myPureFunction </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">String
+</span><span>myPureFunction a b c </span><span style="color:#859900;">=</span><span> a </span><span style="color:#859900;">++ </span><span style="color:#839496;">&quot; &quot; </span><span style="color:#859900;">++</span><span> b </span><span style="color:#859900;">++ </span><span style="color:#839496;">&quot; &quot; </span><span style="color:#859900;">++</span><span> c
+</span><span>
+</span><span style="color:#b58900;">myComputation </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Concurrently String
+</span><span>myComputation </span><span style="color:#859900;">=
+</span><span>  myPureFunction
+</span><span>  </span><span style="color:#859900;">&lt;$&gt; </span><span style="color:#cb4b16;">Concurrently</span><span> fetchStringFromAPI1
+</span><span>  </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> (    </span><span style="color:#cb4b16;">Concurrently</span><span> fetchStringFromAPI2_Region1
+</span><span>       </span><span style="color:#859900;">&lt;|&gt; </span><span style="color:#cb4b16;">Concurrently</span><span> fetchStringFromAPI2_Region2
+</span><span>       </span><span style="color:#859900;">&lt;|&gt; </span><span style="color:#cb4b16;">Concurrently</span><span> fetchStringFromAPI2_Region3
+</span><span>       </span><span style="color:#859900;">&lt;|&gt; </span><span style="color:#cb4b16;">Concurrently</span><span> fetchStringFromAPI2_Region4)
+</span><span>  </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Concurrently</span><span> fetchStringFromAPI3
+</span></code></pre>
+<p>Let's talk a bit on the drawbacks of this approach. How many threads do you think we need to make sure all these calls execute concurrently? Try to come up with a number and an explanation and then continue reading.</p>
+<p>I am guessing you are expecting this code to spawn six (6) threads, correct? One for each <code>IO</code> sub-routine that we are using. However, with the existing implementation of <code>Applicative</code> and <code>Alternative</code> in <code>Concurrently</code>, we will spawn at least ten (10) threads. Let's explore these instances to have a better understanding of what is going on:</p>
+<pre data-lang="Haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-Haskell "><code class="language-Haskell" data-lang="Haskell"><span style="color:#859900;">instance </span><span style="color:#268bd2;">Applicative Concurrently </span><span style="color:#859900;">where
+</span><span>  pure </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Concurrently </span><span style="color:#859900;">.</span><span> return
+</span><span>  </span><span style="color:#cb4b16;">Concurrently</span><span> fs </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Concurrently</span><span> as </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#cb4b16;">Concurrently </span><span style="color:#859900;">$</span><span> (</span><span style="color:#859900;">\</span><span>(f, a) </span><span style="color:#859900;">-&gt;</span><span> f a) </span><span style="color:#859900;">&lt;$&gt;</span><span> concurrently fs as
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">Alternative Concurrently </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#cb4b16;">Concurrently</span><span> as </span><span style="color:#859900;">&lt;|&gt; </span><span style="color:#cb4b16;">Concurrently</span><span> bs </span><span style="color:#859900;">=
+</span><span>    </span><span style="color:#cb4b16;">Concurrently </span><span style="color:#859900;">$</span><span> either id id </span><span style="color:#859900;">&lt;$&gt;</span><span> race as bs
+</span></code></pre>
+<p>First, let us expand the alternative calls in our example:</p>
+<pre data-lang="Haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-Haskell "><code class="language-Haskell" data-lang="Haskell"><span>    </span><span style="color:#cb4b16;">Concurrently</span><span> fetchStringFromAPI2_Region1
+</span><span style="color:#859900;">&lt;|&gt; </span><span style="color:#cb4b16;">Concurrently</span><span> fetchStringFromAPI2_Region2
+</span><span style="color:#859900;">&lt;|&gt; </span><span style="color:#cb4b16;">Concurrently</span><span> fetchStringFromAPI2_Region3
+</span><span style="color:#859900;">&lt;|&gt; </span><span style="color:#cb4b16;">Concurrently</span><span> fetchStringFromAPI2_Region4
+</span><span>
+</span><span style="color:#93a1a1;">--- is equivalent to
+</span><span style="color:#cb4b16;">Concurrently</span><span> (
+</span><span>  either id id </span><span style="color:#859900;">&lt;$&gt;
+</span><span>    race </span><span style="color:#93a1a1;">{- 2 threads -}
+</span><span>      fetchStringFromAPI2_Region1
+</span><span>      (either id id </span><span style="color:#859900;">&lt;$&gt;
+</span><span>         race </span><span style="color:#93a1a1;">{- 2 threads -}
+</span><span>           fetchStringFromAPI2_Region2
+</span><span>           (either id id </span><span style="color:#859900;">&lt;$&gt;
+</span><span>              race </span><span style="color:#93a1a1;">{- 2 threads -}
+</span><span>                fetchStringFromAPI2_Region3
+</span><span>                fetchStringFromAPI2_Region4))
+</span><span>)
+</span></code></pre>
+<p>Next, let us expand the applicative calls:</p>
+<pre data-lang="Haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-Haskell "><code class="language-Haskell" data-lang="Haskell"><span>    </span><span style="color:#cb4b16;">Concurrently</span><span> (myPureFunction </span><span style="color:#859900;">&lt;$&gt;</span><span> fetchStringFromAPI1)
+</span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Concurrently</span><span> fetchStringFromAPI2
+</span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt; </span><span style="color:#cb4b16;">Concurrently</span><span> fetchStringFromAPI3
+</span><span>
+</span><span style="color:#93a1a1;">--- is equivalent to
+</span><span>
+</span><span style="color:#cb4b16;">Concurrently</span><span> (
+</span><span>  (</span><span style="color:#859900;">\</span><span>(f, a) </span><span style="color:#859900;">-&gt;</span><span> f a) </span><span style="color:#859900;">&lt;$&gt;
+</span><span>    concurrently </span><span style="color:#93a1a1;">{- 2 threads -}
+</span><span>      ( (</span><span style="color:#859900;">\</span><span>(f, a) </span><span style="color:#859900;">-&gt;</span><span> f a) </span><span style="color:#859900;">&lt;$&gt;
+</span><span>         concurrently </span><span style="color:#93a1a1;">{- 2 threads -}
+</span><span>           (myPureFunction </span><span style="color:#859900;">&lt;$&gt;</span><span> fetchStringFromAPI1)
+</span><span>           fetchStringFromAPI2
+</span><span>      )
+</span><span>      fetchStringFromAPI3
+</span><span>)
+</span></code></pre>
+<p>You may tell we are always spawning two threads for each pair of sub-routines. Suppose we have 7 sub-routines we want to compose via <code>Applicative</code> or <code>Alternative</code>. Using this implementation we would spawn at least 14 new threads when at most 8 should do the job. For each composition we do, an extra thread is going to be spawned to deal with bookkeeping.</p>
+<p>Another drawback to consider: what happens if one of the values in the call is a <code>pure</code> call? Given this code:</p>
+<pre data-lang="Haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-Haskell "><code class="language-Haskell" data-lang="Haskell"><span>pure foo </span><span style="color:#859900;">&lt;|&gt;</span><span> bar
+</span></code></pre>
+<p>We get to spawn a new thread (unnecessarily) to wait for <code>foo</code>, even though it has already been computed and it should always win. As we mentioned before, Haskell is an excellent choice for concurrency because it makes spawning threads cheap; however, these threads don't come for free, and we should strive to avoid redundant thread creation.</p>
+<h2 id="introducing-the-conc-type">Introducing the <code>Conc</code> type</h2>
+<p>To address the issues mentioned above, we implemented a new type called <code>Conc</code> in our <code>unliftio</code> package. It has the same purpose as <code>Concurrently</code>, but it offers some extra guarantees:</p>
+<ul>
+<li>There is going to be only a single bookkeeping thread for all <code>Applicative</code> and <code>Alternative</code> compositions.</li>
+<li>If we have <code>pure</code> calls in an <code>Applicative</code> or an <code>Alternative</code> composition, we will not spawn a new thread.</li>
+<li>We will optimize the code for trivial cases. For example, not spawning a thread when evaluating a single <code>Conc</code> value (instead of a composition of <code>Conc</code> values).</li>
+<li>We can compose more than <code>IO</code> sub-routines. Any monadic type that implements <code>MonadUnliftIO</code> is accepted.</li>
+<li>Children threads are always launched in an unmasked state, not the inherited state of the parent thread.</li>
+</ul>
+<p>The <code>Conc</code> type is defined as follows:</p>
+<pre data-lang="Haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-Haskell "><code class="language-Haskell" data-lang="Haskell"><span style="color:#859900;">data </span><span style="color:#cb4b16;">Conc</span><span> m a </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#cb4b16;">Action </span><span style="color:#859900;">::</span><span> m a </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Conc</span><span> m a
+</span><span>  </span><span style="color:#cb4b16;">Apply  </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Conc</span><span> m (v </span><span style="color:#859900;">-&gt;</span><span> a) </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Conc</span><span> m v </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Conc</span><span> m a
+</span><span>  </span><span style="color:#cb4b16;">LiftA2 </span><span style="color:#859900;">::</span><span> (x </span><span style="color:#859900;">-&gt;</span><span> y </span><span style="color:#859900;">-&gt;</span><span> a) </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Conc</span><span> m x </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Conc</span><span> m y </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Conc</span><span> m a
+</span><span>  </span><span style="color:#cb4b16;">Pure   </span><span style="color:#859900;">::</span><span> a </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Conc</span><span> m a
+</span><span>  </span><span style="color:#cb4b16;">Alt    </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Conc</span><span> m a </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Conc</span><span> m a </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Conc</span><span> m a
+</span><span>  </span><span style="color:#cb4b16;">Empty  </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Conc</span><span> m a
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadUnliftIO m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Applicative</span><span> (</span><span style="color:#268bd2;">Conc m</span><span>) </span><span style="color:#859900;">where
+</span><span>  pure   </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Pure
+</span><span>  </span><span style="color:#b58900;">(&lt;*&gt;)  </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Apply
+</span><span>  </span><span style="color:#b58900;">(*&gt;)   </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Then
+</span><span>  liftA2 </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">LiftA2
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">MonadUnliftIO m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Alternative</span><span> (</span><span style="color:#268bd2;">Conc m</span><span>) </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#b58900;">(&lt;|&gt;) </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Alt
+</span></code></pre>
+<p>If you are familiar with <code>Free</code> types, this will look eerily familiar. We are going to represent our concurrent computations as data so that we can later transform it or evaluate as we see fit. In this setting, our first example would look something like the following:</p>
+<pre data-lang="Haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-Haskell "><code class="language-Haskell" data-lang="Haskell"><span style="color:#b58900;">myComputation </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Conc String
+</span><span>myComputation </span><span style="color:#859900;">=
+</span><span>  myPureFunction
+</span><span>  </span><span style="color:#859900;">&lt;$&gt;</span><span> conc fetchStringFromAPI1
+</span><span>  </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> (    conc fetchStringFromAPI2_Region1
+</span><span>       </span><span style="color:#859900;">&lt;|&gt;</span><span> conc fetchStringFromAPI2_Region2
+</span><span>       </span><span style="color:#859900;">&lt;|&gt;</span><span> conc fetchStringFromAPI2_Region3
+</span><span>       </span><span style="color:#859900;">&lt;|&gt;</span><span> conc fetchStringFromAPI2_Region4)
+</span><span>
+</span><span style="color:#93a1a1;">--- is equivalent to
+</span><span>
+</span><span style="color:#cb4b16;">Apply</span><span> (myPureFunction </span><span style="color:#859900;">&lt;$&gt;</span><span> fetchStringFromAPI1)
+</span><span>      (</span><span style="color:#cb4b16;">Alt</span><span> (</span><span style="color:#cb4b16;">Action</span><span> fetchStringFromAPI2_Region1)
+</span><span>           (</span><span style="color:#cb4b16;">Alt</span><span> (</span><span style="color:#cb4b16;">Action</span><span> fetchStringFromAPI2_Region2)
+</span><span>                (</span><span style="color:#cb4b16;">Alt</span><span> (</span><span style="color:#cb4b16;">Action</span><span> fetchStringFromAPI2_Region3)
+</span><span>                     (</span><span style="color:#cb4b16;">Action</span><span> fetchStringFromAPI2_Region4))))
+</span><span>
+</span></code></pre>
+<p>You may notice we keep the tree structure of the <code>Concurrently</code> implementation. However, given we are dealing with a pure data structure, we can modify our <code>Conc</code> value to something that is easier to evaluate. Indeed, thanks to the <code>Applicative</code>  interface, we don't need to evaluate any of the <code>IO</code> sub-routines to do transformations (magic!).</p>
+<p>We have additional (internal) types that flatten all our alternatives and applicative values:</p>
+<pre data-lang="Haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-Haskell "><code class="language-Haskell" data-lang="Haskell"><span style="color:#859900;">data </span><span style="color:#cb4b16;">Flat</span><span> a
+</span><span>  </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">FlatApp </span><span style="color:#859900;">!</span><span>(</span><span style="color:#cb4b16;">FlatApp</span><span> a)
+</span><span>  </span><span style="color:#859900;">| </span><span style="color:#cb4b16;">FlatAlt </span><span style="color:#859900;">!</span><span>(</span><span style="color:#cb4b16;">FlatApp</span><span> a) </span><span style="color:#859900;">!</span><span>(</span><span style="color:#cb4b16;">FlatApp</span><span> a) </span><span style="color:#859900;">!</span><span>[</span><span style="color:#cb4b16;">FlatApp</span><span> a]
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">FlatApp</span><span> a </span><span style="color:#859900;">where
+</span><span>  </span><span style="color:#cb4b16;">FlatPure   </span><span style="color:#859900;">::</span><span> a </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">FlatApp</span><span> a
+</span><span>  </span><span style="color:#cb4b16;">FlatAction </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">IO</span><span> a </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">FlatApp</span><span> a
+</span><span>  </span><span style="color:#cb4b16;">FlatApply  </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Flat</span><span> (v </span><span style="color:#859900;">-&gt;</span><span> a) </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Flat</span><span> v </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">FlatApp</span><span> a
+</span><span>  </span><span style="color:#cb4b16;">FlatLiftA2 </span><span style="color:#859900;">::</span><span> (x </span><span style="color:#859900;">-&gt;</span><span> y </span><span style="color:#859900;">-&gt;</span><span> a) </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Flat</span><span> x </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Flat</span><span> y </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">FlatApp</span><span> a
+</span></code></pre>
+<p>These types are equivalent to our <code>Conc</code> type, but they have a few differences from <code>Conc</code>:</p>
+<ul>
+<li>The <code>Flat</code> type separates <code>Conc</code> values created via <code>Applicative</code> from the ones created via <code>Alternative</code></li>
+<li>The <code>FlatAlt</code> constructor flattens an <code>Alternative</code> tree into a list (helping us spawn all of them at once and facilitating the usage of a single bookkeeping thread).
+<ul>
+<li>Note that we represent this as a &quot;at least two&quot; list, with a similar representation of a non empty list from the <code>semigroups</code> package.</li>
+</ul>
+</li>
+<li>The <code>Flat</code> and <code>FlatApp</code> records are not polymorphic on their monadic context given they rely directly on <code>IO</code>. We can transform the <code>m</code> parameter in our <code>Conc m a</code>  type to <code>IO</code> via the <code>MonadUnliftIO</code>  constraint.</li>
+</ul>
+<p>The first example of our blog post, when flattened, would look something like the following:</p>
+<pre data-lang="Haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-Haskell "><code class="language-Haskell" data-lang="Haskell"><span style="color:#cb4b16;">FlatApp
+</span><span>  (</span><span style="color:#cb4b16;">FlatApply
+</span><span>    (</span><span style="color:#cb4b16;">FlatApp</span><span> (</span><span style="color:#cb4b16;">FlatAction</span><span> (myPureFunction </span><span style="color:#859900;">&lt;$&gt;</span><span> fetchStringFromAPI1)))
+</span><span>    (</span><span style="color:#cb4b16;">FlatAlt</span><span> (</span><span style="color:#cb4b16;">FlatAction</span><span> fetchStringFromAPI2_Region1)
+</span><span>             (</span><span style="color:#cb4b16;">FlatAction</span><span> fetchStringFromAPI2_Region2)
+</span><span>             [ </span><span style="color:#cb4b16;">FlatAction</span><span> fetchStringFromAPI2_Region3
+</span><span>             , </span><span style="color:#cb4b16;">FlatAction</span><span> fetchStringFromAPI2_Regoin4 ]))
+</span></code></pre>
+<p>Using a <a href="https://github.com/fpco/unliftio/blob/2c68959a5f498bf4ea457fc4bd673b4dfce5c512/unliftio/src/UnliftIO/Internals/Async.hs#L617"><code>flatten</code></a> function that transforms a <code>Conc</code> value into a <code>Flat</code> value, we can <a href="https://github.com/fpco/unliftio/blob/2c68959a5f498bf4ea457fc4bd673b4dfce5c512/unliftio/src/UnliftIO/Internals/Async.hs#L662">later evaluate</a> the concurrent sub-routine tree in a way that is optimal for our use case.</p>
+<h2 id="performance">Performance</h2>
+<p>So given that the <code>Conc</code> API reduces the number of threads created via <code>Alternative</code>, our implementation should work best, correct? Sadly, it is not all peachy. To ensure that we get the result of the first thread that finishes on an <code>Alternative</code> composition, we make use of the STM API. This approach works great when we want to gather values from multiple concurrent threads. Sadly, the STM monad doesn't <a href="https://www.oreilly.com/library/view/parallel-and-concurrent/9781449335939/ch10.html#sec_stm-cost">scale too well when composing lots of reads</a>, making this approach prohibitive if you are composing tens of thousands of <code>Conc</code> values.</p>
+<p>Considering this limitation, we only use <code>STM</code> when an <code>Alternative</code> function is involved; otherwise, we rely on <code>MVar</code>s for multiple thread result composition via <code>Applicative</code>. We can do this without sweating because we can change the evaluator of the sub-routine tree created by <code>Conc</code> on the fly.</p>
+<h2 id="conclusions">Conclusions</h2>
+<p>We showcased how we can model the composition of computations using an <code>Applicative</code> and <code>Alternative</code> tree, and then, taking advantage of this APIs; we transformed this computation tree into something more approachable to execute concurrently. We also took advantage of this <em>sub-routines as data</em> approach to change the evaluator from <code>MVar</code> to <code>STM</code> compositions.</p>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Transformations%20on%20Applicative%20Concurrent%20Computations https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;transformations-on-applicative-concurrent-computations&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;transformations-on-applicative-concurrent-computations&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;transformations-on-applicative-concurrent-computations&#x2F;&amp;title=Transformations%20on%20Applicative%20Concurrent%20Computations"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;transformations-on-applicative-concurrent-computations&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#bac9dbd6dfc9fadccad9d5d7cad6dfcedf94d9d5d7" targe="_blank"><span class="__cf_email__" data-cfemail="8cffede0e9ffcceafcefe3e1fce0e9f8e9a2efe3e1">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

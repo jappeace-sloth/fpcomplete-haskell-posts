@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>transformers: Monad transformers</title>
+  <meta property="og:title" content="transformers: Monad transformers">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;library&#x2F;transformers&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+  
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+<section class="hero grid-bg">
+  <div class="container">
+    <h1>transformers: Monad transformers
+    </h1></div>
+</section>
+
+
+
+  
+<div class="container py-3">
+  <p>The <a href="https://www.stackage.org/package/transformers">transformers</a> package provides
+useful control flow extensions for monad stacks.</p>
+<p>Even without understanding how Monad transformers work, the following should
+demonstrate their practicality.</p>
+<p>Let's first describe the most simple and useful of the transformers
+provided.</p>
+<h2 id="maybet">MaybeT</h2>
+<p>Suppose we have the following functions:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">getA </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">m</span><span> (</span><span style="color:#268bd2;">Maybe a</span><span>)
+</span><span style="color:#b58900;">getB </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">Int </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">m</span><span> (</span><span style="color:#268bd2;">Maybe b</span><span>)
+</span><span style="color:#b58900;">getC </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">m c
+</span></code></pre>
+<p>And suppose we would like to define a function that tries getting A and B,
+and also gets C twice under this monad. If any of the <code>getA</code> or <code>getB</code>
+return <code>Nothing</code>, we would like to return <code>Nothing</code>.</p>
+<p>Working plainly, without using transformers, we would do the following:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">someCode </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">m</span><span> (</span><span style="color:#268bd2;">Maybe</span><span> (</span><span style="color:#268bd2;">a</span><span>, </span><span style="color:#268bd2;">b</span><span>, </span><span style="color:#268bd2;">c</span><span>, </span><span style="color:#268bd2;">c</span><span>))
+</span><span>someCode </span><span style="color:#859900;">= do
+</span><span>    c1 </span><span style="color:#859900;">&lt;-</span><span> getC
+</span><span>    ma </span><span style="color:#859900;">&lt;-</span><span> getA
+</span><span>    </span><span style="color:#859900;">case</span><span> ma </span><span style="color:#859900;">of
+</span><span>        </span><span style="color:#cb4b16;">Nothing </span><span style="color:#859900;">-&gt;</span><span> return </span><span style="color:#cb4b16;">Nothing
+</span><span>        </span><span style="color:#cb4b16;">Just</span><span> a </span><span style="color:#859900;">-&gt; do
+</span><span>            mb </span><span style="color:#859900;">&lt;-</span><span> getB </span><span style="color:#6c71c4;">2
+</span><span>            </span><span style="color:#859900;">case</span><span> mb </span><span style="color:#859900;">of
+</span><span>                </span><span style="color:#cb4b16;">Nothing </span><span style="color:#859900;">-&gt;</span><span> return </span><span style="color:#cb4b16;">Nothing
+</span><span>                </span><span style="color:#cb4b16;">Just</span><span> b </span><span style="color:#859900;">-&gt; do
+</span><span>                    c2 </span><span style="color:#859900;">&lt;-</span><span> getC
+</span><span>                    return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Just</span><span> (a, b, c1, c2)
+</span></code></pre>
+<p>Using the <code>MaybeT</code> transformer we can compact it:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.Trans.Maybe
+</span><span>
+</span><span style="color:#b58900;">someCode </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">m</span><span> (</span><span style="color:#268bd2;">Maybe</span><span> (</span><span style="color:#268bd2;">a</span><span>, </span><span style="color:#268bd2;">b</span><span>, </span><span style="color:#268bd2;">c</span><span>, </span><span style="color:#268bd2;">c</span><span>))
+</span><span>someCode </span><span style="color:#859900;">= do
+</span><span>    c1 </span><span style="color:#859900;">&lt;-</span><span> getC
+</span><span>    runMaybeT </span><span style="color:#859900;">$ do
+</span><span>        a </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">MaybeT</span><span> getA
+</span><span>        b </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">MaybeT </span><span style="color:#859900;">$</span><span> getB </span><span style="color:#6c71c4;">2
+</span><span>        c2 </span><span style="color:#859900;">&lt;-</span><span> lift getC
+</span><span>        return (a, b, c1, c2)
+</span></code></pre>
+<p>The <code>runMaybeT</code> wrapping guarantees that if a monadic function returns
+<code>Nothing</code>, execution of that monad stops and the whole operation returns
+<code>Nothing</code>.</p>
+<p>Notice that under <code>MaybeT</code> every monadic bind needs to be wrapped in a
+<code>MaybeT</code>, so for functions that return a <code>Maybe</code>, simply wrapping them
+with <code>MaybeT</code> works, and then we don't need to add a <code>case</code> for their
+returned value later.</p>
+<p>However, proxying functions not originally under <code>MaybeT</code>, which also
+don't return a <code>Maybe</code> type requires the use of <code>lift</code>. Also, notice
+that we did not require a <code>Just</code> to wrap the value in the final <code>return</code>.</p>
+<p>This is useful for instance, when dealing with the many library functions
+that return a <code>Maybe</code> under <code>IO</code>. For example:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">findExecutable </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">String </span><span style="color:#859900;">-&gt; </span><span style="color:#268bd2;">IO</span><span> (</span><span style="color:#268bd2;">Maybe FilePath</span><span>)
+</span><span>
+</span><span style="color:#b58900;">ourFindExes </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">MonadIO m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">m</span><span> (</span><span style="color:#268bd2;">Maybe</span><span> (</span><span style="color:#268bd2;">FilePath</span><span>, </span><span style="color:#268bd2;">FilePath</span><span>, </span><span style="color:#268bd2;">FilePath</span><span>))
+</span><span>ourFindExes </span><span style="color:#859900;">= do
+</span><span>    a </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">MaybeT </span><span style="color:#859900;">$</span><span> findExecutable </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">a-exe</span><span style="color:#839496;">&quot;
+</span><span>    b </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">MaybeT </span><span style="color:#859900;">$</span><span> findExecutable </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">b-exe</span><span style="color:#839496;">&quot;
+</span><span>    c </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">MaybeT </span><span style="color:#859900;">$</span><span> findExecutable </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">c-exe</span><span style="color:#839496;">&quot;
+</span><span>    return (a, b, c)
+</span></code></pre>
+<h3 id="guard">guard</h3>
+<p>We can use <code>guard</code> to check for conditions. If the condition fails,
+<code>Nothing</code> is returned.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">ourFindExes </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">MonadIO m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">m</span><span> (</span><span style="color:#268bd2;">Maybe</span><span> (</span><span style="color:#268bd2;">FilePath</span><span>, </span><span style="color:#268bd2;">FilePath</span><span>, </span><span style="color:#268bd2;">FilePath</span><span>))
+</span><span>ourFindExes </span><span style="color:#859900;">= do
+</span><span>    a </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">MaybeT </span><span style="color:#859900;">$</span><span> findExecutable </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">a-exe</span><span style="color:#839496;">&quot;
+</span><span>    guard </span><span style="color:#859900;">$</span><span> a </span><span style="color:#859900;">== </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">/some/path</span><span style="color:#839496;">&quot;
+</span><span>    b </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">MaybeT </span><span style="color:#859900;">$</span><span> findExecutable </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">b-exe</span><span style="color:#839496;">&quot;
+</span><span>    c </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">MaybeT </span><span style="color:#859900;">$</span><span> findExecutable </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">c-exe</span><span style="color:#839496;">&quot;
+</span><span>    return (a, b, c)
+</span></code></pre>
+<h3 id="pattern-matching-failures">Pattern matching failures</h3>
+<p>Pattern matching failures under the <code>MaybeT</code> transformers translate
+to <code>Nothing</code> being returned (rather than exceptions). This is useful
+in its own, regardless of whether or not you are using <code>MaybeT</code> to
+wind down on these calls returning<code>Maybe</code>.</p>
+<p>For example, observe the extension of the example above, with the
+addition of the pattern matching on the return of <code>getD</code> and <code>getE</code>.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">getD </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">m</span><span> (</span><span style="color:#268bd2;">Maybe</span><span> (</span><span style="color:#268bd2;">Either Int Char</span><span>))
+</span><span style="color:#b58900;">getE </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">m</span><span> (</span><span style="color:#268bd2;">Either Int Char</span><span>)
+</span><span>
+</span><span style="color:#b58900;">someCode </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">m</span><span> (</span><span style="color:#268bd2;">Maybe</span><span> (</span><span style="color:#268bd2;">a</span><span>, </span><span style="color:#268bd2;">b</span><span>, </span><span style="color:#268bd2;">c</span><span>, </span><span style="color:#268bd2;">c</span><span>, </span><span style="color:#268bd2;">Int</span><span>, </span><span style="color:#268bd2;">Char</span><span>))
+</span><span>someCode </span><span style="color:#859900;">= do
+</span><span>    c1 </span><span style="color:#859900;">&lt;-</span><span> getC
+</span><span>    runMaybeT </span><span style="color:#859900;">$ do
+</span><span>        a </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">MaybeT</span><span> getA
+</span><span>        b </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">MaybeT</span><span> getB
+</span><span>        </span><span style="color:#cb4b16;">Left</span><span> ld </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">MaybeT</span><span> getD
+</span><span>        </span><span style="color:#cb4b16;">Right</span><span> re </span><span style="color:#859900;">&lt;-</span><span> lift getE
+</span><span>        c2 </span><span style="color:#859900;">&lt;-</span><span> lift </span><span style="color:#859900;">$</span><span> getC
+</span><span>        return (a, b, c1, c2, ld, re)
+</span></code></pre>
+<h2 id="readert">ReaderT</h2>
+<p>The <code>ReaderT</code> transformer, available from both the
+<a href="https://www.stackage.org/package/transformers">transformers</a> and
+<a href="https://www.stackage.org/package/mtl">mtl</a> packages, adds a read-only value
+which is accessible via <code>ask</code> and the helper function <code>asks</code>.</p>
+<p>In practice, the <code>ReaderT</code> transformer is used often for passing down
+a static configuration environment, so that such environment need not be
+explicitly passed via function parameters.</p>
+<p>Similarly to how <code>runMaybeT</code> receives a monadic function, <code>runReaderT</code>
+receives a monadic function, that is also followed by a value, which
+can be of any type.</p>
+<p>We shall demonstrate an elborate monad stack in the following example:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude        #-}
+</span><span>
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">ClassyPrelude
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.Reader
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.Trans.Maybe
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    </span><span style="color:#859900;">let</span><span> maybeHeadReader </span><span style="color:#859900;">=</span><span> asks headMay
+</span><span>    </span><span style="color:#859900;">let</span><span> runReaderT&#39; </span><span style="color:#859900;">=</span><span> flip runReaderT
+</span><span>
+</span><span>    runReaderT&#39; [</span><span style="color:#839496;">&#39;</span><span style="color:#2aa198;">2</span><span style="color:#839496;">&#39;</span><span>] </span><span style="color:#859900;">$ do
+</span><span>        ask </span><span style="color:#859900;">&gt;&gt;=</span><span> print </span><span style="color:#93a1a1;">-- prints: &quot;2&quot;
+</span><span>        asks length </span><span style="color:#859900;">&gt;&gt;=</span><span> print </span><span style="color:#93a1a1;">-- prints 1
+</span><span>
+</span><span>        runReaderT&#39; [</span><span style="color:#6c71c4;">42 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span>] </span><span style="color:#859900;">$ do
+</span><span>            ask </span><span style="color:#859900;">&gt;&gt;=</span><span> print </span><span style="color:#93a1a1;">-- prints: [42]
+</span><span>
+</span><span>            x </span><span style="color:#859900;">&lt;-</span><span> runMaybeT </span><span style="color:#859900;">$ do
+</span><span>                z </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">MaybeT</span><span> maybeHeadReader
+</span><span>                guard </span><span style="color:#859900;">$</span><span> z </span><span style="color:#859900;">== </span><span style="color:#6c71c4;">42
+</span><span>                z2 </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">MaybeT </span><span style="color:#859900;">$</span><span> lift maybeHeadReader
+</span><span>                guard </span><span style="color:#859900;">$</span><span> z2 </span><span style="color:#859900;">== </span><span style="color:#839496;">&#39;</span><span style="color:#2aa198;">2</span><span style="color:#839496;">&#39;
+</span><span>                return </span><span style="color:#839496;">&#39;</span><span style="color:#2aa198;">x</span><span style="color:#839496;">&#39;
+</span><span>            print x </span><span style="color:#93a1a1;">-- prints: Just &#39;x&#39;
+</span><span>
+</span><span>            runReaderT&#39; (</span><span style="color:#6c71c4;">8.9 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Double</span><span>) </span><span style="color:#859900;">$ do
+</span><span>                ask </span><span style="color:#859900;">&gt;&gt;=</span><span> print </span><span style="color:#93a1a1;">-- prints: 8.9
+</span><span>                (lift </span><span style="color:#859900;">.</span><span> lift) ask </span><span style="color:#859900;">&gt;&gt;=</span><span> print </span><span style="color:#93a1a1;">-- prints: &quot;2&quot;
+</span><span>                lift ask </span><span style="color:#859900;">&gt;&gt;=</span><span> print </span><span style="color:#93a1a1;">-- prints: [42]
+</span><span>
+</span><span>            lift ask </span><span style="color:#859900;">&gt;&gt;=</span><span> print </span><span style="color:#93a1a1;">-- prints: &quot;2&quot;
+</span><span>
+</span><span>            </span><span style="color:#93a1a1;">-- Run with a modified environment
+</span><span>            withReaderT (fmap </span><span style="color:#cb4b16;">Just</span><span>) </span><span style="color:#859900;">$ do
+</span><span>                ask </span><span style="color:#859900;">&gt;&gt;=</span><span> print </span><span style="color:#93a1a1;">-- prints: [Just 42]
+</span></code></pre>
+<p>Notes about the example above:</p>
+<ul>
+<li>Because the parameters to <code>runReaderT</code> are the monadic function
+followed by the environment, it helps on convenience to flip the
+monadic function to the second arguement, so a <code>do</code> can follow, hence
+<code>let runReaderT' = flip runReaderT</code>.</li>
+<li>Notice the use of
+<a href="https://www.stackage.org/package/classy-prelude">classy-prelude</a> to
+provide us with <code>print</code>, of the more general type <code>(Show a, MonadIO m) =&gt; a -&gt; m ()</code>, instead of <code>Show a =&gt; a -&gt; IO ()</code>, so we can freely use
+anywhere inside our monad stack.</li>
+<li>We also use <code>headMay</code> from <code>classy-prelude</code>.</li>
+<li>We allow the nested use of readers, with <code>lift</code> used to access the
+various levels of the stack.</li>
+<li>We can use <code>MaybeT</code> nested inside our stacks of <code>ReaderT</code>, and
+access the various <code>ReaderT</code> levels inside it using <code>lift</code>.</li>
+<li>The use of <code>withReaderT</code> to run under a modified environment is
+demonstrated.</li>
+</ul>
+<h2 id="eithert">EitherT</h2>
+<p>The <code>EitherT</code> transformer, available from
+<a href="https://www.stackage.org/package/either">transformers</a> can be
+thought of as an extension of <code>MaybeT</code>, where instead of <code>Nothing</code>
+to break out the computation, we can provide a value of a decided
+type.</p>
+<p>The following provides six examples to demonstrate the use of <code>EitherT</code>.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude        #-}
+</span><span>
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">ClassyPrelude
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.Trans.Either
+</span><span>
+</span><span style="color:#b58900;">getE </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">Monad m </span><span style="color:#859900;">=&gt; </span><span style="color:#268bd2;">m</span><span> (</span><span style="color:#268bd2;">Either a Int</span><span>)
+</span><span>getE </span><span style="color:#859900;">=</span><span> return </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Right </span><span style="color:#6c71c4;">42
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    v0 </span><span style="color:#859900;">&lt;-</span><span> runEitherT </span><span style="color:#859900;">$ do
+</span><span>        print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Print this</span><span style="color:#839496;">&quot;
+</span><span>        left </span><span style="color:#6c71c4;">2 </span><span style="color:#93a1a1;">-- Stopping here!
+</span><span>        print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Will not be printed</span><span style="color:#839496;">&quot;
+</span><span>        left </span><span style="color:#6c71c4;">3 </span><span style="color:#93a1a1;">-- Type of value passed to all left&#39;s must agree,
+</span><span>               </span><span style="color:#93a1a1;">-- e.g. left [3] will have failed type checking in
+</span><span>               </span><span style="color:#93a1a1;">-- this simple case.
+</span><span>        print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Will also not be printed</span><span style="color:#839496;">&quot;
+</span><span>        right </span><span style="color:#839496;">&#39;</span><span style="color:#2aa198;">x</span><span style="color:#839496;">&#39; </span><span style="color:#93a1a1;">-- Note that: right == return
+</span><span>    print v0 </span><span style="color:#93a1a1;">-- prints: Left 2
+</span><span>
+</span><span>
+</span><span>    v1 </span><span style="color:#859900;">&lt;-</span><span> runEitherT </span><span style="color:#859900;">$ do
+</span><span>        </span><span style="color:#93a1a1;">-- Incorporate existing monadic functions returning Either,
+</span><span>        </span><span style="color:#93a1a1;">-- using EitherT. The &#39;z&#39; here is the value from the Right,
+</span><span>        </span><span style="color:#93a1a1;">-- if Left did not get returned.
+</span><span>        z </span><span style="color:#859900;">&lt;- </span><span style="color:#cb4b16;">EitherT</span><span> getE
+</span><span>        return </span><span style="color:#859900;">$</span><span> z </span><span style="color:#859900;">+ </span><span style="color:#6c71c4;">1
+</span><span>    print (v1 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Either </span><span style="color:#b58900;">() </span><span style="color:#cb4b16;">Int</span><span>) </span><span style="color:#93a1a1;">-- prints: Right 43
+</span><span>
+</span><span>
+</span><span>    v2 </span><span style="color:#859900;">&lt;-</span><span> runEitherT </span><span style="color:#859900;">$ do
+</span><span>        print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Print this</span><span style="color:#839496;">&quot;
+</span><span>        right [(</span><span style="color:#839496;">&#39;</span><span style="color:#2aa198;">x</span><span style="color:#839496;">&#39;</span><span>, </span><span style="color:#6c71c4;">2</span><span>)] </span><span style="color:#93a1a1;">-- execution does not interrupt, just
+</span><span>                         </span><span style="color:#93a1a1;">-- like &#39;return ...&#39; in IO ().
+</span><span>                         </span><span style="color:#93a1a1;">-- the type is ignored too, and need not
+</span><span>                         </span><span style="color:#93a1a1;">-- match the type of the actual &#39;right&#39;.
+</span><span>        print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Will also print this</span><span style="color:#839496;">&quot;
+</span><span>        right </span><span style="color:#839496;">&#39;</span><span style="color:#2aa198;">y</span><span style="color:#839496;">&#39;
+</span><span>    </span><span style="color:#93a1a1;">-- We need a type signature to give a final type for the Left:
+</span><span>    print (v2 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Either </span><span style="color:#b58900;">() </span><span style="color:#cb4b16;">Char</span><span>) </span><span style="color:#93a1a1;">-- prints: Right &#39;y&#39;
+</span><span>
+</span><span>
+</span><span>    </span><span style="color:#93a1a1;">-- Use of &#39;guard&#39; to exit, like in MaybeT
+</span><span>    v3 </span><span style="color:#859900;">&lt;-</span><span> runEitherT </span><span style="color:#859900;">$ do
+</span><span>        print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Print this</span><span style="color:#839496;">&quot;
+</span><span>        guard </span><span style="color:#cb4b16;">False </span><span style="color:#93a1a1;">-- Breaks out, returning the mzero of the left type,
+</span><span>                    </span><span style="color:#93a1a1;">-- which needs to implement Monoid.
+</span><span>        print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Will not be printed</span><span style="color:#839496;">&quot;
+</span><span>        right </span><span style="color:#839496;">&#39;</span><span style="color:#2aa198;">y</span><span style="color:#839496;">&#39;
+</span><span>    print (v3 </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Either </span><span style="color:#b58900;">() </span><span style="color:#cb4b16;">Char</span><span>) </span><span style="color:#93a1a1;">-- prints: Left ()
+</span><span>
+</span><span>
+</span><span>    </span><span style="color:#93a1a1;">-- The `eitherT` utility, is like runEitherT, but transforms the
+</span><span>    </span><span style="color:#93a1a1;">-- either value to a single result type, using two monadic
+</span><span>    </span><span style="color:#93a1a1;">-- functions.
+</span><span>    v4 </span><span style="color:#859900;">&lt;-
+</span><span>        </span><span style="color:#859900;">let</span><span> leftSide a </span><span style="color:#859900;">=</span><span> return (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">left </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show a)
+</span><span>            rightSide a </span><span style="color:#859900;">=</span><span> return (</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">right </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show a)
+</span><span>         </span><span style="color:#859900;">in</span><span> eitherT leftSide rightSide </span><span style="color:#859900;">$ do
+</span><span>                x </span><span style="color:#859900;">&lt;-</span><span> lift </span><span style="color:#859900;">$</span><span> getArgs
+</span><span>                when (x </span><span style="color:#859900;">==</span><span> [</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">strange command line arg</span><span style="color:#839496;">&quot;</span><span>]) </span><span style="color:#859900;">$ do
+</span><span>                    </span><span style="color:#93a1a1;">-- If this was true, the print below
+</span><span>                    </span><span style="color:#93a1a1;">-- would have printed &#39;left \&quot;x\&quot;&#39;
+</span><span>                    left </span><span style="color:#839496;">&#39;</span><span style="color:#2aa198;">x</span><span style="color:#839496;">&#39;
+</span><span>                right </span><span style="color:#6c71c4;">4
+</span><span>
+</span><span>
+</span><span>    </span><span style="color:#93a1a1;">-- Demonstrate hoistEither:
+</span><span>    v5 </span><span style="color:#859900;">&lt;-</span><span> runEitherT </span><span style="color:#859900;">$ do
+</span><span>        print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Print this</span><span style="color:#839496;">&quot;
+</span><span>        </span><span style="color:#93a1a1;">-- hoistEither receives an Either and is equivalent
+</span><span>        </span><span style="color:#93a1a1;">-- to deciding on &#39;left&#39; or &#39;right&#39; based on the value:
+</span><span>        hoistEither </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Left </span><span style="color:#b58900;">()
+</span><span>        print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Will not be printed</span><span style="color:#839496;">&quot;
+</span><span>        hoistEither </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Right</span><span> [</span><span style="color:#839496;">&#39;</span><span style="color:#2aa198;">x</span><span style="color:#839496;">&#39;</span><span>]
+</span><span>
+</span><span>    print v5 </span><span style="color:#93a1a1;">-- prints: Left ()
+</span></code></pre>
+<p>Also provided as utilities to be used in this transformer, are
+the functions: <code>bracketEitherT</code>, <code>bimapEitherT</code>, <code>mapEitherT</code>, and
+<code>swapEitherT</code>.</p>
+<h3 id="pattern-matching-failures-1">Pattern matching failures</h3>
+<p>Note that unlike <code>MaybeT</code>, pattern matching failures in <code>do</code> under
+this monad, fail the upper monad.</p>
+<h2 id="contt">ContT</h2>
+<p>Explaining the <code>ContT</code> transformer usually takes time, as it tends
+to carry you over into the realms of exception handling and coroutines
+implementations.</p>
+<p>However, instead of undergoing that, we shall demonstrate a case
+where <code>ContT</code> is immediately being useful as an enhencement over
+<code>EitherT</code>, as the latter was demonstrated above.</p>
+<p>Suppose we have a nested tree of four <code>runEitherT</code>s, where we break
+from the most inner <code>EitherT</code> into the second inner <code>EitherT</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    v </span><span style="color:#859900;">&lt;-</span><span> runEitherT </span><span style="color:#859900;">$ do
+</span><span>        print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Print this</span><span style="color:#839496;">&quot;
+</span><span>        r </span><span style="color:#859900;">&lt;-</span><span> runEitherT </span><span style="color:#859900;">$ do
+</span><span>            print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Print this</span><span style="color:#839496;">&quot;
+</span><span>            runEitherT </span><span style="color:#859900;">$ do
+</span><span>                print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Print this</span><span style="color:#839496;">&quot;
+</span><span>                runEitherT </span><span style="color:#859900;">$ do
+</span><span>                    print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Print this</span><span style="color:#839496;">&quot;
+</span><span>                    lift </span><span style="color:#859900;">.</span><span> lift </span><span style="color:#859900;">$</span><span> left </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">x</span><span style="color:#839496;">&quot;
+</span><span>                    print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Will not be printed</span><span style="color:#839496;">&quot;
+</span><span>            print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Will not be printed</span><span style="color:#839496;">&quot;
+</span><span>            right </span><span style="color:#839496;">&#39;</span><span style="color:#2aa198;">y</span><span style="color:#839496;">&#39;
+</span><span>        print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Print this too</span><span style="color:#839496;">&quot;
+</span><span>        hoistEither r
+</span><span>    print v </span><span style="color:#93a1a1;">-- prints: Left &quot;x&quot;
+</span></code></pre>
+<p>Note the rather annoying <code>lift . lift</code>. It would get much worse,
+suppose if we would have nested six <code>runEitherT</code> into each other, and
+find ourselves quarreling with a long trail of <code>lift . lift . lift . lift ...</code>, just to break out to the upper level.</p>
+<p>From this it emerges that it may be nicer to label the scope from
+which we would like to break out. The example above can be rewritten
+using <code>runContT</code>:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> NoImplicitPrelude        #-}
+</span><span>
+</span><span style="color:#859900;">module ContT where
+</span><span>
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">ClassyPrelude
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.Trans.Cont
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Monad.Trans.Either
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    </span><span style="color:#859900;">let</span><span> runContM </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Monad</span><span> m </span><span style="color:#859900;">=&gt; </span><span style="color:#cb4b16;">ContT</span><span> r m r </span><span style="color:#859900;">-&gt;</span><span> m r
+</span><span>        runContM </span><span style="color:#859900;">=</span><span> (</span><span style="color:#859900;">`runContT`</span><span> return)
+</span><span>
+</span><span>    v </span><span style="color:#859900;">&lt;-</span><span> runEitherT </span><span style="color:#859900;">$ do
+</span><span>        print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Print this</span><span style="color:#839496;">&quot;
+</span><span>        r </span><span style="color:#859900;">&lt;- do
+</span><span>            runContM </span><span style="color:#859900;">$</span><span> callCC </span><span style="color:#859900;">$ \</span><span>breakOut </span><span style="color:#859900;">-&gt; do
+</span><span>                print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Print this</span><span style="color:#839496;">&quot;
+</span><span>                callCC </span><span style="color:#859900;">$ \</span><span>_ </span><span style="color:#859900;">-&gt; do
+</span><span>                    print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Print this</span><span style="color:#839496;">&quot;
+</span><span>                    callCC </span><span style="color:#859900;">$ \</span><span>_ </span><span style="color:#859900;">-&gt; do
+</span><span>                        print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Print this</span><span style="color:#839496;">&quot;
+</span><span>                        breakOut </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Left </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">x</span><span style="color:#839496;">&quot;
+</span><span>                        print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Will not be printed</span><span style="color:#839496;">&quot;
+</span><span>
+</span><span>                print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Will not be printed</span><span style="color:#839496;">&quot;
+</span><span>                return  </span><span style="color:#859900;">$ </span><span style="color:#cb4b16;">Right </span><span style="color:#839496;">&#39;</span><span style="color:#2aa198;">y</span><span style="color:#839496;">&#39;
+</span><span>        print </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Print this too</span><span style="color:#839496;">&quot;
+</span><span>        hoistEither r
+</span><span>    print v </span><span style="color:#93a1a1;">-- prints: Left &quot;x&quot;
+</span></code></pre>
+<p>We replaced the three internal <code>runEitherT</code>s with <code>callCC</code>s, which
+expect a monadic function receiving an argument, and we used a single
+transformer - <code>runContT</code> instead of the three. The short-hand
+<code>runContM</code> to <code>runContT</code> is used chiefly to remove some clutter, and
+to provide <code>EitherT</code>-like functionality from <code>runContT</code>. Indeed we
+could have also used a shorthand such as <code>runNoCC x = callCC $ \_ -&gt; x</code>
+to clean up further.</p>
+<p>The immediate picture is that <code>breakOut</code> being the lambda parameter
+to the second scope, serves as a &quot;call away&quot; mechanism to break out
+of the context, similarly to <code>left</code> in <code>EitherT</code> and <code>break;</code> in
+many imperative languages, or <code>goto</code> with a label in C, for instance.</p>
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#87f4e6ebe2f4c7e1f7e4e8eaf7ebe2f3e2a9e4e8ea" targe="_blank"><span class="__cf_email__" data-cfemail="681b09040d1b280e180b070518040d1c0d460b0705">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

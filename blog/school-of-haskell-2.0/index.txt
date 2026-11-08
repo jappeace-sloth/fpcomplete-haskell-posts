@@ -1,0 +1,164 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+School of Haskell 2.0
+
+By Michael Sloan, May 4, 2015
+
+Share this     
+
+As announced by Michael Snoyman a couple weeks ago, we are going to be releasing an open source
+version of the School of Haskell! The SoH provides interactive documentation and tutorials for
+newcomers and advanced haskellers alike. This interactivity comes in the form of editable code,
+inline in the webpage, letting you try things out as you learn them.
+
+We are dedicated to supporting the community with excellent Haskell tools and infrastructure. As
+this is a community project, I'm writing this post to explain our plans, and to ask for feedback
+and ideas.
+
+We are focused on eliminating any obstacles which have historically discouraged or prevented people
+from contributing to the School of Haskell. In particular, here are the changes we're planning:
+
+  • Open Source! We'll encourage community participation on improving the service, via the bug
+    tracker and pull requests. Anyone will be free to host their own version of the site.
+
+  • Creative Commons license! While our old license was not intended to be restrictive, it turned
+    away some potential contributors.
+
+  • Git! Git will be used to store the SoH markdown pages. The core school repo will be hosted on
+    GitHub. This means that editing, history, organization, and collaboration will all be based on
+    a system that many people understand well.
+
+  • Interactive code on any website! Any website will be able to include editable and runnable
+    Haskell code. All you'll need to do is include a script tag like <script src="https://
+    www.schoolofhaskell.com/soh.js">. When run, this script will replace code divs with the editor.
+    This means that haddocks could potentially have examples that you can play with directly in the
+    browser!
+
+Questions for the Community
+
+Please help us guide this work to best serve you and the community!
+
+  • Should all user content be licensed under the Creative Commons license? One option is to
+    relicense all user content when it gets moved to the soh-migration-snapshot repo. Another
+    option is to add a footnote to each page noting that its license is the SoH 1.0 license. After
+    users migrate to their own repo, they are free to remove this footnote.
+
+  • Should the markdown format change? We're considering switching to CommonMark, but perhaps
+    having a stable format for migration is more important?
+
+  • Does the system of git repos sound good (it's described below)? One issue is that it will
+    require a little bit of setup for users to continue editing their SoH content. Is this
+    acceptable to folks? Should we seek to streamline the process via the GitHub API?
+
+  • Any other ideas? We've already got a fair amount of work cut out for us, but we'd love to hear
+    more ideas, particularly of the low-hanging-fruit variety.
+
+Plan for the Editor Service
+
+The editor service will allow Haskell to be edited in the browser and run on the server. This
+service is independent of the markdown rendering service, described below.
+
+Editor Features
+
+Our plan is to support the following features in the SoH code editor / runner:
+
+  • Standard input / output will use a console emulator in the browser. This means that things like
+    ncurses apps will work!
+
+  • GHCI support. Initially this will likely be a bit of a hack, directly running ghci rather than
+    using ide-backend.
+
+  • Type information will be available for sub-expressions, simply by selecting a sub-expression in
+    the code.
+
+  • -fdefer-type-errors will be used by default. This will likely be setup such that type errors
+    still prevent running the code, but using this flag this means that type info is still yielded
+    by GHC.
+
+  • Support for looking up the haddocks associated with an identifier. Info from GHC will be used
+    for this, and open the results in an IFrame.
+
+  • Go-to-definition will tell you where an identifier is bound.
+
+  • The capability to serve websites. This will work by detecting of when the user's code is acting
+    as an HTTP server, and opening an IFrame / separate window for interacting with it.
+
+This new version is going to be offering quite a lot of information! In order to have somewhere to
+put it all, there will be a tabbed info pane at the bottom of the snippet (much like the pane at
+the bottom of FPHC).
+
+Implementation Changes
+
+We've learned a lot about writing this sort of application since the initial creation of the School
+of Haskell. In particular, we're planning on making the following changes, although things aren't
+quite set in stone yet:
+
+  • Using GHCJS instead of Fay. Back when the SoH was created, GHCJS wasn't quite ready, and so Fay
+    was picked. Fay was quite nice for the task, but having full-blown GHC Haskell is even nicer.
+
+  • Using Docker for managing Linux containers and images.
+
+  • Using Ace instead of CodeMirror. Our experience with using Ace for stackage-view was quite
+    positive. This will address a number of open bugs, and allow us to reuse some existing GHCJS
+    bindings to Ace.
+
+  • Using websockets instead of HTTP requests. Due to usage of Amazon's Elastic Load Balancer, in
+    the past we couldn't use websockets.
+
+  • The protocol will likely be based on ide-backend-client.
+
+Plan for the Markdown Rendering Service
+
+The markdown rendering service allows rendering of SoH markdown into documentation / tutorials
+which contain active Haskell code. We hope to make this largely backwards compatible with the old
+markdown format, as we'll be migrating content from the old site.
+
+Our plan is to have a central GitHub repo which hosts the main "school" section. For example, it
+might be placed at https://github.com/schoolofhaskell/school. This will be a central place to put
+Haskell educational content, and we will heartily encourage pull requests.
+
+You'll also be able to give the server a URL to your own publicly accessible git repo. The contents
+of this repo will then be served as SoH pages, possibly with a URL like https://schoolofhaskell.com
+/user/user-name/tutorial-name. To facilitate the migration, we'll provide a tarball of your current
+SoH pages, in a form readable by the new implementation.
+
+All existing SoH URLs at https://fpcomplete.com will redirect to https://schoolofhaskell.com. In
+order to do this, we need to migrate the content to the new system. The current plan for this is to
+have a repo, possibly at https://github.com/schoolofhaskell/soh-migration-snapshot, which will be
+used as a fallback for users who haven't yet specified a repo for their account.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

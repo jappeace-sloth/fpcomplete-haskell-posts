@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Best Practices for Developing Medical Device Software</title>
+  <meta property="og:title" content="Best Practices for Developing Medical Device Software">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Medical device regulation makes development more complex than typical software. Learn about the best practices for sound medical device software development. ">
+  <meta property="og:description" content="Medical device regulation makes development more complex than typical software. Learn about the best practices for sound medical device software development. ">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;02&#x2F;best-practices-for-developing-medical-device-software&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Best Practices for Developing Medical Device Software</h1>
+      
+      <p id="page-description">By Niklas Hambüchen, February  7, 2018</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Best%20Practices%20for%20Developing%20Medical%20Device%20Software https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;02&#x2F;best-practices-for-developing-medical-device-software&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;02&#x2F;best-practices-for-developing-medical-device-software&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;02&#x2F;best-practices-for-developing-medical-device-software&#x2F;&amp;title=Best%20Practices%20for%20Developing%20Medical%20Device%20Software"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;02&#x2F;best-practices-for-developing-medical-device-software&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>At FP Complete we have experience writing <a href=
+"https://en.wikipedia.org/wiki/Medical_device" target=
+"_blank">Medical Device software</a> that has to go through
+rigorous compliance steps and eventually be approved by a
+government regulatory body such as the US <a href=
+"https://en.wikipedia.org/wiki/Food_and_Drug_Administration"
+target="_blank">Food and Drug Administration (FDA)</a>.</p>
+<p>In this post we'd like to share some of the best practices and
+pitfalls we have learned when working in this area.</p>
+<p>You may find this blog post especially relevant if you are</p>
+<ul>
+<li>a Software Engineer working on any form of medical
+software,</li>
+<li>a Researcher or Data Scientist trying to turn your research
+into a product, or</li>
+<li>an Engineering Manager or Product Manager trying to deliver a
+medical product,</li>
+</ul>
+<p>but of course you are also invited to read and discuss this
+topic with us when you are none of these.</p>
+<p>Before we get to the problems and best practices, we'll give
+some context by describing what a common project setup for Medical
+Device software may look like.</p>
+<h2>Typical Medical Device project setup</h2>
+<p>A common team structure inside a company working on a Medical
+Device might be:</p>
+<ul>
+<li>10 researchers (mathematicians, statisticians, chemists,
+medical experts, data scientists),</li>
+<li>10 software engineers,</li>
+<li>a project manager, some people managers, some regulatory
+experts, and a product owner/business representative.</li>
+</ul>
+<p>Together, they want to develop a software product that makes
+some form of medical statement (which could be a diagnosis of a
+disease, a forecast of how a patient will react to some treatment,
+or a recommendation of treatment), or one that takes medical action
+(e.g. control logic of a physical device performing a treatment or
+administering a medicine).</p>
+<p>Because of that, the software will be classified as a “<a href=
+"https://en.wikipedia.org/wiki/Medical_device" target=
+"_blank">Medical Device</a>” by regulatory bodies such as the
+<a href=
+"https://en.wikipedia.org/wiki/Food_and_Drug_Administration"
+target="_blank">FDA</a> or <a href=
+"https://en.wikipedia.org/wiki/European_Medicines_Agency" target=
+"_blank">EMA</a>, even though it is just a computer program.</p>
+<p>A common project history is:</p>
+<ul>
+<li>There was an internal <a href=
+"https://en.wikipedia.org/wiki/Research_and_development" target=
+"_blank">R&amp;D</a> phase in which the key algorithms were
+discovered; this phase was free of any form of regulation, mainly
+containing researchers and no engineers.</li>
+<li>Now the project is entering a productisation phase where the
+“device” is built based on that R&amp;D, but many algorithm details
+are still unclear.</li>
+<li>Researchers need to continually run smaller experiments on
+their machines, and from time to time longer batch experiments that
+may run over night . They often do so on separately purchased data
+sets to check and tune their algorithms.</li>
+</ul>
+<p>During the productisation phase, you are obliged to operate in
+“regulation-safe mode”, meaning that all processes and decisions
+need to be well-informed and documented. They must be able to get
+through a regulatory audit, if you do not want to be at risk that
+your product will be denied approval by your regulator and thus
+cannot be used or marketed.</p>
+<p>The regulatory experts on your team will help you with this,
+telling you what certifications you'll need to get and in which
+order to perform which steps. However, they are typically not
+experts at Software Engineering, and will rarely be able to provide
+concrete advice on how to do your Software Engineering to support
+the “regulation-safe mode” as much as possible.</p>
+<h2>Best practices and pitfalls</h2>
+<p>Now that the project setup is clear, let's get into some best
+practices to exercise and pitfalls to avoid when working on Medical
+Device software.</p>
+<h3>Special considerations for working in a regulated medical
+environment</h3>
+<h4>Make a list of “reserved terminology keywords”.</h4>
+<p>The fields of programming and medical regulation have some
+overlap in terminology that can result in disastrous
+miscommunication unless special care is taken to avoid this. For
+example, <em>“<a href=
+"/blog/2016/11/devops-best-practices-multifaceted-testing">unit
+testing</a>”</em> may mean two different things from the
+engineering and regulation perspectives. Your regulatory expert may
+completely misinterpret what regulatory steps you have already
+completed when you tell them that you've just finished writing some
+“unit tests”.</p>
+<p>Disambiguate it to e.g. <em>“engineering unit tests”</em> and
+<em>“regulatory unit tests”</em> and enforce across your team that
+everybody use only these explicitly qualified phrases, and never
+<em>“unit tests”</em> alone.</p>
+<p>A list of terminology that we found ambiguous between engineers
+and regulatory people includes:</p>
+<ul>
+<li><em>unit testing</em></li>
+<li><em>code review</em></li>
+<li><em>verification</em></li>
+<li><em>quality</em></li>
+<li><em>performance</em></li>
+<li><em>“the device”</em></li>
+</ul>
+<h4>Many companies in the medical space may have no experience with
+software .</h4>
+<p>Consequently they may try to apply processes to software that
+were designed for other products, and do not apply to software.</p>
+<p>A common example is the assumption that after the product is
+“done”, it will never change again. This is a sensible
+expectation<img alt="Medical Device Concept - Small.jpg"
+data-constrained="true" sizes="(max-width: 410px) 100vw, 410px"
+src="/images/hubspot/0e438d32c3f5fa378def3b20af8a8b510516f7e71cbf1c73d7d6a7f1ddae22e1.jpeg"
+srcset=
+"/images/hubspot/20e4edfc40b6aa736d89841295338adcc44b2fbccff44d02079a904ea1bb1243.jpeg 205w, /images/hubspot/0e438d32c3f5fa378def3b20af8a8b510516f7e71cbf1c73d7d6a7f1ddae22e1.jpeg 410w, /images/hubspot/a6b204a5b2c342aca5a9c333f5308f9ca4f4992a59804ab6670a71f1a9b05e9d.jpeg 615w, /images/hubspot/de7b3c04d72f90affc944065f1623acfd20c71ea1d4098cfe51825502fc9e835.jpeg 820w, /images/hubspot/922360cf29624facaa344636acee71d34731dcf13262b60ef49e8edda4924419.jpeg 1025w, /images/hubspot/03445c108794056dfcae60ebc71ef5ef1754c296e75f294e7720bc2df11d116a.jpeg 1230w"
+style="width: 410px; margin: 10px 0px 10px 10px; float: right;"
+title="Medical Device Concept - Small.jpg" width="410"> for a drug.
+Of course this doesn't work with software: Continuous modifications
+are needed, already for routine security updates. (You can
+drastically reduce the frequency of such updates being necessary by
+using an advanced programming language such as <a href=
+"/haskell">Haskell</a>, which is designed for safety and
+reliability and thus our language of choice for medical software;
+however you will never be able to entirely rule out the need for
+post-release updates.)</p>
+<p>While this is obvious and natural to any programmer, it may not
+be to medical experts, and not understood in many medical
+companies. You may meet heavy resistance to any form of agile
+development model, continuous deployment setup, and frequent code
+changes after the release of the software. You should ensure that
+you train the managers and medical experts of the project on this
+aspect of software before you start the project, define clear
+boundaries between “device-software updates” and “security-software
+updates”, and set expectations, e.g. that the software may have to
+be recompiled and re-deployed should a security update for an
+underlying software library be necessary.</p>
+<h4>Make CI the central point where all work comes together.</h4>
+<p><a href="/blog/2017/03/continuous-integration">Continuous
+Integration (CI)</a> means merging everybody's work together
+frequently and running automated tests on it. While CI is common in
+software teams by now, researchers and data scientists may not be
+used to it. They may be more familiar with the workflow of
+developing their own, often one-off scripts and programs on their
+PCs and rarely sharing the code with their team members, instead
+only sharing the results.</p>
+<p>For a regulated project, you should enforce that
+<em>everyone</em> on the team checks <em>any</em> code ever
+produced for any purpose of the project, into source code version
+control. That the results produced by this code should be generated
+or reproduced on the shared CI servers, as opposed to be generated
+only on a researcher's own PC. This ensures that it is recorded
+which exact code produced which exact results in which exact
+environment, which helps a lot when making regulatorily relevant
+statements such as “our experiments have confirmed our thesis X”.
+It also speeds up development, because everybody on the team can
+see what everybody else does, or get notified by the CI server when
+accidentally breaking somebody else's program or workflow. You
+should, where possible, refuse to accept results as certain unless
+you have seen them produced by your CI server, and train everybody
+on the team how to follow this workflow.</p>
+<h4>Advertise your tools in the right language.</h4>
+<p>When we as programmers use advanced technical tooling like
+<a href="https://haskell-lang.org" target="_blank">Haskell</a>, we
+can easily enumerate the various features that will make the
+software more correct and reliable. However, these features may
+mean nothing to a medical expert, and thus may not be easily used
+by your team for advertising or explaining to a regulator why your
+software is especially safe. Consequently you should do research on
+what terms will be understood by medical experts, and map your
+tools and features into their terminology.</p>
+<p>For example, if you use a compiler featuring static analysis,
+you might explicitly advertise this as a form of “formal software
+verification”, which is a term most medical experts are familiar
+with.</p>
+<p>Here's a list of cool tools we've used in the past that fall
+under “formal software verification”:</p>
+<ul>
+<li>strong typing</li>
+<li>referential transparency (pure functions)</li>
+<li>parametricity</li>
+<li>generative testing</li>
+<li>code coverage</li>
+<li>model checking</li>
+<li>theorem proving</li>
+</ul>
+<h4 style="text-align: center;"></h4>
+<h4>Unexpected changes are the worst.</h4>
+<h5>Code and product changes</h5>
+<p><strong>As a programmer</strong>, you should:</p>
+<ul>
+<ul>
+<li>
+<p>Try to <strong>make all programs deterministic</strong>, ideally
+up to byte-identical output.</p>
+<p>This will drastically help you get needed code refactorings past
+regulatory review, as you can provide evidence that your changes
+did not change the functioning of the device.</p>
+</li>
+<li>
+<p>Set up <strong>“gold-standard” testing</strong> in CI to notice
+any change.</p>
+<p>Gold-standard testing means that you store the last-approved
+outputs of your algorithms on a (large) data set of inputs in your
+version control system or (if it doesn't fit in there) in another
+form of storage. Each code commit message should then indicate
+whether it is expected to change the results or not. After the
+results have been computed by CI, proceed according to the
+table:</p>
+<table style="width: 749px;">
+<thead>
+<tr>
+<th style="width: 157px; text-align: left;">&nbsp;</th>
+<th style="width: 258px; text-align: left;">results are
+<em>identical</em> with gold-standard</th>
+<th style="width: 332px; text-align: left;">results are
+<em>different</em> from gold- standard</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left; width: 157px;">commit message<br>
+does <strong>not expect change</strong></td>
+<td style="width: 258px; text-align: left;">good to merge</td>
+<td style="text-align: left; width: 332px;">not good to merge,
+investigate why results changed</td>
+</tr>
+<tr>
+<td style="text-align: left; width: 157px;">commit message<br>
+<strong>expects change</strong></td>
+<td style="text-align: left; width: 258px;">not good to merge,
+investigate why change didn't have the desired effect</td>
+<td style="text-align: left; width: 332px;">possibly good to merge,
+let medical / data science team sign off the changed results, then
+update the gold-standard outputs</td>
+</tr>
+</tbody>
+</table>
+<p>Note how this is different from engineering unit-testing:</p>
+<p>In engineering unit-testing, the programmer defines and
+understands precisely what the output of the algorithm is for each
+single test case. In gold-standard testing, the idea is not to
+understand the output for each input, but to get notified when
+outputs change (independent of what exactly the outputs look like).
+Because of this, gold-standard tests are easier to write: They
+require no thinking effort from the programmer, they only require
+input data to run on.</p>
+</li>
+</ul>
+</ul>
+<p><strong>Make only controlled changes:</strong></p>
+<ul>
+<ul>
+<li>Make people announce when they expect a change.</li>
+<li>Roll back any unexpected change.</li>
+<li>Every change must be traceable to a concrete requirement. This
+bit can be done with low overhead by having commits and code
+comments reference issue tracker entries, and the issue tracker
+being well maintained to link together code features with technical
+requirements (“feature X shouldn't crash and be easy to
+understand”), regulatory requirements (“computation X must not
+store user data”), or business requirements (“computation X must
+finish in under an hour”).</li>
+</ul>
+</ul>
+<h4>Process changes</h4>
+<p>While software engineers love to upgrade their stack and switch
+tools and processes frequently, medical people tend to hate it.
+However, there are ways to make them more comfortable with it.</p>
+<p><strong>As a product manager or similar role</strong>, when you
+want to make a process change, stick to a predictable order such
+as:</p>
+<ol>
+<li>Analyse what change needs to be made</li>
+<li>Announce that the team will be moving to a new approach X in
+the future, with a concrete proposal.</li>
+<li>Collect feedback, inviting everyone whose workflow might be
+touched by this move to provide input of how and when it should be
+done to reduce disruption to a minimum.</li>
+<li>Give it a memorable name that people can use for referring to
+the motion.</li>
+<li>Perform coordinated switchover at a pre-announced time, making
+sure everybody knows about it in advance.</li>
+</ol>
+<p>Here is an example:</p>
+<p>Let's say it is necessary that data scientists switch their
+working environment operating system (OS) from Windows to Linux so
+that developers can more easily reproduce their results in the
+production software.</p>
+<ol>
+<li>Investigate in audience-limited conversations (e.g. with
+programmers) whether the data scientists' desktop OS has to be
+changed, or whether it is sufficient that they connect to a Linux
+machine from their current Windows machines.</li>
+<li>Announce that the team would like to move the data scientist
+workspaces from Windows to Linux within the next three months, and
+present your concrete proposal so far which may include a
+video-tutorial based training on how to use the new work spaces
+remotely from Windows, as well as a dedicated engineer to help with
+the migration.</li>
+<li>Collect feedback such as a data scientist saying that some
+scripts don't work on Windows. Discuss with this data scientist
+(but in public) whether an engineer helping to port these script to
+Windows before the move would address that issue. Another data
+scientist may point out that the move should be done after
+producing results X but before starting feature Y. Refine the
+schedule accordingly.</li>
+<li>Call the motion “Datasci-Linux”.</li>
+<li>Ensure everybody knows that “Datasci-Linux” will be performed
+in the last week of April.</li>
+</ol>
+<h3>Team organisation</h3>
+<h4>Have a real ops , tools and help team .</h4>
+<p>A lean “<a href="/devops">DevOps</a>”- only approach usually
+doesn't work with researchers.</p>
+<p>While developers like to control machines and servers themselves
+and the team can be made more efficient that way, researchers like
+to have their heavy machinery moved by people who understand what
+they are doing.</p>
+<p>Thus, as a manager, you should make sure that:</p>
+<ul>
+<li>Ops should take care of researchers' working environments,
+software needed, computing clusters and so on, so that researchers
+don't have to spend time on trial and error (unless they
+<em>want</em> to learn it).</li>
+<li>If a researcher wants to do some overnight computation job,
+assign them an engineer to execute it properly.</li>
+<li>Recurring jobs are coded up so they can be more automated.
+Non-software people are surprisingly unfamiliar with that idea and
+will happily do the same manual task again and again.</li>
+<li>The rule of thumb is: Do it manually 3 times, then code it up
+(this is a good rule for general software development, but you may
+have to emphasise it especially in a medical environment where
+manual procedures that cannot be automated are very common).</li>
+<li>Ensure you have people who can continually help with every-day
+issues with tools the team uses, and are tasked to train everybody
+in using and understanding version control software and the
+development model. A lot of time can be wasted if somebody does not
+understand how to get their changes in the right place with
+<a href="https://en.wikipedia.org/wiki/Git"><code>git</code></a> ,
+pushes things to the wrong branch, and so on.</li>
+</ul>
+<h4>Separate roles</h4>
+<p>Define ahead of time what role can block what activity to avoid
+unnecessary project slowdowns.</p>
+<p>As a Project Manager, you should make sure that:</p>
+<ul>
+<li>Regulatory people don't use their almost unlimited veto power
+to block decisions that are outside of their domain. For example, a
+regulatory reviewer should not use their veto to enforce changes
+that are irrelevant for regulatory review.</li>
+<li>Programmers should be able to block researcher or regulatory
+decisions when they are not realisable , such as using a given
+method when it cannot be implemented correctly, accurately, or in
+time.</li>
+<li>You (the Project Manager) are actually able to exercise the
+power over the schedule and work items that was given to you. A
+Project Manager's responsibility is to ensure realistic estimates,
+also at times pushing back against features that executives may
+want to see in short time, if, based on programmer or researcher
+feedback, they cannot be realised that quickly.</li>
+</ul>
+<h3>Managing code, processes and documentation</h3>
+<h4>Version control</h4>
+<p><strong>Enforce that all code be checked into version
+control.</strong> Make no exceptions here.</p>
+<p>Arrange for <strong>personal scrap spaces</strong> in version
+control, that are clearly marked as not being under the same
+scrutiny as “device code”. If you do not do this, researchers and
+programmers will not check their experiments into version control,
+and the project will suffer. Examples for such scrap spaces are
+branches prefixed with <code>wip/</code> (for work-in-progress),
+and a <code>personal-workspaces/username</code> directory
+hierarchy.</p>
+<p>In general, always <strong>clearly separate device-code and
+non-device code</strong>. This need not mean that they should be in
+independent source code repositories (as that would forbid ensuring
+experimental scripts work with the latest version of device-code).
+Instead, use other explicit means as separation, such as having one
+directory for device , and one for non-device code.</p>
+<p>Relatedly, <strong>separate the device from the
+platform</strong> needed to run the device (such as deployment
+infrastructure and server tools). As mentioned earlier, this is
+especially important for infrastructure security updates.</p>
+<p>You should optimise version control usage for
+<strong>efficiency</strong>. For example: Have branches with a
+<code>doc-</code> prefix only run documentation builds, and skip
+the big or costly stages other builds may include. People will hate
+tools for structured working such as version control and CI if it
+makes their workflow slow. Always provide fast ways to do
+things.</p>
+<p>If possible, use a <strong>linear development model</strong> in
+version control (such as a “rebasing” workflow in
+<code>git</code>). In an environment where reproducibility is of
+utmost importance, being able to do <a href=
+"https://lwn.net/Articles/317154/" target="_blank">automatic
+bisections</a> to find regressions is more important than
+developers having to resolve more merge conflicts.</p>
+<h4>Be especially careful with development practices that can scare
+regulatory people.</h4>
+<h5>TODOs</h5>
+<p>As a programmer or data scientist,</p>
+<strong>Don't write :</strong> <code>TODO: fix this code</code> .
+<ul>
+<li>This may suggest there is a flaw in the device that can make it
+unsafe, or that it is unfinished.</li>
+<li>Assume that regulatory reviewers have no understanding of
+programming and take you literally by the words you write.</li>
+</ul>
+<br>
+<strong>Do write:</strong> <code>TODO-ENG: Future performance
+enhancement: While this computes the correct result and is safe to
+use, we should make this faster by doing XYZ.</code><br>
+<p>For each project, define and document clear criteria for labels
+like <code>TODO</code> .</p>
+<p>For example, you might designate <code>TODO-ENG</code> as a
+label to mean <em>“irrelevant for the medical device operating
+correctly, but engineering would like to change this”</em>, and
+<code>TODO-DEVICE</code> as a label to mean <em>“this must be
+changed before the release or next major milestone on the
+roadmap”</em>. You can then ensure before the next milestone that
+all <code>TODO-DEVICE</code> labels are gone.</p>
+<p>Ensure everybody (including regulatory people) know which label
+means what. Add this information to your documentation. Also see
+the next point for more on that.</p>
+<h4>Enforce documentation for all coding processes</h4>
+<p>Whenever you make a decision of how things are done in the
+project, write it down, ideally in version control.</p>
+<p>Don't propagate engineering, review, and other process rules by
+word of mouth. One way regulators assess you is whether you stick
+to your own processes; they will not be able to find evidence of
+you doing so if you haven't written the processes down.</p>
+<h4>Finding documentation</h4>
+<p>Only <em>having</em> documentation is not enough. It also needs
+to be discoverable.</p>
+<p><img alt="Software Documentation.jpg" data-constrained="true"
+sizes="(max-width: 320px) 100vw, 320px" src=
+"/images/hubspot/2816e0f0a7a662bb77386f78b0803e969cff643b57f9fbbea18071bd333c7888.jpeg"
+srcset=
+"/images/hubspot/420d58e985e9ed40bc3c99db4f0ba77ec7f6e60b6bf4e13521a3efefe94e9f89.jpeg 160w, /images/hubspot/2816e0f0a7a662bb77386f78b0803e969cff643b57f9fbbea18071bd333c7888.jpeg 320w, /images/hubspot/827638316f85fcb0f681d688f4474fc5eaae818c72ebab5bdb4ad0c7478d132d.jpeg 480w, /images/hubspot/63ffe06350ea04411aacc4ff258b870acedd9826f7d57acbb6cc641da17f71ea.jpeg 640w, /images/hubspot/0833543179b84a98514c90f39d676aa984340ef03d23d27b3b526c5d6f69c2b8.jpeg 800w, /images/hubspot/cf82c96753183e4cce49aa17504f36d00d3a273591537d7dd6089affe4ef0ac8.jpeg 960w"
+style="width: 320px; margin: 0px 10px 10px 0px; float: left;"
+title="Software Documentation.jpg" width="320">Use simple and
+obvious ways for people to find any documentation they might need.
+An approach that works well is to place a <code>README</code> file
+in each sub-project's top level directory (of course under version
+control), and link to other documents from this entry point.</p>
+<p>Use a simple tagging scheme, such as tags in brackets (e.g.
+<code>[ALIEN-SALIVA-DENSITY-ESTIMATION]</code>) that allows you to
+place textual anchors and references to them in code and
+documentation. This is because linking from documentation to
+documentation (which may be easier, e.g. using hyperlinks) is not
+enough; you will also need to link from code to docs and from docs
+to code (and referring to file name plus line number is obviously
+not a good choice given that code can move around).</p>
+<p>Medical device software tends to have <em>a lot</em> of
+documentation, so you will have many links and references in your
+project. At the time of an audit, you don't want auditors unable to
+follow outdated documentation links. Have your tools team write
+tooling to find dangling links and references, possibly also to
+produce simple graphs so that you can easily visualise
+documentation references.</p>
+<h3>Interaction between researchers and engineers</h3>
+<p>You cannot simply throw a bunch of engineers and researchers
+together and expect that they will work in perfect symbiosis and
+produce the desired results.</p>
+<p>In many companies, R&amp;D and Engineering may be separate
+departments that may have developed different ways of working and
+communicating. This maybe even more true when one of the two sides
+is brought in by a different company or via contracting . Bringing
+them together often warrants extra planning and being more explicit
+than usual when setting up joint workflows.</p>
+<h4>Define clearly who is in charge at each stage of the
+project.</h4>
+<ul>
+<li>In the <strong>R&amp;D phase</strong>, engineering should
+likely assist researchers to get good results, quickly.</li>
+<li>In the <strong>productisation phase</strong>, researchers
+should likely assist engineers to make an excellent product.</li>
+</ul>
+<h4>Discourage walled-off thinking.</h4>
+<p>Make clear that the success of the project depends on the
+successful interaction between researchers and engineers.</p>
+<p>Most importantly, be aware of the <strong>the <em>“my side is
+fine”</em> problem</strong>.</p>
+<p>Researchers like to think:</p>
+<blockquote>
+<p><span style="color: #003366;">These are my preconditions, and
+they have to be provided by the engineers. If those are provided,
+we'll be fine.</span></p>
+</blockquote>
+<p>Engineers like to think:</p>
+<blockquote>
+<p><span style="color: #003366;">As long as I code up these maths
+written by the researchers, I'll be safe.</span></p>
+</blockquote>
+<p>As a result, neither of the two sides makes sure that the
+critical preconditions that make the system work are actually
+provided.</p>
+<p>To avoid this, you should make sure each side understands the
+other well, that the interface between them is understood
+especially well by both, and that they talk often about it.
+<strong>Encourage mutual training</strong>: Have Researchers train
+Engineers to understand their maths, and Engineers train
+Researchers to read their code.</p>
+<h4>Establish critical thinking and a culture where everyone can
+ask everything.</h4>
+<p>This is one of the most important bits when trying to make a
+safe device.</p>
+<p><strong>Allow and encourage any form of understanding
+question.</strong> <em>“Is this safe to do, and why?”</em> should
+be a common thing to be heard and written in your project.
+<strong>Establish that this does not question anybody’s
+reputation.</strong> Employ blame-free evaluation and analysis
+techniques.</p>
+<h2>Summary</h2>
+<p>Hopefully you have found these insights useful or
+interesting.</p>
+<p>If you'd like our help with delivering Medical Device software,
+don't hesitate to&nbsp;<a href="/contact-us" target=
+"_blank">contact us</a>.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Best%20Practices%20for%20Developing%20Medical%20Device%20Software https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;02&#x2F;best-practices-for-developing-medical-device-software&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;02&#x2F;best-practices-for-developing-medical-device-software&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;02&#x2F;best-practices-for-developing-medical-device-software&#x2F;&amp;title=Best%20Practices%20for%20Developing%20Medical%20Device%20Software"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2018&#x2F;02&#x2F;best-practices-for-developing-medical-device-software&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#d1a2b0bdb4a291b7a1b2bebca1bdb4a5b4ffb2bebc" targe="_blank"><span class="__cf_email__" data-cfemail="e695878a8395a6809685898b968a839283c885898b">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

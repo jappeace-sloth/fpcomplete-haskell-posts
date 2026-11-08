@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Ten Things You Should Know About Haskell Syntax</title>
+  <meta property="og:title" content="Ten Things You Should Know About Haskell Syntax">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;09&#x2F;ten-things-you-should-know-about-haskell-syntax&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Ten Things You Should Know About Haskell Syntax</h1>
+      
+      <p id="page-description">By Bartosz Milewski, August 22, 2012</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Ten%20Things%20You%20Should%20Know%20About%20Haskell%20Syntax https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;09&#x2F;ten-things-you-should-know-about-haskell-syntax&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;09&#x2F;ten-things-you-should-know-about-haskell-syntax&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;09&#x2F;ten-things-you-should-know-about-haskell-syntax&#x2F;&amp;title=Ten%20Things%20You%20Should%20Know%20About%20Haskell%20Syntax"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;09&#x2F;ten-things-you-should-know-about-haskell-syntax&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>Learning a new programming language involves learning syntax,
+semantics, and idioms. Syntax itself can tell you a lot about the
+philosophy of the language, but learning syntax without any context
+is not only hard but also boring. On the other hand, you'd want to
+get some handle on syntax as soon as possible, so you can
+sight-read simple programs and try your own hand at modifying
+them.</p>
+<p>So here's a little introduction to Haskell syntax, without any
+formal definitions, that touches on the philosophy of the language
+and tries not to be too boring. Unless you are already a Haskell
+pro, you're not supposed to understand all of it on the first
+reading. In fact you might want to occasionally come back to it as
+you are progressing in your understanding of Haskell. (If you're a
+Haskell pro, you might cringe at some mental shortcuts I've taken
+for the sake of simplicity.)</p>
+<h2>Table of Contents</h2>
+<ol>
+<li>Haskell is Terse</li>
+<li>Function Call Syntax is Terse</li>
+<li>Function Definition Syntax is Terse</li>
+<li>Currying is Cool (and Terse)</li>
+<li>What’s not a Declaration is an Expression</li>
+<li>There are no Loops</li>
+<li>Function Application Has Precedence over Operators</li>
+<li>Data Types are Algebraic and Pattern Matching is
+Ubiquitous</li>
+<li>There is no Order</li>
+<li>There is Order in Do</li>
+</ol>
+<h2>1. Haskell is Terse</h2>
+There is very little redundancy in Haskell so almost everything,
+including whitespace, has meaning.
+<p>The good thing is that, once you get used to it, you'll be able
+to see more program logic at a glance. In a wordy language you not
+only waste precious keystrokes but you also dilute the structure
+and meaning of your program. Code that fills one screenful in
+Haskell, would be spread over several screenfuls in Java. For a
+Haskell programmer, studying a Java or a C++ program is like
+looking at it through a microscope: you see lots of detail but miss
+the big picture.</p>
+<p>One of those things that seem indispensable in other languages
+are special characters for separating statements (e.g., semicolons)
+and delimiting blocks (e.g., braces). Mind you, every programmer
+worth his or her salt uses formatting to make their code readable,
+but the compiler throws the formatting away. Haskell does (almost)
+the opposite. It recognizes blocks by <strong>indentation</strong>
+(but please use spaces, not tabs), and <strong>newlines</strong> as
+separators.</p>
+<p>As part of this philosophy of frugality of expression Haskell
+doesn't require type signatures -- although an experienced
+Haskeller provides them for clarity -- so type errors in this
+strongly typed language are often cryptic for the uninitiated. For
+instance, if you define a function <code>f</code> that adds two
+numbers and then call it with two strings, the compiler will not
+complain about bad arguments, it will complain about string not
+supporting operator plus. And it will formulate this complaint in a
+very non-obvious way:</p>
+<pre>No instance for (Num [Char]) arising from a use of `f'
+    Possible fix: add an instance declaration for (Num [Char])</pre>
+<p>Also, the case is important. Anything that starts with a
+<strong>capital letter</strong> is either a concrete type or a data
+constructor. Lower-case-starting names are reserved for function
+names and variables, including type variables.</p>
+<p>The bad thing about terseness is that lack of redundancy makes
+error reporting harder. The compiler truly doesn't know if you have
+forgotten a closing parenthesis or messed up indentation.</p>
+<h2>2. Function Call Syntax is Terse</h2>
+This is probably the first and the hardest obstacle in reading
+Haskell code fluently: There is no special syntax for function
+application. Any set of identifiers separated by
+<strong>spaces</strong> is a function call. For instance:
+<pre>a b c d e</pre>
+is a call to function <code>a</code> with arguments <code>b</code>,
+<code>c</code>, <code>d</code>, and <code>e</code>. If you use
+parentheses it's only to delimit individual arguments (if they are
+expressions); and commas are used to separate tuple elements. So if
+you see something like this:
+<pre>f (a, b, c)</pre>
+you interpret it as a call to (application of) a function
+<code>f</code> to just <em>one argument</em> -- a tuple of three
+elements. It's very important to train your eyes to look for
+spaces. They separate functions from their arguments and arguments
+from each other.
+<p>When an argument to a function is a result of another function
+application, you have to use parentheses for that. For
+instance,</p>
+<pre>a b (c d)</pre>
+means the function <code>a</code> acting on two arguments,
+<code>b</code> and <code>(c d)</code>, which itself is an
+application of function <code>c</code> to <code>d</code>. There is
+a way to omit the parentheses in the above by using the operator
+<code>$</code> (dollar sign):
+<pre>a b $ c d</pre>
+A <code>$</code> is interpreted as: What follows is the last
+argument to the function you're calling.
+<h2>3. Function Definition Syntax is Terse</h2>
+A function definition:
+<ul>
+<li>starts with the name of the function,</li>
+<li>followed by its formal parameters separated by white
+spaces,</li>
+<li>an <strong>equal sign</strong>,</li>
+<li>and an expression that is the body of the function.</li>
+</ul>
+You should be able to parse this line of code:
+<pre>a b c = d e f</pre>
+It's a definition of the function <code>a</code> that takes two
+formal parameters, <code>b</code> and <code>c</code>. The body of
+this function is a call to <code>d</code> with two arguments,
+<code>e</code> and <code>f</code>. Of course, the use of short
+meaningless names is not encouraged in Haskell but I do it here to
+help you prime your internal parser.
+<p>When formal parameters are enclosed in parentheses, they contain
+<strong>patterns</strong>. If an argument is data with some
+structure, it can be pattern-matched on the spot. Types that have
+more than one constructor may be pattern-matched in more than one
+way. In that case there may be what looks like several definitions
+of the same function. For instance, a function that operates on a
+tree might be defined as:</p>
+<pre>f (Leaf x) = ...
+f (Node left right) = ...</pre>
+Here, <code>(Leaf x)</code> matches a leaf node containing a value
+<code>x</code>, and <code>(Node left right)</code> matches an
+internal node with two children <code>left</code> and
+<code>right</code>.
+<p>Function definitions may also contain guards: boolean
+expressions constraining the arguments.</p>
+<p>The use of the equal sign as part of function definition has a
+deeper meaning. The right hand side is <em>equal</em> to the left
+hand side in the sense that it might be substituted for it anywhere
+in the program -- with the formal parameters replaced by actual
+arguments. In fact using this kind of "equational reasoning" you
+may formally prove things about your code.</p>
+<h2>4. Currying is Cool (and Terse)</h2>
+It's okay to call a function of, say, 5 parameters:
+<pre>f a b c d e = ...</pre>
+with, say, two arguments:
+<pre>f 7.1 2.35</pre>
+The result is a <em>new function</em> that takes 3 arguments (the
+remaining ones). This is called partial application and is possible
+because any function of multiple arguments can be curried, i.e.,
+interpreted as a function of one argument returning another
+function. This fundamental property is reflected in the way we
+write type signatures for functions:
+<p>A function of one argument has the type:</p>
+<pre>a -&gt; b</pre>
+where a and b are some types. For instance, a function
+<code>strLen</code> that takes a string and returns an integer
+would have the signature:
+<pre>strLen :: String -&gt; Int</pre>
+Type signatures are optional but, nevertheless, they are routinely
+written before function definitions.
+<p>The signature of the function <code>prefix</code> that takes a
+string and an integer and returns a string would be:</p>
+<pre>prefix :: String -&gt; Int -&gt; String</pre>
+The last arrow points to the return type of the function, the
+preceding one(s) separate argument types (here, <code>String</code>
+from <code>Int</code>). But there is an equivalent, curried,
+interpretation of this signature:
+<pre>prefix :: String -&gt; (Int -&gt; String)</pre>
+In this interpretation <code>prefix</code> is a function of one
+argument of type <code>String</code> returning a <em>function</em>
+that takes an <code>Int</code> and returns a <code>String</code>.
+The parentheses are usually omitted because of the right
+associativity of the arrow.
+<p>Another common trick is to provide a signature that lists more
+arguments than the function definition. For instance:</p>
+<pre>f :: a -&gt; b -&gt; c
+f x = g</pre>
+Here a two-argument function <code>f</code> is defined in terms of
+a one-argument function <code>g</code>. This is equivalent to:
+<pre>f x y = g y</pre>
+but using the curried form is considered cooler because it
+eliminates some notational redundancy. The extreme of this approach
+is called <em>point-free</em> style, in which arguments are not
+used at all and functions are defined in terms of other functions.
+<p>The downside to currying is cryptic error messages. The compiler
+can't, for instance, guess that you have forgotten to provide an
+argument to some function. It will instead think that you used a
+curried function and may, for instance, complain that it can't
+convert the (curried) function to some other type that was expected
+at that point in your code.</p>
+<h2>5. What's not a Declaration is an Expression</h2>
+The body of a function is an expression. This expression evaluates
+to a value which is returned by the function. Terseness dictates
+that there is no return statement in Haskell. There is however an
+(overloaded) library function called <code>return</code> (more
+about which later).
+<p>It follows that the <code>if/then/else</code> construct is an
+expression too: it returns a value from one of the branches.</p>
+<p>You might think that a definition of a local variable would be a
+statement, but it isn't. Instead you introduce locals using the
+<code>let/in</code> expression. You "let" a name (or a pattern) be
+equal to something "in" an expression. The scope of the new name(s)
+span the expression following <code>in</code>. For instance:</p>
+<pre>let x = 5 in
+    x * x</pre>
+is equal to 25.
+<p>Another statement-like expression is the pattern-matching
+<code>case/of</code> construct, as in:</p>
+<pre>case tree of
+    Leaf x -&gt; ...
+    Node left right -&gt; ...
+</pre>
+The value of this expression is one of the expressions to the right
+of the arrows.
+<p>You might think that a loop must be a statement, but it isn't
+because:</p>
+<h2>6. There are no Loops</h2>
+The replacement for loops is recursion. You might worry that
+recursion could blow your stack, and that's a valid concern. In
+time you'll learn more about the execution model of Haskell to be
+able to correctly predict resource usage (both stack and heap
+memory) of each approach. For now, remember that Haskell will
+optimize tail-recursive cases. Thinking recursively rather than
+loopily takes some getting used to, but it quickly becomes second
+nature.
+<p>Recursion is not used as often as you'd expect since a lot of
+loops can be replaced by bulk operations: functions that take lists
+or other containers. They are, under the surface, implemented using
+recursion, but they are often easier to read and reason about. Four
+such functions from the Haskell standard library, Prelude, are
+ubiquitous in Haskell code: <code>map</code>, <code>filter</code>,
+<code>foldl</code>, and <code>foldr</code>.</p>
+<h2>7. Function Application Has Precedence over Operators</h2>
+The most important thing in parsing Haskell code is to understand
+the precedence of various constructs. Function application -- in
+most cases just the "whitespace operator" --has the highest
+precedence. So if you see something like this:
+<pre>f a b c + g d e</pre>
+you know that you are adding the result of two function calls
+rather than calling one function with one of the arguments being
+the sum of two terms. Other operators have precedences between 0
+(the lowest) and 9 (the highest, but still lower than function
+application). In particular the <code>$</code> operator has
+precedence 0; and the dot, function composition, has precedence 9.
+<p>Parentheses may always be used to clarify both precedence and
+associativity.</p>
+<h2>8. Data Types are Algebraic and Pattern Matching is
+Ubiquitous</h2>
+Conceptually, new data types are defined using combinations of OR
+and AND. These two operations form an algebra, with OR playing the
+role of addition and AND playing the role of multiplication.
+<p>The OR, denoted by <code>|</code> (vertical bar) in data
+definitions, could be understood as creating a tagged union -- in
+the simplest case it's just an enumeration. For instance, a Bool
+type can be described as:</p>
+<pre>data Bool = True | False</pre>
+<code>Bool</code> is the name of the type and <code>True</code> and
+<code>False</code> are called data <strong>constructors</strong>
+(notice the mandatory capitalization).
+<p>The AND combination could be understood as forming tuples or
+structures with one or more fields of different types.</p>
+<p>Since data is immutable in Haskell, an object always remembers
+how it was created. It remembers which data constructor was called
+and what values (or expressions) were passed to it.</p>
+<p>Data constructor can also be used as a pattern to match this
+information, e.g., in a function definition, a let expression, or
+in the case/of expression. We've seen examples of this in items 3
+and 5. Here's the (recursive) data type definition that was used in
+those examples (see also the Appendix):</p>
+<pre>data Tree = Leaf Int | Node Tree Tree</pre>
+<h2>9. There is no Order</h2>
+<p>The order of definitions within a module doesn't matter. That
+means you can call a function or use a data structure whose
+definition is further down in the file -- no no need for forward
+declarations. There is even a <code>where</code> construct that
+lets you define local functions or variables <em>after</em> the
+code that calls them, as in:</p>
+<pre>len x y = sqrt (sq x + sq y)
+  where
+    sq a = a * a</pre>
+<p>By the way, Haskell is a lazy language, so things are not
+evaluated in the order you write them. Instead they are evaluated
+when the values are needed. Evaluation is forced, for instance,
+when you want to output results, or when you want to pattern-match
+them. There is also the bang operator and the <code>seq</code>
+function that force (some degree of) evaluation.</p>
+<p>One of the advantages of lazy evaluation is that you can define
+infinite data structures, like this list from 0 to infinity:</p>
+<pre>[0..]</pre>
+<h2>10. There is Order in Do</h2>
+Haskell has a built-in domain specific language for imperative
+programming (this is one of those useful simplifications at which
+purists turn up their noses). Blocks written in this language start
+with <code>do</code> and contain lines that look like statements
+and assignments:
+<pre>do
+    a &lt;- giveMeAnA
+    b &lt;- giveMeAB
+    return (a + b)</pre>
+You can even see here the <code>return</code> "statement" (really,
+a library function). The "statements" inside the <code>do</code>
+blocks are executed in order -- when and if they are executed. This
+kind of code is called <em>monadic</em> because there is always a
+monad behind it. Monads are very interesting beasts but,
+unfortunately, beyond the scope of the current article.
+<p>In monadic code there is usually something hidden from view;
+often some state is passed implicitly, or some form of flow of
+control is imposed. The details vary from monad to monad.</p>
+<p>An important example of monadic code is input and output. You
+always do I/O inside a <code>do</code> statement -- using the IO
+monad. This way you are guaranteed that I/O actions are executed in
+order.</p>
+<p>A function that does I/O returns an IO object, often called an
+<em>action</em>. There's nothing you can do with an IO action,
+except to ignore it (in that case no I/O will be done), or pass it
+all the way to main, where you can return it to the system --
+<code>main</code> usually has the signature:</p>
+<pre>main :: IO ()</pre>
+<h2>Conclusion</h2>
+This is by no means a complete presentation of the Haskell syntax,
+but it should get you going for now.
+<p>I'd like to thank Michael Snoyman for valuable comments on the
+draft of this blog.</p>
+<h2>Appendix</h2>
+<p>Here's the more complete version of the tree example I used in
+this article:</p>
+<pre>data Tree = Leaf Int | Node Tree Tree
+g (Leaf x) = x
+g (Node left right) = g left + g right
+f tree =
+    case tree of
+        Leaf x -&gt; x
+        Node left right -&gt; f left + f right</pre>
+The two functions, f and g, are equivalent.
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Ten%20Things%20You%20Should%20Know%20About%20Haskell%20Syntax https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;09&#x2F;ten-things-you-should-know-about-haskell-syntax&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;09&#x2F;ten-things-you-should-know-about-haskell-syntax&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;09&#x2F;ten-things-you-should-know-about-haskell-syntax&#x2F;&amp;title=Ten%20Things%20You%20Should%20Know%20About%20Haskell%20Syntax"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2012&#x2F;09&#x2F;ten-things-you-should-know-about-haskell-syntax&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#3043515c5543705640535f5d405c5544551e535f5d" targe="_blank"><span class="__cf_email__" data-cfemail="91e2f0fdf4e2d1f7e1f2fefce1fdf4e5f4bff2fefc">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

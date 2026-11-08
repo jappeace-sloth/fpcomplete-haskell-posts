@@ -1,72 +1,67 @@
-# FP Complete exception posts
+# FP Complete Haskell posts
 
-Private archive of the FP Complete / FP Block writing on Haskell exceptions and
-async exceptions. The original sites no longer resolve, so these copies come
-from the Wayback Machine. The text remains the work of its authors, which is why
-this repository stays private.
+Private archive of FP Complete's Haskell writing: 224 blog posts from 2012 to
+2025 and 55 pages from the Haskell section of their site (tutorials, library
+guides, getting started). Their Rust, devops, cloud, blockchain and company
+posts are left out. The original sites (www.fpcomplete.com, tech.fpcomplete.com
+and academy.fpblock.com) no longer resolve, so every page here is a Wayback
+Machine capture. The text remains the work of its authors, which is why this
+repository stays private.
 
-Collected 7 Nov 2026 by cabal@lenovo-tablet.
+Collected 7 and 8 Nov 2026 by cabal@lenovo-tablet.
 
-Read `academy/blog/2018/04/async-exception-handling-haskell` and
-`academy/haskell/tutorial/exceptions` first. The 2016 best practices post says
-it was absorbed into that tutorial, and FP's `safe-exceptions` page recommends
-`UnliftIO.Exception` instead, so the older posts are dated on that point.
+## Reading
+
+`index.md` lists every page with its date, author and a Wayback link.
+
+For exceptions, read `blog/async-exception-handling-haskell` and
+`haskell/tutorial/exceptions` first. The 2016 best practices post says it was
+absorbed into that tutorial, and `haskell/library/safe-exceptions` recommends
+`UnliftIO.Exception` instead, so the older exception posts are dated on that
+point.
+
+## Layout
 
 Each page directory holds the raw capture as `index.html` and a `w3m -dump`
 rendering as `index.txt`. Stylesheets and images were not archived.
 
-To reopen a page in the Wayback Machine, use
-`https://web.archive.org/web/<capture>/<original URL>`. Inserting `id_` after the
-capture timestamp returns the raw bytes. Those bytes can be gzip-compressed, so
-use `curl --compressed` or check for the gzip magic number.
+- `blog/<slug>/`: one copy per post. When a post existed on several hosts, the
+  academy.fpblock.com capture is used, falling back to tech.fpcomplete.com and
+  then www.fpcomplete.com.
+- `haskell/<path>/`: the Haskell section, mirroring its original URLs.
+- `manifest.tsv`: directory, date, author, title, original URL, Wayback capture
+  timestamp and why the page was selected.
 
-## academy.fpblock.com captures
+Dates come from the byline on the post. For two posts whose captures have no
+byline, the month comes from the dated URL the post had on www.fpcomplete.com.
+The bylines and the `/blog/YYYY/MM/` URLs disagree by about a month on 16 posts;
+the byline is used.
 
-The most recent versions, and the ones to prefer.
+## Selection
 
-| Directory under `academy/` | Capture | Author, date |
-|---|---|---|
-| `blog/2018/04/async-exception-handling-haskell` | 20250405223544 | Michael Snoyman, Apr 2018 |
-| `haskell/tutorial/exceptions` | 20250428060542 | undated |
-| `blog/2016/11/exceptions-best-practices-haskell` | 20250512111457 | Michael Snoyman, Nov 2016 |
-| `blog/2016/06/announce-safe-exceptions` | 20250717144712 | Michael Snoyman, Jun 2016 |
-| `blog/2016/06/async-exceptions-stm-deadlocks` | 20250428055001 | Michael Snoyman, Jun 2016 |
-| `blog/2017/06/tale-of-two-brackets` | 20250428053405 | Michael Snoyman, Jun 2017 |
-| `blog/2017/02/monadmask-vs-monadbracket` | 20250624223553 | Michael Snoyman, Feb 2017 |
-| `blog/2017/07/announcing-new-unliftio-library` | 20250428064002 | Michael Snoyman, Jul 2017 |
-| `blog/2018/05/pinpointing-deadlocks-in-haskell` | 20250428060422 | Alexey Kuleshevich, May 2018 |
-| `blog/async-exceptions-haskell-rust` | 20250611010103 | Michael Snoyman, Dec 2019 |
-| `blog/defining-exceptions-in-haskell` | 20250428053629 | Chris Done, Jan 2019 |
-| `blog/how-to-handle-asynchronous-exceptions-in-haskell` | 20250428055932 | Robert Bobbett, Apr 2018 (webinar announcement) |
-| `haskell/library/async` | 20250515034200 | undated |
-| `haskell/library/unliftio` | 20250717154604 | undated |
-| `haskell/library/safe-exceptions` | 20250624224209 | undated (short notice only) |
+`selected_by` in `manifest.tsv` says how each post got in:
 
-The original URL is `https://academy.fpblock.com/<directory>/`.
+- `haskell tag`: listed on academy.fpblock.com's own Haskell tag pages (157).
+- `content review`: untagged, but about Haskell, its tooling or FP Complete's
+  Haskell products such as FP Haskell Center, School of Haskell, Stackage and
+  stack (67). Chosen by counting Haskell, Rust and other topic terms in each
+  body and reading the opening of the borderline ones. This includes job ads
+  for Haskell roles and Bartosz Milewski's 2012 posts on functional patterns in
+  C++.
 
-The webinar itself is at <https://www.youtube.com/watch?v=T5y8sFmCFnA>.
+Left out after review although they touch on Haskell: "Is Rust functional?",
+"Type Safety Doesn't Matter", "Docker demons: PID-1, orphans, zombies, and
+signals", "Our history with containerization", "10 Common Mistakes to Avoid in
+FinTech Software Development" and "FP Complete and Cardano Blockchain Audit
+Partnership".
 
-## www.fpcomplete.com captures
+Not archived: six Haskell section URLs whose captures are "Page not found"
+pages (among them `haskell/tutorial/exception-safety`), the mailing list signup
+form, and three non-Haskell posts that the Wayback Machine failed to serve.
 
-Older captures, kept as a cross-check. `green-threads-are-like-garbage-collection`
-and the `topic/` listing pages exist only here.
+## Reopening a page
 
-| Top-level directory | Capture |
-|---|---|
-| `async-exception-handling-haskell` | 20230925221523 |
-| `exceptions-best-practices-haskell` | 20230921151031 |
-| `announce-safe-exceptions` | 20230921161307 |
-| `async-exceptions-stm-deadlocks` | 20230921161927 |
-| `async-exceptions-haskell-rust` | 20200817090528 |
-| `tale-of-two-brackets` | 20230925231804 |
-| `monadmask-vs-monadbracket` | 20230926001856 |
-| `green-threads-are-like-garbage-collection` | 20230925223421 |
-| `defining-exceptions-in-haskell` | 20190201053541 |
-| `how-to-handle-asynchronous-exceptions-in-haskell` | 20180414082213 |
-| `topic/async-exceptions` | 20190721063231 |
-| `topic/asynchronous-exception-handling` | 20190721072620 |
-| `topic/asynchronous-exceptions` | 20190721071836 |
-| `topic/exception-safe-code` | 20190721064016 |
-
-The original URL is `https://www.fpcomplete.com/blog/<directory>`, with a trailing
-slash for the 2023 captures and the 2020 capture.
+Use `https://web.archive.org/web/<capture>/<original URL>`, both from
+`manifest.tsv`. Inserting `id_` after the capture timestamp returns the raw
+bytes. Those bytes can be gzip-compressed, so use `curl --compressed` or check
+for the gzip magic number.

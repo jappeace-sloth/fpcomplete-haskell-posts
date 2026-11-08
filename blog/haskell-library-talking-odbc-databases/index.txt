@@ -1,0 +1,141 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+A new Haskell library for talking to ODBC databases
+
+By Chris Done, May 1, 2018
+
+Share this     
+
+I'm pleased to announce the release of a Haskell library for connecting to SQL Server databases via
+ODBC.
+
+Features
+
+The library is very simple, but what it does support should be high quality:
+
+ 1. Correct Unicode handling. All text is handled through the Text type. The test suite randomly
+    generates Unicode to send to the server and query back in a roundtrip.
+ 2. A very simple API: simply connect, execute or query, and then close.
+ 3. Query formatting API (to protect against SQL injection).
+ 4. A streaming query function, so that you don't have to load all data in memory at once.
+ 5. Comprehensive API documentation, including example code, pitfalls, considerations and warnings.
+ 6. SQL Server-specific support.
+ 7. Cross-platform: it should function the same on Windows, OS X or Linux. We have CI tests for
+    this.
+
+Tiny history
+
+Haskell has lacked a stable, “drop in”, working package capable of connecting to SQL Server for
+years.
+
+Existing implementations are pretty lacking, either they segfault, or they have weird bugs, and
+their code is difficult to correct.
+
+This has been a bit of a sore point for people who just want to easily connect to an SQL Server
+database in Haskell. Many big businesses rely soley on many SQL Server databases, and this
+limitation excluded Haskell.
+
+I needed an actual usable library for a client project. I have some good experience with FFI
+(foreign function interface) writing in Haskell, and knew that I could write something much more
+stable, provided I keep things simple.
+
+How ODBC works
+
+ODBC is a C API that is split into a manager and a driver.
+
+On Windows, there is an ODBC manager that comes with the OS. On Linux and OS X, the unixODBC
+package provides the same functionality.
+
+Separately, for each database type, you have driver packages. When you provide a connection string,
+like this:
+
+ODBC_TEST_CONNECTION_STRING='DRIVER={ODBC Driver 13 for SQL Server};SERVER=127.0.0.1;Uid=SA;Pwd=Passw0rd;Encrypt=no'
+
+The DRIVER tells the ODBC API which library to use. In this case, it's the recent SQL Server driver
+provided by Microsoft. Then, ODBC functions like SQLDriverConnectW will call that library.
+
+Protective programming
+
+I've put special effort into stability of the library. Talking to C can be perilous; we have to
+take special care in dealing with it.
+
+Here are a number of steps taken to prevent common issues:
+
+ 1. Race conditions on Connection objects are blocked by wrapping the Connection in an MVar. This
+    means only one thread can perform an operation on a connection at once.
+ 2. Double close on the connection is protected by putting the connection inside a Maybe: once
+    freed, the Just becomes a Nothing. Future attempts to close just throw an exception to say you
+    tried to double close.
+ 3. Garbage collected: the connection handle itself is wrapped in a ForeignPtr, whose finalizer
+    (run when garbage collected) closes and frees the C object.
+ 4. It's not possible to use an SQL statement separately from a connection; we don't expose any
+    functions to access statements directly. This prevents the user from being able to get a hold
+    of a statement and use it on a closed (or freed) connection.
+ 5. It's not possible to use an environment (which is a C object that the ODBC requires before
+    making a connection) and a connection separately, they are held in the same C object. This
+    prevents using a connection in a freed environment.
+
+Comprehensive testing
+
+There are several aspects to the testing on this project. The first is:
+
+ 1. We write tests that intentionally involve bad code (such as attempted double frees).
+ 2. We have QuickCheck tests that test roundtrips from the client to the server and back to the
+    client again for all supported data types. This can take some care, as not all Haskell types
+    roundtrip to SQL Server types without losing precision.
+ 3. On Windows, Linux and OS X, the library has been tested against Microsoft's officially released
+    SQL Server ODBC driver. I have CI setup for Windows and Linux (via Docker), on which we can run
+    a real SQL Server to test against.
+
+Performance
+
+There is limited performance work done on this project, with its main focus on correctness. But
+there is a benchmark suite for space usage. This means we have a baseline for future improvements.
+Time usage tests can come later.
+
+How to use it
+
+It's available on Hackage and on Stackage under the name odbc. The README explains how to install
+the Microsoft ODBC Driver and how to specify the right connection string.
+
+The Travis CI and AppVeyor files should also be useful to see how a from-nothing setup is able to
+run a SQL Server and connect to it from Haskell.
+
+We invite you to contribute any changes on GitHub and share any experiences you have using the
+library, especially if you are a heavy user of SQL Server!
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

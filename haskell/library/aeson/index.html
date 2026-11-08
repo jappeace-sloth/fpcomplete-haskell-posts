@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>aeson: Working with JSON data</title>
+  <meta property="og:title" content="aeson: Working with JSON data">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;library&#x2F;aeson&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+  
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+<section class="hero grid-bg">
+  <div class="container">
+    <h1>aeson: Working with JSON data
+    </h1></div>
+</section>
+
+
+
+  
+<div class="container py-3">
+  <p>aeson is an efficient and easy to use library for decoding (parsing) and
+encoding JSON. The ways to work with aeson ranges from simple (but inflexible)
+to complex (but flexible).</p>
+<h2 id="api-docs">API docs</h2>
+<p>The API documentation can be found
+<a href="https://www.stackage.org/lts-12.21/package/aeson">here</a>. There's plenty
+of good information in the API docs.</p>
+<h2 id="decoding-and-encoding-standard-data-types">Decoding and encoding standard data types</h2>
+<p>JSON strings can trivially be decoded to Haskell values, provided that the types
+of those values are instances of <code>FromJSON</code>. Analogously, types that are
+instances of <code>ToJSON</code> can easily be encoded back to JSON strings. aeson comes
+with convenient <code>FromJSON</code> and <code>ToJSON</code> instances for the standard data types
+(numbers, booleans, lists, tuples, dates, and so on).</p>
+<p>Let's try these instances out in GHCi. You'll need to import <code>Data.Aeson</code>,
+<code>Data.Map</code>, <code>Data.Text</code> and <code>Data.Time.Clock</code> in order to try out the examples above. You'll
+also need to launch GHCi with <code>ghci -XOverloadedStrings</code>.</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>λ&gt; decode &quot;true&quot; :: Maybe Bool
+</span><span>Just True
+</span><span>
+</span><span>λ&gt; encode True
+</span><span>&quot;true&quot;
+</span><span>
+</span><span>λ&gt; decode &quot;[1, 2, 3]&quot; :: Maybe [Int]
+</span><span>Just [1,2,3]
+</span><span>
+</span><span>λ&gt; encode [1, 2, 3]
+</span><span>&quot;[1,2,3]&quot;
+</span><span>
+</span><span>λ&gt; decode &quot;\&quot;1984-10-15T00:00:00Z\&quot;&quot; :: Maybe UTCTime
+</span><span>Just 1984-10-15 00:00:00 UTC
+</span><span>
+</span><span>λ&gt; encode (read &quot;1984-10-15 00:00:00 UTC&quot; :: UTCTime)
+</span><span>&quot;\&quot;1984-10-15T00:00:00Z\&quot;&quot;
+</span><span>
+</span><span>λ&gt; decode &quot;{ \&quot;foo\&quot;: 0, \&quot;bar\&quot;:1, \&quot;baz\&quot;: 2 }&quot; :: Maybe (Map Text Int)
+</span><span>Just (fromList [(&quot;bar&quot;,1),(&quot;baz&quot;,2),(&quot;foo&quot;,0)])
+</span><span>
+</span><span>λ&gt; encode (fromList [ (&quot;bar&quot; :: Text, 1 :: Int)
+</span><span>                    , (&quot;baz&quot; :: Text, 2 :: Int)
+</span><span>		, (&quot;foo&quot; :: Text, 0 :: Int) ])
+</span><span>&quot;{\&quot;bar\&quot;:1,\&quot;baz\&quot;:2,\&quot;foo\&quot;:0}&quot;
+</span></code></pre>
+<h2 id="automatic-decoding-and-encoding">Automatic decoding and encoding</h2>
+<p>So how do you define <code>FromJSON</code> and <code>ToJSON</code> instances for types that don't have
+them?</p>
+<p>One simple way to do this is to use the <code>DeriveGeneric</code> extension and have the
+compiler generate the implementation for you.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack script --resolver lts-12.21
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> DeriveGeneric #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Aeson
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Text
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">GHC.Generics
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Person </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Person</span><span> { name </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Text</span><span>, age </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span> } </span><span style="color:#859900;">deriving</span><span> (</span><span style="color:#268bd2;">Generic</span><span>, </span><span style="color:#268bd2;">Show</span><span>)
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">FromJSON Person
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">ToJSON Person
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Encode: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> (show (encode (</span><span style="color:#cb4b16;">Person</span><span> { name </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Joe</span><span style="color:#839496;">&quot;</span><span>, age </span><span style="color:#859900;">= </span><span style="color:#6c71c4;">12</span><span> })))
+</span><span>    putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Decode: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++
+</span><span>        (show (decode </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">{ </span><span style="color:#dc322f;">\&quot;</span><span style="color:#2aa198;">name</span><span style="color:#dc322f;">\&quot;</span><span style="color:#2aa198;">: </span><span style="color:#dc322f;">\&quot;</span><span style="color:#2aa198;">Joe</span><span style="color:#dc322f;">\&quot;</span><span style="color:#2aa198;">, </span><span style="color:#dc322f;">\&quot;</span><span style="color:#2aa198;">age</span><span style="color:#dc322f;">\&quot;</span><span style="color:#2aa198;">: 12 }</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Maybe Person</span><span>))
+</span></code></pre>
+<p>For compatibility reasons, the default <code>DeriveGeneric</code> <code>ToJSON</code> implementation
+is relatively slow. So for better efficiency, you might want to override the
+<code>toEncoding</code> function <code>ToJSON</code> instance with:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">instance </span><span style="color:#268bd2;">ToJSON Person </span><span style="color:#859900;">where
+</span><span>    toEncoding </span><span style="color:#859900;">=</span><span> genericToEncoding defaultOptions
+</span></code></pre>
+<p>You can also derive instances at compile-time, using <code>Data.Aeson.TH</code> and the
+<code>TemplateHaskell</code> extension.</p>
+<h2 id="decoding-and-encoding-in-your-own-way">Decoding and encoding in your own way</h2>
+<p><code>FromJSON</code> and <code>ToJSON</code> instances can also be written by hand.</p>
+<p>For <code>FromJSON</code> (decoding), you need to define the <code>parseJSON</code> function, which
+takes a JSON value (of the aeson type <code>Value</code>) and returns a Haskell value of
+your type. In order to define your own <code>ToJSON</code> instance, you need to do the
+reverse - create a <code>Value</code> from a Haskell value of your type.</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack script --resolver lts-12.21
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Control.Applicative
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Aeson
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Text </span><span>(</span><span style="color:#268bd2;">Text</span><span>)
+</span><span>
+</span><span style="color:#93a1a1;">-- Same type as before, but without the Generic instance.
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Person </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Person</span><span> { name </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Text</span><span>, age </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Int</span><span> } </span><span style="color:#859900;">deriving </span><span style="color:#cb4b16;">Show
+</span><span>
+</span><span style="color:#93a1a1;">-- We expect a JSON object, so we fail at any non-Object value.
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">FromJSON Person </span><span style="color:#859900;">where
+</span><span>    parseJSON (</span><span style="color:#cb4b16;">Object</span><span> v) </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Person </span><span style="color:#859900;">&lt;$&gt;</span><span> v </span><span style="color:#859900;">.: </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">name</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> v </span><span style="color:#859900;">.: </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">age</span><span style="color:#839496;">&quot;
+</span><span>    parseJSON _ </span><span style="color:#859900;">=</span><span> empty
+</span><span>
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">ToJSON Person </span><span style="color:#859900;">where
+</span><span>    toJSON (</span><span style="color:#cb4b16;">Person</span><span> name age) </span><span style="color:#859900;">=</span><span> object [</span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">name</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">.=</span><span> name, </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">age</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">.=</span><span> age]
+</span><span>
+</span><span style="color:#93a1a1;">-- The main function is unchanged from before.
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>    putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Encode: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> (show (encode (</span><span style="color:#cb4b16;">Person</span><span> { name </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Joe</span><span style="color:#839496;">&quot;</span><span>, age </span><span style="color:#859900;">= </span><span style="color:#6c71c4;">12</span><span> })))
+</span><span>    putStrLn </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Decode: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++
+</span><span>        (show (decode </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">{ </span><span style="color:#dc322f;">\&quot;</span><span style="color:#2aa198;">name</span><span style="color:#dc322f;">\&quot;</span><span style="color:#2aa198;">: </span><span style="color:#dc322f;">\&quot;</span><span style="color:#2aa198;">Joe</span><span style="color:#dc322f;">\&quot;</span><span style="color:#2aa198;">, </span><span style="color:#dc322f;">\&quot;</span><span style="color:#2aa198;">age</span><span style="color:#dc322f;">\&quot;</span><span style="color:#2aa198;">: 12 }</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Maybe Person</span><span>))
+</span></code></pre>
+<p>Above, <code>parseJSON</code> constructs the Haskell value using a JSON object. If some
+other kind of JSON value is provided, decoding will fail. Note that <code>parseJSON</code>
+above operates in an <code>Applicative</code> <code>Parser</code> context. This is what <code>parseJSON</code>
+could look like using a monadic computation:</p>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#859900;">instance </span><span style="color:#268bd2;">FromJSON Person </span><span style="color:#859900;">where
+</span><span>    parseJSON (</span><span style="color:#cb4b16;">Object</span><span> v) </span><span style="color:#859900;">= do
+</span><span>        name </span><span style="color:#859900;">&lt;-</span><span> v </span><span style="color:#859900;">.: </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">name</span><span style="color:#839496;">&quot;
+</span><span>        age </span><span style="color:#859900;">&lt;-</span><span> v </span><span style="color:#859900;">.: </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">age</span><span style="color:#839496;">&quot;
+</span><span>        return (</span><span style="color:#cb4b16;">Person</span><span> { name </span><span style="color:#859900;">=</span><span> name, age </span><span style="color:#859900;">=</span><span> age })
+</span><span>    parseJSON _ </span><span style="color:#859900;">=</span><span> empty
+</span></code></pre>
+<p>The <code>toJSON</code> function above uses the <code>object</code> function to define a JSON object,
+which takes a list of key-value <code>Pair</code> values. The <code>Pair</code> type is simply defined
+as <code>(Text, Value)</code>, and <code>.=</code> is a helper to encode the right-hand side to its
+corresponding JSON value.</p>
+<h2 id="working-with-a-arbitrary-json-data">Working with a arbitrary JSON data</h2>
+<p>Sometimes you want to work with the JSON data without actually converting it to
+some specific type first. One way to do this is to work with the JSON <a href="https://en.wikipedia.org/wiki/Abstract_syntax_tree">abstract
+syntax tree (AST)</a>. This can
+be done by simply decoding it to a <code>Value</code>, like so:</p>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>λ&gt; decode &quot;{ \&quot;foo\&quot;: false, \&quot;bar\&quot;: [1, 2, 3] }&quot; :: Maybe Value
+</span><span>Just (Object (fromList [(&quot;foo&quot;,Bool False),(&quot;bar&quot;,Array [Number 1.0,Number
+</span><span>2.0,Number 3.0])]))
+</span></code></pre>
+<p>You can also decode your JSON string to any of the JSON types that <code>Value</code>
+encapsulates:</p>
+<table class="table">
+<tr><th> JSON          </th><th> aeson Type    </th><th> Standard Type        </th></tr>
+<tr><td> Array         </td><td> <code>Array</code>       </td><td> <code>Vector Value</code>       </td></tr>
+<tr><td> Boolean       </td><td> <code>Bool</code>        </td><td> <code>Bool</code>               </td></tr>
+<tr><td> Number        </td><td> <code>Number</code>      </td><td> <code>Scientific</code>         </td></tr>
+<tr><td> Object        </td><td> <code>Object</code>      </td><td> <code>HashMap Text Value</code> </td></tr>
+<tr><td> String        </td><td> <code>String</code>      </td><td> <code>Text</code>               </td></tr>
+</table>
+<p>Once you have a JSON value, you can define a <code>Parser</code> like we did in <code>parseJSON</code>
+above, and run it using <code>parse</code>, <code>parseEither</code> or <code>parseMaybe</code>.</p>
+<p>Decoding JSON to a specific Haskell type is actually a two-step process - first,
+the JSON string is converted to a <code>Value</code>, and then the <code>FromJSON</code> instance is
+used to convert that <code>Value</code> to the specific type.</p>
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#3b485a575e487b5d4b5854564b575e4f5e15585456" targe="_blank"><span class="__cf_email__" data-cfemail="c5b6a4a9a0b685a3b5a6aaa8b5a9a0b1a0eba6aaa8">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

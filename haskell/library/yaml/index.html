@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>yaml: Parsing and rendering YAML</title>
+  <meta property="og:title" content="yaml: Parsing and rendering YAML">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;haskell&#x2F;library&#x2F;yaml&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+  
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+<section class="hero grid-bg">
+  <div class="container">
+    <h1>yaml: Parsing and rendering YAML
+    </h1></div>
+</section>
+
+
+
+  
+<div class="container py-3">
+  <p>Section exercise: write a program using the <code>rio</code> template that
+receives a database connection string as an environment variable, by
+using a YAML config file.</p>
+<ul>
+<li>High level API based on aeson</li>
+<li>Low-level, streaming API (we won't cover it)</li>
+<li>Config file helpers</li>
+<li>Leverages C libyaml for functionality</li>
+</ul>
+<h2 id="basic-usage">Basic usage</h2>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> RecordWildCards #-}
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Aeson </span><span>(</span><span style="color:#b58900;">withObject</span><span>) </span><span style="color:#93a1a1;">-- should be provided by yaml...
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Text </span><span>(</span><span style="color:#268bd2;">Text</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Vector </span><span>(</span><span style="color:#268bd2;">Vector</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Yaml
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Person </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Person
+</span><span>  { personName </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">Text
+</span><span>  , personAge </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">Int
+</span><span>  }
+</span><span>  </span><span style="color:#859900;">deriving</span><span> (</span><span style="color:#268bd2;">Show</span><span>, </span><span style="color:#268bd2;">Eq</span><span>)
+</span><span style="color:#93a1a1;">-- Could use Generic deriving, doing it by hand
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">ToJSON Person </span><span style="color:#859900;">where
+</span><span>  toJSON </span><span style="color:#cb4b16;">Person</span><span> {</span><span style="color:#859900;">..</span><span>} </span><span style="color:#859900;">=</span><span> object
+</span><span>    [ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">name</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">.=</span><span> personName
+</span><span>    , </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">age</span><span style="color:#839496;">&quot;  </span><span style="color:#859900;">.=</span><span> personAge
+</span><span>    ]
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">FromJSON Person </span><span style="color:#859900;">where
+</span><span>  parseJSON </span><span style="color:#859900;">=</span><span> withObject </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Person</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">$ \</span><span>o </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Person
+</span><span>    </span><span style="color:#859900;">&lt;$&gt;</span><span> o </span><span style="color:#859900;">.: </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">name</span><span style="color:#839496;">&quot;
+</span><span>    </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> o </span><span style="color:#859900;">.: </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">age</span><span style="color:#839496;">&quot;
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  </span><span style="color:#859900;">let</span><span> bs </span><span style="color:#859900;">=</span><span> encode
+</span><span>        [ </span><span style="color:#cb4b16;">Person </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Alice</span><span style="color:#839496;">&quot; </span><span style="color:#6c71c4;">25
+</span><span>        , </span><span style="color:#cb4b16;">Person </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Bob</span><span style="color:#839496;">&quot; </span><span style="color:#6c71c4;">30
+</span><span>        , </span><span style="color:#cb4b16;">Person </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Charlie</span><span style="color:#839496;">&quot; </span><span style="color:#6c71c4;">35
+</span><span>        ]
+</span><span>  people </span><span style="color:#859900;">&lt;-
+</span><span>    </span><span style="color:#859900;">case</span><span> decodeEither&#39; bs </span><span style="color:#859900;">of
+</span><span>      </span><span style="color:#cb4b16;">Left</span><span> exc </span><span style="color:#859900;">-&gt;</span><span> error </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Could not parse: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show exc
+</span><span>      </span><span style="color:#cb4b16;">Right</span><span> people </span><span style="color:#859900;">-&gt;</span><span> return people
+</span><span>
+</span><span>  </span><span style="color:#859900;">let</span><span> fp </span><span style="color:#859900;">= </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">people.yaml</span><span style="color:#839496;">&quot;
+</span><span>  encodeFile fp (people </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Vector Person</span><span>)
+</span><span>  res </span><span style="color:#859900;">&lt;-</span><span> decodeFileEither fp
+</span><span>  </span><span style="color:#859900;">case</span><span> res </span><span style="color:#859900;">of
+</span><span>    </span><span style="color:#cb4b16;">Left</span><span> exc </span><span style="color:#859900;">-&gt;</span><span> error </span><span style="color:#859900;">$ </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Could not parse file: </span><span style="color:#839496;">&quot; </span><span style="color:#859900;">++</span><span> show exc
+</span><span>    </span><span style="color:#cb4b16;">Right</span><span> people2
+</span><span>      </span><span style="color:#859900;">|</span><span> people </span><span style="color:#859900;">==</span><span> people2 </span><span style="color:#859900;">-&gt;</span><span> mapM_ print people
+</span><span>      </span><span style="color:#859900;">|</span><span> otherwise </span><span style="color:#859900;">-&gt;</span><span> error </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Mismatch!</span><span style="color:#839496;">&quot;
+</span></code></pre>
+<ul>
+<li>Encode/decode to both <code>ByteString</code> and files</li>
+<li>Prefer the explicit exception functions
+<ul>
+<li>20/20 hindsight: they'd be the default</li>
+</ul>
+</li>
+</ul>
+<h2 id="config-files">Config files</h2>
+<ul>
+<li>Common use case for YAML</li>
+<li>Would be nice to allow for env var override</li>
+<li>This is the default Yesod scaffolding config approach</li>
+<li>Stolen from my Yesod talk, apologies :)</li>
+</ul>
+<h3 id="yaml-file-itself">YAML file itself</h3>
+<pre data-lang="yaml" style="background-color:#fdf6e3;color:#657b83;" class="language-yaml "><code class="language-yaml" data-lang="yaml"><span style="color:#268bd2;">aws-secret</span><span>: </span><span style="color:#2aa198;">_env:AWS_SECRET
+</span><span style="color:#268bd2;">home-response</span><span>: </span><span style="color:#2aa198;">_env:HOME_RESPONSE:Hello World
+</span></code></pre>
+<ul>
+<li>Special syntax in YAML to allow env overriding</li>
+<li>aws-secret: must have an env var</li>
+<li>home-response: optional</li>
+</ul>
+<h3 id="haskell-code">Haskell code</h3>
+<pre data-lang="haskell" style="background-color:#fdf6e3;color:#657b83;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>#</span><span style="color:#859900;">!/</span><span>usr</span><span style="color:#859900;">/</span><span>bin</span><span style="color:#859900;">/</span><span>env stack
+</span><span style="color:#93a1a1;">-- stack --resolver lts-12.21 script
+</span><span style="color:#b58900;">{-# </span><span style="color:#859900;">LANGUAGE</span><span style="color:#b58900;"> OverloadedStrings #-}
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Aeson </span><span>(</span><span style="color:#b58900;">withObject</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Text </span><span>(</span><span style="color:#268bd2;">Text</span><span>)
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Yaml
+</span><span style="color:#cb4b16;">import </span><span style="color:#859900;">Data.Yaml.Config
+</span><span>
+</span><span style="color:#859900;">data </span><span style="color:#cb4b16;">Config </span><span style="color:#859900;">= </span><span style="color:#cb4b16;">Config
+</span><span>  { awsSecret    </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">Text
+</span><span>  , homeResponse </span><span style="color:#859900;">:: !</span><span style="color:#cb4b16;">Text
+</span><span>  }
+</span><span>  </span><span style="color:#859900;">deriving </span><span style="color:#cb4b16;">Show
+</span><span style="color:#859900;">instance </span><span style="color:#268bd2;">FromJSON Config </span><span style="color:#859900;">where
+</span><span>  parseJSON </span><span style="color:#859900;">=</span><span> withObject </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">Config</span><span style="color:#839496;">&quot; </span><span style="color:#859900;">$ \</span><span>o </span><span style="color:#859900;">-&gt; </span><span style="color:#cb4b16;">Config
+</span><span>    </span><span style="color:#859900;">&lt;$&gt;</span><span> o </span><span style="color:#859900;">.: </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">aws-secret</span><span style="color:#839496;">&quot;
+</span><span>    </span><span style="color:#859900;">&lt;</span><span>*</span><span style="color:#859900;">&gt;</span><span> o </span><span style="color:#859900;">.: </span><span style="color:#839496;">&quot;</span><span style="color:#2aa198;">home-response</span><span style="color:#839496;">&quot;
+</span><span>
+</span><span style="color:#b58900;">main </span><span style="color:#859900;">:: </span><span style="color:#268bd2;">IO </span><span style="color:#859900;">()
+</span><span>main </span><span style="color:#859900;">= do
+</span><span>  config </span><span style="color:#859900;">&lt;-</span><span> loadYamlSettingsArgs </span><span style="color:#b58900;">[]</span><span> useEnv
+</span><span>  print (config </span><span style="color:#859900;">:: </span><span style="color:#cb4b16;">Config</span><span>)
+</span></code></pre>
+<ul>
+<li><code>FromJSON</code>: normal aeson/yaml code</li>
+<li>No <code>ToJSON</code> needed</li>
+<li>Get config file name from command line arguments</li>
+<li>Use environment variables when available</li>
+</ul>
+<h3 id="usage">Usage</h3>
+<pre style="background-color:#fdf6e3;color:#657b83;"><code><span>$ ./Main.hs
+</span><span>Main.hs: loadYamlSettings: No configuration provided
+</span><span>$ ./Main.hs config.yaml
+</span><span>Main.hs: Could not convert to AppSettings: expected Text,
+</span><span>         encountered Null
+</span><span>$ AWS_SECRET=foobar ./Main.hs config.yaml
+</span><span>Config {awsSecret = &quot;foobar&quot;, homeResponse = &quot;Hello World&quot;}
+</span><span>$ AWS_SECRET=foobar HOME_RESPONSE=Goodbye ./Main.hs config.yaml
+</span><span>Config {awsSecret = &quot;foobar&quot;, homeResponse = &quot;Goodbye&quot;}
+</span></code></pre>
+<ul>
+<li>Must provide config file(s) on command line</li>
+<li>Must provide <code>AWS_SECRET</code></li>
+<li>If provided, <code>HOME_RESPONSE</code> changes that response payload</li>
+</ul>
+<h2 id="exercises">Exercises</h2>
+<p>Write a Haskell program to generate the following YAML file:</p>
+<pre data-lang="yaml" style="background-color:#fdf6e3;color:#657b83;" class="language-yaml "><code class="language-yaml" data-lang="yaml"><span>- </span><span style="color:#268bd2;">title</span><span>: </span><span style="color:#2aa198;">Star Wars
+</span><span>  </span><span style="color:#268bd2;">director</span><span>: </span><span style="color:#2aa198;">George Lucas
+</span><span>- </span><span style="color:#268bd2;">title</span><span>: </span><span style="color:#2aa198;">Transformers
+</span><span>  </span><span style="color:#268bd2;">director</span><span>: </span><span style="color:#2aa198;">Michael Bay
+</span></code></pre>
+<p>Write a Haskell program to convert a JSON formatted file to YAML
+format, and vice-versa.</p>
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#c1b2a0ada4b281a7b1a2aeacb1ada4b5a4efa2aeac" targe="_blank"><span class="__cf_email__" data-cfemail="7e0d1f121b0d3e180e1d11130e121b0a1b501d1113">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

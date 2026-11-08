@@ -1,0 +1,183 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Get base onto stackage.org
+
+By Alexey Kuleshevich, March 11, 2020
+
+Share this     
+
+Preface for unaware
+
+When you install a particular version of GHC on your machine it comes with a collection of "boot"
+libraries. What does it mean to be a "boot" library? Quite simply, a library must be used for
+implementation of GHC and other core components. Two such notable libraries are base and ghc. All
+the matching package names and their versions for a particular GHC release can be found in this
+table
+
+The fact that a library comes wired-in with GHC means that there is never a need to download
+sources for the particular version from Hackage or elsewhere. In fact, there is really no need to
+upload the sources on Hackage even for the purpose of building the Haddock for each individual
+package, since those are conveniently hosted on haskell.org
+
+That being said, Hackage has always been a central place for releasing a Haskell package and
+historically Hackage trustees would upload the exact version of almost every "boot" package on
+Hackage. That is why, for example, we have bytestring-0.10.8.2 available on Hackage, despite that
+it comes with versions of GHC from ghc-8.2.1 to ghc-8.6.5 inclusive.
+
+Such an upload makes total sense. Any Haskeller using a core package as a dependency for their own
+package in a cabal file has a central place to look for available versions and documentation for
+those versions. In fact some people have become so accustomed to this process that it has been
+discussed on Haskell-Cafe and a few other places when such package was never uploaded:
+
+    It's a crisis that the standard library is unavailable on Hackage...
+
+The problem
+
+A bit over a half a year ago ghc-8.8.1 was released, with current latest one being ghc-8.8.3. If
+you carefully inspect the table of core packages and try to match to available versions on Hackage
+for those libraries, you will quickly notice that a few of them are missing. I personally don't
+know the exact reasoning behind this is, but from what I've heard it has something to do with the
+fact that ghc-8.8.1 now depends on Cabal-3.0.
+
+The problem for us is that it also affects Stackage's web interface. Let's see how and why.
+
+The "how"
+
+The "how" is very simple. Until recently, if a package was missing from Hackage, it would not have
+been listed on Stackage either. This means that if you tried to follow a dependency of any package
+on base-4.13.0.0 in nightly snapshots starting September of last year you would not find it. As I
+noted before, not only was base missing, but a few others as well.
+
+This problem also depicted itself in a funny looking bug on Stackage. For every package in a list
+of dependencies the count was always off by at least 1 when compared with the actual links in the
+list (eg. primtive). This had me puzzled at first. It was later that I realized that base was
+missing and since almost every every package depends on it, it was counted, but not listed, causing
+a mismatch.
+
+The "why"
+
+Stackage was structured in such a way that it always used Hackage as true source of available
+packages, except for the core packages, since those would always come bundled with GHC. For example
+if you look at the specification of a latest LTS-15.3 snapshot you will not find any of the core
+packages listed there, for they are decided by the GHC version, which in turn is specified in the
+snapshot.
+
+There are a few stages, tools and actual people involved in making a Stackage snapshot happen. Here
+are some of the steps in the pipeline:
+
+  • a curated list of packages that involves package maintainers and sometimes Stackage curators.
+
+  • a curator tool that is used to construct the actual snapshot, build packages, run test suites
+    and generate Haddocks.
+
+  • a stackage-server-cron tool that runs at some interval and updates the stackage.org database to
+    reflect all of the above work in a form of package relations and their respective
+    documentation.
+
+The last step is of the most interest to us because stackage.org is the place where we had stuff
+missing. Let's look at some pieces of information the tool needs in order for stackage-server to
+create a page for a package:
+
+  • Package name, its version and Pantry keys (cryptographic keys that uniquely identify the
+    contents of source distribution)
+  • Previously generated haddocks and hoogle files for each package
+  • Cabal file, so we can extract useful information about the package, such as description,
+    license, maintainers, module names etc.
+  • Optionally Readme and Changelog files from the source distribution can be served on a package
+    page as well.
+
+Information from the latter two bullet points is only available in the source distribution
+tarballs. Packages that are defined in the snapshot do not pose a problem for us, because by
+definition their sources are available from Hackage or any of its mirrors. Core packages on the
+other hand are different, in a sense that they are always available in a build environment, so
+information about them is present when we build a package:
+
+$ stack --resolver lts-15.0 exec -- ghc-pkg describe base
+name:                 base
+version:              4.13.0.0
+visibility:           public
+...
+
+The problem is that stackage-server-cron tool is just an executable that is running somewhere in a
+cloud and it doesn't have such environment. Therefore, until recently, we had no means of getting
+the cabal files for core packages except by checking on Hackage. With more and more core packages
+missing from Hackage, especially such critical ones as base and bytestring, we had to come up with
+solution.
+
+Solution
+
+Solving this problem should be simple, because all we really need is cabal files. Haddock for
+missing packages has been generated and was always available, it is the extra little bit of the
+meta information that was needed in order to generate the appropriate links and the package home
+page.
+
+The first place to look for cabal files was the GHC git repository. The whole GHC bundle though is
+quite different from all other packages that we are normally used to:
+
+  • Libraries that GHC depends on do not come from Hackage, as we already know, instead they are
+    pinned as git submodules.
+  • Most of the packages that are defined in the GHC repository do not have cabal files. Instead
+    they have templates that are used for generating cabal files for a particular architecture
+    during the build process.
+
+This means that the repository is not a good source for grabbing cabal files. Building GHC from
+source is a time consuming process and we don't want to be doing that for every release, just to
+get cabal files we need. A better alternative is to simply download a distribution package for a
+common operating system and extract the missing cabal files from there. We used Linux x86_64 for
+Debian, but the choice of the OS shouldn't really matter, since we only really need high level
+information from those cabal files.
+
+That was it. The only thing we really needed to do in order to get missing core files on Stackage
+was to collect all missing cabal files and make them available to the stackage-server-cron tool
+
+Conclusion
+
+Going back to the origin of Stackage it turns out that there was quite a few of such core packages
+missing, one most common and most notable one was ghc itself. Only a handful of officially released
+versions were ever uploaded to Hackage.
+
+From now on we have a special repository commercialhaskell/core-cabal-files where we can place
+cabal files for missing core packages, which stackage-server-cron tool will pick up automatically.
+As it usually goes with public repositories anyone from the community is encouraged to submit pull
+requests, whenever they notice that a core package is not being listed on Stackage for a newly
+created snapshot.
+
+For the past few weeks the very first such missing core package from Hackage base-4.13.0.0 was
+being included on Stackage. With recent notable additions being bytestring-0.10.9.0, ghc-8.8.x and
+Cabal-3.0.1.0.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

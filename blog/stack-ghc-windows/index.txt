@@ -1,0 +1,116 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+stack and GHC on Windows
+
+By Michael Snoyman, August 24, 2015
+
+Share this     
+
+I've spent some time over the past few weeks working on problems stack users have run into on
+Windows, and I'd like to share the outcome. To summarize, here are the major problems I've seen
+encountered:
+
+ 1. When linking a project with a large number of libraries, GHC hits the 32k command length limit
+    of Windows, causing linking to fail with a mysterious "gcc: command not found."
+ 2. On Windows, paths (at least by default) are limited to 260 characters. This can cause problems
+    quickly when using either stack or cabal sandboxes, which have dist directory structures
+    including GHC versions, Cabal versions, and sometimes a bit more metadata.
+ 3. Most users do not have a Unicode codepage (e.g., 65001 UTF-8) by default, so some characters
+    cannot be produced by GHC. This affects both error/warning output on stdout/stderr, and dump
+    files (e.g., -ddump-to-file -ddump-hi, which stack uses for detecting unlisted modules and
+    Template Haskell files. Currently, GHC simply crashes when this occurs. This can affect
+    non-Windows systems as well.
+
+The result of this so far has been four GHC patches, and one recommended workaround - hopefully we
+can do better on that too.
+
+Thanks to all those who have helped me get these patches in place, especially Ben Gamari, Reid
+Barton, Tamar Christina and Austin Seipp. If you're eager and want to test out the changes already,
+you can try out my GHC 7.10 branch.
+
+Always produce UTF8-encoded dump files
+
+This patch has already been merged and backported to GHC 7.10. The idea is simple: GHC expects
+input files to always be UTF-8 encoded, so generated UTF-8 encoded dump files too. Upshot:
+environment variables and codepage settings can no longer affect the format of these dump files,
+making it more reliable for tooling to parse and use these files.
+
+Transliterate unknown characters
+
+This patch is similarly both merged and backported. Currently, if GHC tries to print a warning that
+includes non-Latin characters, and the LANG variable/Windows codepage doesn't support it, you end
+up with a crash about the commitBuffer. This change is pretty simple: take the character encoding
+used by stdout and stderr, and switch on transliteration, which replaces unknown characters with a
+question mark (?).
+
+Respect a GHC_CHARENC environment variable
+
+The motivation here is that, when capturing the output of GHC, tooling like stack (and presumably
+cabal as well) would like to receive it in a consistent format. GHC currently has no means of
+setting the character encoding reliably across OSes: Windows uses the codepage, which is a
+quasi-global setting, whereas non-Windows uses the LANG environment variable. And even changing
+LANG may not be what we want; for example, setting that to C.UTF-8 would enable smart quotes, which
+we don't necessary want to do.
+
+This new variable can be used to force GHC to use a specific character encoding, regardless of
+other settings. I chose to do this as an environment variable instead of a command line option, so
+that it would be easier to have this setting trickle through multiple layers of tools (e.g., stack
+calling the Cabal library calling GHC).
+
+Note: This patch has not yet been merged, and is probably due for some discussion around naming.
+
+Use a response file for command line arguments
+
+Response files allow us to pass compiler and linker arguments via an external file instead of the
+command line, avoiding the 32k limit on Windows. The response file patch does just this. This patch
+is still being reviewed, but I'm hopeful that it will make it in for GHC 7.10.3, to help alleviate
+the pain points a number of Windows users are having. I'd also like to ask people reading this who
+are affected by this issue to test out the patches I've made; instructions are available on the
+stack issue tracker.
+
+Workaround: shorter paths
+
+For the issue of long path names, I don't have a patch available yet, nor am I certain that I can
+make one. Windows in principle supports tacking \\?\ to the beginning of an absolute path to unlock
+much larger path limits. However, I can't get this to be respected by GHC yet (I still need some
+investigation).
+
+A workaround is to move your project directory to the root of the filesystem, and to set your
+STACK_ROOT environment variable similarly to your root (e.g., set STACK_ROOT=c:\stack_root). This
+should keep you under the limit for most cases.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

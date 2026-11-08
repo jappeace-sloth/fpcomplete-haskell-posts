@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Mastering Time-to-Market with Haskell</title>
+  <meta property="og:title" content="Mastering Time-to-Market with Haskell">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;11&#x2F;mastering-time-to-market-haskell&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Mastering Time-to-Market with Haskell</h1>
+      
+      <p id="page-description">By Chris Done, November 21, 2016</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Mastering%20Time-to-Market%20with%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;11&#x2F;mastering-time-to-market-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;11&#x2F;mastering-time-to-market-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;11&#x2F;mastering-time-to-market-haskell&#x2F;&amp;title=Mastering%20Time-to-Market%20with%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;11&#x2F;mastering-time-to-market-haskell&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <h1 id="mastering-time-to-market-with-haskell">Mastering
+Time-to-Market with Haskell</h1>
+<p>For bringing your product to market, there isn't just one metric
+for success. That depends on your business needs. <a href=
+"https://haskell-lang.org/">Haskell</a> is the pure functional
+programming language that brings tangible benefits over its
+competitors for a variety of TTM priorities. Let's explore four of
+them.</p>
+<h2 id="speed-to-market">Speed to market</h2>
+<p>You may want to bring your product to market as quickly as
+possible, because you have direct competitors; you have to produce
+a functioning demo for your investors; or your success in the
+market is time sensitive. Haskell speeds up this process in various
+ways.</p>
+<p><b>Constuct things correctly the first time:</b> Haskell is
+statically typed, which is a form of program verification that
+guarantees correctness of certain properties, like in Java or C#.
+Unlike Java or C#, Haskell is a <i>pure functional</i> language,
+leading to verification of <i>far more</i> portions of the program
+source code. With feedback from the compiler while developing, your
+developers are guaranteed a certain level of correctness and this
+allows them to concentrate on your domain business logic. As
+written elsewhere, <a href=
+"https://www.haskellforall.com/2016/04/worst-practices-should-be-hard.html">
+worst practices should be hard</a>. Also, a <a href=
+"/resources/case-studies/">case study on
+Haskell vs C#</a> for contract writing.</p>
+<p><b>Reduce testing time:</b> Haskell emphasizes the <i>correct by
+construction</i> approach, which is to use the type system to
+verify that program parts are combined in only the ways that will
+not crash and that make sense. Examples range from the simple to
+advanced. For example, Haskell web frameworks like Yesod <a href=
+"https://www.yesodweb.com/page/about">prevent XSS and accidental
+broken links</a> statically. The more surface area of your problem
+covered by static analysis, the less time and effort is needed by
+your developers for writing unit and integration tests, and the
+tests blow up less often in continuous integration.</p>
+<p><b>Make builds reproducible:</b> Haskell projects that are built
+with <a href="https://docs.haskellstack.org/en/stable/README/">the
+Stack build tool</a>, are guaranteed reproducible builds using a
+<a href="https://www.stackage.org/">stable set of packages</a>,
+with Stack also providing docker support out of the box, adding an
+additional layer of reproducibility. If a reproducible build is
+created on one developer's machine, it will work on any. This
+significantly reduces ramp up time for your developers, and makes
+continuous integration trivial for your devops people.</p>
+<p><b>Use the concurrency:</b> Many problems are solved more easily
+with concurrency (networking, file I/O, video/image/document
+processing, database access, etc.) simply because the programming
+model is easier to understand. Haskell has some of the best
+concurrency support of any popular language, it has a breadth of
+tools, efficiency, stability, and it is trivial to use, out of the
+box. Let your developers use it. See <a href=
+"https://www.microsoft.com/en-us/research/publication/beautiful-concurrency/">
+Beautiful concurrency</a> for more about concurrency in Haskell.
+Additionally, the code doesn't have to be rewritten in an arcane
+style like in NodeJS to gain concurrency.</p>
+<h2 id="shipping-on-schedule">Shipping on schedule</h2>
+<p>You may not need to ship as soon as possible, but to ship <i>on
+schedule</i>, for a demo, a conference or as promised to your
+investors or customers. For this, there is another mitigating
+feature of Haskell.</p>
+<p><b>Types shed light on scope:</b> Using the type system of
+Haskell to model your domain logic helps to expand the "fog of war"
+that we experience with project scope: there are many unknowns, and
+we need to enumerate all the cases and kinds of things. Armed with
+this UML-without-the-UML, you can have confidence in how much scope
+you can cover now for the current shipping schedule, and what needs
+to come in version 2. This gives confidence in time estimates made
+by your developers. See <a href=
+"/resources/case-studies">Haskell-Providing
+Peace of Mind</a> for a case-study. See <a href=
+"https://sqream.com/using-haskell-at-sqream-technologies/">Using
+Haskell at SQream Technologies</a> for a technical
+demonstration.</p>
+<p><b>Avoid build system detours:</b> Reproducible builds help to
+avoid the inevitable build system detours that happen on large
+projects, where developers are wasting time getting the build
+system to work on eachother's machines and debugging failures.
+Stack is reproducible out of the box.</p>
+<h2 id="minimizing-resources">Minimizing resources</h2>
+<p>You might want or need to be cost-effective in your development
+cycle, using as few developers or machines as possible. Haskell
+also reduces development costs.</p>
+<p><b>Less testing is required:</b> Haskell software requires
+<i>less testing</i>. Your developers always write tests, but with
+Haskell they can write fewer, and spend less time on it.
+Furthermore, <i>fewer developers</i> are needed to achieve a stable
+system, because a type system helps limit scope of possibilities,
+and lets your developers manage complexity.</p>
+<p><b>Use Haskell's raw performance:</b> Additionally, Haskell is a
+fast language on a single core. It is compiled to native machine
+code, and is competitive with C# and Java. At times it is
+competitive with C, see <a href=
+"/blog/2013/06/haskell-from-c">Haskell from C: Where are the for
+loops?</a> for a technical demonstration. This means that you need
+fewer machine resources, and fewer machines. Haskell is also easy
+to write concurrent code for, which means you can make use of those
+additional cores on your machines.</p>
+<h2 id="flexbility-to-make-changes">Flexbility to make changes</h2>
+<p>Most developments put a high priority in flexibility to change,
+or should. But you may have particularly pronounced need for
+flexibility in changes to requirements without disruption. This is
+perhaps Haskell's strongest, most desirable advantage.</p>
+<p><b>Correct by construction extends to reconstruction:</b> Making
+a change to a well-typed system in Haskell is far more stable and
+reliable than its competitors because correctness invariants are
+maintained with any change of the code. See also this <a href=
+"/resources/case-studies">case study by
+Silk</a>.</p>
+<p><b>Less maintenance of the test suite under change:</b> This
+requires less maintenance of the test suite, because static
+analysis gives your developers immediate feedback at a granular
+level, whereas a test suite typically does not guide them through
+the change process, it only tells them what their out-of-date
+specification expects. Once the change process is complete,
+updating the test suite becomes easier.</p>
+<p><b>Types are rarely buggy:</b> It's very rare to design a data
+type that has bugs in it, because they are so simple. Meanwhile a
+unit test or integration test suite presents additional developer
+overhead because it itself is a program that requires maintenance
+too.</p>
+<p>See <a href=
+"/resources/case-studies/">this Bump case
+study</a>, for why teams are choosing Haskell over Python, and
+<a href=
+"/resources/case-studies/">here</a> for
+the comparison against Ruby of a similar nature: Haskell yields
+fewer errors and bugs.</p>
+<h2 id="expanding-development-effort">Expanding development
+effort</h2>
+<p>You may find that your project requires hiring new developers
+and building a team. Now is the perfect time to hire Haskell
+developers. <a href="http://paulgraham.com/pypar.html">Like Python
+developers 10 years ago</a>, Haskell developers are self-selecting;
+they learn it because it's a better language, not because it will
+guarantee them employment. At the same time, at this stage in
+Haskell's development, the wealth of practical, stable packages
+available indicate an infusion of pragmatic, experienced
+programmers.</p>
+<h2 id="summary-and-further-reading">Summary and further
+reading</h2>
+<p>In summary we've seen that:</p>
+<ul>
+<li>Haskell decreases development time by narrowing the scope of
+development to your domain.</li>
+<li>Haskell decreases the need and dependency on unit testing
+alone.</li>
+<li>Haskell aids in reproducibility which helps teams work
+together, expand, and deploy.</li>
+<li>Haskell's speed and easy concurrency reduce the cost of
+development substantially.</li>
+<li>Haskell helps your developers evolve a system over time safely
+and with confidence, yielding more reliable time estimates.</li>
+</ul>
+<p>You can learn more about using Haskell as a business at <a href=
+"/index">FP Complete's home page</a>, in particular the <a href=
+"/consulting">Consulting page</a>, or go and <a href=
+"/contact-us">contact us</a> straight away and we'll be in
+touch.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Mastering%20Time-to-Market%20with%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;11&#x2F;mastering-time-to-market-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;11&#x2F;mastering-time-to-market-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;11&#x2F;mastering-time-to-market-haskell&#x2F;&amp;title=Mastering%20Time-to-Market%20with%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;11&#x2F;mastering-time-to-market-haskell&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#0774666b627447617764686a776b6273622964686a" targe="_blank"><span class="__cf_email__" data-cfemail="bccfddd0d9cffcdaccdfd3d1ccd0d9c8d992dfd3d1">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

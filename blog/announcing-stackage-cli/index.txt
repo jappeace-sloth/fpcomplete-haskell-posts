@@ -1,0 +1,168 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Announcing: first release of Stackage CLI (Command Line Tools)
+
+By Michael Snoyman, April 20, 2015
+
+Share this     
+
+We're happy to announce the first release of stackage-cli (Command Line Interface). This project
+got started by a request in a somewhat unlikely place: a MinGHC issue. We started on this as a way
+to automate some of the instructions available on stackage.org, but quickly realized there was a
+lot more potential to make lives of developers even better.
+
+To get started, just run cabal update && cabal install stackage-cli. You can see more information
+on the Github README. In the rest of this blog post, we'll cover some of the motivation for the
+tool, and directions to see it head in the future.
+
+Manage your cabal.config
+
+Stackage's primary mechanism for setup is to give cabal-install a set of constraints of which
+package versions to install, via a cabal.config file in your project. Typically, setting up
+Stackage is a matter of running wget https://www.stackage.org/lts/cabal.config. However, there are
+a few minor annoyances around this:
+
+  • Windows users may not have wget available (this was the main point of the original MinGHC
+    issue).
+  • There's a non-obvious upgrade process, which can require wiping out your old package database
+
+With stackage-cli, you just run stackage init to get a cabal.config file. stackage purge deletes
+that file and wipes your package database. And stackage upgrade does both.
+
+Sandboxes
+
+The above is nice, but not especially noteworthy. The sandbox feature is where the tool really
+begins to shine. As many of you know, cabal sandboxes are highly touted for minimizing "cabal hell"
+problems, by isolating interactions between different projects. However, there are two downsides of
+sandboxes:
+
+  • They still don't solve the problem of coming up with an initial installation plan
+  • Having a separate sandbox for each projects takes a lot of disk space, and requires significant
+    CPU time to get started on a new project
+
+stackage-cli fixes both of those by introducing automated shared sandboxes. The idea is this: when
+you use a single LTS Haskell version, you're hardcoding your dependency tree. Therefore, multiple
+projects using the same LTS version can share the same sandbox. To demonstrate this, let me proceed
+by making fun of Yesod a bit with a shell session:
+
+$ yesod init
+# Answer some questions, get a bunch of output
+$ cd project1
+$ stackage sandbox init
+Writing a default package environment file to
+/home/vagrant/Desktop/project1/cabal.sandbox.config
+Creating a new sandbox at /home/vagrant/.stackage/sandboxes/ghc-7.8.4/lts-2.3
+$ cabal install --run-tests
+# Let's get some coffee
+# OK, lunch time
+# Fine, I'll actually go work out today
+# Still not done???
+# OK, done
+$ cd ..
+$ yesod init
+# Start project 2
+$ cd project2
+$ stackage sandbox init
+Initializing at snapshot: lts-2.3
+Writing a default package environment file to
+/home/vagrant/Desktop/project2/cabal.sandbox.config
+Using an existing sandbox located at
+/home/vagrant/.stackage/sandboxes/ghc-7.8.4/lts-2.3
+$ cabal install --run-tests
+# Wait, it's already configuring
+# Oh, it's done. Crap, no coffee
+
+The point of this little demonstration is: you compile your package set once. You then get to reuse
+it across multiple projects. Yes, the first installation takes just as long and just as much disk
+space. But subsequent uses will be immediate.
+
+By the way, please pay attention to the caveats.
+
+Better team collaboration
+
+We use LTS Haskell at FP Complete and on client projects, and it has eliminated problems of
+incompatible package versions. Our recommendation is to check in the cabal.config file to your
+repo, or equivalently make sure that everyone on your team starts development by running the same
+init command, e.g. stackage sandbox init lts-1.15.
+
+To sandbox or not to sandbox?
+
+We'd typically recommend to start off with sandboxes, and only leave them if you have a good
+reason. Given that, you may be wondering why we have two versions of the command. One answer is
+that there are multiple sandboxing technologies already out there. For example, hsenv still
+provides some functionality that people prefer to cabal sandboxes. Another answer is that there are
+other sandboxing approaches that have yet to be fully explored, such as Docker containers, which
+may provide significant advantages. We don't want to tie the tool down to one implementation.
+
+Plugins
+
+One final point. If you pay close attention, you may notice that stackage-cli provides a few
+different executables. We've decided to emulate the Git approach to the command line tool: we have
+a wrapper executable called stackage (and a shorter abbreviation stk) which will call out to any
+other tools with the name stackage-*. stackage-cli ships with executables called stackage-init,
+stackage-purge, stackage-upgrade, and stackage-sandbox. These all work as plugins to the main
+executable. This provides for a number of nice features:
+
+  • The main stackage-cli can remain light-weight
+  • New functionality can be added easily by other packages
+  • Others in the community are welcome to release their own Stackage plugins
+
+The only requirements placed on a Stackage plugin are that it must:
+
+  • Be named stackage-something
+  • When called with the argument --summary, give a short description of its functionality
+
+The Stackage.CLI module provides some helper functions for this.
+
+There are already a few Stackage plugins on Hackage.
+
+  • stackage-update provides a faster, more secure variant of cabal update. With both stackage-cli
+    and stackage-update installed, you now just run stk update
+  • stackage-view is an interactive code explorer
+  • stackage-curator is used by the Stackage team to produce Nightly and LTS releases
+
+Future work
+
+We hope others will join in the fun with both the core stackage-cli tool, and by producing their
+own plugins. If you have ideas, please bring them up on the mailing list, issue trackers, or
+elsewhere. We also have plans for further open sourcing of our internally built code bases. We're
+still fixing up some details, but the tools we've developed have been in production use by our
+customers for a while now, and we're excited to get them into the community's hands. We're also
+looking at providing tools to provide greater package download security, and to automate the
+process of getting a Haskell development environment up and running. Stay tuned.
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]

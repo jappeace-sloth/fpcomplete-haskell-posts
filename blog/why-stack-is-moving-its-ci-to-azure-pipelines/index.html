@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Why Stack is moving its CI to Azure Pipelines</title>
+  <meta property="og:title" content="Why Stack is moving its CI to Azure Pipelines">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Stack is moving its CI to Azure Pipelines (from Travis CI, AppVeyor, and Gitlab CI).  This will simplify our configuration, and give us faster and more reliable automated builds.  We&#x27;ve also written documentation to help you set up Azure Pipelines for your own Haskell projects.">
+  <meta property="og:description" content="Stack is moving its CI to Azure Pipelines (from Travis CI, AppVeyor, and Gitlab CI).  This will simplify our configuration, and give us faster and more reliable automated builds.  We&#x27;ve also written documentation to help you set up Azure Pipelines for your own Haskell projects.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;why-stack-is-moving-its-ci-to-azure-pipelines&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Why Stack is moving its CI to Azure Pipelines</h1>
+      
+      <p id="page-description">By Emanuel Borsboom, April 12, 2019</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Why%20Stack%20is%20moving%20its%20CI%20to%20Azure%20Pipelines https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;why-stack-is-moving-its-ci-to-azure-pipelines&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;why-stack-is-moving-its-ci-to-azure-pipelines&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;why-stack-is-moving-its-ci-to-azure-pipelines&#x2F;&amp;title=Why%20Stack%20is%20moving%20its%20CI%20to%20Azure%20Pipelines"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;why-stack-is-moving-its-ci-to-azure-pipelines&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>Up to now, Stack has been using a number of CI solutions:</p>
+<ul>
+<li><a href="https://travis-ci.org/" rel="noopener">Travis CI</a>
+for unit tests on Linux and macOS</li>
+<li><a href="https://www.appveyor.com/" rel="noopener">AppVeyor</a>
+for unit tests on Windows</li>
+<li><a href="https://about.gitlab.com/" rel="noopener">Gitlab
+CI</a> for integration tests</li>
+</ul>
+<p>There are a number of problems we’re running into:</p>
+<ul>
+<li>
+<p>Travis’s lack of resources and limited build times lead to
+unreliability of tests, which are frequently hitting Travis’s 50
+minute time limit even with all dependencies cached. I don’t think
+we’ve ever gotten the macOS build to complete. We’ve also seen a
+lot of network instability which leads to spurious build
+failures.</p>
+</li>
+<li>
+<p>Running integration tests with Gitlab CI gets us past the
+resourcing/timeout problems, but Gitlab CI doesn’t integrate well
+with Github (e.g., showing test status for pull requests), which
+rules out moving all tests to it.</p>
+</li>
+<li>
+<p>For Gitlab CI, we have to manage a Gitlab runner on an EC2
+instance, and pay costs of the EC2 instance that hosts it.</p>
+</li>
+<li>
+<p>Using multiple CI services increases complexity and maintenance
+burden.</p>
+</li>
+</ul>
+<p><img alt="Azure Logo" sizes="(max-width: 200px) 100vw, 200px"
+src=
+"/images/hubspot/cd3f8334b0ff85bd9c724e88d1ea504fa455eda1a11029460b686c1babe5c96b.png"
+srcset=
+"/images/hubspot/89b72ba6e246cb182ea0685f73a518d56c78156d68cf957672a1b1fe7e2030f4.png 100w, /images/hubspot/cd3f8334b0ff85bd9c724e88d1ea504fa455eda1a11029460b686c1babe5c96b.png 200w, /images/hubspot/a83e81d19568c73d978490bd33dbf8fe18e04a074494e756a26bac7587c62909.png 300w, /images/hubspot/dec9491a6b85a4e67d1cc873781cac5cd10f54952f58ca6b0689684fed75ca10.png 400w, /images/hubspot/5c5243765d25179d2b8df332b66c5eed7d08fb23a1a73920f3d1eee8a8252871.png 500w, /images/hubspot/c0bdd5abc665ae0f73c1646f7e1f10164aeb02502613e1aa95cfd7413d4a1647.png 600w"
+style="width: 200px; float: left; margin: 0px 10px 10px 0px;"
+width="200">Back in September, Microsoft <a href=
+"https://azure.microsoft.com/en-ca/blog/announcing-azure-pipelines-with-unlimited-ci-cd-minutes-for-open-source/"
+rel="noopener">announced Azure Pipelines</a>, a new CI/CD service
+that integrates with Github, provides unlimited free build minutes,
+a 20 hour time limit for jobs, and supports all three major
+platforms (Linux, macOS, and Windows). This looked very intriguing,
+and we’ve been trying it out with success.</p>
+<ul>
+<li>
+<p>Most builds complete in less than 15 minutes.</p>
+</li>
+<li>
+<p>All three platforms are building reliably (when there are test
+failures, they are legitimate).</p>
+</li>
+<li>
+<p>Unit tests are run on every push.</p>
+</li>
+<li>
+<p>Integration tests are run nightly on the <code>master</code> and
+<code>stable</code> branches, and nightly binaries are published as
+artifacts.</p>
+</li>
+<li>
+<p>There is now <a href=
+"https://dev.azure.com/commercialhaskell/stack/_build?definitionId=1">
+one place</a> to see the status of <em>all</em> automated
+tests.</p>
+</li>
+</ul>
+<p>Converting all the existing pipelines was not trivial, but also
+not overly difficult. <b>UPDATE</b> We've since moved this CI over to Github Actions, and have removed the files referenced. See the YAML configurations for unit tests,
+nightly integration tests, and emplates
+they reference.</p>
+<p>The Azure Pipelines UI is not very intuitive. In particular,
+adding a second pipeline (for nightlies) was confusing, and it’s
+hard to find settings and options.While we are generally happy with
+Azure Pipelines, that is not to say everything is perfect:</p>
+<ul>
+<li>
+<p>Parts of the CI configuration (such as scheduled builds) are not
+controlled by the YAML files and must be configured through the
+UI.</p>
+</li>
+<li>
+<p>Azure Pipelines does not have built-in support for caching. For
+Stack, this isn’t a big deal since built-in caching solutions are
+rarely a great fit for large Haskell projects, so we use the
+<a href="https://github.com/fpco/cache-s3">cache-s3</a> tool to
+manage a cache in an S3 bucket.</p>
+</li>
+<li>
+<p>We’ve found bugs, such as an <a href=
+"https://github.com/Microsoft/azure-pipelines-tasks/issues/9158"
+rel="noopener">incompatibility between bash and powershell
+tasks</a>.</p>
+</li>
+<li>
+<p>This ties us a bit more closely to Microsoft, and it’s unknown
+whether they’ll offer all the features we use for free
+indefinitely. That said, we’re already tied to Microsoft by using
+Github (which <a href=
+"https://blogs.microsoft.com/blog/2018/10/26/microsoft-completes-github-acquisition/">
+Microsoft has acquired</a>), and moving to a different CI platform
+in the future isn’t terribly difficult should it turn out to be
+necessary.</p>
+</li>
+</ul>
+<p>We’ve <a href=
+"https://docs.haskellstack.org/en/stable/azure_ci/" rel=
+"noopener">added a page to the Stack documentation</a> with details
+on how to enable Azure Pipelines for your own Haskell projects.</p>
+<p>Any contributions to move other <a href=
+"https://github.com/commercialhaskell" rel=
+"noopener">commercialhaskell</a> or <a href=
+"https://github.com/fpco" rel="noopener">fpco</a> repos over to
+Azure Pipelines would be welcome (we don’t necessarily plan to move
+them all over immediately if Travis is working well enough, but
+happy for help any time).</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Why%20Stack%20is%20moving%20its%20CI%20to%20Azure%20Pipelines https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;why-stack-is-moving-its-ci-to-azure-pipelines&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;why-stack-is-moving-its-ci-to-azure-pipelines&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;why-stack-is-moving-its-ci-to-azure-pipelines&#x2F;&amp;title=Why%20Stack%20is%20moving%20its%20CI%20to%20Azure%20Pipelines"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;why-stack-is-moving-its-ci-to-azure-pipelines&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#ee9d8f828b9dae889e8d81839e828b9a8bc08d8183" targe="_blank"><span class="__cf_email__" data-cfemail="6d1e0c01081e2d0b1d0e02001d01081908430e0200">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

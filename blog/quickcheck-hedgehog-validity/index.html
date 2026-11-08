@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>QuickCheck, Hedgehog, Validity</title>
+  <meta property="og:title" content="QuickCheck, Hedgehog, Validity">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Property testing has so much potential to become a powerful tool for software development yet it remains mysterious to most developers.  This blog explores ways to utilize the power of property testing as it pertains to Haskell.  Learn about QuickCheck and HedgeHog, and “Validity-based Testing”.">
+  <meta property="og:description" content="Property testing has so much potential to become a powerful tool for software development yet it remains mysterious to most developers.  This blog explores ways to utilize the power of property testing as it pertains to Haskell.  Learn about QuickCheck and HedgeHog, and “Validity-based Testing”.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;quickcheck-hedgehog-validity&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>QuickCheck, Hedgehog, Validity</h1>
+      
+      <p id="page-description">By Tom Sydney Kerckhove, February 27, 2019</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=QuickCheck%2C%20Hedgehog%2C%20Validity https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;quickcheck-hedgehog-validity&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;quickcheck-hedgehog-validity&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;quickcheck-hedgehog-validity&#x2F;&amp;title=QuickCheck%2C%20Hedgehog%2C%20Validity"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;quickcheck-hedgehog-validity&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>I have been working on property testing for years now. My
+current conclusion is that property testing still has so much
+uncovered potential that with just some more effort, it can become
+an even greater tool for software development than it already is
+today. The concept is relatively young and the design space
+relatively unexplored. This post seeks to provide an overview of
+the different approaches and to outline a comparison between the
+most commonly used libraries for property-based testing in Haskell.
+These include two popular libraries: QuickCheck and HedgeHog, and a
+new approach called “Validity-based Testing”.</p>
+<h2>The problems with testing</h2>
+<p>There are many ways to try to make sure that code works. They
+each have their own trade-offs and we should consider these
+trade-offs carefully. The first step is to consider how expensive
+breakage would be. The next step is to use the right tools. Use the
+right programming language, build system, etc, so that code is safe
+in certain ways automatically. Is it worth it to formally verify
+all of your code? Maybe, probably not. When you have gone through
+these steps, you turn to testing, and most likely: unit
+testing.</p>
+<p>By “unit test”, here, I mean a test that checks whether the
+output of a function, for a single example, is equal to the
+expected output. An example <code>hspec</code> snippet in
+Haskell:</p>
+<pre><code class=
+"language-haskell">myFunction exampleInput `shouldBe` expectedOutput
+</code></pre>
+<p>There are two standard problems with unit tests:</p>
+<ul>
+<li>
+<p>One has to write many examples to cover all possible code paths.
+Even when we do write tests that cover all code paths, we may not
+notice that we have forgotten to write code to deal with edge
+cases. We call this problem the coverage problem.</p>
+</li>
+<li>
+<p>Writing these tests is both cumbersome, and usually not
+considered enjoyable. Unit testing is expensive from a
+developer-time perspective. We call this problem the developer cost
+problem.</p>
+</li>
+</ul>
+<h2>Property testing as a solution to the coverage problem</h2>
+<p>Property testing is a different approach to testing. The idea is
+that you can make a test parametric in a certain argument, and the
+test should still pass for every argument that you pass in. The
+next question is then: Where do you get these arguments? That
+depends on the kind of property test:</p>
+<ul>
+<li>Exhaustive property test: Run the test for each element of the
+argument type.</li>
+<li>Randomised property test: Run the test for N random elements
+drawn from the entire argument type.</li>
+<li>Exhaustive specialised property test: Run the test for each
+element of a subset of the argument type.</li>
+<li>Randomised specialised property test: Run the test for N random
+elements drawn from a subset of the argument type.</li>
+</ul>
+<p>An exhaustive property test would be the most comprehensive, but
+for argument types inhabited by a very large or infinite number of
+values, like <code>Int64</code> or <code>String</code>, this is
+infeasible. To make the runtime of a property test reasonable, we
+usually opt for a randomised property test. Randomised property
+testing probabilistically solves the coverage problem of tests, but
+it exacerbates the developer cost problem. It is generally harder
+to come up with a general property of your code than an
+input-output example. You could argue that one would never write as
+many unit tests as property tests will generate for them, but the
+point here is about the strict amount of thinking and typing that
+the programmer has to do to get started. It is a trade-off.</p>
+<p>In this post, we will use the following running example of a
+property test:</p>
+<pre><code class=
+"language-haskell">(\str -&gt; reverse (reverse str) == str) :: String -&gt; Bool
+</code></pre>
+<p>This property states that if you reverse a string twice, then
+you get the original string. (For the purposes of this posts, we
+assume that data structures are finite. This is important because
+testing frameworks require that data is <code>Show</code>-able in
+order to print counter examples.)</p>
+<h3>Generators</h3>
+<p>Randomised property testing requires a way to generate the
+random values. These generators are responsible for generating the
+arguments to the property tests. An appropriate generator can often
+be the difference between finding a bug, and not finding a bug.</p>
+<p>For example, when only generating small lists, the following
+property test may seem to hold:</p>
+<pre><code class="language-haskell">(\ls -&gt; length ls &lt; 100)
+</code></pre>
+<p>It is important to note that not all types allow easy sampling
+of values. Generating a value of type <code>Word8</code> is
+relatively simple: We can just choose a value between
+<code>0x00</code> and <code>0xff</code> uniformly at random.
+However, generating a value from an unbounded type like
+<code>String</code> is tricky. Indeed, there is no way to sample a
+value uniformly from the type <code>String</code> because there are
+infinitely many Strings, and there isn’t one obvious way to sample
+from an infinite set. To solve this problem, generators often use
+some way to guide how large of a value to generate. This is usually
+called the size parameter. This size parameter then allows the
+generator for <code>String</code>s to generate a
+<code>String</code> up to the given size.</p>
+<p>Generators can usually also be adapted to the exact test at
+hand. For example, combinators can usually be composed to build
+bigger combinators, or filtered to only return the generated values
+that satisfy a given predicate.</p>
+<h3>Shrinking</h3>
+<p>When a property test fails, it is likely that the value that
+made the test fail is large. This makes it hard to reason about why
+the test failed. A standard solution to this problem is to try and
+shrink the value that makes the test fail. The test is re-run with
+smaller values to make sure that the test still fails with the
+smaller value. After shrinking, the resulting value should be of a
+more manageable size.</p>
+<h4>An example of shrinking</h4>
+<p>Suppose we believe that the following property holds:</p>
+<p>After lower-casing every character in a string, all the
+characters in this string will be lower-case.</p>
+<pre><code class=
+"language-haskell">\str -&gt; all isLower (map toLower str)
+</code></pre>
+<p>When we run the property test without shrinking, we may get a
+counterexample like the following:</p>
+<pre><code>"As5Enu3auO4"
+</code></pre>
+<p>It is certainly not immediately obvious to me why this is a
+counterexample for the above property. However, when we rerun the
+property test <em>with</em> shrinking, the counterexample is shrunk
+to the following:</p>
+<pre><code class="language-haskell">"1"
+</code></pre>
+<p>Now it becomes rather obvious why the test failed, if we start
+debugging as follows:</p>
+<pre><code>λ toLower '1'
+'1'
+λ isLower '1'
+False
+</code></pre>
+<p>Indeed, applying <code>toLower</code> to the character
+<code>'1'</code> returns <code>'1'</code>, but it is also not
+considered lower-case by <code>isLower</code>. In this case, the
+property that we thought would hold just does not hold. We could
+try to specialise it so that we get a property that does hold, but
+that is beyond the scope of this example.</p>
+<p>Note that the shrunk counterexample: <code>"1"</code> is not
+necessarily part of the original counter example. This brings me to
+my next point:</p>
+<h4>Shrinking with invariants</h4>
+<p>It is important that the shrunk value does not just fail the
+test, it must also have been generatable by the generator that was
+used. For example, consider the following property test that you
+may mistakenly write:</p>
+<p>For every number larger than six: the number is larger than five
+and odd. (pseudocode)</p>
+<pre><code>∀ n. (n &gt; 6) =&gt; (n &gt; 5 &amp;& odd n)
+</code></pre>
+<p>This property is designed to be tested with values larger than
+six. We can constrain the set to draw random values from to the set
+of integers larger than six, using randomised specialised testing.
+However, if the shrinking method is not adapted as well, to
+preserve this constraint on input set, then something unexpected
+might occur. At some point, the generator might generate
+<code>8</code> as its random integer larger than <code>6</code>,
+and fail the property test. Before this value is reported, it is
+shrunk to zero because this is the smallest integer, and shrinking
+might as well try this first. (Note that shrinking is for humans,
+which is why integers are shrunk to zero, (debatably) the simplest
+integer, instead of <code>minBound :: Int</code>, the smallest
+integer.) Zero still fails the property test, because zero is not
+greater than five, so we report that this property test fails
+because zero fails to make the property evaluate to
+<code>True</code>. This will make the output look something like
+the following:</p>
+<pre>
+<code>failed: the following number larger than six does not pass the property test: 0
+</code></pre>
+<p>It is therefore important that the shrinking method preserves
+the intended invariants of the subset that one wants to test. A
+value should only ever be shrunk to a smaller value that is still
+within this subset.</p>
+<h2>Quickcheck approach and problems</h2>
+<p>The QuickCheck library was the pioneer of randomised property
+testing in Haskell. QuickCheck makes use of a type class called
+<code>Arbitrary</code>.</p>
+<p><a href=
+"https://www.stackage.org/haddock/lts-12.11/QuickCheck-2.11.3/Test-QuickCheck-Arbitrary.html#t:Arbitrary">
+The <code>Arbitrary</code> type class</a> contains two
+functions:</p>
+<ul>
+<li><a href=
+"https://www.stackage.org/haddock/lts-12.11/QuickCheck-2.11.3/Test-QuickCheck-Arbitrary.html#v:arbitrary">
+<code>arbitrary :: Arbitrary a =&gt; Gen a</code></a> to generate
+random values. <code>arbitrary</code> is the default generator to
+use to generate values of a given type.</li>
+<li><a href=
+"https://www.stackage.org/haddock/lts-12.11/QuickCheck-2.11.3/Test-QuickCheck-Arbitrary.html#v:shrink">
+<code>shrink :: Arbitrary a =&gt; a -&gt; [a]</code></a> to shrink
+a given value.</li>
+</ul>
+<p>You can run a quickcheck by passing something <a href=
+"https://www.stackage.org/haddock/lts-12.11/QuickCheck-2.11.3/Test-QuickCheck-Property.html#t:Testable">
+<code>Testable</code></a> to the <a href=
+"https://www.stackage.org/haddock/lts-12.11/QuickCheck-2.11.3/Test-QuickCheck-Test.html#v:quickCheck">
+<code>quickCheck</code></a> function. Something
+<code>Testable</code> is usually of the form <code>FooBar -&gt;
+Bool</code> where <code>FooBar</code> is a member of the
+<code>Arbitrary</code> type class. Quickcheck then generates random
+values of type <code>FooBar</code> and evaluates the property with
+it to check that the resulting boolean is <code>True</code>.</p>
+<p>The example property of the <code>reverse</code> function is
+written as follows, using QuickCheck:</p>
+<pre>
+<code>λ&gt; quickCheck $ \(str :: String) -&gt; reverse (reverse str) == str
++++ OK, passed 100 tests.
+</code></pre>
+<p>The QuickCheck approach has certain trade-offs, some of which
+we’ll discover and analyse below.</p>
+<h3>Property combinators for non-specialised randomised property
+testing</h3>
+<p>To test whether a given binary relation <code>&lt;|*|&gt;</code>
+is reflexive, we can write a property test as follows:</p>
+<pre><code class="language-haskell">\x -&gt; x &lt;|*|&gt; x
+</code></pre>
+<p>If we want to test reflexivity of many binary relations, we may
+write a function that takes a binary relation and produces a
+property. Such a function is called a property combinator:</p>
+<pre><code class=
+"language-haskell">reflexive :: Arbitrary a =&gt; (a -&gt; a -&gt; Bool) -&gt; Property
+reflexive rel = \x -&gt; x `rel` x
+</code></pre>
+<p>Now we can use this property combinator to test reflexivity of
+any binary relation for which the arguments are a member of
+<code>Arbitrary</code>.</p>
+<p>Note that there is an important limitation to this approach.
+This property combinator can only test reflexivity of a given
+binary relation if the relation is reflexive for ALL possible
+values that may be generated by the <code>arbitrary</code>
+generator.</p>
+<p>This is already a problem with <code>Rational</code> (from
+<code>GHC.Real</code>) and <code>Eq</code>, for example. <a href=
+"https://hackage.haskell.org/package/base-4.12.0.0/docs/src/GHC.Real.html#line-82">
+The <code>Eq</code> instance for <code>Ratio a</code></a> asssumes
+that values are normalised:</p>
+<pre><code>&gt; 2 :% 2 == 1 :% 1
+False
+</code></pre>
+<p>If <code>arbitrary :: Gen Rational</code> ever generates
+un-normalised values, then we can no longer test properties which
+require that <code>(==)</code> works as if the values are actual
+ratios, even if the property holds for all values of
+<code>Rational</code> except un-normalised values. This brings me
+to the next point</p>
+<h3>No laws or semantics for the <code>Arbitrary</code> type
+class</h3>
+<p>To continue with the previous example of <code>Rational</code>.
+How should we implement the <code>Arbitrary</code> instance for
+<code>Rational</code>:</p>
+<ul>
+<li>Should we ever let it generate <code>0 :% 0</code>?</li>
+<li>Should we ever let it generate <code>1 :% 0</code>?</li>
+<li>Should we ever let it generate <code>5 :% -1</code>? How about
+<code>-5 :% 1</code>?</li>
+<li>Should we take the size parameter into account?</li>
+</ul>
+<p>There are some considerations here:</p>
+<ul>
+<li>If <code>arbitrary :: Gen Rational</code> never generates
+un-normalised values, then property tests about functions that deal
+with <code>(==)</code> assuming that values are actual ratios will
+never test what happens for this edge-case. Maybe they work, maybe
+they do not.</li>
+<li>If <code>arbitrary :: Gen Rational</code> generates
+un-normalised values, then we cannot test properties which require
+that <code>(==)</code> works as if the values are actual ratios,
+even if the property holds for all values of <code>Rational</code>
+except un-normalised values.</li>
+</ul>
+<p>There is a solution for problems like this in
+<code>QuickCheck</code>: Using newtypes to guide generation. For
+example, the <code>Positive a</code> newtype wrapper has a
+specialised generator to make sure that <code>arbitrary :: Positive
+Rational</code> only generates positive <code>Rational</code>
+values. One could imagine a newtype wrapper like <code>Normalised
+a</code> that could have a specialised generator to make sure that
+<code>Normalised Rational</code> never generates un-normalised
+values, if <code>arbitrary :: Gen Rational</code> is implemented to
+sometimes generate un-normalised values.</p>
+<p>However, this newtype approach has an important limitation as
+well. The property test to test for reflexivity would now look
+something like this:</p>
+<pre>
+<code>reflexive (\(Normalised nn1) (Normalised nn2) -&gt; nn1 == nn2)
+</code></pre>
+<p>(Note that you cannot just supply a custom generator if you want
+to use property combinators that assume an <code>Arbitrary</code>
+constraint.) This is rather cumbersome. It is a direct result of
+the fact that values like <code>5 :% -5</code> are not considered
+valid values. Who decided that these values are invalid even though
+they are certainly members of their type? It is the programmer who
+wrote the <code>GHC.Real</code> module and decided that
+<code>Ratio</code> values should satisfy the invariant that they
+are normalised. These invariants are not statically checked.
+QuickCheck’s <code>Arbitrary</code> typeclass makes it cumbersome
+to work with values for which not all values are considered valid
+values.</p>
+<h3>Expensive generators and shrinking</h3>
+<p>The authors of QuickCheck chose to not have a default
+implementation for <code>Arbitrary</code>. This is because there
+are certain problems with the automatic generation of
+<code>Arbitrary</code> instances.</p>
+<p><a href=
+"https://www.stackage.org/haddock/lts-12.12/QuickCheck-2.11.3/Test-QuickCheck-Arbitrary.html#v:arbitrary">
+The QuickCheck documentation mentions</a> that:</p>
+<blockquote>
+<p>There is no generic arbitrary implementation included because we
+don’t know how to make a high-quality one. If you want one,
+consider using the testing-feat or generic-random packages.</p>
+</blockquote>
+<p>There are multiple seperate libraries to allow programmers to
+have GHC implement <code>Arbitrary</code> instances automatically
+using <code>Generic</code> instances. However, using one of these
+is not common practice.</p>
+<p>As a result, there is no default implemetation of
+<code>arbitrary</code> and the default implementation for
+<code>shrink</code> is <code>const []</code>. This means that by
+default, <code>shrink</code> is never overridden with a more
+sensible implementation and counter examples are never shrunk.</p>
+<p>Because programmers have to implement generators and shrinking
+themselves, using QuickCheck (and <code>Arbitrary</code> in
+particular) can be considered expensive (in developer-time) and
+friction-full.</p>
+<h3>Orphan instances for <code>Arbitrary</code></h3>
+<p>A minor problem, but an annoying one nonetheless, is the
+question of where to write the <code>Arbitrary</code>
+instances.</p>
+<ul>
+<li>If we write the <code>Arbitrary</code> instances next to the
+data types, then the entire library that we are writing must depend
+on <code>QuickCheck</code>.</li>
+<li>If we write the <code>Arbitrary</code> instances in the test
+suite, then they are orphan instances and we have to re-write them
+for every test suite.</li>
+<li>If we write the <code>Arbitrary</code> instances in a seperate
+library, then we can depend on this library for the
+<code>Arbitrary</code> instances, but this adds maintenance
+overhead.</li>
+</ul>
+<p>The most commonly chosen solution seems to be to put
+<code>Arbitrary</code> instances in the
+<code>quickcheck-instances</code> library, but this has another
+problem: now the test suite depends on extra libraries for which
+the instances are in <code>quickcheck-instances</code>, that the
+test suite may not be using at all.</p>
+<h2>Hedgehog as a solution to QuickCheck’s problems</h2>
+<p><a href="https://hedgehog.qa">Hedgehog</a> is a newer way to do
+property testing.</p>
+<p>The example property of the <code>reverse</code> function is
+written as follows, using Hedgehog:</p>
+<pre><code class="language-haskell">
+import           Hedgehog
+import qualified Hedgehog.Gen as Gen
+import qualified Hedgehog.Range as Range
+
+prop_reverse :: Property
+prop_reverse =
+  property $ do
+    xs &lt;- forAll $ Gen.list (Range.linear 0 100) Gen.alpha
+    reverse (reverse xs) === xs
+</code></pre>
+<h3>Hedgehog generators</h3>
+<p>Hedgehog uses a different implementation of generators. In
+particular, hedgehog generators have built-in shrinking, so that
+every generated value can automatically be shrunk without any extra
+developer effort to implement a shrinking function. This built-in
+shrinking also automatically takes care to ensure that shrunk
+values obey the same invariants as the generator.</p>
+<p>Whereas QuickCheck declares “shrink” as a function, in Hedgehog
+generating and shrinking are performed simultaneously. Instead of
+generating a single value, we can generate a rose tree of them,
+where the main output is at the root, and the other nodes carry
+shrunk versions of it, with the smallest ones at the leaves.</p>
+<p>Generators are defined more generally, to allow for monadic
+effects during generation. As such, generators are not seperated
+from properties entirely. Indeed, as you can see in the
+<code>prop_reverse</code> example above, the generation of data and
+testing of properties can be interleaved monadically.</p>
+<p><a href=
+"https://www.stackage.org/haddock/lts-11.22/hedgehog-quickcheck-0.1/Hedgehog-Gen-QuickCheck.html">
+Hedgehog also has adapters such that a programmer can use
+QuickCheck generators in HedgeHog properties.</a></p>
+<h3>Sub-optimal shrinking</h3>
+<p>Hedgehog explicitly makes a tradeoff when it comes to shrinking.
+The Hedgehog authors chose to make shrinking sub-optimal in order
+to build it into generators.</p>
+<p>The following is an example of such a tradeoff. Here Hedgehog is
+generating two characters that are equal, by generating them
+independently and then filterig the equal ones. It is a contrived
+example, admittedly, but it makes my point.</p>
+<pre><code class=
+"language-haskell">λ &gt; let gen = Gen.enum 'a' 'b' in Gen.printTree (Gen.filter (uncurry (==)) ((,) &lt;$&gt; gen &lt;*&gt; gen))
+=== Outcome ===
+('b','b')
+=== Shrinks ===
+('a','a')
+('a','a')
+('a','a')
+</code></pre>
+<p>As you can see, Hedgehog correctly shrinks the generated value
+<code>('b', 'b')</code> to tuples with equal characters <code>('a',
+'a')</code>, but it shrinks to the same value many times. This
+problem grows as the generated datastructure grows in size, and as
+the amount of options to try while shrinking grows. This is the
+main drawback with integrating shrinking with generating: It
+requires some duplicated work during shrinking.</p>
+<p>Side note: QuickCheck handles this case wrong as well, but in a
+different way:</p>
+<pre><code class=
+"language-haskell">λ filter (uncurry (==)) $ QC.shrink ('b','b')
+[]
+</code></pre>
+<p>Spoiler (see the rest of the post): <code>genvalidity</code>
+handles this case correctly.</p>
+<pre><code class=
+"language-haskell">λ filter (uncurry (==)) $ shrinkUnchecked ('b', 'b')
+[('a','a')]
+</code></pre>
+<h3>Even more expensive generators</h3>
+<p>Hedgehog does not use any type classes for generators like
+QuickCheck does with <code>Arbitrary</code>. Instead, every
+generator must be a manually-written value.</p>
+<p>This means that Hedgehog does not have any problems with orphan
+instances or with a lack of laws or semantics. However, it also
+means that writing a generator for a value in Hedgehog now requires
+even more developer effort.</p>
+<h3>More cumbersome property combinators.</h3>
+<p>It is still possible to write property combinators for Hedgehog
+properties, but now the programmer will have to explicitly pass in
+a given generator:</p>
+<pre>
+<code>associative :: Gen a -&gt; (a -&gt; a -&gt; a) -&gt; Property
+</code></pre>
+<p>This makes writing property combinators more cumbersome, and
+tests using property combinators more verbose.</p>
+<h2>Validity-based Testing as a solution to the problems of both
+QuickCheck and Hedgehog</h2>
+<p>Validity-based testing attempts to use the advantages from each
+of both QuickCheck and Hedgehog and make a different tradeoff. It
+focuses on making property testing cheap (in terms of developer
+time) and removing as much friction as possible.</p>
+<p>The goals are:</p>
+<ul>
+<li>Free generators</li>
+<li>Free shrinking</li>
+<li>Cheap properties</li>
+</ul>
+<p>The example property of the reverse function is written as
+follows, using the <code>validity</code>-based libraries:</p>
+<pre>
+<code>forAllUnchecked $ \str -&gt; reverse (reverse str) == (str :: String)
+</code></pre>
+<h3>The <code>GenUnchecked</code> type-class in the
+<code>genvalidity</code> library for free generators and free
+shrinking.</h3>
+<p>The <a href=
+"https://www.stackage.org/haddock/lts-12.11/genvalidity-0.5.1.0/Data-GenValidity.html#t:GenUnchecked">
+<code>GenUnchecked</code></a> type class defines both a generator:
+<a href=
+"https://www.stackage.org/haddock/lts-12.11/genvalidity-0.5.1.0/Data-GenValidity.html#v:genUnchecked">
+<code>genUnchecked :: Gen a</code></a> and a shrinking function
+<a href=
+"https://www.stackage.org/haddock/lts-12.11/genvalidity-0.5.1.0/Data-GenValidity.html#v:shrinkUnchecked">
+<code>shrinkUnchecked :: a -&gt; [a]</code></a>, just like
+QuickCheck does with <code>Arbitrary</code>.</p>
+<p>Unlike QuickCheck’s <code>Arbitrary</code>,
+<code>GenUnchecked</code> has very clear semantics: Any value that
+can possibly be represented by the type should be generatable
+(excluding bottom values and infinite values). Because of these
+very clear semantics, the implementations of both the
+<code>genUnchecked</code> and <code>shrinkUnchecked</code>
+functions are generated via the <code>Generic</code> instance by
+default. This means that the programmer never has to write such a
+generator themselves, and shrinking comes for free as well.</p>
+<h3>The <code>validity</code> library to define invariants
+explicitly</h3>
+<p>The next step for validity-based testing is to assert that types
+with internal invariants are as natural as types themselves.
+Indeed, types exist to constrain the possible values of a given
+variable using compile-time checks whereas runtime invariants exist
+to constraint the possible values of a given variable using
+programming-time cleverness. This will be important later, to
+further remove friction, but requires a bit of extra up-front
+thought.</p>
+<p>The <code>validity</code> library allows programmers to
+explicitly define, <em>in code</em> (instead of documentation),
+what it means for a value of a given type to be valid. Types that
+have an instance of the <code>Validity</code> typeclass implement
+the <code>validate :: a -&gt; Validation</code> to explain all the
+reasons why a value may be invalid. The semantics of this type
+class is that an invalid value of any type should never exist at
+runtime, otherwise the programmer has made a mistake.</p>
+<p>For example, the type <code>Map k v</code> has an internal
+invariant: it should always have <a href=
+"https://www.stackage.org/haddock/lts-12.11/containers-0.5.11.0/Data-Map-Lazy.html#v:valid">
+<code>Data.Map.valid :: Ord k =&gt; Map k v -&gt; Bool</code></a>
+evaluate to <code>True</code>. <a href=
+"https://www.stackage.org/haddock/lts-12.18/validity-containers-0.3.1.0/src/Data.Validity.Map.html#line-12">
+Its <code>Validity</code> instance</a> defines this explicitly:</p>
+<pre><code class=
+"language-haskell">-- | A 'Map' of things is valid if all the keys and values are valid and the 'Map' itself
+-- is valid.
+instance (Ord k, Validity k, Validity v) =&gt; Validity (Map k v) where
+    validate m =
+        mconcat
+            [ declare "The Map structure is valid." $ M.valid m
+            , delve "Map elements" $ M.toList m
+            ]
+</code></pre>
+<p>This implementation checks that the internal map structure is
+valid: <code>M.valid</code>, and that the individual elements of
+the map are valid values by themselves as well.</p>
+<p>The <code>validate</code> function does not just check whether a
+value is valid, but also reports all the reasons why a value may
+not be valid. This makes for very useful error messages. For
+example:</p>
+<pre><code class=
+"language-haskell">newtype Prime = Prime { unPrime :: Int } -- INVARIANT: isPrime
+
+instance Validity Prime where
+  validate (Prime p) = declare "The number is prime" $ isPrime p
+</code></pre>
+<pre>
+<code>λ let Left e = prettyValidate [Prime 2, Prime 3, Prime 5, Prime 6]
+λ putStrLn e
+The element at index 3 in the list
+  \ Violated: The number is prime -- Aha!
+</code></pre>
+<p>The default implementation of <code>Validity</code> uses a
+type’s <code>Generic</code> instance to derive an implementation
+that defines a value to be valid if all of its sub-parts are valid.
+This makes it frictionless to instantiate <code>Validity</code> for
+types of which the validity of its values depends only on its
+sub-parts.</p>
+<h3>The <code>GenValid</code> type-class in the
+<code>genvalidity</code> library for free generators and free
+shrinking for valid values.</h3>
+<p>To generate valid values, <code>genvalidity</code> has the
+<a href=
+"https://www.stackage.org/haddock/lts-12.11/genvalidity-0.5.1.0/Data-GenValidity.html#v:GenValid">
+<code>GenValid</code></a> type class. This type class also has very
+clear semantics.</p>
+<ul>
+<li>The <code>genValid :: Gen a</code> generator must only ever
+generate valid values.</li>
+<li>The <code>shrinkValid :: a -&gt; [a]</code> shrinking function
+should must only ever shrink valid values to valid values..</li>
+<li>The <code>genValid</code> generator should be able to generate
+all possible valid values that can exist at runtime.</li>
+</ul>
+<p>These semantics also allow for default implementations:</p>
+<pre><code class=
+"language-haskell">genValid :: GenValid a =&gt; Gen a
+genValid = genUnchecked `suchThat` isValid
+
+shrinkValid :: GenValid a =&gt; a -&gt; [a]
+shrinkValid = filter isValid . shrinkUnchecked
+</code></pre>
+<p>This makes it relatively frictionless to generate valid values
+as well.</p>
+<p>Note that if there are not many valid values of a given type, or
+if checking validity is expensive, the default
+<code>genValid</code> implementation using <code>suchThat</code>
+may be too slow, and a programmer may have to override it with a
+faster implementation. This is the tradeoff that
+<code>genvalidity</code> makes to remove friction, but there are
+helper functions in <code>genvalidity</code> to write faster
+generators too.</p>
+<p>As a result, the following is all that’s necessary for a
+programmer to write a custom type with generators, and start
+writing property tests:</p>
+<pre><code class="language-haskell">{-# LANGUAGE DeriveGeneric #-}
+module Example where
+
+data MyType = MyType
+  { myBool :: Bool
+  , myRational :: Rational
+  } deriving (Show, Eq, Generic)
+
+instance Validity MyType
+
+instance GenUnchecked MyType
+instance GenValid MyType
+</code></pre>
+<h3>Overriding <code>genValid</code> to make it faster</h3>
+<p>While <code>genValid</code> is always correct by default, it can
+sometimes be too slow. In such cases we want to override
+<code>genValid</code> to make it faster, but then it is up to us to
+make sure that it is still correct. When overriding
+<code>genValid</code>, it is advisable to add <a href=
+"https://www.stackage.org/haddock/lts-12.18/genvalidity-hspec-0.6.2.0/Test-Validity-GenValidity.html#v:genValidSpec">
+a test that makes sure that <code>genValid</code> still only
+generates valid values</a> It is also important that
+<code>genValid</code> can generate any value that would be
+considered valid. We cannot test for this, so it is up to the
+programmer to maintain this property of the generator.</p>
+<p>As an example, consider a <code>newtype Prime = Prime Int</code>
+with a <code>Validity</code> instance that describes that the
+integer inside is prime. The <code>genUnchecked</code> generator is
+generated using the <code>Generic</code> instance, and it works
+exactly as it should. The default implementation of
+<code>genValid</code> is equivalent to the following:</p>
+<pre><code class="language-haskell">genValid :: Gen Prime
+genValid = genUnchecked `suchThat` isValid
+</code></pre>
+<p>There are two ways to speed up a generator that uses
+<code>suchThat</code>:</p>
+<ul>
+<li>
+<p>Generate values that are automatically valid, and don’t filter
+them using <code>isValid</code> afterward. This is particularly
+useful if the <code>isValid</code> predicate is expensive to
+compute. In the case of <code>Prime</code>: primality testing is
+relatively expensive.</p>
+</li>
+<li>
+<p>Generate values that are more likely to be valid than the ones
+generated by <code>genUnchecked</code> and then filter them with
+<code>isValid</code>. This is particularly useful if there aren’t
+many valid values. In the case of <code>Prime</code>: the
+likelihood for an arbitrary number goes down as the number grows
+larger.</p>
+</li>
+</ul>
+<p>In the case of the <code>Prime</code> example, we could speed up
+<code>genValid</code> by replacing <code>genUnchecked</code> by a
+generator that either generates <code>2</code>, or an odd number.
+The result would look like this:</p>
+<pre><code class="language-haskell">genValid :: Gen Prime
+genValid = (oneof [pure 2, (\x -&gt; 2*x + 1) &lt;$&gt; genUnchecked]) `suchThat` isValid
+</code></pre>
+<h3>Cheap properties using property combinators from
+<code>genvalidity-property</code></h3>
+<p>Once these type classes have been implemented, a programmer can
+use the many property combinators from
+<code>genvalidity-property</code> and even test suite combinators
+from <code>genvalidity-hspec</code>.</p>
+<pre><code class="language-haskell">-- # Property combinators
+-- Test whether two functions are inverses
+inverseFunctions :: (Show a, Eq a, GenUnchecked a) =&gt; (a -&gt; b) -&gt; (b -&gt; a) -&gt; Property
+-- Test whether a binary relation is symmetric
+symmetry :: (Show a, GenUnchecked a) =&gt; (a -&gt; a -&gt; Bool) -&gt; Property
+-- Test whether a binary operator is commutative:
+commutative :: (Show a, Eq a, GenUnchecked a) =&gt; (a -&gt; a -&gt; a) -&gt; Property
+-- Test whether a function maintains validity
+producesValidsOnValids :: (Show a, Show b, GenValid a, Validity b) =&gt; (a -&gt; b) -&gt; Property
+</code></pre>
+<p>Each property combinator in <code>genvalidity-property</code>
+comes in multiple variants:</p>
+<ul>
+<li><code>symmetry</code> for unchecked values</li>
+<li><code>symmetryOnValid</code> for values generated by
+<code>GenValid</code></li>
+<li><code>symmetryOnArbitrary</code> for values generated by
+<code>Arbitrary</code> (for compatibility with QuickCheck)</li>
+<li><code>symmetryOnGens</code> for values generated by a given
+generator</li>
+</ul>
+<h3>Cheap properties using test suite combinators from
+<code>genvalidity-hspec</code></h3>
+<p>With the <code>TypeApplications</code> extension that is new in
+GHC 8.0, we can now write entire test suites that are parametric in
+type argument (without the use of proxies). These so-called test
+suite combinators are of the form <code>testSuiteCombinator ::
+forall a. Spec</code>.</p>
+<p>The <code>genvalidity-hspec</code> library and its companion
+libraries already contain many test suite combinators.</p>
+<pre><code class=
+"language-haskell">-- Test whether a custom Eq instance of a type makes sense
+eqSpec :: forall a. (Show a, Eq a, Typeable a, GenUnchecked a) =&gt; Spec
+-- Test that a Monad doesn't violate the monad laws
+monadSpec :: forall (f :: * -&gt; *). (Monad f, Eq (f Int), Show (f Int), Typeable f, GenUnchecked (f Int)) =&gt; Spec
+-- Test whether a lens doesn't violate the lens laws.
+lensSpec :: forall s b. (Show b, Eq b, GenUnchecked b, Validity b, Show s, Eq s, GenUnchecked s, Validity s) =&gt; Lens' s b -&gt; Spec
+</code></pre>
+<p>Each property combinator in <code>genvalidity-hspec</code> comes
+in multiple variants:</p>
+<ul>
+<li><code>eqSpec</code> for unchecked values</li>
+<li><code>eqSpecOnValid</code> for values generated by
+<code>GenValid</code></li>
+<li><code>eqSpecOnArbitrary</code> for values generated by
+<code>Arbitrary</code> (for backward compatibility)</li>
+<li><code>eqSpecOnGens</code> for values generated by a given
+generator</li>
+</ul>
+<h2>Conclusion</h2>
+<p>Property testing can be a great tool in your quality arsenal.
+This point has outlined the major similarities and differences
+between property testing tools. You should now be more equipped to
+make the necessary tradeoffs between these tools, but more
+important than trying to optimise your usage is that you give
+property testing a try.</p>
+<p>Below are some exercises to get you started with Validity-based
+testing. <a href=
+"https://www.stackage.org/package/validity"><code>validity</code></a>
+and the related libraries can all be found on Stackage.</p>
+<h3>Exercise: Odd</h3>
+<p>Objective: Generate valid <code>Odd</code> values using
+<code>genValid</code> by completing the following piece of
+code.</p>
+<pre><code class=
+"language-haskell">newtype Odd = Odd Int -- INVARIANT: The Int must be odd
+</code></pre>
+<p>Solution:</p>
+<pre><code class="language-haskell">instance Validity Int where
+  validate (Odd i) = declare "The Int is odd" $ odd i
+instance GenUnchecked Odd
+instance GenValid Odd
+</code></pre>
+<h3>Exercise: JSON</h3>
+<p>Objective: Test whether the JSON instance in the following piece
+of code works, using <code>genvalidity-hspec-aeson</code>, by
+completing the following piece of code:</p>
+<pre><code>data MyType = MyType
+  { myBool :: Bool
+  , myRational :: Rational
+  } deriving (Show, Eq, Generic)
+
+instance FromJSON MyType where
+  parseJSON = withObject "MyType" $ \o -&gt; MyType &lt;$&gt; o .: "bool" &lt;*&gt; o .: "Rational"
+instance ToJSON MyType where
+  toJSON mt = object ["bool" .= (myBool mt), "double" .= (myRational mt)]
+</code></pre>
+<p>Solution:</p>
+<pre><code class="language-haskell">data MyType = MyType
+  { myBool :: Bool
+  , myRational :: Rational
+  } deriving (Show, Eq, Generic)
+
+instance FromJSON MyType where
+  parseJSON = withObject "MyType" $ \o -&gt; MyType &lt;$&gt; o .: "bool" &lt;*&gt; o .: "Rational"
+instance ToJSON MyType where
+  toJSON mt = object ["bool" .= (myBool mt), "double" .= (myRational mt)]
+
+instance Validity MyType
+instance GenUnchecked MyType
+instance GenValid MyType
+
+spec :: Spec
+spec =
+  describe "MyType" $
+    jsonSpecOnValid @MyType
+</code></pre>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=QuickCheck%2C%20Hedgehog%2C%20Validity https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;quickcheck-hedgehog-validity&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;quickcheck-hedgehog-validity&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;quickcheck-hedgehog-validity&#x2F;&amp;title=QuickCheck%2C%20Hedgehog%2C%20Validity"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;quickcheck-hedgehog-validity&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#394a58555c4a795f495a565449555c4d5c175a5654" targe="_blank"><span class="__cf_email__" data-cfemail="e390828f8690a38593808c8e938f869786cd808c8e">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

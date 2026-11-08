@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>When Rust is safer than Haskell</title>
+  <meta property="og:title" content="When Rust is safer than Haskell">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content="Haskell generally has better safety guarantees than Rust, there are some cases when Rust is safer than Haskell. This post explores when Rust is safe to use.">
+  <meta property="og:description" content="Haskell generally has better safety guarantees than Rust, there are some cases when Rust is safer than Haskell. This post explores when Rust is safe to use.">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;when-rust-is-safer-than-haskell&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>When Rust is safer than Haskell</h1>
+      
+      <p id="page-description">By Michael Snoyman, January 17, 2019</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=When%20Rust%20is%20safer%20than%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;when-rust-is-safer-than-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;when-rust-is-safer-than-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;when-rust-is-safer-than-haskell&#x2F;&amp;title=When%20Rust%20is%20safer%20than%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;when-rust-is-safer-than-haskell&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <p>We’re big fans of safety-focused languages at FP Complete. As
+our previous blog post comparing Rust and Haskell made clear, we
+think both of these are great languages. A recurring theme we have
+for both internal and client projects is: which language should we
+use? The general guidelines in that blog post apply:</p>
+<ul>
+<li>If there’s a specific requirement (e.g., hard realtime) that
+prefers avoiding garbage collection, use Rust</li>
+<li>If absolute guarantees of high performance are warranted,
+prefer Rust</li>
+<li>Otherwise, the higher productivity and greater safety of
+Haskell push us towards using it</li>
+</ul>
+<p>A large part of the higher safety of Haskell is its expressive
+type system. You can simply state more invariants, in general, in
+Haskell than in Rust.</p>
+<p>However, I’d like to point out a situation where Rust’s safety
+guarantees are in fact <em>stronger</em> than Haskell’s, and how
+the compiler naturally pushes us towards the correct, safe
+solution.</p>
+<h2>References in Haskell</h2>
+<p>My general recommendation about mutable variables when giving
+Haskell training is:</p>
+<ul>
+<li>Avoid them if you can</li>
+<li>If you absolutely must use them, default to using Software
+Transactional Memory (STM)</li>
+</ul>
+<p>If you follow that advice, the bug below won’t occur, or at
+least won’t occur implicitly. That said, the code below is entirely
+valid Haskell, so I don’t feel <em>that</em> cheeky pointing it
+out.</p>
+<p>Question: Will the following code throw an exception, or will it
+exit successfully?</p>
+<pre><code class="language-haskell">main :: IO ()
+main = do
+  ref &lt;- newIORef (0 :: Int)
+  secret $ do
+    x &lt;- randomIO
+    writeIORef ref x
+    threadDelay 1000
+    y &lt;- readIORef ref
+    unless (x == y) $ error "failure!"
+  putStrLn "All good!"
+</code></pre>
+<p>This code creates a reference. Then, bracketed by some function
+<code>secret</code>, it will generate a random <code>Int</code>,
+write it to the reference, sleep for 1ms, read the reference out
+again, and ensure the written and read values are the same.</p>
+<p>So will the code throw an exception? The right answer is really
+“it depends.” We’ve invoked a function called <code>secret</code>,
+with the type <code>IO () -&gt; IO ()</code>. Obviously, if
+<code>secret</code> is defined as <code>secret _ = error
+"hahaha"</code>, this code will error out. But I’m talking about
+non-trivial failure cases.</p>
+<p>One valid definition for <code>secret</code> is the identity
+function:</p>
+<pre><code class="language-haskell">secret :: IO () -&gt; IO ()
+secret = id
+</code></pre>
+<p>And with this definition, our code exits successfully.
+Hurrah!</p>
+<p>However—and you may have seen this coming—it’s fairly easy to
+come up with an implementation of <code>secret</code> which causes
+our code to fail:</p>
+<pre><code class="language-haskell">secret :: IO () -&gt; IO ()
+secret = replicateConcurrently_ 1000
+</code></pre>
+<p>Or <a href=
+"https://gist.github.com/snoyberg/d0625747054342848634089691d25a89"
+rel="nofollow noopener" target="_blank">full code as a
+Gist</a>.</p>
+<p>We’ve now spawned 1,000 threads running concurrently, all trying
+to write to the same reference. Assuming one version of how these
+threads get scheduled, all 1,000 threads first write their values
+to the shared reference. Then, they all take a nap for 1ms.
+Finally, they all read the value, and 999 of them are disappointed
+with the result.</p>
+<p>The right answer to this in Haskell is what I said above: avoid
+mutable references, and prefer STM. If you use STM, you’ll need to
+explicitly bracket your mutable actions with an
+<code>atomically</code> call, and it will be far more obvious when
+you’re allowing other threads to mutate your variables.</p>
+<p style="text-align: center;"><strong>Click below to&nbsp;learn
+more about a unique offer</strong></p>
+<h2>How about Rust?</h2>
+<p>Let’s write an equivalent <code>main</code> function in
+Rust:</p>
+<pre><code class="language-rust">fn main() {
+    let mut var = 0isize;
+    secret(|| {
+        let x = rand::random();
+        var = x;
+        sleep(Duration::from_millis(1));
+        assert_eq!(x, var);
+    });
+}
+</code></pre>
+<p>Ignoring silly cases like <code>secret</code> immediately
+<code>panic!</code>ing, will this code exit successfully? Our gut
+reaction is “it depends.” But again, ignoring the silly cases, what
+can go wrong?</p>
+<p>Firstly, let’s try out the identity case for Rust. Writing
+higher order functions is a bit more verbose than in Haskell, but
+not too bad:</p>
+<pre><code class=
+"language-rust">fn secret&lt;F: FnMut()&gt;(mut f: F) {
+    f();
+}
+</code></pre>
+<p><em>Pro tip</em>, especially to those who read <a href=
+"https://www.snoyman.com/blog/2018/11/rust-crash-course-05-rule-of-three">
+my Rust crash course lesson 5</a>: you can use <code>FnOnce</code>
+here instead. I used <code>FnMut</code> because of the rest of the
+code in this post.</p>
+<p>If you squint hard enough, you’ll probably agree that this is
+<em>basically</em> the same as the above.</p>
+<p>Alright, that’s all well and good, but how about throwing in a
+curve ball with multiple threads? Let’s really test out that Rust
+“fearless concurrency” concept:</p>
+<pre><code class=
+"language-rust">fn secret&lt;F: FnMut()&gt;(mut f: F) {
+    let mut handles = vec![];
+    for _ in 0..1000 {
+        handles.push(spawn(f));
+    }
+    for handle in handles {
+        handle.join().unwrap();
+    }
+}
+</code></pre>
+<p>This code spawns 1,000 threads, each running the same
+<code>f</code> closure. It then blocks on each of these completing
+(via <code>join</code>), and will then re-<code>panic!</code> in
+the main thread if any of the child threads <code>panic!</code>ed.
+For our purposes, it’s quite similar to the
+<code>replicateConcurrently_</code> in Haskell-land.</p>
+<p>Obviously this code <em>must</em> fail at runtime, right? It has
+the same kind of logic bug as the Haskell code. However, the Rust
+code doesn’t even get that far. Instead, we get a <em>compile
+time</em> error:</p>
+<pre><code>error[E0277]: `F` cannot be sent between threads safely
+  --&gt; src/main.rs:17:22
+   |
+17 |         handles.push(spawn(f));
+   |                      ^^^^^ `F` cannot be sent between threads safely
+   |
+   = help: the trait `std::marker::Send` is not implemented for `F`
+   = help: consider adding a `where F: std::marker::Send` bound
+   = note: required by `std::thread::spawn`
+</code></pre>
+<p>Oh, right. We can’t send data between threads unless we have a
+<code>Send</code> trait. Fortunately, the compiler tells us how to
+fix that one right away. We change the type signature of
+<code>secret</code> to:</p>
+<pre><code class=
+"language-rust">fn secret&lt;F: FnMut() + Send&gt;(mut f: F) {
+</code></pre>
+<p>But now we get a new error:</p>
+<pre>
+<code>error[E0310]: the parameter type `F` may not live long enough
+  --&gt; src/main.rs:17:22
+   |
+14 | fn secret&lt;F: FnMut() + Send&gt;(mut f: F) {
+   |           -- help: consider adding an explicit lifetime bound `F: 'static`...
+...
+17 |         handles.push(spawn(f));
+   |                      ^^^^^
+   |
+note: ...so that the type `F` will meet its required lifetime bounds
+  --&gt; src/main.rs:17:22
+   |
+17 |         handles.push(spawn(f));
+   |                      ^^^^^
+</code></pre>
+<p>Oh, huh. <code>F</code> may not live long enough. Perhaps the
+closure—or references it has captured—will be dropped before the
+other thread completes. Again, the compiler tells us how to fix
+this: add the <code>'static</code> lifetime parameter:</p>
+<pre><code class=
+"language-rust">fn secret&lt;F: FnMut() + Send + 'static&gt;(mut f: F) {
+</code></pre>
+<p>Darn, now we’ve got <em>two</em> problems: one in the
+<code>main</code> function, and one in <code>spawn</code>:</p>
+<pre><code>error[E0597]: `var` does not live long enough
+  --&gt; src/main.rs:8:9
+   |
+6  |     secret(|| {
+   |            -- value captured here
+7  |         let x = rand::random();
+8  |         var = x;
+   |         ^^^ borrowed value does not live long enough
+...
+12 | }
+   | - `var` dropped here while still borrowed
+   |
+   = note: borrowed value must be valid for the static lifetime...
+
+error[E0382]: use of moved value: `f`
+  --&gt; src/main.rs:17:28
+   |
+17 |         handles.push(spawn(f));
+   |                            ^ value moved here, in previous iteration of loop
+   |
+   = note: move occurs because `f` has type `F`, which does not implement the `Copy` trait
+</code></pre>
+<p>Ugh, this is getting tedious. Fine, let’s try to solve the
+problem in <code>secret</code>. We’ve <em>moving</em> the
+<code>f</code> closure on each iteration through the
+<code>for</code> loop. Let’s clone it instead. To do that, we need
+to add a <code>Clone</code> trait to our <code>secret</code>
+function:</p>
+<pre><code class=
+"language-rust">fn secret&lt;F: FnMut() + Send + 'static + Clone&gt;(mut f: F) {
+    let mut handles = vec![];
+    for _ in 0..1000 {
+        handles.push(spawn(f.clone()));
+    }
+    for handle in handles {
+        handle.join().unwrap();
+    }
+}
+</code></pre>
+<p>Now, we’ve <em>finally</em> written a valid <code>secret</code>
+function. But our <code>main</code> function is still broken:</p>
+<pre>
+<code>error[E0277]: the trait bound `&amp;mut isize: std::clone::Clone` is not satisfied in `[closure@src/main.rs:6:12: 11:6 var:&amp;mut isize]`
+ --&gt; src/main.rs:6:5
+  |
+6 |     secret(|| {
+  |     ^^^^^^ within `[closure@src/main.rs:6:12: 11:6 var:&amp;mut isize]`, the trait `std::clone::Clone` is not implemented for `&amp;mut isize`
+  |
+  = help: the following implementations were found:
+            &lt;isize as std::clone::Clone&gt;
+  = note: required because it appears within the type `[closure@src/main.rs:6:12: 11:6 var:&amp;mut isize]`
+note: required by `secret`
+ --&gt; src/main.rs:14:1
+  |
+14| fn secret&lt;F: FnMut() + Send + 'static + Clone&gt;(mut f: F) {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+</code></pre>
+<p>The closure captures a mutable reference to a variable. But
+mutable references cannot be cloned! Because, if we did that, we’d
+end up with a data race. (Kind of like that original bug in the
+Haskell program, right?) We’ll <em>also</em> run into a lifetime
+problem, but the compiler hasn’t even identified that here since
+it’s so hung up on the lack of a <code>Clone</code>.</p>
+<p>Well, we know how to solve this kind of situatuion in Rust: use
+a reference counted wrapper. Let’s go ahead and throw that at the
+problem:</p>
+<pre><code class="language-rust">use std::rc::Rc;
+
+fn main() {
+    let mut var = Rc::new(0isize);
+    secret(|| {
+        let x = rand::random();
+        *var = x;
+        sleep(Duration::from_millis(1));
+        assert_eq!(x, *var);
+    });
+}
+</code></pre>
+<p>And, once again, Rust doesn’t like this:</p>
+<pre>
+<code>error[E0277]: `std::rc::Rc&lt;isize&gt;` cannot be shared between threads safely
+ --&gt; src/main.rs:7:5
+  |
+7 |     secret(|| {
+  |     ^^^^^^ `std::rc::Rc&lt;isize&gt;` cannot be shared between threads safely
+  |
+  = help: the trait `std::marker::Sync` is not implemented for `std::rc::Rc&lt;isize&gt;`
+  = note: required because of the requirements on the impl of `std::marker::Send` for `&amp;std::rc::Rc&lt;isize&gt;`
+  = note: required because it appears within the type `[closure@src/main.rs:7:12: 12:6 var:&amp;std::rc::Rc&lt;isize&gt;]`
+note: required by `secret`
+ --&gt; src/main.rs:15:1
+  |
+15| fn secret&lt;F: FnMut() + Send + 'static + Clone&gt;(mut f: F) {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+</code></pre>
+<p>An <code>Rc</code> is a non-atomic reference counted variable.
+It’s slightly more efficient than an <code>Arc</code>, because it
+doesn’t need to use atomic primitives on the reference count
+variable. But, we can’t send it to another thread, which is exactly
+what we’re trying to do. (It’s also what the Haskell type system
+doesn’t even notice it’s letting us do.)</p>
+<p>Switching over to an <code>Arc</code> instead solves that
+problem with almost no code change. We also need to dereference the
+<code>var</code> when using it now:</p>
+<pre><code class="language-rust">use std::sync::Arc;
+
+fn main() {
+    let var = Arc::new(0isize);
+    secret(move || {
+        let x = rand::random();
+        *var = x;
+        sleep(Duration::from_millis(1));
+        assert_eq!(x, *var);
+    });
+}
+</code></pre>
+<p>But the compiler isn’t happy with this either!</p>
+<pre>
+<code>error[E0594]: cannot assign to data in a `&amp;` reference
+ --&gt; src/main.rs:9:9
+  |
+9 |         *var = x;
+  |         ^^^^^^^^ cannot assign
+
+error: aborting due to previous error
+</code></pre>
+<p>An <code>Arc</code> will dereference into an immutable
+reference. So of course we can’t write to it! What we’ve
+essentially created with our <code>Arc&lt;isize&gt;</code> is the
+equivalent of an immutable <code>Int</code> in Haskell, which can
+be shared between multiple threads, but never written to. In order
+to allow writing, we need some kind of cell wrapper. We could test
+the waters with <code>RefCell</code>, but I’m sure everyone’s
+falling asleep reading at this point, so let’s just cut to the
+chase:</p>
+<pre><code class=
+"language-rust">extern crate rand; // not needed in Rust 2018!
+
+use std::thread::{spawn, sleep};
+use std::time::Duration;
+use std::sync::{Arc, Mutex};
+
+fn main() {
+    let var = Arc::new(Mutex::new(0isize));
+    secret(move || {
+        let x = rand::random();
+        let mut var = var.lock().unwrap();
+        *var = x;
+        sleep(Duration::from_millis(1));
+        assert_eq!(x, *var);
+    });
+}
+
+fn secret&lt;F: FnMut() + Send + 'static + Clone&gt;(f: F) {
+    let mut handles = vec![];
+    for _ in 0..1000 {
+        handles.push(spawn(f.clone()));
+    }
+    for handle in handles {
+        handle.join().unwrap();
+    }
+}
+</code></pre>
+<p>We’ve gone ahead and locked a mutex, ensuring that no other
+thread has the possibility of modifying our variable while we’re
+working with it. This code will compile successfully (finally!),
+and will complete successfully at runtime.</p>
+<h2>Takeaway</h2>
+<p>While Haskell generally has better safety guarantees than Rust,
+there are some cases where the explicit tracking of lifetimes and
+thread safety—versus Haskell’s garbage collection and
+explicit-mutable-types—produces a safer result. Specifically, in
+our case, the following features of Rust forced us into using the
+right solution:</p>
+<ul>
+<li>Inability to clone a mutable reference</li>
+<li>Inability to send the wrong reference type to another
+thread</li>
+</ul>
+<p>The following features also play in, but overlap strongly with
+Haskell:</p>
+<ul>
+<li>Inability to mutate an immutable reference. In Haskell, you
+must also (and in some ways, more strongly) opt in to
+mutability.</li>
+<li>Requirement to ensure variables live long enough. In Haskell,
+this is handled implicitly via garbage collection.</li>
+</ul>
+<h2>Breaking the Rust code</h2>
+<p>I don’t want to imply that it’s <em>impossible</em> to make a
+logic error in the Rust code. What I <em>am</em> saying is that
+Rust naturally pushed us towards the correct solution here.
+However, it’s possible for us to reduce the scope of the mutex lock
+and end up in the same situation as the Haskell code:</p>
+<pre><code class="language-rust">fn main() {
+    let var = Arc::new(Mutex::new(0isize));
+    secret(move || {
+        let x = rand::random();
+        {
+            let mut var = var.lock().unwrap();
+            *var = x;
+        }
+        sleep(Duration::from_millis(1));
+        {
+            let var = var.lock().unwrap();
+            assert_eq!(x, *var);
+        }
+    });
+}
+</code></pre>
+<p>However, this code is more blatant about its lack of thread
+safety, just like the Haskell STM implementation is:</p>
+<pre><code class="language-haskell">main :: IO ()
+main = do
+  var &lt;- newTVarIO (0 :: Int)
+  secret $ do
+    x &lt;- randomIO
+    atomically $ writeTVar var x
+    threadDelay 1000
+    y &lt;- atomically $ readTVar var
+    unless (x == y) $ error "failure!"
+  putStrLn "All good!"
+</code></pre>
+<p>While both the Haskell and Rust versions presented will fail at
+runtime, it’s fair to claim that the language and libraries did all
+they possibly could to help the programmer avoid the problem. In
+the Rust case, we explicitly delimited the scope and locked the
+mutex twice. In the Haskell code, we explicitly elected to perform
+two different atomic transactions.</p>
+<p>When dealing with concurrent code—or really any code—it’s
+impossible to create a language that will prevent the possibility
+of all logic errors. Instead, our hope is that we avoid
+<em>most</em> logic errors with the help of our tooling. And I
+believe both Haskell and Rust assist with this significantly.</p>
+<p>Learn more about <a href="/haskell" rel="noopener" target=
+"_blank">Haskell</a> and <a href="/rust" rel="noopener" target=
+"_blank">Rust</a> at FP Complete.</p>
+<p>Interested in exploring these languages for your team? Find out
+more about our <a href="/custom" rel="noopener" target=
+"_blank">consulting</a> and <a href="/training" rel="noopener"
+target="_blank">training</a> offerings.&nbsp;</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=When%20Rust%20is%20safer%20than%20Haskell https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;when-rust-is-safer-than-haskell&#x2F;"
+      title="Share on Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;when-rust-is-safer-than-haskell&#x2F;"
+      title="Share on Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;when-rust-is-safer-than-haskell&#x2F;&amp;title=When%20Rust%20is%20safer%20than%20Haskell"
+      title="Share on LinkedIn">
+      <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;when-rust-is-safer-than-haskell&#x2F;" title="Share on Reddit">
+      <i class="fab fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#99eaf8f5fcead9ffe9faf6f4e9f5fcedfcb7faf6f4" targe="_blank"><span class="__cf_email__" data-cfemail="e794868b8294a7819784888a978b829382c984888a">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

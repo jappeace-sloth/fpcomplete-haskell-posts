@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Practical Haskell: Bitrot-free Scripts</title>
+  <meta property="og:title" content="Practical Haskell: Bitrot-free Scripts">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;08&#x2F;bitrot-free-scripts&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Practical Haskell: Bitrot-free Scripts</h1>
+      
+      <p id="page-description">By Michael Snoyman, August 11, 2015</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Practical%20Haskell%3A%20Bitrot-free%20Scripts https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;08&#x2F;bitrot-free-scripts&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;08&#x2F;bitrot-free-scripts&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;08&#x2F;bitrot-free-scripts&#x2F;&amp;title=Practical%20Haskell%3A%20Bitrot-free%20Scripts"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;08&#x2F;bitrot-free-scripts&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <h1 id="file-server-demo-in-a-single-haskell-file">File server demo
+in a single Haskell file</h1>
+<p><b>Sneak peek</b>: Run <code>docker run --rm -p 8080:8080
+snoyberg/file-server-demo</code> and open <code>http://localhost:8080</code>.</p>
+<p>We've all been there. We need to write some non-trivial piece of
+functionality, and end up doing it in bash or perl because that's
+what we have on the server we'll be deploying to. Or because it's
+the language we can most easily rely on being present at a
+consistent version on our coworkers' machines. We'd rather use a
+different language and leverage more advanced, non-standard
+libraries, but we can't do that reliably.</p>
+<p>One option is to create static executables or to ship around
+Docker images. This is great for many use cases, and we are going
+to have a follow-up blog post about using Docker and Alpine Linux
+to make such static executables. But there are at least two
+downsides to this approach:</p>
+<ul>
+<li>It's not possible to modify a static executable directly. You
+need to have access to the source code and the tool chain used to
+produce it.</li>
+<li>The executable is tied to a single operating system; good luck
+getting your Linux executable to run on your OS X machine.</li>
+</ul>
+<p>Said another way: there are good reasons why people like to use
+scripting languages. This blog post is going to demonstrate doing
+some non-trivial work with Haskell, and do so with a fully
+reproducible and trivially installed toolchain, supported on
+multiple operating systems.</p>
+<h2 id="why-haskell">Why Haskell?</h2>
+<p>Haskell is a functional programming language with high
+performance, great safety features, and a large ecosystem of open
+source libraries to choose from. Haskell programs are high level
+enough to be readable and modifiable by non-experts, making it
+ideal for these kinds of shared scripts. If you're new to Haskell,
+learn more on <a href=
+"https://haskell-lang.org/">haskell-lang.org</a>.</p>
+<h2 id="the-task">The task</h2>
+<p>We're going to put together a simple file server with upload
+capability. We're going to assume a non-hostile environment (like a
+corporate LAN with no external network access), and therefore not
+put in security precautions like upload size limits. We're going to
+use the relatively low-level Web Application Interface instead of a
+web framework. While it makes the code a bit longer, there's no
+magic involved. Common frameworks in Haskell include <a href=
+"https://www.yesodweb.com/">Yesod</a> and <a href=
+"https://haskell-servant.readthedocs.io/en/stable/">Servant</a>.
+We're going to host this all with the blazingly fast Warp web
+server.</p>
+<h2 id="get-stack">Get Stack</h2>
+<p><a href="https://haskellstack.org">Stack</a> is a cross-platform
+program for developing Haskell projects. While it has many
+features, in our case the most important bit is that it can:</p>
+<ul>
+<li>Download a complete Haskell toolchain for your OS</li>
+<li>Install Haskell libraries from a <a href=
+"https://www.stackage.org/">curated package set</a></li>
+<li>Run Haskell source files directly as a script (we'll show how
+below)</li>
+</ul>
+<p>Check out the <a href="https://haskell-lang.org/get-started">Get
+Started page on haskell-lang.org</a> to get Stack on your
+system.</p>
+<h2 id="the-code">The code</h2>
+<p>You can see <a href=
+"https://github.com/snoyberg/file-server-demo/blob/master/FileServer.hs">
+the full source code on Github</a>. Let's step through the
+important parts here.</p>
+<h3 id="script-interpreter">Script interpreter</h3>
+<p>We start off our file with something that is distinctly
+<i>not</i> Haskell code:</p>
+<pre><span class="hs-cpp">#!/</span><span class=
+"hs-varid">usr</span><span class="hs-varop">/</span><span class=
+"hs-varid">bin</span><span class="hs-varop">/</span><span class=
+"hs-varid">env</span> <span class="hs-varid">stack</span>
+<span class="hs-comment">{- stack
+    --resolver lts-6.11
+    --install-ghc
+    runghc
+    --package shakespeare
+    --package wai-app-static
+    --package wai-extra
+    --package warp
+ -}</span></pre>
+<p>With this header, we've made our file executable from the shell.
+If you <code>chmod +x</code> the source file, you can run
+<code>./FileServer.hs</code>. The first line is a standard <a href=
+"https://en.wikipedia.org/wiki/Shebang_%28Unix%29">shebang</a>.
+After that, we have a comment that provides Stack with the relevant
+command line options. These options tell it to:</p>
+<ul>
+<li>Use the Haskell Long Term Support (LTS) 6.11 package set. From
+now through the rest of time, you'll be running against the same
+set of packages, so no worries about your code bitrotting!</li>
+<li>Install GHC, the Glasgow Haskell Compiler. LTS 6.11 indicates
+what version of GHC is needed (GHC 7.10.3). Once again: no bitrot
+concerns!</li>
+<li><code>runghc</code> says we'd like to run a script with
+GHC</li>
+<li>The rest of the lines specify which Haskell library packages we
+depend on. You can see a full list of available libraries in LTS
+6.11 <a href="https://www.stackage.org/lts-6.11">on the Stackage
+server</a></li>
+</ul>
+<p>For more information on Stack's script interpreter support, see
+<a href=
+"https://docs.haskellstack.org/en/stable/GUIDE/#script-interpreter">
+the Stack user guide</a>.</p>
+<h3 id="command-line-argument-parsing">Command line argument
+parsing</h3>
+<p>Very often with these kinds of tools, we need to handle command
+line arguments. Haskell has some great libraries for doing this in
+an elegant way. For example, see <a href=
+"https://haskell-lang.org/library/optparse-applicative">the
+optparse-applicative library tutorial</a>. However, if you want to
+go simple, you can also just use the <code>getArgs</code> function
+to get a list of arguments. We're going to add support for a
+<code>sanity</code> argument, which will allow us to sanity-check
+that running our application works:</p>
+<pre><span class="hs-definition">main</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">IO</span> <span class="hs-conid">()</span>
+<span class="hs-definition">main</span> <span class=
+"hs-keyglyph">=</span> <span class="hs-keyword">do</span>
+    <span class="hs-varid">args</span> <span class=
+"hs-keyglyph">&lt;-</span> <span class="hs-varid">getArgs</span>
+    <span class="hs-keyword">case</span> <span class=
+"hs-varid">args</span> <span class="hs-keyword">of</span>
+        <span class="hs-keyglyph">[</span><span class=
+"hs-str">"sanity"</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">putStrLn</span> <span class=
+"hs-str">"Sanity check passed, ready to roll!"</span>
+        <span class="hs-conid">[]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class="hs-keyword">do</span>
+            <span class="hs-varid">putStrLn</span> <span class=
+"hs-str">"Launching application"</span>
+            <span class=
+"hs-comment">-- Run our application (defined below) on port 8080</span>
+            <span class="hs-varid">run</span> <span class=
+"hs-num">8080</span> <span class="hs-varid">app</span>
+        <span class="hs-keyword">_</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">error</span> <span class=
+"hs-varop">$</span> <span class="hs-str">"Unknown arguments: "</span> <span class="hs-varop">++</span> <span class="hs-varid">show</span> <span class="hs-varid">args</span></pre>
+<h3 id="routing">Routing</h3>
+<p>We're going to support three different routes in our
+application:</p>
+<ul>
+<li>The <code>/browse/...</code> tree should allow you to get a
+directory listing of files in the current directory, and
+view/download individual files.</li>
+<li>The <code>/upload</code> page accepts a file upload and writes
+the uploaded content to the current directory.</li>
+<li>The homepage (<code>/</code>) should display an HTML page with
+a link to <code>/browse</code> and provide an HTML upload form
+targeting <code>/upload</code>.</li>
+</ul>
+<p>Thanks to pattern matching in Haskell, getting this to work is
+very straightforward:</p>
+<pre><span class="hs-definition">app</span> <span class=
+"hs-keyglyph">::</span> <span class="hs-conid">Application</span>
+<span class="hs-definition">app</span> <span class=
+"hs-varid">req</span> <span class=
+"hs-varid">send</span> <span class="hs-keyglyph">=</span>
+    <span class=
+"hs-comment">-- Route the request based on the path requested</span>
+    <span class="hs-keyword">case</span> <span class=
+"hs-varid">pathInfo</span> <span class=
+"hs-varid">req</span> <span class="hs-keyword">of</span>
+        <span class=
+"hs-comment">-- "/": send the HTML homepage contents</span>
+        <span class="hs-conid">[]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">send</span> <span class="hs-varop">$</span> <span class=
+"hs-varid">responseBuilder</span>
+                <span class="hs-varid">status200</span>
+                <span class="hs-keyglyph">[</span><span class=
+"hs-layout">(</span><span class=
+"hs-str">"Content-Type"</span><span class=
+"hs-layout">,</span> <span class=
+"hs-str">"text/html; charset=utf-8"</span><span class=
+"hs-layout">)</span><span class="hs-keyglyph">]</span>
+                <span class="hs-layout">(</span><span class=
+"hs-varid">runIdentity</span> <span class=
+"hs-varop">$</span> <span class=
+"hs-varid">execHtmlT</span> <span class=
+"hs-varid">homepage</span><span class="hs-layout">)</span>
+
+        <span class=
+"hs-comment">-- "/browse/...": use the file server to allow directory</span>
+        <span class=
+"hs-comment">-- listings and downloading files</span>
+        <span class="hs-layout">(</span><span class=
+"hs-str">"browse"</span><span class="hs-conop">:</span><span class=
+"hs-varid">rest</span><span class="hs-layout">)</span> <span class=
+"hs-keyglyph">-&gt;</span>
+            <span class=
+"hs-comment">-- We create a modified request that strips off the</span>
+            <span class=
+"hs-comment">-- "browse" component of the path, so that the file server</span>
+            <span class=
+"hs-comment">-- does not need to look inside a /browse/ directory</span>
+            <span class="hs-keyword">let</span> <span class=
+"hs-varid">req'</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">req</span> <span class="hs-layout">{</span> <span class=
+"hs-varid">pathInfo</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-varid">rest</span> <span class="hs-layout">}</span>
+             <span class="hs-keyword">in</span> <span class=
+"hs-varid">fileServer</span> <span class=
+"hs-varid">req'</span> <span class="hs-varid">send</span>
+
+        <span class=
+"hs-comment">-- "/upload": handle a file upload</span>
+        <span class="hs-keyglyph">[</span><span class=
+"hs-str">"upload"</span><span class=
+"hs-keyglyph">]</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">upload</span> <span class=
+"hs-varid">req</span> <span class="hs-varid">send</span>
+
+        <span class="hs-comment">-- anything else: 404</span>
+        <span class="hs-keyword">_</span> <span class=
+"hs-keyglyph">-&gt;</span> <span class=
+"hs-varid">send</span> <span class="hs-varop">$</span> <span class=
+"hs-varid">responseLBS</span>
+            <span class="hs-varid">status404</span>
+            <span class="hs-keyglyph">[</span><span class=
+"hs-layout">(</span><span class=
+"hs-str">"Content-Type"</span><span class=
+"hs-layout">,</span> <span class=
+"hs-str">"text/plain; charset=utf-8"</span><span class=
+"hs-layout">)</span><span class="hs-keyglyph">]</span>
+            <span class="hs-str">"Not found"</span></pre>
+<p>The most complicated bit above is the path modification for the
+<code>/browse</code> tree, which is something a web framework would
+handle for us automatically. Remember: we're doing this low level
+to avoid extra concepts, real world code is typically even easier
+than this!</p>
+<h3 id="homepage-content">Homepage content</h3>
+<p>An area that Haskell really excels at is Domain Specific
+Languages (DSLs). We're going to use the <a href=
+"https://www.yesodweb.com/book/shakespearean-templates">Hamlet</a>
+for HTML templating. There are many other options in the Haskell
+world favoring other syntax, such as <a href=
+"https://www.stackage.org/package/lucid">Lucid library</a> (which
+provides a Haskell-based DSL), plus implementations of
+language-agnostic templates, like <a href=
+"https://www.stackage.org/package/mustache">mustache</a>.</p>
+<p>Here's what our HTML page looks like in Hamlet:</p>
+<pre><span class="hs-definition">homepage</span> <span class=
+"hs-keyglyph">::</span> <span class=
+"hs-conid">Html</span> <span class="hs-conid">()</span>
+<span class="hs-definition">homepage</span> <span class=
+"hs-keyglyph">=</span> <span class=
+"hs-keyglyph">[</span><span class=
+"hs-varid">shamlet</span><span class="hs-keyglyph">|</span>
+<span class="hs-varop">$</span><span class=
+"hs-varid">doctype</span> <span class="hs-num">5</span>
+<span class="hs-varop">&lt;</span><span class=
+"hs-varid">html</span><span class="hs-varop">&gt;</span>
+    <span class="hs-varop">&lt;</span><span class=
+"hs-varid">head</span><span class="hs-varop">&gt;</span>
+        <span class="hs-varop">&lt;</span><span class=
+"hs-varid">title</span><span class=
+"hs-varop">&gt;</span><span class=
+"hs-conid">File</span> <span class="hs-varid">server</span>
+    <span class="hs-varop">&lt;</span><span class=
+"hs-varid">body</span><span class="hs-varop">&gt;</span>
+        <span class="hs-varop">&lt;</span><span class=
+"hs-varid">h1</span><span class="hs-varop">&gt;</span><span class=
+"hs-conid">File</span> <span class="hs-varid">server</span>
+        <span class="hs-varop">&lt;</span><span class=
+"hs-varid">p</span><span class="hs-varop">&gt;</span>
+            <span class="hs-varop">&lt;</span><span class=
+"hs-varid">a</span> <span class="hs-varid">href</span><span class=
+"hs-varop">=/</span><span class=
+"hs-varid">browse</span><span class="hs-varop">/&gt;</span><span class="hs-conid">Browse</span> <span class="hs-varid">available</span> <span class="hs-varid">files</span>
+
+        <span class="hs-varop">&lt;</span><span class=
+"hs-varid">form</span> <span class=
+"hs-varid">method</span><span class=
+"hs-keyglyph">=</span><span class=
+"hs-conid">POST</span> <span class=
+"hs-varid">action</span><span class=
+"hs-varop">=/</span><span class="hs-varid">upload</span> <span class="hs-varid">enctype</span><span class="hs-keyglyph">=</span><span class="hs-varid">multipart</span><span class="hs-varop">/</span><span class="hs-varid">form</span><span class="hs-comment">-</span><span class="hs-keyword">data</span><span class="hs-varop">&gt;</span>
+            <span class="hs-varop">&lt;</span><span class=
+"hs-varid">p</span><span class="hs-varop">&gt;</span><span class=
+"hs-conid">Upload</span> <span class=
+"hs-varid">a</span> <span class="hs-varid">new</span> <span class=
+"hs-varid">file</span>
+            <span class="hs-varop">&lt;</span><span class=
+"hs-varid">input</span> <span class=
+"hs-keyword">type</span><span class=
+"hs-keyglyph">=</span><span class=
+"hs-varid">file</span> <span class=
+"hs-varid">name</span><span class=
+"hs-keyglyph">=</span><span class="hs-varid">file</span><span class="hs-varop">&gt;</span>
+            <span class="hs-varop">&lt;</span><span class=
+"hs-varid">input</span> <span class=
+"hs-keyword">type</span><span class=
+"hs-keyglyph">=</span><span class=
+"hs-varid">submit</span><span class="hs-varop">&gt;</span>
+<span class="hs-keyglyph">|</span><span class=
+"hs-keyglyph">]</span></pre>
+<p>Note that Hamlet - like Haskell itself - uses significant
+whitespace and indentation to denote nesting.</p>
+<h3 id="the-rest">The rest</h3>
+<p>We're not going to cover the rest of the code in the Haskell
+file. If you're interested in the details, please read the comments
+there, and feel free to ask questions about any ambiguous bits
+(hopefully the inline comments give enough clarity on what's going
+on).</p>
+<h2 id="running">Running</h2>
+<p>Download the <code>FileServer.hs</code> file contents (or
+copy-paste, or clone the repo), make sure the file is executable
+(<code>chmod +x FileServer.hs</code>), and then run:</p>
+<pre><code class="shell">$ ./FileServer.hs</code></pre>
+<p>If you're on Windows, you can instead run:</p>
+<pre><code class="batch">&gt; stack FileServer.hs</code></pre>
+<p>That's correct: the same source file will work on POSIX systems
+and Windows as well. The only requirement is Stack and GHC support.
+Again, to get Stack on your system, please see the <a href=
+"https://haskell-lang.org/get-started">Get Started page</a>.</p>
+<p>The first time you run this program, it will take a while to
+complete. This is because Stack will need to download and install
+GHC and necessary libraries to a user-local directory. Once
+complete, the results are kept on your system, so subsequent runs
+will be almost instantaneous.</p>
+<p>Once running, you can view the
+app on localhost:8080.</p>
+<h2 id="dockerizing">Dockerizing</h2>
+<p>Generally, I wouldn't recommend Dockerizing a source file like
+this; it makes more sense to Dockerize a compiled executable. We'll
+cover how to do that another time (though sneak preview: Stack has
+<a href=
+"https://docs.haskellstack.org/en/stable/yaml_configuration/#image">
+built in support for generating Docker images</a>). For now, let's
+actually Dockerize the source file itself, complete with Stack and
+the GHC toolchain.</p>
+<p>You can <a href=
+"https://github.com/snoyberg/file-server-demo/blob/master/Dockerfile">
+check out the Dockerfile on Github</a>. That file may be slightly
+different from what I cover here.</p>
+<pre><code class="dockerfile">FROM ubuntu:16.04
+MAINTAINER Michael Snoyman</code></pre>
+<p>Nothing too interesting...</p>
+<pre><code class=
+"dockerfile">ADD https://github.com/Yelp/dumb-init/releases/download/v1.1.3/dumb-init_1.1.3_amd64 /usr/local/bin/dumb-init
+RUN chmod +x /usr/local/bin/dumb-init</code></pre>
+<p>While interesting, this isn't Haskell-specific. We're just using
+an init process to get proper handling for signals. For more
+information, see <a href=
+"https://engineeringblog.yelp.com/2016/01/dumb-init-an-init-for-docker.html">
+dumb-init's announcement blog post</a>.</p>
+<pre><code class=
+"dockerfile">ADD https://get.haskellstack.org/get-stack.sh /usr/local/bin/
+RUN sh /usr/local/bin/get-stack.sh</code></pre>
+<p>Stack has a shell script available to automatically install it
+on POSIX systems. We just download that script and then run it.
+This is all it takes to have a Haskell-ready system set up: we're
+now ready to run script interpreter based files like our
+<code>FileServer.hs</code>!</p>
+<pre><code class=
+"dockerfile">COPY FileServer.hs /usr/local/bin/file-server
+RUN chmod +x /usr/local/bin/file-server</code></pre>
+<p>We're copying over the source file we wrote and then ensuring it
+is executable. Interestingly, we can rename it to not include a
+<code>.hs</code> file extension. There is plenty of debate in the
+world around whether scripts should or should not include an
+extension indicating their source language; Haskell is allowing
+that debate to perpetuate :).</p>
+<pre><code class=
+"dockerfile">RUN useradd -m www &amp;& mkdir -p /workdir &amp;& chown www /workdir
+USER www</code></pre>
+<p>While not strictly necessary, we'd rather not run our executable
+as the root user, for security purposes. Let's create a new user,
+create a working directory to store files in, and run all
+subsequent commands as the new user.</p>
+<pre><code class=
+"dockerfile">RUN /usr/local/bin/file-server sanity</code></pre>
+<p>As I mentioned above, that initial run of the server takes a
+long time. We'd like to do the heavy lifting of downloading and
+installing during the Docker image build rather than at runtime. To
+make this happen, we run our program once with the
+<code>sanity</code> command line argument, so that it immediately
+exits after successfully starting up.</p>
+<pre><code class=
+"dockerfile">CMD ["/usr/local/bin/dumb-init", "/usr/local/bin/file-server"]
+WORKDIR /workdir
+EXPOSE 8080</code></pre>
+<p>Finally, we use <code>CMD</code>, <code>WORKDIR</code>, and
+<code>EXPOSE</code> to make it easier to run. This Docker image is
+available on Docker Hub, so if you'd like to try it out without
+doing a full build on your local machine:</p>
+<pre><code class=
+"shell">docker run --rm -p 8080:8080 snoyberg/file-server-demo</code></pre>
+<p>You should be able to play with the application on
+http://localhost:8080.</p>
+<h2 id="what39s-next">What's next</h2>
+<p>As you can see, getting started with Haskell as a scripting
+language is easy. You may be interested in checking out <a href=
+"https://www.stackage.org/haddock/lts-6.11/turtle-1.2.8/Turtle-Tutorial.html">
+the turtle library</a>, which is a Shell scripting DSL written in
+Haskell.</p>
+<p>If you're ready to get deeper into Haskell, I'd recommend:</p>
+<ul>
+<li>Check out <a href=
+"https://haskell-lang.org/">haskell-lang.org</a>, which has a lot
+of beginner-targeted information, and we're adding more
+regularly.</li>
+<li>Check out <a href="https://haskellbook.com/">Haskell Programming
+from First Principles</a>, a book which will get you completely up
+and running with Haskell</li>
+<li>Join one of the many <a href=
+"https://haskell-lang.org/community">Haskell online
+communities</a></li>
+</ul>
+<p>FP Complete both supports the open source Haskell ecosystem, as
+well as provides commercial support for those seeking it. If you're
+interested in learning more about how FP Complete can help you and
+your team be more successful in your development and devops work,
+you can <a href="/haskell">learn about what services we offer</a>
+or <a href="/index">contact us for a free consultation</a>.</p>
+
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Practical%20Haskell%3A%20Bitrot-free%20Scripts https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;08&#x2F;bitrot-free-scripts&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;08&#x2F;bitrot-free-scripts&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;08&#x2F;bitrot-free-scripts&#x2F;&amp;title=Practical%20Haskell%3A%20Bitrot-free%20Scripts"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2016&#x2F;08&#x2F;bitrot-free-scripts&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#b2c1d3ded7c1f2d4c2d1dddfc2ded7c6d79cd1dddf" targe="_blank"><span class="__cf_email__" data-cfemail="5f2c3e333a2c1f392f3c30322f333a2b3a713c3032">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

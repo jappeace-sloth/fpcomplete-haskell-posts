@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Meta -->
+  
+  
+  <title>Kubernetes for Haskell Services</title>
+  <meta property="og:title" content="Kubernetes for Haskell Services">
+  
+  
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f); })(window, document, 'script', 'dataLayer', 'GTM-W9C68HC');</script>
+  <!-- End Google Tag Manager -->
+
+  
+  
+  <meta name="description" content=".">
+  <meta property="og:description" content=".">
+  
+  
+  
+  
+  <meta property="og:url" content="https:&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;11&#x2F;kubernetes&#x2F;">
+  
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FP Complete">
+  <meta property="twitter:site" content="@FPComplete">
+
+  
+  <meta property="og:image" content="https:&#x2F;&#x2F;tech.fpcomplete.com/images/ogimage.png">
+  
+
+  <meta property="twitter:card" content="summary_large_image">
+
+
+  <!-- RSS -->
+  <link href="/feed/" rel="alternate" title="FP Complete » Feed" type="application/rss+xml">
+
+  <!-- Favicon -->
+  <meta content="/images/fpblock-favicon.png" name="msapplication-TileImage">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="32x32">
+  <link href="/images/fpblock-favicon.png" rel="icon" sizes="192x192">
+  <link href="/images/fpblock-favicon.png" rel="apple-touch-icon">
+
+  
+  
+
+  <!-- STYLES -->
+
+  <!-- Base style-framework -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Custom styles -->
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/css/splide.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet">
+
+
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+  <!-- SCRIPTS -->
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-36928035-3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-36928035-3');
+  </script>
+
+  <!-- Netlify -->
+  <script async src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  
+  
+</head>
+
+<body
+  class="">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W9C68HC" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Top navigation -->
+
+  <header>
+    <nav class="navbar fixed-top navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <img class="main-logo" src="/images/fpblock-logo.png" alt="FP Block">
+        </a>
+
+
+        <div class="mobile-items d-lg-none">
+          <button class="mobile-navbar-button" type="button" data-toggle="collapse"
+            data-target="#mobile-navbar-dropdown" aria-controls="mobile-navbar-dropdown" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+              <path fill="#CEF240" fill-rule="evenodd"
+                d="M3 6.75A.75.75 0 0 1 3.75 6h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.75zM3 12a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 12zm8.25 5.25a.75.75 0 0 1 .75-.75h8.25a.75.75 0 0 1 0 1.5H12a.75.75 0 0 1-.75-.75z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div id="mobile-navbar-dropdown" class="dropdown-menu d-lg-none" aria-labelledby="navbarDropdown">
+            <div class="dropdown-menu-content">
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                Platform Engineering
+              </a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+              <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+              <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+              <a class="dropdown-item" href="/products/kube360">
+                Kube360®
+              </a>
+              <a class="dropdown-item" href="/products/zehut/">
+                Zehut
+              </a>
+              <a class="dropdown-item" href="/training">Training</a>
+              <a class="dropdown-item" href="/jobs/">Jobs</a>
+              <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+              <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+              <a class="dropdown-item" href="/contact-us/">Contact Us</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="navbar-items d-none d-lg-block">
+          <ul class="navbar-nav">
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Learn
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/blog/">Blog</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/rust/">Rust</a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/platformengineering/">
+                    Platform Engineering
+                  </a>
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/haskell/">Haskell</a>
+                  <a class="dropdown-item" href="https://www.youtube.com/c/fpcomplete">YouTube Channel</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Offerings
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="https://tech.fpcomplete.com/services/">Overview</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">Blockchain & Smart Contracts</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">Platform Engineering</a>
+                  <a class="dropdown-item" href="/products/kube360">
+                    Kube360®
+                  </a>
+                  <a class="dropdown-item" href="/products/zehut/">
+                    Zehut
+                  </a>
+                  <a class="dropdown-item" href="/training">Training</a>
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item drophover">
+              <a class="nav-link" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">Company
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.67" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <div class="dropdown-menu-content">
+                  <a class="dropdown-item" href="/jobs/">Jobs</a>
+                  <a class="dropdown-item" href="https://www.fpcomplete.com">FP Complete Homepage</a>
+                  <a class="dropdown-item" href="https://www.fpblock.com">FP Block Homepage</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a class="cta-button d-none d-lg-block" href="/contact-us/">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<section class="banner-area text-light" style="background: url(&#x2F;images&#x2F;banner&#x2F;blog_new_head.png) no-repeat center center / cover;">
+  <div class="banner-overlay">
+    <div class="container">
+      <h1>Kubernetes for Haskell Services</h1>
+      
+      <p id="page-description">By Tim Dysinger, November 19, 2015</p>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+  
+<div class="container my-5 blog-body">
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Kubernetes%20for%20Haskell%20Services https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;11&#x2F;kubernetes&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;11&#x2F;kubernetes&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;11&#x2F;kubernetes&#x2F;&amp;title=Kubernetes%20for%20Haskell%20Services"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;11&#x2F;kubernetes&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+  
+  
+  <h2 id="a-hrefhttp:kubernetes.iokubernetesa-aka-quotk8squot">
+<a href="https://kubernetes.io/">Kubernetes</a> (AKA "k8s")</h2>
+<p>From kubernetes.io: Kubernetes is an open source orchestration
+system for Docker containers. It handles scheduling onto nodes in a
+compute cluster and actively manages workloads to ensure that their
+state matches the users declared intentions. Using the concepts of
+"labels" and "pods", it groups the containers which make up an
+application into logical units for easy management and
+discovery.</p>
+<p>We use it to host some of our web applications at FP Complete.
+In this article we will show you how to deploy a Kubernetes cluster
+to Amazon's AWS cloud, create a Haskell web application, build the
+application with Stack and finally deploy the application with
+Docker & Kubernetes. The whole process should take about 10
+minutes.</p>
+<p>Download the command line interface <code>kubectl</code>
+<a href="https://github.com/kubernetes/kubernetes/releases/download/v1.1.1/kubernetes.tar.gz">
+here</a> (the binary CLI for your OS will be found in the tarball).
+You'll need this executable in order to interact with your deployed
+Kubernetes cluster. Download it now & make sure it's in your
+PATH.</p>
+<p>If you are curious about all the things you can do with
+Kubernetes, you can find the <a href=
+"https://kubernetes.io/">documentation</a> online. There's also
+an active mail-list and IRC channel.</p>
+<h2 id=
+"a-hrefhttps:coreos.comkubernetesdocslatestkubernetes-on-aws.htmlkube-awsa-deployment-tool">
+<a href=
+"https://coreos.com/kubernetes/docs/latest/kubernetes-on-aws.html">kube-aws</a>
+Deployment Tool</h2>
+<p>The CoreOS team has created a nice AWS CloudFormation tool for
+deploying working clusters of Kubernetes on AWS with ease. This is
+much simpler than <a href=
+"https://awsadvent.tumblr.com/post/104260597799/aws-advent-2014-coreos-and-kubernetes-on-aws">
+my blog post from last winter</a> (shows the guts of a
+CloudFormation deployment with CoreOS & Kubernetes.) These days all
+we need is one command line tool & a tiny yaml manifest file.</p>
+<p>Download the command line tool <a href=
+"https://coreos.com/kubernetes/docs/latest/kubernetes-on-aws.html">here</a>
+and put it in your PATH.</p>
+<h2 id="deploy-kubernetes">Deploy Kubernetes</h2>
+<h3 id="setup-your-aws-environment-variables">Setup your AWS
+environment variables</h3>
+<p>Make sure you have at least the following environment variables
+set:</p>
+<ul>
+<li>AWS_ACCESS_KEY_ID</li>
+<li>AWS_SECRET_ACCESS_KEY</li>
+<li>AWS_DEFAULT_REGION</li>
+</ul>
+<h3 id="create-a-folder-for-the-new-cluster">Create a folder for
+the new cluster</h3>
+<p>This will house the TLS certificates & configuration for
+communicating with Kubernetes after launch.</p>
+<pre><code>mkdir -p ~/.kube/clusters/kube/
+cd ~/.kube/</code></pre>
+<h3 id="create-a-.kubeclusterskubecluster.yaml-manifest-file">
+Create a ~/.kube/clusters/kube/cluster.yaml manifest file</h3>
+<p>This file will be used by kube-aws when launching a cluster (or
+destroying a cluster. See <code>kube-aws --help</code> for more
+options.)</p>
+<pre><code># cluster name is whatever you want it to be
+clusterName: kube
+# the key name is, of course, the aws key-pair name
+keyName: kubernetes
+# pick a region and availability zone
+region: us-west-2
+availabilityZone: us-west-2a
+# pick a domain name for your cluster
+externalDNSName: kube.mydomain.com
+# pick the size of your cluster
+workerCount: 3</code></pre>
+<h3 id="launch-with-codekube-awscode">Launch with
+<code>kube-aws</code></h3>
+<p>Once our manifest is ready we can launch our cluster.</p>
+<pre>
+<code>kube-aws up --config=~/.kube/clusters/kube/cluster.yaml</code></pre>
+<p>This will output the IP address of the master node. Take note of
+the IP address for the next step.</p>
+<h3 id="set-a-dns-a-record-for-the-kubernetes-ip-address">Set a DNS
+A record for the Kubernetes IP address</h3>
+<p>Set an external DNS 'A' record with master node's IP
+address.</p>
+<pre>
+<code>kube.mydomain.com. IN A &lt;&lt;IPADDRESS&gt;&gt;</code></pre>
+<p>If you don't have control of DNS for a domain, you can put an
+entry into your /etc/hosts file.</p>
+<pre><code>kube.mydomain.com &lt;&lt;IPADDRESS&gt;&gt;</code></pre>
+<h3 id="configure-codekubectlcode">Configure
+<code>kubectl</code></h3>
+<p>Then we'll want to link the kubectl configuration file that
+kube-aws produced into the right spot (~/.kube/config) so we can
+talk to our cluster.</p>
+<pre>
+<code>ln -sf ~/.kube/clusters/kube/kubeconfig ~/.kube/config</code></pre>
+<h3 id="interact-with-the-kubernetes-cluster">Interact with the
+Kubernetes cluster</h3>
+<p>Everything should be ready to interact with our new cluster.
+Let's list the (worker) nodes. You should see 3 based on our
+manifest file above.</p>
+<pre><code>kubectl get nodes</code></pre>
+<h2 id="haskell-web-service">Haskell Web Service</h2>
+<h3 id="start-a-new-haskell-package">Start a new haskell
+package</h3>
+<p>Let's create a new directory for our example haskell web
+service. (We could have used <code>stack new hello</code> to create
+an application stub but our needs are as simple as they get. We'll
+just create a couple of files & our project will be complete.)</p>
+<pre><code>mkdir hello
+cd hello</code></pre>
+<h3 id="create-a-hello.cabal">Create a hello.cabal</h3>
+<p>As with any Haskell application we need a cabal file describing
+the project.</p>
+<pre><code>name:                hello
+version:             0.1.0
+license:             BSD3
+build-type:          Simple
+cabal-version:       &gt;=1.10
+executable hello
+  default-language:    Haskell2010
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  main-is:             Main.hs
+  build-depends:       base
+                     , http-types
+                     , wai
+                     , warp</code></pre>
+<h3 id="create-a-stack.yaml">Create a stack.yaml</h3>
+<p>We also need a stack.yaml file. This sets the resolver (and the
+GHC version. In this case it's 7.10.2). The stack.yaml file also
+describes what packages we are building and it has container image
+settings.</p>
+<pre><code>resolver: lts-3.14
+packages: [.]
+image:
+  container:
+    base: hello:base</code></pre>
+<h3 id="create-a-dockerfile">Create a Dockerfile</h3>
+<p>In order for Stack to build our application & package a docker
+container, we need to setup a base image with all our application
+dependencies. Put anything in your base image that your application
+will need. In our case today, we only need libgmp which is used by
+most haskell applications.</p>
+<pre><code>FROM ubuntu:14.04
+RUN apt-get update &amp;& apt-get install -y libgmp10</code></pre>
+<p>Now we need to build & tag the base image. You most likely only
+need to do this once. You can optionally tag this base image &
+share it on <a href="https://hub.docker.com">DockerHub</a> with your
+co-workers.</p>
+<pre><code>docker build -t hello:base .</code></pre>
+<h3 id="create-a-main.hs">Create a Main.hs</h3>
+<p>Every haskell application needs it's Main module. This one
+simply fires up a Warp web-server on port 8080 and always serves
+"hello world" as plain text.</p>
+<pre><code>{-# LANGUAGE OverloadedStrings #-}
+
+import Network.HTTP.Types (status200)
+import Network.Wai (responseLBS)
+import Network.Wai.Handler.Warp (run)
+
+main :: IO ()
+main =
+  run 8080
+      (\rq rs -&gt;
+         rs (responseLBS status200
+                         [("Content-Type","text/plain")]
+                         "hello world"))</code></pre>
+<h3 id="build-with-stack">Build with Stack</h3>
+<p>This will compile your haskell executable and layer it on top of
+your 'base' image.</p>
+<pre><code>stack image container</code></pre>
+<p>You should now see a <code>hello</code> docker image if you list
+your images.</p>
+<h3 id="test-the-image-locally">Test the image locally</h3>
+<p>We should now be able to run the docker image locally & see it
+work. Try it.</p>
+<pre>
+<code>docker run -i -t --rm -p 8080:8080 hello hello</code></pre>
+<p>In another window use curl or your web-browser to access port
+8080.</p>
+<pre><code>curl -v http://localhost:8080</code></pre>
+<p>Press ctrl-c when you are done with the local docker
+web-server.</p>
+<h3 id="push-the-image-to-dockerhub">Push the image to
+dockerhub</h3>
+<p>Next we'll tag the hello image with our dockerhub user prefix
+and a version. Then we'll push the image up to dockerhub.com.</p>
+<pre><code>docker tag hello dysinger/hello:0.1.0
+docker push dysinger/hello:0.1.0</code></pre>
+<h2 id="deploy-to-kubernetes">Deploy to Kubernetes</h2>
+<p>Now that we have our application written & published we can
+deploy it to our new Kubernetes cluster. In order to deploy any
+cluster of web-servers to Kubernetes you need two basic yaml files.
+One is the Replication Controller file & the other is the Service
+file.</p>
+<h3 id="create-a-hello-rc.yaml">Create a hello-rc.yaml</h3>
+<p>The Replication Controller file describes our docker container's
+needs (ports, volumes, number of replicas, etc). Kubernetes will
+use this information to maintain a number of docker containers on
+the cluster running your application.</p>
+<pre><code>apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: hello
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: hello
+    spec:
+      containers:
+      - name: hello
+        image: dysinger/hello:0.1.0
+        command:
+        - hello
+        ports:
+        - name: http
+          containerPort: 8080</code></pre>
+<h3 id="create-a-hello-svc.yaml">Create a hello-svc.yaml</h3>
+<p>The Service file describes the external interface for your
+replicated application. It can optionally create a load-balancer
+and map ports into your replicated application. If you need your
+application to be exposed to the internet, then you need a Service
+file.</p>
+<pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: hello
+  labels:
+    app: hello
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+  selector:
+    app: hello
+  type: LoadBalancer</code></pre>
+<h3 id="deploy-the-controller-amp-service-to-kubernetes">Deploy the
+Controller & Service to Kubernetes</h3>
+<p>Next we use the <code>kubectl</code> command line tool to tell
+Kubernetes to deploy this application. We can do it with one
+command.</p>
+<pre>
+<code>kubectl create -f hello-rc.yaml -f hello-svc.yaml</code></pre>
+<h3 id="describe-the-running-service">Describe the running
+Service</h3>
+<p>We can ask Kubernetes how the deployment went with the
+<code>get</code> subcommand.</p>
+<pre><code>kubectl get pods</code></pre>
+<p>You should see your new hello application being deployed
+(possibly not ready yet.)</p>
+<p>You should see 2 of our hello applications deployed on 2 of our
+3 worker nodes.</p>
+<p>After a few minutes you should be able to get information about
+the applications external interface.</p>
+<pre><code>kubectl describe svc hello</code></pre>
+<p>This will show you the Amazon ELB DNS name. You can stick this
+hostname in your browser & your should see 'hello world'. You can
+update DNS with a CNAME from your domain to the Amazon ELB DNS name
+if you would like a shorter URL.</p>
+<pre>
+<code>hello.mydomain.com. CNAME &lt;&lt;ELB-HOSTNAME&gt;&gt;.</code></pre>
+
+  
+
+  <p class="text-center spark-pricing-top" style="border-radius:1rem;padding:1rem;">
+    <a class="btn btn-primary" href="https://blogtrottr.com/?subscribe=https://www.fpcomplete.com/feed/"
+      target="_blank">
+      Subscribe to our blog via email
+    </a>
+    <br>
+    <small>Email subscriptions come from our <a target="_blank" href="/feed/">Atom feed</a> and are handled by <a
+        target="_blank" href="https://blogtrottr.com">Blogtrottr</a>. You will only receive notifications of blog posts,
+      and can unsubscribe any time.</small>
+  </p>
+
+  <p class="blog-contact">Do you like this blog post and need help with Next Generation Software Engineering, Platform
+    Engineering or Blockchain & Smart Contracts? <a class="text-decoration-none" href="/contact-us/">Contact us</a>.</p>
+  
+
+
+
+
+
+<div class="share-bar-wrapper">
+  <div class="share-bar-inner">
+    <b class='text-white'>Share this</b>
+    <a target="_blank"
+      href="https://twitter.com/intent/tweet?text=Kubernetes%20for%20Haskell%20Services https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;11&#x2F;kubernetes&#x2F;"
+      title="Share on Twitter">
+      <i class="fa fa-twitter"></i>
+    </a>
+
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;11&#x2F;kubernetes&#x2F;"
+      title="Share on Facebook">
+      <i class="fa fa-facebook"></i>
+    </a>
+
+    <a target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;11&#x2F;kubernetes&#x2F;&amp;title=Kubernetes%20for%20Haskell%20Services"
+      title="Share on LinkedIn">
+      <i class="fa fa-linkedin"></i>
+    </a>
+
+    <a target="_blank" href="https://www.reddit.com/submit?url=https%3A&#x2F;&#x2F;tech.fpcomplete.com&#x2F;blog&#x2F;2015&#x2F;11&#x2F;kubernetes&#x2F;" title="Share on Reddit">
+      <i class="fa fa-reddit"></i>
+    </a>
+  </div>
+</div>
+
+
+</div>
+
+
+  <footer class="footer deep-blue text-light">
+    <div class="container">
+      <div class="row">
+        <div class="d-none d-md-block col-2"></div>
+
+        <div class="col-12 col-md-4 footer-company">
+          <div>
+            <img alt="FP Block Logo" class="footer-logo" src="/images/fpblock-logo.png">
+
+            <div>© FP Block</div>
+            <div>All Rights Reserved</div>
+            <a href="/privacy">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4 footer-contact">
+          <div>
+            <h3>Contact</h3>
+            <u>Corporate Office</u>
+            <p>
+              10130 Perimeter Parkway
+              <br>Suite 200
+              <br>Charlotte, NC 28216
+            </p>
+            <div><a href="tel:+18586170430" targe="_blank">+1 858-617-0430</a></div>
+            <div><a href="/cdn-cgi/l/email-protection#6b180a070e182b0d1b0804061b070e1f0e45080406" targe="_blank"><span class="__cf_email__" data-cfemail="a7d4c6cbc2d4e7c1d7c4c8cad7cbc2d3c289c4c8ca">[email&#160;protected]</span></a></div>
+          </div>
+        </div>
+
+        <div class="d-none d-md-block col-2"></div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- SCRIPTS (synchronous) -->
+
+  <!-- Base style-framework (scripts) -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+  <!-- Hubspot Chat -->
+  <script defer src="//js.hs-scripts.com/2814979.js" type="text/javascript" id="hs-script-loader"></script>
+
+  <!-- Custom scripts -->
+  <script src="/js/custom.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@2.4.10/dist/js/splide.min.js"></script>
+
+</body>
+
+</html>

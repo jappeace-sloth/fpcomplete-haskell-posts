@@ -1,0 +1,222 @@
+FP Block
+(Toggle navigation)
+Blog Rust Platform Engineering Haskell YouTube Channel Overview Blockchain & Smart Contracts
+Platform Engineering Kube360® Zehut Training Jobs FP Complete Homepage FP Block Homepage Contact Us
+
+  • Learn
+    Blog Rust Platform Engineering Haskell YouTube Channel
+  • Offerings
+    Overview Blockchain & Smart Contracts Platform Engineering Kube360® Zehut Training
+  • Company
+    Jobs FP Complete Homepage FP Block Homepage
+
+Contact Us
+
+Cache CI builds to an S3 Bucket
+
+By Alexey Kuleshevich, February 5, 2018
+
+Share this     
+
+Just by reading the blogpost title you are likely to guess the problem at hand, but to be fair I
+will recap it anyways.
+
+What's the problem?
+
+It is increasingly common for software projects to have Continuous Integration (CI) setup,
+regardless of their size or complexity. In the matter of fact, it is so common that it is
+considered bad practice not to have your project be at least compiled upon every push to the
+repository. It's even better when a project is also tested with a possibility of doing an automated
+release as an extra step, which means uploading a new version to the package index, pushing newly
+created image to Docker registry, what have you. With all of the benefits that CI brings to the
+table it often has a drawback of taking too long time, especially when the project is really big or
+it simply has lots of dependencies that also have to be compiled from scratch.
+
+This drawback of long builds can have significant impact on the overall speed of the development
+process. Let's consider a large project that takes an hour to compile and run the test suite on
+decent hardware. It is not uncommon to have dozens of developers working daily on such a project,
+each of whom might introduce a change or two or maybe even more during a single day to the project,
+consequently triggering a CI build each time. Moreover, it is usually the case that there is a
+matrix of jobs for each build that will do compilation and testing on different Operating Systems,
+with different compiler versions and build tools. For example a common Haskell project will have a
+Travis CI build setup that will compile and test the project on Linux as well as Mac OS, while
+using 4~6 different GHC versions and multiple build tools, such as stack, cabal or nix. A CI build
+with such a matrix easily results in dozens of jobs on its own. Naturally, all of those jobs can be
+executed in parallel on as many Virtual Machines (VMs) as you have at your disposal, so you don't
+have to wait hundreds of hours for a CI build to finish, but even with an unlimited number of those
+VMs a developer will still end up waiting at least an hour for a successful feedback.
+
+Available Solution
+
+If you think recompiling a project from scratch every time when there is a slight change is really
+absurd, you are absolutely right. What is the point of wasting all of that electricity and
+developer's time just so we can create practically the same set of files, especially since all of
+the decent build tools are fully capable of handling changes. I am almost positive that all of the
+CI providers have this ability of caching files from one build, so they are available for the
+subsequent one. This simple idea solves the problem above in the majority of the situations. An
+example solution for a Haskell project would be adding these few lines to the .travis.yml file in
+the project repository:
+
+cache:
+  directories:
+  - $HOME/.ghc
+  - $HOME/.cabal
+  - $HOME/.stack
+  - $TRAVIS_BUILD_DIR/.stack-work
+
+Alternative Solution
+
+In a perfect world this solution would be universal and complete and this blog post would end now,
+but, unfortunately, that is not the case. CI providers are not created equal, and their caching
+capabilities and limitations vary drastically, which can pose real problems for some projects. Just
+to list a few:
+
+  • AppVeyor limits the cache size to 1GB for their free accounts and 20Gb for the paid ones,
+  • it also shares the same cache between builds for different repository branches, which can
+    easily lead to cache corruption.
+  • Travis handles cache sharing between builds for different branches properly, namely it will
+    make sure a build for one branch does not interfere with cache for another branch's build,
+    while also using cache created for master branch, whenever there is an initial build for a
+    fresh branch. Problem is, that Travis makes cache available even to Pull Requests (PRs) from
+    forked repositories, consequently making it publicly readable.
+  • You can't set cache paths dynamically, e.g. whenever locations of files depend on the output of
+    the build script itself. One way to solve this is to move files around to the known locations
+    that will be cached, but then you have to restore them during the next build and not to forget
+    to properly handle access/modification times, permissions and ownership.
+
+Regardless of the issue you might hit with CI provider's caching you can always fallback onto your
+own resources, one of them being an S3 bucket. There are two aspects of caching files to S3, one is
+storing cache during one build, and the inverse, restoring them during another one. Here is what we
+need to do to accomplish the former:
+
+Continous Integration Small.jpg
+
+  • upon a successful build select files and folders you need to cache and create an archive
+  • check if there is already a cache on S3 for that branch
+  • if there is none or the content has changed, upload created archive to S3.
+  • compute the cryptographic hash and attach it to the uploaded object, so it can be used later
+    for validating consistency and detecting a change in cache .
+
+During the restore step we do as follows:
+
+  • Check if there is an archive available on S3 from a previous build for a current branch, in
+    case when there is none fallback onto cache stored for a base branch such as master .
+  • Download the archive, validate content is consistent by validating the value of cryptographic
+    hash
+  • Restore the files from the downloaded archive into their original locations.
+
+I would not be surprised to see some of those steps implemented with bash and PowerShell scripts
+out there in the wild that use common tools like tar and aws-cli to get the job done for a
+particular project. I believe those tasks are useful enough to deserve there own tool that works
+consistently for any project and on more than one platform. The steps listed above represent a
+quick summary of how cache-s3 uses AWS to cache CI builds and below is a sample command that can be
+used to store files at the end of a build:
+
+$ cache-s3 save -p $PROJECT_PATH/.build
+
+And to restore files to their original place at the beginning of a CI build:
+
+$ cache-s3 restore --base-branch=master
+
+AWS credentials and S3 bucket name are being read from the environment, as it is commonly done
+during CI. I encourage you to read the cache-s3/README for more details on how to get everything
+setup and other available options before using the tool.
+
+Caching stack
+
+Despite cache-s3 being a general caching tool it is tailored specifically for working with stack .
+Whenever you build a project with stack , it will generate a lot of files, which can be divided
+into two groups:
+
+  • global ~/.stack directory , where GHC will live along with all of the project's dependencies
+    from a specified snapshot, eg. ghc -8.2.2 and lts -10.3 respectfully. This set of files doesn't
+    change very often during the lifetime of a project, so it would be wasteful if we try to cache
+    them during builds for every branch. It makes more sense to reuse global stack folder that is
+    being cached for a base branch, such as master , as readonly cache for all other branches.
+  • local to a project .stack-work directory . For a more complicated project with many nested
+    packages, there might be more than one .stack-work , usually one per package.
+
+In order for stack to be able to detect changes in a project, thus preventing it from recompiling
+the whole thing from scratch, all of the .stack-work directories , along with the global stack
+directory must be properly cached. This is exactly what cache-s3 will do for you.
+
+$ cache-s3 save stack
+
+Running the above command inside the stack project, where stack.yaml is located, will cache the
+global stack directory. As mentioned before, this should be enabled conditionally at the end of the
+build for master branch only, for example in travis.yml : if [ "$TRAVIS_BRANCH" = master ]; then
+... .
+
+$ cache-s3 save stack work
+
+As you might suspect, above will perform the caching of all of the .stack-work directories that it
+can infer from stack.yaml .
+
+Going in reverse is just as easy:
+
+$ cache-s3 restore stack --base-branch=master
+$ cache-s3 restore stack work --base-branch=master
+
+Setup
+
+If you are thinking about using S3 in automated fashion you are likely already aware of how
+daunting can the task be of setting up the S3 bucket with all of its IAM policies and associated
+IAM user. For this reason we've created a ci-cache-s3 terraform module that can take care of the
+whole setup for you, unfortunately it does require familiarity with terraform itself. There is a
+quick example on how to use it in the cache-s3 documentation.
+
+Getting cache-s3 into your CI environment is very easy, there are executable versions of the tool
+for some of the most common Operating Systems available on github release page and examples on how
+to automate its downloading is described in Downloading the executable section. If you are looking
+for some examples on how to implement your CI build script, .travis.yml and appveyor.yml
+configuration files written for the tool itself could serve as a great starting point.
+
+If you find any of those steps even a little overwhelming, feel free to get in touch with our
+representative and we will be happy to either set up the CI environment for you or schedule some
+training sessions with your engineers on how to use terraform and other tools necessary to get the
+job done.
+
+Extra ideas
+
+Undoubtedly, cache-s3 will find other places it can be useful, since its basic goal is to save/
+restore files to/from S3. One use case other than CI I can see right off the bet is when a project
+is compiled from source during deployment on EC2 instance, which can be sped up in the same manner
+described so far, except instead of using an IAM User, we would use EC2 instance profile and role
+assumption to handle access to S3 bucket. I even published a gist with terraform that you can use
+to deploy an S3 bucket and an EC2 instance with proper IAM policy in place for cache-s3 to work.
+
+cache-s3 is pretty customizable, so try running it with --help to explore all of the options
+available for each command. For example --prefix and --suffix options can come very handy for
+namespacing the builds for different projects on different Operating Systems respectfully,
+--git-branch for overriding inferred branch name, while --verbosity and --concise can be used to
+adjust the output, etc.
+
+If you liked this blog you may also like:
+
+  • Dockerizing your App
+  • Cloud Deployment Models Evaluated
+  • How to measure the success of DevOps
+
+Subscribe to our blog via email
+Email subscriptions come from our Atom feed and are handled by Blogtrottr. You will only receive
+notifications of blog posts, and can unsubscribe any time.
+
+Do you like this blog post and need help with Next Generation Software Engineering, Platform
+Engineering or Blockchain & Smart Contracts? Contact us.
+
+Share this     
+FP Block Logo
+© FP Block
+All Rights Reserved
+Privacy Policy
+
+Contact
+
+Corporate Office
+
+10130 Perimeter Parkway
+Suite 200
+Charlotte, NC 28216
+
++1 858-617-0430
+[email protected]
