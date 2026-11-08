@@ -1,0 +1,379 @@
+---
+layout: page
+title: "To Void or to void"
+---
+{% raw %}
+*By Michael Snoyman, 31 July 2017. Mirrored from FP Complete's blog: [original URL](https://academy.fpblock.com/blog/2017/07/to-void-or-to-void/) (offline), [Wayback Machine copy](https://web.archive.org/web/20250717154437/https://academy.fpblock.com/blog/2017/07/to-void-or-to-void/).*
+
+Let's say we're going to be writing some code that needs to know the current time. It would be inefficient to have to recalculate the current time whenever it's demanded, assuming we demand it more than once per second. Instead, it would be more efficient to have a variable that gets updated once per second. A good solution to this is in the [auto-update package](https://www.stackage.org/package/auto-update). A naive approach could start with a function like this:
+
+``` haskell
+updateTimeRef :: IORef String -> IO ()
+updateTimeRef ref =
+  let loop = do
+        now <- getCurrentTime
+        writeIORef ref (show now)
+        threadDelay 1000000
+        loop
+   in loop
+```
+
+You could use the `forever` function from `Control.Monad` in this implementation, but I'm intentionally avoiding it to make things clearer.
+
+Now, presumably, we would like to run this in one thread and our code that will use the `IORef` in another thread. Using the `race_` function from the (wonderful) async package, this is really easy:
+
+``` haskell
+useTimeRef :: IORef String -> IO ()
+
+main :: IO ()
+main = do
+  now <- getCurrentTime
+  timeRef <- newIORef (show now)
+  race_ (updateTimeRef timeRef) (useTimeRef timeRef)
+```
+
+`race_` has the behavior that it will run both threads until one of them exits. We know that `updateTimeRef` is an infinite loop, and therefore we're waiting until `useTimeRef` is completed. This also handles exceptions correctly: if either thread hits an exception, both threads will be killed. This code is short, readable, and correct. Nice!
+
+## Introducing a result
+
+`race_`'s `_` at the end means that it ignores the result values from the two child threads. Since both threads will return a unit value `()`, this is also what we want. But suppose we want to get some result out of the `useTimeRef` thread. Fair enough, let's just use `race` instead:
+
+``` haskell
+race :: IO a -> IO b -> IO (Either a b)
+```
+
+We have this `Either` result because only one of the threads will be allowed to complete. Whichever thread completes second will be killed and will not be given a chance to return a result. Fair enough. Let's use this function:
+
+``` haskell
+useTimeRef :: IORef String -> IO SomeResult
+
+getSomeResult :: IO SomeResult
+getSomeResult = do
+  now <- getCurrentTime
+  timeRef <- newIORef (show now)
+  eres <- race (updateTimeRef timeRef) (useTimeRef timeRef)
+  case eres of
+    Left () -> error "This shouldn't happen!"
+    Right someResult -> return someResult
+```
+
+What's going on with that `Left ()` case? According to the type of `race`, either `updateTimeRef` or `useTimeRef` could return first, and we have no idea which. Therefore, we need to deal with both possibilities. We can reason about our program and state that there's no way `updateTimeRef` will ever return first: it's an infinite loop, and if an exception occurs, it *still* won't return a success value.
+
+Unfortunately, intuition and reasoning are not appearing in our types, and therefore we need to rely on our own inner reasoning checker instead of letting GHC enforce things for us. For a short example, that's not a big deal. But as things scale up, eventually it gets difficult to know what's happening in the code and to be sure that we really can never get a `Left` value.
+
+## Using the type system
+
+Like all problems in Haskell, we can solve this with another type variable! It turns out that I lied just a bit when I defined `updateTimeRef` above. Let's take that code again:
+
+``` haskell
+updateTimeRef :: IORef String -> IO ()
+updateTimeRef ref =
+  let loop = do
+        now <- getCurrentTime
+        writeIORef ref (show now)
+        threadDelay 1000000
+        loop
+   in loop
+```
+
+I said that the output from this function would be `IO ()`. Why? Well, because `loop`'s type is `IO ()`. Why is `loop`'s type `IO ()`? Well, the last thing `loop` calls is `loop`, which has type `IO ()`. OK, perfect.
+
+Now let's play a game. Is this a valid type signature for `updateTimeRef`?
+
+``` haskell
+updateTimeRef :: IORef String -> IO Int
+```
+
+How about this?
+
+``` haskell
+updateTimeRef :: IORef String -> IO DoubleWesternBaconCheeseburger
+```
+
+The answer, perhaps surprisingly, is *yes*. `updateTimeRef` can in fact return *any* value inside that `IO`, because in reality it returns *no* values, ever. Since I'll never actually exit, I'm never going to follow through on my promise to deliver a `DoubleWesternBaconCheeseburger`, and therefore I can feel free to make such an empty promise. (Similarly, I'll happily give you a million dollars on Feburary 30.)
+
+We chose `IO ()` initially. But what if we chose `SomeResult`? Then we get *this* interesting result:
+
+``` haskell
+updateTimeRef :: IORef String -> IO SomeResult
+
+getSomeResult :: IO SomeResult
+getSomeResult = do
+  now <- getCurrentTime
+  timeRef <- newIORef (show now)
+  eres <- race (updateTimeRef timeRef) (useTimeRef timeRef)
+  case eres of
+    Left someResult -> return someResult
+    Right someResult -> return someResult
+```
+
+Notice that our `error` call above has now vanished. The type system is in effect enforcing our requirement that `useTimeRef` will outlive `updateTimeRef`. If we somehow changed `updateTimeRef` such that it wasn't an infinite loop, we could no longer give it a result type of `IO SomeResult`, and then this code would fail to compile (unlike the call to `error` we had before). Nifty!
+
+Side note: Yes, you can make this code cleaner with `either id id <$>` :)
+
+## What about the type variable?
+
+That's all well and good, but sticking `SomeResult` in the result type is pretty arbitrary. And it has even worse downsides:
+
+- What if we have another case where we want to treat it like `SomeOtherResult`?
+- What if `updateTimeRef` is provided by a library that knows nothing about `SomeResult`?
+- From the type signature, we can't actually tell the difference between "runs forever" and "runs for a bit and then returns a `SomeResult`".
+
+It turns out that we have a better type signature available:
+
+``` haskell
+updateTimeRef :: IORef String -> IO a
+```
+
+Normally, sticking a type variable in the output of a function would make no sense. But in our case, it makes *perfect* sense: it witnesses the fact that we have an infinite loop\* going on! With this change, we can continue to use our `case` expression as before, and if someone else wants to use our function for `SomeOtherResult`, no problem. If we move this into a library, everything will continue to work. And—to someone familiar with this type system trick—the type signature immediately tells us that we've got an infinite loop here.
+
+\* In reality, this type variable can mean one of two things: an infinite loop or some exception/bottom value is being used. For our purposes with side threads, they're essentially equivalent: we'll never get a `Left` value. In general, if you see such a type variable, you do need to consider the possibility that it's throwing an exception (like the `exitWith` function or, more simply, `throwIO`).
+
+## That's absurd
+
+I have to admit that I've got a problem with that case expression. We're simply returning the `Left` branch as if that's at all possible. In reality, we want to say *that can never happen*. One thing to do would be to throw an `assert` in:
+
+``` haskell
+  case eres of
+    Left someResult -> assert False (return someResult)
+    Right someResult -> return someResult
+```
+
+But this is just a runtime assertion and a pretty flimsy one. The type system is *still* not doing very much to protect us. For example, what happens if the behavior of `updateTimeRef` changes and it's no longer an infinite loop, but actually returns a `SomeResult`? Our code will continue to compile and run, but the behavior is not what we were expecting (getting the `SomeResult` from `useTimeRef`).
+
+Fortunately, there's a great datatype we can add to our arsenal here. The [Data.Void module](https://www.stackage.org/haddock/lts-9.0/base-4.9.1.0/Data-Void.html) provides:
+
+``` haskell
+data Void
+absurd :: Void -> a
+```
+
+That type signature looks ridiculous (pun avoided): how can you just return a value of any type? This must be partial, right? In fact, this is a total function. The `Void` datatype has no constructors, and therefore there are no valid values of it, making this function, amazingly, total.
+
+Now we can clear up my misgivings about our `case` expression above:
+
+``` haskell
+  case eres of
+    Left void -> absurd void
+    Right someResult -> return someResult
+```
+
+## Use Void in updateTimeRef?
+
+Your knee-jerk reaction may be to update the type signature on `updateTimeRef` to use `Void`:
+
+``` haskell
+updateTimeRef :: IORef String -> IO Void
+```
+
+Not only does this work, but it is isomorphic to our previous type signature:
+
+``` haskell
+updateTimeRef1 :: IORef String -> IO a
+updateTimeRef1 = fmap absurd . updateTimeRef2
+
+updateTimeRef2 :: IORef String -> IO Void
+updateTimeRef2 = updateTimeRef1
+```
+
+(Side note: there's one more function in `Data.Void`, `vacuous`, which is just `fmap absurd`.)
+
+These two things are equivalent in power, and to one familiar with the techniques, give the exact same meaning: an infinite loop. However, I'd recommend sticking with the first type signature, since it avoids the need to use `absurd` if you don't want to. Even with my cautions above around accidentally grabbing a `SomeResult` from `Left`, lots of code in the world (including my own!) still skips the call to `absurd`, just because it's so convenient and avoids an import of `Data.Void`.
+
+However, I would recommend one slight modification:
+
+``` haskell
+updateTimeRef :: IORef String -> IO void
+```
+
+Using the type variable `void` makes your intentions *crystal clear* to the reader, while still giving the flexibility to treat the result as any value you want.
+
+## RankNTypes!
+
+That pattern with `race` looks pretty useful, doesn't it? I'd call it the side thread pattern (yay, more Haskell design patterns!). Let's capture it in a simple function:
+
+``` haskell
+withSideThread :: IO void -> IO a -> IO a
+withSideThread infinite finite = do
+  res <- race infinite finite
+  case res of
+    Left x -> absurd x
+    Right y -> return y
+```
+
+Oops.
+
+``` text
+    • Couldn't match type ‘void’ with ‘a’
+      ‘void’ is a rigid type variable bound by
+        the type signature for:
+          withSideThread :: forall void a. IO void -> IO a -> IO a
+        at /Users/michael/Desktop/foo.hs:7:19
+      ‘a’ is a rigid type variable bound by
+        the type signature for:
+          withSideThread :: forall void a. IO void -> IO a -> IO a
+        at /Users/michael/Desktop/foo.hs:7:19
+      Expected type: IO a
+        Actual type: IO void
+```
+
+Huh, GHC doesn't like this. Suddenly our `void` type variable is carrying a different meaning: it no longer means "I'll give you back whatever you want." Instead, it means "the caller of this function can give you whatever *it* wants." And we have no idea if the caller gave us a `Void`, an `Int`, or a `TunaFishSandwich`. (You may have noticed that I haven't had lunch yet.)
+
+One approach you may consider is just using the type variable `a` in both arguments:
+
+``` haskell
+withSideThread :: IO a -> IO a -> IO a
+withSideThread infinite finite = do
+  res <- race infinite finite
+  case res of
+    Left x -> return x
+    Right y -> return y
+```
+
+However, this would be *really* bad: you could call this function with something like:
+
+``` haskell
+getSomeResult :: IO SomeResult
+getSomeResult = do
+  now <- getCurrentTime
+  timeRef <- newIORef (show now)
+  withSideThread (return SomeResult) (useTimeRef timeRef)
+```
+
+Completely bypassing all of the guarantees we wanted from the type system about the first thread being infinite.
+
+Alright, let's really solve this. If you thought that type variables can solve any Haskell problem, you're wrong. It's language extensions that really do the trick. Just add `RankNTypes` and you get:
+
+``` haskell
+withSideThread :: (forall void. IO void) -> IO a -> IO a
+withSideThread infinite finite = do
+  res <- race infinite finite
+  case res of
+    Left x -> absurd x
+    Right y -> return y
+```
+
+This says that "you can give me whatever argument you want for `infinite`, but it must match the type `IO void` *for any possible `void` I choose*. That eliminates our previous code with `return SomeResult`:
+
+``` text
+    • Couldn't match type ‘void’ with ‘SomeResult’
+      ‘void’ is a rigid type variable bound by
+        a type expected by the context:
+          forall void. IO void
+        at /Users/michael/Desktop/foo.hs:33:3
+      Expected type: IO void
+        Actual type: IO SomeResult
+```
+
+Type safety is restored, sanity reigns, and we have yet another language extension to ensure no compiler but GHC will ever run our code. Hurrah!
+
+## y u no Void?
+
+While that technique worked, it's using a bazooka where a scalpel will do. Our type signature says "You've gotta give me an `IO` action that'll return *anything*." But inside our function, we don't care if it's *anything*. We want it to be `Void`. If you ask GHC for the type signature for this function, it will tell you the right thing:
+
+``` haskell
+withSideThread :: IO Void -> IO a -> IO a
+```
+
+No need for `RankNTypes`. Our code is perfectly safe. Our type signatures practically sing to the heavens of the guarantees they give, and the invariants they expect.
+
+## To Void or to void?
+
+This all brings us to the title of the post. I've claimed that these are the best choices for your type signatures:
+
+``` haskell
+updateTimeRef :: IORef String -> IO void
+withSideThread :: IO Void -> IO a -> IO a
+```
+
+We clearly demonstrated that, in the second one, you can't use the `void` type variable without `RankNTypes`. But we *could* use the concrete `Void` type in the first signature. Is there some guiding principle to know which one to choose in which situation?
+
+Fortunately, there is, and it's pretty simple, assuming you know about [positive and negative position](../covariance-contravariance/). Please read that blog post for the full story, but basically:
+
+- Positive position is for values *generated* by a function
+- Negative position is for values *consumed* by a function
+
+In `updateTimeRef`, we are *generating* a value of type `void`. Therefore, we can get away with a type variable, stating: "I'm promising I'm giving you *anything* you want, when I eventually exit. (Oh, by the way, I'm never gonna exit, kthxbye.)"
+
+In `withSideThread`, we're *consuming* a value of type `Void`, and therefore can't leave it up to the caller to provide us with any arbitrary type. We need to be assertive and say "no, I don't want your `MacAndCheese`, give me a `Void`!"
+
+And if you're familiar with positive position, you know that in a signature like `((a -> b) -> c)`, `a` is actually in positive position (again, read the linked blog post for details). And this translates into our case, with a function like:
+
+``` haskell
+withTimeRef :: ((IO void, IORef String) -> IO a) -> IO a
+withTimeRef inner = do
+  timeRef <- getCurrentTime >>= newIORef . show
+  inner (updateTimeRef timeRef, timeRef)
+```
+
+The `IO void` value is definitely being generated by our function, and therefore we use the `void` type variable. We can use this funciton like so:
+
+``` haskell
+getSomeResult :: IO SomeResult
+getSomeResult = withTimeRef $ \(infinite, timeRef) ->
+  withSideThread infinite (useTimeRef timeRef)
+```
+
+That all said: this specific example is a bit contrived, since the better implementation would inside the `withSideThread` call inside `withTimeRef`:
+
+``` haskell
+withTimeRef :: (IORef String -> IO a) -> IO a
+withTimeRef inner = do
+  timeRef <- getCurrentTime >>= newIORef . show
+  withSideThread (updateTimeRef timeRef) (inner timeRef)
+
+getSomeResult :: IO SomeResult
+getSomeResult = withTimeRef useTimeRef
+```
+
+## Incomplete pattern matches?
+
+You may be wondering: why do we need `absurd` at all? Surely this is a complete pattern match:
+
+``` haskell
+foo :: Either Void b -> b
+foo e =
+  case e of
+    -- Left can't happen, there is no Void
+    Right b -> b
+```
+
+In reality, `Left` *can* still occur, due to bottom values:
+
+``` haskell
+bar :: b
+bar = foo (Left undefined)
+```
+
+"But wait a moment, what about strict data!" Unfortunately, it doesn't look like GHC can detect this:
+
+``` haskell
+data Either' a b = Left' !a | Right' !b
+
+foo :: Either' Void b -> b
+foo e =
+  case e of
+    -- Left can't happen, there is no Void
+    Right' b -> b
+```
+
+Results in:
+
+``` text
+warning: [-Wincomplete-patterns]
+    Pattern match(es) are non-exhaustive
+    In a case alternative: Patterns not matched: (Left' _)
+```
+
+As cool as this would be, I'm actually glad that GHC considers this an incomplete pattern: I like the idea of having to explicitly litter my code with `absurd` to make it painfully obvious to readers what's going on.
+
+## Summary
+
+Alright, that was a lot, but let's summarize the key points:
+
+- Use `race` to accomplish the "side thread pattern"
+- If you have an infinite loop, you can represent it by a `void` or `Void` value in the type signature
+- Use `void` in positive position for maximum generality
+- Use `Void` in negative position to clearly state your demands
+- Use `absurd` whenever possible to make it clear that a case is unreachable
+{% endraw %}

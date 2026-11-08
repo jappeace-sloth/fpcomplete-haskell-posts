@@ -1,0 +1,230 @@
+---
+layout: page
+title: "Parsing command line arguments"
+---
+{% raw %}
+*By Tom Sydney Kerckhove, 28 December 2017. Mirrored from FP Complete's blog: [original URL](https://academy.fpblock.com/blog/2017/12/parsing-command-line-arguments/) (offline), [Wayback Machine copy](https://web.archive.org/web/20250512154244/https://academy.fpblock.com/blog/2017/12/parsing-command-line-arguments/).*
+
+There are many ways to make programs that use settings to customise their behavior. In this post, we provide an overview of these methods and some best practices.
+
+## Different approaches to passing settings
+
+### Settings as global state versus passing settings as an argument
+
+The first distinction to make is between passing settings as an argument to the operating part of your program, or to make settings part of the global state that is available to the entire program.
+
+In pseudocode, the difference looks like this:
+
+``` text
+% Passing settings as an argument
+main () {
+ settings =: getSettings(getArgs())
+ myMain(settings)
+}
+
+myMain (settings) {
+ if (settings.shouldIDoSomething) {
+    doSomething()
+  }
+}
+```
+
+versus:
+
+``` text
+% Settings in the global state
+global settings =: getSettings(getArgs())
+
+main () {
+  myMain()
+}
+
+myMain () {
+  if (settings.shouldIDoSomething) {
+    doSomething()
+  }
+}
+```
+
+The [Commons CLI (Java)](https://commons.apache.org/proper/commons-cli/index.html) and [Optparse Applicative](https://hackage.haskell.org/package/optparse-applicative) libraries are examples of the former. The [gflags (C++)](https://gflags.github.io/gflags/) library is an example of the latter.
+
+The advantage of using settings as global state is that any part of your program has access to them. The disadvantage of passing settings as arguments is that you may have to refactor your program, should you wish to add some customization, to give the appropriate part access to the settings.
+
+The disadvantages of using settings as global state are numerous:
+
+- The size of the relevant state is increased globally as you make more settings that can be configured.
+- This is not testable without setting the global variables before running a test.
+- You cannot run the same program twice with different arguments in an automated fashion without setting global variables in between the runs.
+- The settings become available to all parts of your program, even the parts that should be parametric in the settings.
+
+### Mutable versus immutable settings
+
+A second distinction is between allowing or disallowing the mutation of settings after building them. If mutating settings is not allowed, we call the settings [immutable](../immutability-docker-haskells-st-type/).
+
+In pseudo code, the question is whether this should be allowed:
+
+settings.poolSize += 1
+
+The [Commons CLI (Java)](https://commons.apache.org/proper/commons-cli/index.html) and [Optparse applicative (Haskell)](https://hackage.haskell.org/package/optparse-applicative) are examples of libraries that treat settings as immutable objects. On the other hand, the [optparse (Python)](https://pymotw.com/2/optparse/) library is an example of a library that provides mutable settings.
+
+Why are mutable settings a bad idea?
+
+- You cannot assume that settings do not change throughout execution.
+- If settings are a mutable resource, they have to be locked to prevent race conditions.
+
+![Immutable Object -Small.jpg](../../assets/blog/parsing-command-line-arguments/fac28017da42f5c472b9bd0c7a32a5056b29742df0f0ac2dbc18305c25891ccd.jpeg)
+
+### Purely functional versus impure argument parsing
+
+The next distinction is describes whether the argument parsing operates on a list of strings, or gathers the given program arguments from global state.
+
+``` text
+% Parsing given arguments:
+settings =: parseArgs(getArgs())
+```
+
+versus:
+
+``` text
+% Letting the argument parsing get the arguments from global state:
+settings =: parseArgs()
+
+parseArgs () {
+  args = getArgs()
+  [...]
+}
+```
+
+Why is impure parsing a bad idea?
+
+- You can never assume that the parser does not access any global state like the environment variables
+- Testing becomes harder because you have to set the program arguments from within the test instead of just passing a list of strings to the parser.
+- Because settings are a global resource, this means parsing cannot be concurrent (also relevant for testing).
+
+### Passing settings as-is versus pre-processing settings
+
+Command-line arguments are usually not the only way a user would want to customize the behaviour of your program. A user may want also want to use the process environment and configuration files. In this case, the actual settings that a program will use will depend on multiple pieces of information.
+
+The difference here, in pseudo code, looks as follows:
+
+``` text
+% Pre-processing argumnets
+arguments =: parseArgs(getArgs())
+settings =: gatherSettings(arguments)
+myMain(settings)
+
+gatherSettings (arguments) {
+  s =: settings.new()
+  environment =: getEnvironment
+  s.doSomething =: arguments.doSomething
+ ‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑|| environment.get("DO_SOMETHING")
+  return s
+}
+
+myMain () {
+  if (settings.doSomething) {
+    doSomething()
+  }
+}
+```
+
+versus
+
+``` text
+% Using arguments as-is
+
+arguments =: parseArgs(getArgs())
+myMain(arguments)
+
+myMain () {
+  environment =: getEnvironment
+  if (arguments.doSomething || environment.get("DO_SOMETHING")) {
+    doSomething()
+  }
+}
+```
+
+Why is 'passing settings as-is' a bad idea:
+
+- Either no flexibility in conditional settings, or pollution of supposed-to-be irrelevant settings.
+- No separation of concerns between the 'deciding what the settings should be' and 'using the settings'.
+
+## Standardised meaning of some words:
+
+Because the naming of some relevant terms can be confusing, here are some proposed standard definitions:
+
+- Real constant: A fixed constant in the program that is universal accross programs e.g. 'decimalBase = 10', 'multiplicativeIdentityForNumbers = 1'
+- Configuration Constant: A fixed constant in the program that dictates functionality e.g. approximationIterations = 6
+- Program name: The name of the executable being called. This may be relevant to functionality. e.g. 'git'
+- Command-line Arguments: Anything passed on the command-line as the list of strings
+- Command: The specific action indication passed as the arguments e.g. find and its specific arguments and options like the query Note that not every program (needs to) use commands.
+- Options: Any optional argument, they mostly start with -- or - and are followed by the argument. e.g. --message='I made a git commit, yay!'
+- Flags: Usually only binary options, but could also be any option or even everything except the command; The argument values that are comon to all commands and/or relevant in further option parsing e.g. --verbose
+- Environment variable: A single variable in the environment that is available to a process. e.g. DATABASE_SECRET
+- Environment: The mapping of environment variables e.g. \[PORT=8000, DATABASE_SECRET=hunter2\]
+- Configuration: The total of all file system state that configures your program: mostly files e.g. A file config.yaml, its existence, and its contents: \`exclude-extensions: .hi'
+- Settings: The values that the program actually uses to decide what it will do. In certain contextst, this can also mean: The non-action-specific settings. I.e. global settings e.g. a boolean representing --verbose
+- Dispatch: The description of the chosen action and action-specific settings e.g. a value that represents the intention to run the 'find' part of the program and all the relevant action-specific settings
+
+## General tips:
+
+### General
+
+Ideally, anything configurable should be configurable in the configuration file, the environment variables and command-line options. This allows users to choose the way they configure the program.
+
+Command-line options should override the environment variables, and they should override the config files. The reasoning is that the ease of overriding should be proportional to its ephemerality such that settings are always chosen on purpose.
+
+Make all data involved in the optparse process printable. (i.e. do not store functions instead of data) This ensures that you can write property tests for anything involving that data.
+
+### Constants
+
+Wherever possible, use real constants defined by a library instead of defining them yourself. e.g. SECONDS_IN_AN_HOUR This turns the library into a single source of truth.
+
+Do not define constants as constants if it's not really a constant. You probably want to be able to configure those. e.g. NB_DB_CONNECTIONS
+
+Conversely: Do not make real constants configurable. e.g. Do not make --decimal-base=INT# and option You will save yourself a world of headaches.
+
+Leave magic numbers if they're part of a formula and you would just refer back to the formula e.g. discriminant = b ^ 2 - 4 \* a \* c instead of D = b ^ EXPONENT_OF_B_IN_DISCRIMINANT_FORMULA - FACTOR_OF_SECOND_TERM_IN_DISCRIMINANT_FORMULA \* a \* c.
+
+### Arguments and Options
+
+Use kebab-case for option names. It integrates well with the dashes in front of them.
+
+Use the standard format for arguments:
+
+- Use a single dash - for short (one character options).
+- Use a double dash -- for long options. Use kebab case names that look-like-this for long options.
+- Do not use a single dash for long options. E.g. -force instead of --force or -f.
+
+Do not use - in front of commands. I.e my-grep find instead of my-grep --find (GPG famously does this wrong.) There are exactly two exceptions to this rule: --help and --version. In a perfect world, we would have my-grep help instead of my-grep --help, but these two have become such standard practice that they cannot be ignored. Going against this convention will only cause headaches.
+
+Do not make arguments that look like options required. I.e. greet hello --name Richard The - in front of an option is a great way to distinguish between optional and required arguments.
+
+Do not use short flags if they're not obvious. I.e.: -f for --force, but not -l for --files-with-matches (actual example from grep) Short flags are annoying enough to use as-is, their mnemonic should at least make sense.
+
+### Environment variables
+
+Use UPPER_CASE names for your environment variables. Some programmers even think that you cannot use lower case variables in environment variables. Let us use this assumption to prevent headaches.
+
+Because the environment has just one global namespace, you should prefix your environment variables with the name of your program: LD_LIBRARY_PATH. This way there can never be confusion as to which program the variable is for.
+
+### Configuration
+
+Make sure config files are human-readable. A binary config file is not a config file, it is a data file. Config files are made for humans to edit, so make them readable for humans.
+
+Make sure config files are modular. Sharing parts of your config can be a great way to reduce the total amount of configuration that a user has to manage.
+
+Put config files in a considerate place. ~/.config/my-program.cfg instead of ~/.my-programrc.cfg There are dedicated libraries in most languages that will help you to decide.
+
+Make the location of your config file override-able with a flag (i.e. --config-file) A user should not have to replace a file to change the configuration. Instead, they should be able to choose a different config file on a granular basis.
+
+Consider looking for configuration files in more than one (sensible) location. This can be great for the user experience. See stack that looks recursively upwards, so that a user does not have to think about where they run the command.
+
+Stick with standard configuration formats: YAML, JSON, INI. Refrain from inventing your own format. This will make third party tooling a lot easier to build.
+
+### If you liked this post you may also like:
+
+- [Commercial Haskell Use - Case Studies](https://web.archive.org/web/2025/https://academy.fpblock.com/blog/2013/02/announcing-case-studies)
+- [Working with Data in Haskell](../data-haskell/)
+- [Exiting a Haskell Process](../exiting-haskell-process/)
+{% endraw %}

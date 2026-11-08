@@ -1,12 +1,15 @@
 # FP Complete Haskell posts
 
-Private archive of FP Complete's Haskell writing: 224 blog posts from 2012 to
+Archive of FP Complete's Haskell writing: 224 blog posts from 2012 to
 2025 and 55 pages from the Haskell section of their site (tutorials, library
 guides, getting started). Their Rust, devops, cloud, blockchain and company
 posts are left out. The original sites (www.fpcomplete.com, tech.fpcomplete.com
 and academy.fpblock.com) no longer resolve, so every page here is a Wayback
-Machine capture. The text remains the work of its authors, which is why this
-repository stays private.
+Machine capture. The text remains the work of its authors; this repository is
+an unofficial mirror, not affiliated with FP Complete or FP Block.
+
+The technical posts are readable as a website at
+<https://jappeace-sloth.github.io/fpcomplete-haskell-posts/>, built from `docs/`.
 
 Collected 7 and 8 Nov 2026 by cabal@lenovo-tablet.
 
@@ -75,6 +78,24 @@ Partnership".
 Not archived: six Haskell section URLs whose captures are "Page not found"
 pages (among them `haskell/tutorial/exception-safety`), the mailing list signup
 form, and three non-Haskell posts that the Wayback Machine failed to serve.
+
+## Site
+
+`docs/` is a GitHub Pages site (Jekyll with the minima theme) holding the pages
+listed in `reading-list.md`, converted from the captures to Markdown. Rebuild it
+after changing the captures, the manifest or the reading list:
+
+    nix-shell -p pandoc --run 'python3 -I tools/build_site.py .'
+
+The builder keeps the section order of `reading-list.md` and stops on a page
+template it does not know, or when a code block gets lost in conversion.
+Links to mirrored pages become relative links, and other links to FP Complete's
+dead sites point to the Wayback Machine. The posts' images are fetched from the
+Wayback Machine once and kept in `docs/assets/`, so a rebuild only goes online
+for new images. To preview locally with the Jekyll version GitHub Pages runs:
+
+    nix-shell -p 'ruby.withPackages (ps: with ps; [ jekyll minima jekyll-feed jekyll-seo-tag kramdown-parser-gfm ])' \
+      --run 'jekyll serve -s docs'
 
 ## Reopening a page
 

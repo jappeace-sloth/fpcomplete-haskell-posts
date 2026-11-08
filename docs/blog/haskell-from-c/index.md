@@ -1,0 +1,239 @@
+---
+layout: page
+title: "Haskell from C: Where are the for Loops?"
+---
+{% raw %}
+*By Chad Scherrer, June 2013. Mirrored from FP Complete's blog: [original URL](https://academy.fpblock.com/blog/2013/06/haskell-from-c/) (offline), [Wayback Machine copy](https://web.archive.org/web/20250515030559/https://academy.fpblock.com/blog/2013/06/haskell-from-c/).*
+
+If you're coming from a language like C, Haskell can take some getting used to. It's typical for a new language to feel a little different, but in Haskell the differences are more dramatic, and more fundamental. In particular...
+
+## Where are the `for` loops?
+
+In most imperative languages, `for` loops are all over the place, and are used for a wide variety of *different things*. Whether you're squaring every value of an array or finding its sum, you're probably using a `for` loop.
+
+In Haskell, control structures are more expressive. Sure, there's a counterpart to C's `for` (Haskell's `forM_`). But that's a discussion for another time. Today, we'll see some `for` loops in C that can be written very differently in Haskell, and why that's a good thing.
+
+Consider the simple example of computing the norm of a vector. For a vector **x**∈ℝ<sup>n</sup>, this is just
+
+\| \| x \| \| = ∑ i = 0 n - 1 x i 2
+
+Conceptually, there are three stages to this computation:
+
+1.  **`mapSq`**: Square each element
+2.  **`sum`**: Compute the sum
+3.  **`sqrt`**: Compute the square root
+
+We can think of the first step as building (at least abstractly) a new array whose `i`th element is `y[i] = x[i] * x[i]`. In functional programming, we refer to this as *mapping* the square function over the array.
+
+Putting everything in terms of functions, we can write this (in Haskell-like pseudocode) as
+
+``` text
+norm(x) = sqrt(sum(mapSq(x))) ,
+```
+
+To clean up the syntax a bit, we can instead use the notation for function composition and write
+
+``` text
+norm(x) = (sqrt ○ sum ○ mapSq)(x) ,
+```
+
+or just
+
+``` text
+norm = sqrt ○ sum ○ mapSq .
+```
+
+## Computing Norms in C
+
+In C, this modular approach leads to something like
+
+``` text
+void mapSq(double *x, double *y, int n) {
+  int i;
+  for(i=0; i<n; i++) {
+    y[i] = x[i] * x[i];
+  }
+}
+
+double sum(double *x, int n) {
+  double result = 0;
+  int i;
+  for(i=0; i<n; i++) {
+    result += x[i];
+  }
+  return result;
+}
+
+double norm1(double *x, int n) {
+  double *y = malloc(n * sizeof(double));
+  mapSq(x, y, n);
+  theSum = sum(y, n);
+  free(y);
+  return sqrt(theSum);
+}
+```
+
+We'd probably never do it this way, for a few reasons:
+
+- For such a simple computation, it's way too verbose.
+- It uses two separate `for` loops, where only one is needed.
+- There's an unnecessary `malloc` that's unlikely to be removed by the compiler.
+
+If it weren't for these issues, we probably would write code like the above. It has the advantage of being more modular and of faithfully representing the concepts. But the problems are too big to ignore, so we typically make some code transformations in our head, and instead write
+
+``` text
+double norm2(double *x, int n) {
+  double theSum = 0.0;
+  for (int i = 0; i < n; i++) { 
+    theSum += x[i]*x[i]; }
+  return sqrt(theSum);
+}
+```
+
+This code is very clear, and performs well, but we've entirely lost modularity. In this case the code is very short, so we don't give the compromise a second thought. But at a larger scale, this kind of manual optimization reduces code reuse and makes components more complex. Code becomes harder to understand, and harder to test for correctness.
+
+##### **Click below to learn more about a unique offer**
+
+## Computing Norms in Haskell
+
+In Haskell, we could write `norm` as
+
+``` haskell
+import Prelude hiding (sum)
+import Data.List (foldl')
+
+-- show
+mapSq x = map sq x
+  where
+  sq xi = xi * xi
+
+sum x = foldl' (+) 0.0 x
+
+norm x = (sqrt . sum . mapSq) x
+
+main = print (norm [1,2,3,4,5])
+```
+
+While the C example is in terms of arrays, this Haskell example instead uses *lazy linked lists*. We'll change this in a bit.
+
+Let's step through this code. The first function, `mapSq`, is defined in terms of the `map` function, and produces a new list by squaring every element of the original list. The squaring function `sq` can also be written as `(\x -> x*x)`, allowing us to write the function as
+
+``` haskell
+mapSq x = map (\x -> x*x) x
+```
+
+or simply
+
+``` haskell
+mapSq = map (\x -> x*x)
+```
+
+Next, the `sum` function is defined in terms of `foldl'`. Before you worry too much about the name, you should know that a *fold* is just a function that traverses some data structure, using a given function to update some *accumulator* as it goes. In the current case, the accumulator is the counterpart of "`theSum`" in the C version. Accumulation is via addition, and starts at 0.0.
+
+Lists can be folded from either side. In our case, we're using `foldl'`. The "`l`" in this function name is for "left", the side we're starting on, and the "`'`" indicates that this fold is *strict*. Haskell is lazy by default, but for numeric there's no point in delaying evaluation of the accumulator (and for large lists it can lead to a stack overflow), so in this case we prefer to evaluate it at every step.
+
+As it turns out, our `sum` function is common enough that it's included in Haskell's Prelude; we can use it exactly as described with no need to define it.<sup>1</sup> Our `norm` function is now simple:
+
+``` haskell
+norm = sqrt . sum . map (\x -> x*x)
+
+main = print (norm [1,2,3,4,5])
+```
+
+This looks remarkably like the mathematical specification; some have affectionately refered to Haskell as an *executable specification language*.
+
+## But what about performance?
+
+Let's compare performance with C. In order to measure easily across languages, we'll make the vector much bigger - lets say a billion elements. We'll start with a standard list implementation in Haskell and compare this to an implementation in C using arrays. Then we'll make a couple of minor changes in Haskell that allow us to use unboxed vectors.
+
+We'll test using an AMD A6-3670 APU running Ubuntu 13.04. For compilation, we'll use GHC 7.6.3 (with `-O2`) and GCC 4.7.3 (with `-O3`).
+
+### Haskell - Lists
+
+Our Haskell version is certainly elegant, but using linked lists in this way is not the best approach for performance. For a billion elements, the running time is **over 2 minutes**. What's going on here?
+
+Haskell lists are *lazy* (only those elements required by later calculations are computed) and *polymorphic* (you can have a list of elements of any type, even if elements of that type don't take up a fixed number of bytes). In order to implement this, a list in Haskell is really a *list of pointers to elements*. In cases like this, all that pointer chasing adds up.
+
+We'll soon see an easy way to improve this and get Haskell running really fast.
+
+### C - Arrays
+
+Before we get Haskell zipping along, let's look at how we would do this in C. We'll use the faster version of our norm in C (`norm2` above). Here's the plan:
+
+1.  `malloc` an array of a billion elements
+2.  Fill the array so that `x[i] = i`
+3.  Find the norm of the vector
+4.  Free the array and print the result
+
+We'll use the OS to measure the time of the whole process, and insert some code to measure step (3) alone. So all together we have this:
+
+``` text
+#include <time.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#define x_size 1000000000
+
+double norm(double *x, int n) {
+  double theSum = 0.0;
+  int i;
+  for (i=0; i<n; i++) { 
+    theSum += x[i]*x[i]; 
+  }
+  return sqrt(theSum);
+}
+
+int main() {
+  double *x = malloc(x_size * sizeof(double));
+  int i;
+  for(i=0; i<x_size; i++) {
+    x[i] = (double) i;
+  }
+  clock_t start = clock();
+  double result = norm(x, x_size);
+  clock_t end = clock();
+  printf("%3.2f\n", result);
+  printf("%3.2f sec\n", (end-start)/(double)CLOCKS_PER_SEC);
+  free(x);
+  return 0;
+}
+```
+
+The whole thing takes about **7 seconds** to run, with the `norm` function itself taking **1.9 seconds**.
+
+### Haskell - Unboxed Vectors
+
+To close in on C, let's make some minor changes. Instead of using lists, we'll use unboxed *vector*s. The "unboxed" qualifier just means that the elements are available directly, without the need to follow a pointer.
+
+From a data structure standpoint, Haskell's vectors are a lot like C's arrays. There is an important difference, though; many operations on vectors (even boxed ones) are subject to *fusion*. A `map` followed by a `sum` will be represented as a tight loop, but the code can remain modular. Remember the malloc in our original C code? Through fusion, it's eliminated entirely.
+
+Updating the original code to operate on vectors is straightforward. And To stay entirely outside the realm of lists, we can generate our vector using `iterateN`, which plays the role of our data-filling loop in C.
+
+\[EDIT: Because School of Haskell compilation does not use `-O2`, there is no fusion, so we'll need to keep the values a bit smaller. In this case, I'll use an unusually small value for `oneBillion`, though for benchmarking I still use 10<sup>9</sup>\]
+
+``` haskell
+import Data.Vector.Unboxed as V
+
+norm ::  Vector Double -> Double
+norm = sqrt . V.sum . V.map (\x -> x*x)
+
+oneBillion = 100
+
+main = print $ norm $ V.iterateN oneBillion (+1) 0.0 
+```
+
+This code runs in about **2.5 seconds**. It's just a bit longer than C's inner loop alone, but much less than the 7 seconds if the malloc is included.
+
+EDIT: As Pedro Vasconcelos points out, tight numerical loops like this can often benefit from using the LLVM back-end, via `-fllvm`. This brings the time for the entire Haskell run down to **1.9 seconds**, the same as the inner loop alone in C!
+
+## Conclusion
+
+Haskell's control structures express that a reduction (a *fold* in Haskell) is very different than a *map*.<sup>2</sup> Libraries like **vector** implement powerful fusion techniques to combine loops and eliminate intermediate data structures. And *unboxing* elminates excessive pointer chasing required by built-in lists.
+
+All in all, this lets us write *high-level code without sacrificing high performance*. The need for any compromise between the two is becoming more rare every day.
+
+------------------------------------------------------------------------
+
+<sup>1</sup> The Prelude's \`sum\` function is not defined in terms of \`foldl'\`, but instead relies on GHC's strictness analysis. In GHC 7.6.3 there's a regression, as described in \[this ticket\](https://hackage.haskell.org/trac/ghc/ticket/7954). Because of this, we stuck with \`foldl' (+) 0.0\` in timing our Haskell version using lists.  
+<sup>2</sup> EDIT: Michael Sloan has pointed out that the difference is not so fundamental, since \`map f = foldr ((:) . f) \[\]\`.
+{% endraw %}

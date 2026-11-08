@@ -1,0 +1,391 @@
+---
+layout: page
+title: "Pattern matching"
+---
+{% raw %}
+*By Michael Snoyman, 14 December 2020. Mirrored from FP Complete's blog: [original URL](https://academy.fpblock.com/blog/pattern-matching/) (offline), [Wayback Machine copy](https://web.archive.org/web/20250515023340/https://academy.fpblock.com/blog/pattern-matching/).*
+
+I first started writing Haskell about 15 years ago. My learning curve for the language was haphazard at best. In many cases, I learnt concepts by osmosis, and only later learned the proper terminology and details around them. One of the prime examples of this is pattern matching. Using a `case` expression in Haskell, or a `match` expression in Rust, always felt natural. But it took years to realize that patterns appeared in other parts of the languages than just these expressions, and what terms like *irrefutable* meant.
+
+It's quite possible most Haskellers and Rustaceans will consider this content obvious. But maybe there are a few others like me out there who never had a chance to realize how ubiquitous patterns are in these languages. This post may also be a fun glimpse into either Haskell or Rust if you're only familiar with one of the languages.
+
+## Language references
+
+Both Haskell and Rust have language references available online. The caveats are that the Rust reference is marked as incomplete, and the Haskell language reference is for Haskell2010, which GHC does not strictly adhere to. That said, both are readily understandable and complete enough to get a very good intuition. If you've never looked at either of these documents, I highly recommend having a peek.
+
+- [Haskell 2010 Language Report, section 3.17 Pattern Matching](https://www.haskell.org/onlinereport/haskell2010/haskellch3.html#x8-580003.17)
+- [Rust language reference, Patterns](https://doc.rust-lang.org/stable/reference/patterns.html#range-patterns)
+
+## case and match
+
+The first place most of us hear the term "pattern matching" is in Haskell's `case` expression, or Rust's `match` expression. And it makes perfect sense here. We can provide multiple *patterns*, typically based on a data constructor/variant, and the language will match the most appropriate one. Slightly tying in with [my previous post on errors](../error-handling-is-hard/), let's look at a common example: pattern matching on an `Either` value in Haskell.
+
+``` haskell
+mightFail :: Either String Int
+
+main =
+    case mightFail of
+        Left err -> putStrLn $ "Error occurred: " ++ err
+        Right x -> putStrLn $ "Successful result: " ++ show x
+```
+
+Or a `Result` value in Rust:
+
+``` rust
+fn might_fail() -> Result<i32, String> { ... }
+
+fn main() {
+    match might_fail() {
+        Err(err) => println!("Error occurred: {}", err),
+        Ok(x) => println!("Successful result: {}", x),
+    }
+}
+```
+
+I think most programmers, even those unfamiliar with these languages, could intuit to some extent what these expressions do. `mightFail` and `might_fail()` return some kind of value. The value may be in multiple different "states." The patterns match, and we branch our behavior depending on which state. Easy enough.
+
+Already here, though, there's an important detail many of us gloss over. Or at least I did. Our patterns not only *match a constructor*, they also *bind a variable*. In the examples above, we bind the variables `err` and `x` to values contained by the data constructors. And that's pretty interesting, because both Haskell and Rust *also* use `let` bindings for defining variables. I wonder if there's some kind of connection there.
+
+*Narrator: there was a connection*
+
+## Functions in Haskell
+
+Haskell immediately adds a curve ball (in a good way) to this story. Let's take a classic recursive definition of a factorial function (note: this isn't a *good* definition since it has a space leak).
+
+``` haskell
+fact :: Int -> Int
+fact i =
+    case i of
+        0 -> 1
+        _ -> i * fact (i - 1)
+```
+
+This feels a bit verbose. We capture the variable `i`, only to immediately pattern match on it. We also have a *new* kind of pattern, `_`. When I first learned Haskell, I thought of `_` as "a variable I don't care about." But it's actually more specialized than this: a wildcard pattern, something which matches anything. (We'll get into what variables match later.)
+
+Anyway, to make this kind of code a bit terser, Haskell offers a different way of writing this function:
+
+``` haskell
+fact :: Int -> Int
+fact 0 = 1
+fact i = i * fact (i - 1)
+```
+
+These two versions of the code are identical. It's just a syntactic trick. Let's see another more interesting syntactic trick.
+
+## What about let?
+
+We use `let` expressions (and `let` bindings in `do`-notation) in Haskell to create new variables, e.g.:
+
+``` haskell
+main =
+    let name = "Alice"
+     in putStrLn $ "Hello, " ++ name
+```
+
+And we do the same with `let` statements in Rust:
+
+``` rust
+fn main() {
+    let name = "Alice";
+    println!("Hello, {}", name);
+}
+```
+
+But here's where we begin to get a bit fancy. We already saw that we can bind variables in `case` and `match` expressions. Does that mean we can do away with the `let`s? Yes we can!
+
+``` haskell
+main =
+    case "Alice" of
+        name -> putStrLn $ "Hello, " ++ name
+```
+
+And
+
+``` rust
+fn main() {
+    match "Alice" {
+        name => println!("Hello, {}", name)
+    }
+}
+```
+
+This isn't *good* code per se. In fact, `cargo clippy` will complain about it. But it does hint at the fact that there's a deeper connection between two constructs. And the connection is this: the left hand side of the equals sign in a `let` statement/expression/binding is a *pattern*.
+
+## Ditch the case! Ditch the match!
+
+Alright, so we can technically get rid of `let`s if we wanted to (which we don't). Can we get rid of the `case` expressions in Haskell? The real answer is "definitely not." But interestingly, this code compiles!
+
+``` haskell
+mightFail :: Either String Int
+mightFail = Left "It failed"
+
+main :: IO ()
+main =
+    let Right x = mightFail
+     in putStrLn $ "Successful result: " ++ show x
+```
+
+As mentioned, we can put a pattern on the left hand side of the equals sign. And we've done just that here. But what on Earth does this code *do*? As you can see, the `mightFail` expression will evaluate to a `Left` value. But our pattern only matches on `Right` values! Running this code gives us:
+
+``` text
+Main.hs:10:9-27: Non-exhaustive patterns in Right x
+```
+
+Haskell is a non-strict language. Performing this binding is allowed. But evaluating the result of this binding blows up.
+
+Rust, however, **is** a strict language. We can do something very similar in Rust:
+
+``` rust
+fn main() {
+    let Ok(x) = might_fail();
+    println!("Successful result: {}", x);
+}
+```
+
+But this code won't even compile:
+
+``` text
+error[E0005]: refutable pattern in local binding: `Err(_)` not covered
+...
+    = note: `let` bindings require an "irrefutable pattern", like a `struct` or an `enum` with only one variant
+    = note: for more information, visit https://doc.rust-lang.org/book/ch18-02-refutability.html
+    = note: the matched value is of type `std::result::Result<i32, std::string::String>`
+help: you might want to use `if let` to ignore the variant that isn't matched
+```
+
+Let's dive into those "exhaustive" and "refutable" concepts, and then round out this post with a glance at where else patterns appear in these languages.
+
+Side note: it's true that the Haskell code above compiles. However, if you turn on the [`-Wincomplete-uni-patterns` warning](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/using-warnings.html#ghc-flag--Wincomplete-uni-patterns), you'll get a warning about this. I personally think this warning should be included in `-Wall`.
+
+## Refutable and irrefutable, exhaustive and non-exhaustive
+
+This topic is quite a bit more complicated in Haskell due to non-strictness. How matching works in the presence of "bottom" or undefined values is an entire extra wrench of complication. I'm going to ignore those cases entirely here. If you're interested in more information on this, my article [All about strictness](../../haskell/tutorial/all-about-strictness/) discusses some of these points.
+
+Some patterns will *always* match a value. The simplest example of this is a wildcard. In fact, that's basically its definition. Quoting the Rust reference:
+
+> The *wildcard pattern* (an underscore symbol) matches any value.
+
+And fortunately for us, things behave exactly the same way in Haskell.
+
+Another pattern that matches any value given is variable. `let x = blah` is a valid binding, regardless of what `blah` is. Both of these are known as *irrefutable* patterns.
+
+By contrast, some patterns are refutable. They are patterns that only match some possible cases of the value, not all. The simplest example is the one we saw before: matching on one of many data constructors/variants in a data type (Haskell) or enum (Rust).
+
+Contrasting yet again: if you have a `struct` in Rust, or a Rust `enum` with only variant, or a Haskell `data` with only one data constructor, or a Haskell `newtype`, the pattern will always match. That is, of course, assuming any patterns nested within will *also* always match. To demonstrate, this pattern match is irrefutable:
+
+``` haskell
+data Foo = Foo Bar
+data Bar = Baz Int
+
+main :: IO ()
+main =
+    let Foo (Baz x) = Foo (Baz 5)
+     in putStrLn $ "x == " ++ show x
+```
+
+However, if I add another data constructor to `Bar`, it becomes refutable:
+
+``` haskell
+data Foo = Foo Bar
+data Bar = Baz Int | Bin Char
+
+main :: IO ()
+main =
+    let Foo (Baz x) = Foo (Bin 'c')
+     in putStrLn $ "x == " ++ show x
+```
+
+In both Haskell and Rust, tuples behave like data types with one constructor, and therefore as long as the patterns inside of them are irrefutable, they are irrefutable too.
+
+The final case I want to point out is *literal patterns*. Literal patterns are very much refutable. This code thankfully does not compile:
+
+``` rust
+fn main() {
+    let 'x' = 'a';
+}
+```
+
+But the really interesting thing for someone not used to pattern matching is that you can do this at all! We've already done pattern matching on literal values above, in our definition of `fact`. It's very convenient to be able to build up complex case/match expressions using literal syntax (like list/slice syntax).
+
+Alright, let's see a few more examples of where patterns are used in these languages, then tie it up.
+
+## Function arguments
+
+Function arguments are patterns in both languages. In Haskell we saw that you can use *refutable* patterns, and provide multiple function clauses. The same doesn't apply to Rust functions. You'll need to use an irrefutable pattern in the function, and then do some pattern matching or other kind of branching in the body of the functions. For example, the poorly written `fact` function can be rewritten in Rust as:
+
+``` rust
+fn fact(i: u32) -> u32 {
+    if i == 0 {
+        1
+    } else {
+        i * fact(i - 1)
+    }
+}
+
+fn main() {
+    println!("5! == {}", fact(5));
+}
+```
+
+Perhaps more interestingly in both languages, you can use a pattern matching a data structure in the function argument. For example, in Rust:
+
+``` rust
+struct Person {
+    name: String,
+    age: u32,
+}
+
+fn greet(Person { name, age }: &Person) {
+    println!("{} is {} years old", name, age);
+}
+
+fn main() {
+    let alice = Person {
+        name: "Alice".to_owned(),
+        age: 30,
+    };
+    greet(&alice);
+}
+```
+
+Or in Haskell, using positional instead of named fields:
+
+``` haskell
+data Person = Person String Int
+
+greet :: Person -> IO ()
+greet (Person name age) = putStrLn $ name ++ " is " ++ show age ++ " years old"
+
+main :: IO ()
+main = greet $ Person "Alice" 30
+```
+
+## Closures, functions, and lambdas
+
+The arguments to closures (Rust) and lambdas (Haskell) are patterns. That means we can match on irrefutable things like tuples fairly easily:
+
+``` rust
+fn main() {
+    let greet = |(name, age)| println!("{} is {} years old", name, age);
+    greet(("Alice", 30));
+}
+```
+
+The big difference is that, in Rust, the pattern must be irrefutable. This is again due to strictness. The following code will compile in Haskell, but fail at runtime:
+
+``` haskell
+main :: IO ()
+main =
+    let mylambda = \(Right x) -> putStrLn x
+     in mylambda (Left "Error!")
+```
+
+Again, `-Wincomplete-uni-patterns` will warn about this. But again, it's not on by default.
+
+By contrast, in Rust, the equivalent code will fail to compile:
+
+``` rust
+fn main() {
+    let myclosure = |Ok(x): Result<i32, &str>| println!("{}", x);
+    myclosure(Err("Hello"));
+}
+```
+
+This produces:
+
+``` text
+error[E0005]: refutable pattern in function argument: `Err(_)` not covered
+```
+
+And if you're wondering: I needed to add the explicit `: Result<i32, &str>` type annotation to help type inference get to that error message. Without it, it just complained that it couldn't infer the type of `x`.
+
+## if let, while let, and for (Rust)
+
+The `if let` and `while let` expressions are all about refutable pattern matches. "Only do this if the pattern matches" and "keep doing this while the pattern matches." `if let` looks something like this:
+
+``` rust
+fn main() {
+    let result: Result<(), String> = Err("Something happened".to_owned());
+    if let Err(e) = result {
+        eprintln!("Something went wrong: {}", e);
+    }
+}
+```
+
+And with `while let`, you can make something close to a `for` loop:
+
+``` rust
+fn main() {
+    let mut iter = 1..=10;
+    while let Some(i) = iter.next() {
+        println!("i == {}", i);
+    }
+}
+```
+
+And speaking of `for` loops, the left hand side of the `in` keyword is a pattern. This can be really nice for cases like destructuring the tuple generated by the `enumerate()` method:
+
+``` rust
+fn main() {
+    for (idx, c) in "Hello, world!".chars().enumerate() {
+        println!("{}: {}", idx, c);
+    }
+}
+```
+
+The patterns in a `for` loop must be irrefutable. This code won't compile:
+
+``` rust
+fn main() {
+    let array = [Ok(1), Ok(2), Err("something"), Ok(3)];
+    for Ok(x) in &array {
+        println!("x == {}", x);
+    }
+}
+```
+
+Instead, if you want to exit the `for` loop at the first `Err` value, you would need to do something like this:
+
+``` rust
+fn main() {
+    let array = [Ok(1), Ok(2), Err("something"), Ok(3)];
+    for x in &array {
+        match x {
+            Ok(x) => println!("x == {}", x),
+            Err(_) => break,
+        }
+    }
+}
+```
+
+## Where they're used
+
+This was not intended to be a complete explanation of all examples of patterns in these languages. However, for a bit of completeness, let me quote the Haskell language specification for where patterns are part of the language:
+
+> Patterns appear in lambda abstractions, function definitions, pattern bindings, list comprehensions, do expressions, and case expressions. However, the first five of these ultimately translate into case expressions, so defining the semantics of pattern matching for case expressions is sufficient.
+
+And similarly for Rust:
+
+> - let declarations
+> - Function and closure parameters
+> - match expressions
+> - if let expressions
+> - while let expressions
+> - for expressions
+
+There are also more advanced examples of patterns that I haven't touched on at all. Reference patterns in Rust would be relevant here, as would lazy patterns in Haskell.
+
+## Conclusion
+
+I hoped this gave a little bit of insight into the value of patterns. For me, the important takeaway is:
+
+- Patterns appear in lots of places
+- The difference between refutable and irrefutable patterns
+- There are some places where you must use irrefutable patterns
+- There are some places where Haskell lets you use refutable patterns, but you shouldn't
+- Variable binding is just one special case of patterns
+
+If you're interested in learning more about either Haskell or Rust, check out our [Haskell syllabus](../../haskell/syllabus/) or our [Rust Crash Course](https://web.archive.org/web/2025/https://tech.fpcomplete.com/rust/crash-course/). FP Complete also offers both corporate and public training classes on both Haskell and Rust. If you're interested in learning more, please [contact us for details](https://web.archive.org/web/2025/https://tech.fpcomplete.com/contact-us/).
+
+<a href="https://web.archive.org/web/2025/https://academy.fpblock.com/training/" class="button-coral">Learn about Rust training</a>
+{% endraw %}

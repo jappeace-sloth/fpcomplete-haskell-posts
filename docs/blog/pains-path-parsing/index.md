@@ -1,0 +1,192 @@
+---
+layout: page
+title: "The Pains of Path Parsing"
+---
+{% raw %}
+*By Michael Snoyman, 26 April 2021. Mirrored from FP Complete's blog: [original URL](https://academy.fpblock.com/blog/pains-path-parsing/) (offline), [Wayback Machine copy](https://web.archive.org/web/20250515040231/https://academy.fpblock.com/blog/pains-path-parsing/).*
+
+I've spent a considerable amount of coding time getting into the weeds of path parsing and generation in web applications. First with [Yesod in Haskell](https://www.yesodweb.com/), and more recently with a side project for [routetypes in Rust](https://github.com/snoyberg/routetype-rs). (Side note: I'll likely do some blogging and/or videos about that project in the future, stay tuned.) My recent work reminded me of a bunch of the pain points involved here. And as so often happens, I was complaining to my wife about these pain points, and decided to write a blog post about it.
+
+First off, there are plenty of pain points I'm not going to address. For example, the insane world of percent encoding, and the different rules for what part of the URL you're in, is a constant source of misery and mistakes. Little things like required leading forward slashes, or whether query string parameters should differentiate between "no value provided" (e.g. `?foo`) versus "empty value provided" (e.g. `?foo=`). But I'll restrict myself to just one aspect: **roundtripping path segments and rendered paths**.
+
+## What's a path?
+
+Let's take this blog post's URL: `https://www.fpcomplete.com/blog/pains-path-parsing/`. We can break it up into four logical pieces:
+
+- `https` is the *scheme*
+- `://` is a required part of the URL syntax
+- `www.fpcomplete.com` is the *authority*. You may be wondering: isn't it just the domain name? Well, yes. But the authority may contain additional information too, like port number, username, password
+- `/blog/pains-path-parsing/` is the path, including the leading and trailing forward slashes
+
+This URL doesn't include them, but URLs may also include query strings, like `?source=rss`, and fragments, like `#what-s-a-path`. But we just care about that `path` component.
+
+The first way to think of a path is as a string. And by string, I mean a sequence of characters. And by sequence of characters, I really mean Unicode code points. (See how ridiculously pedantic I'm getting? Yeah, that's important.) But that's not true at all. To demonstrate, here's some Rust code that uses Hebrew letters in the path:
+
+``` rust
+fn main() {
+    let uri = http::Uri::builder().path_and_query("/hello/מיכאל/").build();
+    println!("{:?}", uri);
+}
+```
+
+And while that looks nice and simple, it fails spectacularly with the error message:
+
+``` text
+Err(http::Error(InvalidUri(InvalidUriChar)))
+```
+
+In reality, according to [the RFC](https://tools.ietf.org/html/rfc3986#section-2), paths are made up of a limited set of ASCII characters, represented as octets (raw bytes). And we somehow have to use percent encoding to represent other characters.
+
+But before we can really talk about encoding and representing, we have to ask another orthogonal question.
+
+## What do paths represent?
+
+While a path is technically a sequence of a reserved number of ASCII octets, that's not how our applications treat them. Instead, we *want* to be able to talk about the full range of Unicode code points. But it's more than just that. We want to be able to talk about *groupings* of *sequences*. We call these *segments* typically. The raw path `/hello/world` can be thought of as the segments `["hello", "world"]`. I would call this *parsing* the path. And, in reverse, we can *render* those segments back into the original raw path.
+
+With these kinds of parse/render pairs, it's always nice to have complete roundtripping abilities. In other words, `parse(render(x)) == x` and `render(parse(x)) == x`. Generally these rules fail for a variety of reasons, such as:
+
+1.  Multiple valid representations. For example, with the percent encoding we'll mention below, `%2a` and `%2A` mean the same thing.
+2.  Often unimportant whitespace details get lost during parsing. This applies to formats like JSON, where `[true, false]` and `[ true, false ]` have the same meaning.
+3.  Parsing can fail, so that it's invalid to call `render` on `parse(x)`.
+
+Because of this, we often end up reducing our goals to something like: for all `x`, `parse(render(x))` is successful, and produces output identical to `x`.
+
+In path parsing, we definitely have problem (1) above (multiple valid representations). But by using this simplified goal, we no longer worry about that problem. Paths in URLs also don't have unimportant whitespace details (every octet has meaning), so (2) isn't a problem to be concerned with. Even if it was, our `parse(render(x))` step would end up "fixing" it.
+
+The final point is interesting, and is going to be crucial to our complete solution. What exactly does it mean for path parsing to fail? I can think of two ideas in basic path parsing:
+
+- It includes an octet outside of the allowed range
+- It includes a percent encoding which is invalid, e.g. `%@@`
+
+Let's assume for the rest of this post, however, that those have been dealt with at a previous step, and we know for a fact that those error conditions will not occur. Are there any other ways for parsing to fail? In a basic sense: no. In a more sophisticated parsing: absolutely.
+
+## Basic rendering
+
+The basic rendering steps are fairly straightforward:
+
+- Perform percent encoding on each segment
+- Interpolate the segments with a slash separator
+- Prepend a slash to the entire string
+
+To allow roundtripping, we need to ensure that each *input* to the `render` function generates a unique output. Unfortunately, with these basic rendering steps, we immediately run into an error:
+
+``` haskell
+render segs = "/" ++ interpolate '/' (map percentEncode segs)
+
+render []
+    = "/" ++ interpolate '/' (map percentEncode [])
+    = "/" ++ interpolate '/' []
+    = "/" ++ ""
+    = "/"
+
+render [""]
+    = "/" ++ interpolate '/' (map percentEncode [""])
+    = "/" ++ interpolate '/' [""]
+    = "/" ++ ""
+    = "/"
+```
+
+In other words, both `[]` and `[""]` encode to the same raw path, `/`. This may seem like a trivial corner case not worth addressing. In fact, even more generally, empty path segments seem like a corner case. One possibility would be to say "segments must be non-zero length". Then there's no potential `[""]` input to worry about.
+
+When this topic came up in Yesod, we decided to approach this differently. We actually *did* have some people who had use cases for empty path segments. We'll get back to this in normalized rendering.
+
+## Percent encoding
+
+I mentioned originally the annoyances of percent encoding character sets. I'm still not going to go deeply into details of it. But we do need to discuss it at a surface level. In the steps above, let's ask two related questions:
+
+- Why did we percent encode *before* interpolating?
+- Do we percent encode forward slashes?
+
+Let's try percent encoding *after* interpolating. And let's say we decide not to percent encode forward slashes. Then `render(["foo/bar"])` would turn into `/foo/bar`, which is identical to `render(["foo", "bar"])`. That's not what we want. And if we decide we're going to percent encode *after* interpolating and that we *will percent encode forward slashes*, both inputs result in `/foo%2Fbar` as output. Neither of those is any good.
+
+OK, going back to percent encoding before interpolating, let's say that we don't percent encode forward slashes. Then both `["foo/bar"]` and `["foo", "bar"]` will turn into `/foo/bar`, again bad. So by process of elimination, we're left with percent encoding before interpolating, and escaping the forward slashes in segments. With this configuration, we're left with `render(["foo/bar"]) == "/foo%2Fbar"` and `render(["foo", "bar"]) == "/foo/bar"`. Not only is this unique output (our goal here), but it also intuitively feels right, at least to me.
+
+## Unicode codepoint handling
+
+One detail we've glossed over here is Unicode, and the difference between codepoints and octets. It's time to rectify that. Percent encoding is a process that works on *bytes*, not characters. I can percent encode `/` into `%2F`, but only because I'm assuming an ASCII representation of that character. By contrast, let's go back to my favorite non-Latin alphabet example, Hebrew. How do you represent the Hebrew letter Alef `א` with percent encoding? The answer is that you can't, at least not directly. Instead, we need to represent that [Unicode codepoint](https://unicode-table.com/en/05D0/) (U+05D0) as bytes. And the most universally accepted way to do that is to use UTF-8. So our process is something like this:
+
+``` rust
+let segment: &[char] = "א";
+let segment_bytes: &[u8] = encode_utf8(segment); // b"\xD7\x90"
+let encoded: &[u8] = percent_encode(segment_bytes); // b"%D7%90"
+```
+
+OK, awesome, we now have a way to take a sequence of non-empty Unicode strings and generate a unique path representation of that. What's next?
+
+## Basic parsing
+
+How do we go *backwards*? Easy: we reverse each of the steps above. Let's see the render steps again:
+
+- Percent encode each segment, consisting of:
+  - UTF-8 encode the codepoints into bytes
+  - Percent encode all relevant octets, including the forward slash
+- Interpolate all of the segments together, separated by a forward slash
+  - Technically, the "forward slash" here is the forward slash *octet* `\x2F`. But because everyone basically assumes ASCII/UTF-8 encoding, we can typically be a little loose in our terminology.
+- Prepend a forward slash (octet).
+
+Basic parsing is exactly the same steps in reverse:
+
+- Strip off the forward slash.
+  - Arguably, if a forward slash is missing, you could consider this a parse error. Most parsers simply ignore it instead.
+- Split the raw path on each occurrence of a forward slash. We'll discuss some subtleties about this next.
+- Percent decode each segment, consisting of:
+  - Look for any `%` signs, and grab the next two hexadecimal digits. In theory, you could treat an incorrect or missing digit as a parse error. In practice, many people end up using some kind of fallback.
+  - Take the percent decoded octets and UTF-8 decode them. Again, in theory, you could treat invalid UTF-8 data as a parse error, but many people simply use the [Unicode replacement character](https://en.wikipedia.org/wiki/Replacement_character).
+
+If implemented correctly, this should result in the goal we mentioned above: encoding and decoding a specific input will always give back the original value (ignoring the empty segment case, which we still haven't addressed). The one really tricky thing is making sure that our *split* and *interpolate* operations mirror each other correctly. There are actually [many different ways of splitting lists and strings](https://www.stackage.org/package/split). Fortunately for my Rust interpolation, the [standard `split` method on `str`](https://doc.rust-lang.org/stable/std/primitive.str.html#method.split) happens to implement exactly the behavior we want. You can check out the method's documentation for details (helpful even for non-Rustaceans!). Pay particular attention to the comments about contiguous separators, and think about how `["foo", "", "", "bar"]` would end up being interpolated and then parsed.
+
+OK, we're all done, right? Wrong!
+
+## Normalization
+
+I bet you thought I forgot about the empty segments. (Actually, given how many times I called them out, I bet you *didn't* think that.) Before, we saw exactly one problem with empty segments: the weird case of `[""]`. I want to first establish that empty segments are a much bigger problem than that.
+
+I gave a link above to a GitHub repository: `https://github.com/snoyberg/routetype-rs`. Let's change that URL ever so slightly, and add an extra forward slash in between `snoyberg` and `routetype-rs`: `https://github.com/snoyberg//routetype-rs`. Amazingly, you get the same page for both URLs. Isn't that weird?
+
+No, not really. Extra forward slashes are often times ignored by web servers. "I know what you meant, and you didn't mean an empty path segment." This isn't just a "feature" of webservers. The same concept applies on my Linux command line:
+
+``` text
+$ cat /etc/debian_version
+bullseye/sid
+$ cat /etc///debian_version
+bullseye/sid
+```
+
+I've got two problems with the behavior GitHub is demonstrating above:
+
+- What if I'm writing some web application and I really, truly want to be able to embed a *meaningful* empty segment in the path?
+- Doesn't it feel wrong, and maybe even hurt SEO, to have two different URLs that resolve to the same content?
+
+In Yesod, we addressed the second issue with a class method called `cleanPath`, that analyzes the segments of an incoming path and sees if there's a more canonical representation of them. For the case above, `https://github.com/snoyberg//routetype-rs` would produce the segments `["snoyberg", "", "routetype-rs"]`, and `cleanPath` would decide that a more canonical representation would be `["snoyberg", "routetype-rs"]`. Then, Yesod would take the canonical representation and generate a redirect. In other words, if GitHub was written in Yesod, my request to `https://github.com/snoyberg//routetype-rs` would result in a redirect to `https://github.com/snoyberg/routetype-rs`.
+
+[Way back in 2012](https://github.com/yesodweb/yesod/issues/421), this led to a problem, however. Someone actually had empty path segments, and Yesod was automatically redirecting away from the generated URLs. We came up with a solution back then that I'm still very fond of: dash prefixing. See the linked issue for the details, but the way it works is:
+
+- When encoding, if a segment consists entirely of dashes, add one more dash to it.
+  - By our definition of "consists entirely of dashes," the empty string counts too. So `dashPrefix "" == "-"`, and `dashPrefix "---" == "----"`.
+- When decoding:
+  - Perform the split operation above.
+  - Next, perform the clean path check, and generate a redirect if there are any empty path segments.
+  - Once we know that there are no empty path segments, *then* undo dash prefixing. If a segment consists of only dashes, remove one of the dashes.
+
+If you work this through enough, you can see that with this addition, every possible sequence of segments—even empty segments—results in a unique raw path after rendering. And every incoming raw path can either be parsed to a necessary redirect (if there are empty segments) or to a sequence of segments. And finally, each sequence of segments will successfully roundtrip back to the original sequence when parsing and rendering.
+
+I call this *normalized* parsing and rendering, since it is normalizing each incoming path to a single, canonical representation, at least as far as empty path segments are concerned. I suppose if someone wanted to be truly pedantic, they could also try to address variations in percent encoding behavior or invalid UTF-8 sequences. But I'd consider the former a non-semantic difference, and the latter garbage-in-garbage-out.
+
+## Trailing slashes
+
+There's one final point to bring up. What exactly causes an empty path segment to occur when parsing? One example is contiguous slashes, like our `snoyberg//routetype-rs` example above. But there's a far more interesting and prevalent case: the trailing slash. Many web servers use trailing slashes, likely originating from the common pattern of having `index.html` files and accessing a page based on the containing directory name. In fact, this blog post is hosted on a statically generating site which uses that technique, which is why the URL has a trailing slash. And if you perform basic parsing on our path here, you'd get:
+
+``` text
+basic_parse("/blog/pains-path-parsing/") == ["blog", "pains-path-parsing", ""]
+```
+
+Whether to include trailing slashes in URLs has been an old argument on the internet. Personally, because I consider the parsing-into-segments concept to be central to path parsing, I prefer excluding the trailing slash. And in fact, Yesod's default (and, at least for now, `routetype-rs`'s default) is to treat such a URL as non-canonical and redirect away from it. I felt even more strongly about that when I realized lots of frameworks have special handling for "final segments with filename extensions." For example, `/blog/bananas/` is good with a trailing slash, but `/images/bananas.png` should *not* have a trailing slash.
+
+However, since so many people like having trailing slashes, Yesod is configurable on this point, which is why `cleanPath` is a typeclass method that can be overridden. To each their own I suppose.
+
+## Conclusion
+
+I hope this blog post gave a little more insight into the wild world of the web and how something as seemingly innocuous as paths actually hides some depth. If you're interested in learning more about the `routetype-rs` project, please let me know, and I'll try to prioritize some follow ups on it.
+
+You may be interested in more [Rust](https://web.archive.org/web/2025/https://tech.fpcomplete.com/rust/) or [Haskell](https://web.archive.org/web/2025/https://tech.fpcomplete.com/haskell/) from FP Complete. Also, check out [our blog](https://web.archive.org/web/2025/https://tech.fpcomplete.com/blog/) for a wide range of technical content.
+{% endraw %}

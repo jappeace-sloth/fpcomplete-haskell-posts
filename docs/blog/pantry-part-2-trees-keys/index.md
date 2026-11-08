@@ -1,0 +1,137 @@
+---
+layout: page
+title: "Pantry, part 2: Trees and keys"
+---
+{% raw %}
+*By Michael Snoyman, 23 July 2018. Mirrored from FP Complete's blog: [original URL](https://academy.fpblock.com/blog/2018/07/pantry-part-2-trees-keys/) (offline), [Wayback Machine copy](https://web.archive.org/web/20250428052103/https://academy.fpblock.com/blog/2018/07/pantry-part-2-trees-keys/).*
+
+This is part two of a series of blog posts on Pantry, a new storage and download system for Haskell packages. You can see [part 1](../pantry-part-1-package-index/).
+
+In March of last year, there was [a bug on Hackage](https://github.com/haskell/hackage-server/issues/573#issuecomment-283299524) that went something like this:
+
+- Author uploads a package tarball, let’s call it `foo-1.2.3.tar.gz`, at 5:00am.
+- Both the CDN in front of Hackage, and at least one Hackage mirror, grab that tarball, with SHA256 of `deadbeef1234`.
+- Hackage moves servers, and in the process loses information on `foo-1.2.3.tar.gz`.
+- Author notices that the package is missing, and reuploads `foo-1.2.3.tar.gz`, at 6:00am.
+- Because the reupload involves creating a new tarball, the modification timestamp in the tarball for each file is different, resulting in a new SHA256 of `deadbeef5678`.
+- Hackage, the CDN, and the mirror no longer agree on the checksum for the package tarball.
+
+The problem was resolved (see linked issue), but this made me wonder: is there any reason why checksums should depend on inconsequential artifacts of the tar format, like modification times, file order, user IDs, etc?
+
+Alright, **second question**. Let’s take the `yaml` package as an example. It’s got a bunch of modules, each about (let’s just say) 5kb in size, and a fairly sizeable C source file, let’s say 100kb in size. When I’m working on this in Git, I don’t need to store that 100kb of data on each commit. Instead, Git refers to this immutable data via its SHA1. However, each release of `yaml` to Hackage involves including all 100kb of that C file, and all of the Haskell source modules, in full size, with zero data deduplication. Doesn’t that seem highly inefficient?
+
+And finally, **third question**. For many tools (including Stack, Stackage, and things like OSS-license inspectors), we need to be able to download and parse the cabal file for the package before downloading the entire package contents. When dealing with packages from Hackage, that’s easy, since we already have the full package index on our system, containing all cabal files. But let’s say we’ve got a package at some arbitrary URL or in a Git repository. The only way to get the cabal file is to download the entire package contents. Can we more efficiently grab just the cabal file?
+
+Alright, enough questions. Time for some answers!
+
+## What’s in a package?
+
+Right now, in almost all cases, a package is provided by a tarball, created via the `cabal sdist`/`stack sdist` command. As mentioned, these tarballs contain lots of extra information irrelevant to actually building the package. If we pare things down, it appears that we have relatively simple requirements for a package specification:
+
+- A mapping from filename to file contents, and whether that file is executable or not
+- Some normalization of the filename
+  - No directory components like `//`, `/./`, or `/../`
+  - All directory separators are forward slashes for cross-OS compatibility (no Windows-style backslashes)
+  - No null characters
+  - Arguably: no “weird” characters like newlines, ASCII control characters, etc, though there’s not a strong reason for this requirement
+- File contents are represented by the SHA256 of their contents
+- Keep track of the size of the file contents to avoid overflow attacks from a server when downloading file contents (more on that later)
+- No need to track directories; they are created implicitly by the presence of files inside of them.
+- No support for other “special” files like symlinks, device files, etc.
+- Remove the wrapper directory often placed in tarballs. That wrapper directory is useful for avoiding [tarbombs](http://www.linfo.org/tarbomb.html), but actually contains redundant information with the package name and version. In other words: don’t store `foo-1.2.3/foo.cabal`, store `foo.cabal`.
+- When storing the list of files: sort alphabetically for consistency.
+
+Those familiar with it may see a strong overlap with Git’s definition of a tree. That’s not by accident, though there are some differences (left as an exercise to the reader).
+
+It turns out that you can convert most tarballs on Hackage into a representation like the above, with a few exceptions (mentioned below). And with this representation, you get some really nice benefits:
+
+- The file contents are stored separately, meaning:
+  - Unchanged file contents can be shared between versions of a package (dedupe).
+  - You can download the overview of the package with much less bandwidth usage than downloading the entire package, allowing us to discover the cabal file more cheaply.
+- Given the same set of source files, such as a commit in a Git repository, you’ll always get an identical tree, since no ephemeral information (like modification times) is included.
+- There are less OS-specific constructs to deal with, like creating symlinks. (Executable status is still somewhat OS-specific, but that seems unavoidable.)
+- It’s arguably a bit easier to find things like the `.cabal` file for this representation versus a tarball. You’re essentially looking for the only file that matches the rule `` \fp -> not ('/' `elem` fp) && ".cabal" `isSuffixOf` fp ``.
+
+Those are some pretty nice features for a package representation!
+
+## Converting existing Hackage tarballs
+
+This representation does, however, come with some downsides, which as far as I can tell always relate to dealing with existing tarballs:
+
+- The logic for constructing them from a tarball isn’t dead simple. You need to have a few special rules to:
+  - Follow symlinks to determine which file contents they point to
+  - Strip off the containing directory
+- Some tarballs are not amenable to a transformation, e.g.:
+  - They contain broken symlinks, or symlinks to files outside of the tarball
+  - They contain unsupported filetypes
+
+Whether these are dealbreakers or not is a good question. As you probably guessed, this tree structure is what Pantry is using for its primary package representation, and it will convert the other package source types into this representation. With repositories and archives, it seems OK to simply reject input which is not compliant with these requirements.
+
+The question comes down to Hackage. Should Pantry keep to its strict representation of packages as the trees mentioned above, and refuse to work with some packages on Hackage? Or should it put into place a fallback to work directly with the original tarball when it has one of the issues mentioned above?
+
+From my initial testing, it seems like the vast majority of packages will work with this strict tree definition, so I’m tempted to stick to the strict definition. My major concerns are:
+
+1.  Breaking existing build plans that are relying on incompatible tarballs
+2.  The potential for encouraging some behavior where Hackage will have non-Stack-compatible packages by introducing this limitation in compatibility.
+
+Fortunately, extending Pantry to support more than one tree definition is entirely possible, and [I’ve already stubbed out such support](https://github.com/commercialhaskell/stack/blob/55ac92b94d11cea4ba8709596eb0e6cb65a117ec/subs/pantry/src/Pantry/Types.hs#L366-L368).
+
+Alright, from this point, let’s assume we’re going to just have one tree representation, and all packages, no matter their source, can be converted into it. Onward!
+
+## Tree keys
+
+The tree type above is amenable to a simple binary serialization. So let’s assume we [have a function](https://github.com/commercialhaskell/stack/blob/55ac92b94d11cea4ba8709596eb0e6cb65a117ec/subs/pantry/src/Pantry/Types.hs#L371-L383):
+
+``` haskell
+data Tree = ...
+
+renderTree :: Tree -> ByteString
+```
+
+We can now treat this tree representation like any other file, and store it in our Pantry database as yet another blob! This means that when, ultimately, we introduce our network layer, we’ll be able to use the same distributed caching logic for trees. But more importantly, it means we can do this:
+
+``` haskell
+data BlobKey = BlobKey !SHA256 !FileSize
+getBlobKey :: ByteString -> BlobKey
+
+newtype TreeKey = TreeKey BlobKey
+getTreeKey :: Tree -> TreeKey
+getTreeKey = TreeKey . getBlobKey . renderTree
+```
+
+And, finally, we can begin to specify packages to Stack and other tools with something like the following:
+
+``` haskell
+extra-deps:
+- name: foo
+  version: 1.2.3
+  pantry-tree:
+    key: deadbeef9012
+    size: 9001
+  archive: https://example.com/packages/foo-1.2.3.tar.gz
+  sha256: abcdef
+  size: 18000
+```
+
+By specifying the Pantry hash information here, we get two nice features:
+
+- The ability to reuse the network mirroring/caching and local storage, instead of downloading and converting the original tarball
+- A cryptogrphic guarantee that the tarball has not changed since we specified our `stack.yaml` file
+
+An astute reader may ask why we need the SHA256 of the tarball itself, or the `name` and `version` fields. The former is still useful for detecting early if a tarball has changed, and potentially in the future for finding mirrors of the original tarball. The reason for embedding the redundant `name` and `version` information will be the topic of the next post in this series.
+
+## Overflow attacks, and tracking file size
+
+One final note: why do we need to include the file size information? The cryptographic hashes are sufficient to ensure we’re getting the right contents! One motivation would be *paranoia*. As many people know, SHA1 has been (to some extent) [broken](https://shattered.io/). However, even with this breakage, it’s still not easily possible to create a SHA1 collision where the two inputs are the same length. Added file size into the mix reduces the impact of a future attack on our hash function of choice.
+
+However, there’s a more direct threat to address. Assume that one of our Pantry mirrors is compromised. When you connect to it (using the network protocol we haven’t discussed yet) and say “give me the contents that have SHA256 abcdef1234”, it begins to send you an endless stream of random data. What do you do? Until the stream has ended, you have no way of knowing if the server is sending the real data. As a client, you have a few options:
+
+- Start spooling to disk, and hope you don’t run out of disk space
+- Introduce some arbitrary file size limit, and hope the user never wanted a file larger than that limit
+
+Specifying the file size in addition to the hash is a much more elegant solution. The client knows exactly how much data to consume, and the worst a nefarious server can do is waste the client’s time downloading that much data, after which the client will know that the server is either malfunctioning or nefarious and stop trusting it.
+
+## Next time
+
+Next time on our Pantry tour, we’re going to investigate how packages are specified in Stack today, the problems with that specification, why users will hate a good solution, and how to fix that problem too. Stay tuned!
+{% endraw %}

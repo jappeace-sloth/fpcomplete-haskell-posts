@@ -1,0 +1,148 @@
+---
+layout: page
+title: "Immutability, Docker, and Haskell's ST type"
+---
+{% raw %}
+*By Michael Snoyman, 13 February 2017. Mirrored from FP Complete's blog: [original URL](https://academy.fpblock.com/blog/2017/02/immutability-docker-haskells-st-type/) (offline), [Wayback Machine copy](https://web.archive.org/web/20250515034959/https://academy.fpblock.com/blog/2017/02/immutability-docker-haskells-st-type/).*
+
+In managing projects at FP Complete, I get to see both the software development and devops sides of our engineering practice. Over the years, I've been struck by the recurrence of a single word appearing repeatedly in both worlds: **immutability**.
+
+On the software side, one of the strongest tenets of functional programming is immutable data structures. These are values which - once created - can never be changed again through the course of running the application. These reduce coupling between components, simplify concurrency and parallelism, and decrease the total number of moving pieces in a system, making it easier to maintain and develop over time.
+
+On the devops side, immutable infrastructure is relatively a more recent discovery. By creating machine images and replacing rather than modifying existing components, we have a more reliable hosting setup to target, minimize the differences between test and production systems, and reduce the amount of error-prone, manual fiddling that leads to 3am coffee-fueled emergency recovery sessions.
+
+It's no secret that containerization in general, and Docker in particular, has become very popular in the devops space. I've noticed that there's a strong parallel between how Docker images are built, and a technique from functional programming - the ST (State Thread) type. This blog post will explain both sides of the puzzle, and then explain how they match up.
+
+## Dockerfile: mutable steps, immutable outcome
+
+A Docker image is a complete Linux filesystem, providing all of the tools, libraries, and data files needed for its task. As a simple example, I recently [created a simple Docker image](https://github.com/fpco/docker-fop/blob/master/Dockerfile) containing the Stack build tool (more on that later) and Apache FOP for generating some PDFs. In the Docker world, the formula you use for creating a Docker image is a Dockerfile. Let's look at the (very simple) Dockerfile I wrote:
+
+``` text
+FROM fpco/pid1:16.04
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y wget default-jre && \
+    wget -qO- https://get.haskellstack.org/ | sh
+RUN wget -q https://github.com/fpco/docker-fop/releases/download/fop-2.1/fop-2.1-bin.tar.gz && \
+    tar zxf fop-2.1-bin.tar.gz && \
+    rm -f fop-2.1-bin.tar.gz && \
+    mv fop-2.1 /usr/local/share
+```
+
+In this file, I'm starting off from the [`fpco/pid1` base image](https://web.archive.org/web/2025/https://academy.fpblock.com/blog/2016/10/docker-demons-pid1-orphans-zombies-signals), which provides us with a filesystem to start off with (it would obviously be pretty difficult to create a complete filesystem each time we wanted to create a new image). Then we provide a series of actions to take to *modify* that image. Looking at the example above, we:
+
+- Update the list of APT packages available
+- Install `wget` and the default Java Runtime Environment
+- Install the Stack build tool by running a script
+- Download the FOP binary bundle
+- Unpack the bundle and move it to /usr/local/share
+
+Look at that list of steps. In no world could those actions be called "immutable." Every single one of them mutates the filesystem, either modifying files, adding files, or removing files. The end result of this mutation process is a new filesystem, captured in a Docker image.
+
+And here's the important bit: this new image is *totally immutable*. You cannot in any way modify the image. You can create a *new* image based on it, but the original will remain unchanged. For all of history, this image will remain identical.\*
+
+In other words: a Dockerfile is a series of mutations which generates an immutable data structure.
+
+\* You may argue that you can delete the image, or you could create a new image with the same name. That's true, but as long as you're working with the image in question, it does not change. By contrast, each time you access the `/tmp/foobar` file, it may have different contents.
+
+## The ST type
+
+In a purely functional programming language like Haskell, data is immutable by default. This means that, if you have a variable holding an `Int`, you cannot change it. Consider this example code, playing around with a `Map` structure (also known as a dictionary or lookup table):
+
+``` haskell
+myMap <- makeSomeMap
+print myMap
+useMap myMap
+print myMap
+```
+
+We make our initial `Map` using the `makeSomeMap` function, print its contents, pass it to some other function (`useMap`), and then print it again. Pop quiz: is there any way that the two `print` operations will print different values?
+
+If you're accustomed to mutable languages like Java or Python, you'd probably say yes: `myMap` is (presumably) an object with mutable state, and the `useMap` function might modify it. In Haskell, that can't happen: you've passed a reference to `myMap` to your `useMap` function, but *`useMap` is not allowed to modify it*.
+
+Of course, we would like to be able to create different values, so saying "you can't ever change anything" is a little daunting. The primary way of working with Haskell's immutable data structures is to have functions which create new values based on old ones. In this process, we create a new value by giving it some instructions for the change. For example, if in our example above, the `myMap` value had a mapping from names to ages, we could insert an extra value:
+
+``` haskell
+myMap <- makeSomeMap
+let myModifiedMap = insert "Alice" 35 myMap
+print myModifiedMap
+useMap myModifiedMap
+print myModifiedMap
+```
+
+However, this isn't real mutation: the original `myMap` remains the same. There are cases in which creating a completely new version of the data each time would be highly inefficient. Most sorting algorithms fall into this category, as they involve a large number of intermediate swaps. If each of those swaps generated a brand new array, it would be very slow with huge amounts of memory allocation.
+
+Instead, Haskell provides the `ST` type, which allows for *local mutations*. While within an `ST` block, you can directly mutate local variables, such as mutable vectors. But none of those mutated values can escape the `ST` block, only immutable variants. To see how this works, look at this Haskell code (save it to `Main.hs` and run with `stack Main.hs` using [the Stack build tool](https://web.archive.org/web/2025/https://haskell-lang.org/get-started)):
+
+``` haskell
+#!/usr/bin/env stack
+{- stack --resolver lts-7.14 --install-ghc runghc
+    --package vector-algorithms -}
+import Data.Vector (Vector, fromList, modify, freeze, thaw)
+import Data.Vector.Algorithms.Insertion (sort)
+import Control.Monad.ST
+
+-- longer version, to demonstrate what's actually happening
+immutableSort :: Vector Int -> Vector Int
+immutableSort original = runST $ do
+    mutableVector <- thaw original
+    sort mutableVector
+    freeze mutableVector
+
+-- short version, what we'd use in practice, using the modify helper
+-- immutableSort :: Vector Int -> Vector Int
+-- immutableSort = modify sort
+
+main = do
+    let unsortedVector = fromList [1, 4, 2, 0, 8, 9, 5]
+        sortedVector = immutableSort unsortedVector
+    print unsortedVector
+    print sortedVector
+```
+
+The `immutableSort` function takes an immutable vector of integers, and returns a new immutable vector of integers. Internally, though, it runs everything inside an `ST` block. First we *thaw* the immutable vector into a mutable copy of the original. Now that we have a fresh copy, we're free to - within the `ST` block - modify it to our heart's content, without impacting the original at all. To do this, we use the mutating `sort` function. When we're done, we *freeze* that mutable vector into a new immutable vector, which can be passed outside of the `ST` block.
+
+(I've also included a shorter version of the function which uses the `modify` function to automate the freezing and thawing. Under the surface, it's doing almost exactly the same thing... see extra credit at the bottom for more details.)
+
+Using this technique, we get to have our cake and eat it too: an efficient sorting algorithm (insertion sort) based on mutations to a random-access vector, while maintaining the invariant that our original vector remains unchanged.
+
+## Parallels between Docker and functional programming
+
+After analyzing both Dockerfiles and the ST type, I think we can draw some interesting parallels. Both techniques accept that there are some things which are either easier or more efficient to do with direct mutation. But instead of throwing out the baby with the bathwater, they both value immutability as a goal. To achieve this, both of them have the concept of *constrained mutation*: you can only mutate in some specific places.
+
+There's another interesting parallel to be observed: both Docker and functional programming *hide* some mutation from the user. For example, when you code `2 + 3`, under the surface your compiler is generating something like:
+
+- Write the value `2` to a machine register
+- Write the value `3` to another machine register
+- Perform the ADD machine instruction
+- Copy the result in the output machine register to some location in memory
+
+All four of these steps are inherently mutating the state of your machine, but you probably never think about that. (This applies to *all* common programming languages, not just functional languages.) While mutation is happening all the time, we'd often rather not think about it, and instead focus on the higher level goal (in this case: add two numbers together).
+
+When you launch a Docker container, Docker is making a lot of mutating changes. When you execute `docker run busybox echo Hello World!`, Docker creates a new control group (c-group), creates some temporary files, forks processes, and so on. Again, each of these actions is inherently a state mutation, but taken as a whole, we can view the sum total as an immutable action that uses a non-changing file system to run a command in an isolated environment that generates some output on the command line.
+
+Of course, you can also use Docker to run mutating commands, such as bind-mounting the host file system and modifying files. Similarly, from within a functional programming language you can cause mutations of similar magnitude. But that's up to you; the system itself tries to hide away a bunch of intermediate mutations as a single, immutable action.
+
+## Further insights
+
+I always enjoy finding a nexus between two seemingly unrelated fields. While the line of reasoning that brought them there are quite distinct, I'm very intrigued that both the devops and functional programming worlds seem to be thriving today on immutability. I'd be interested to hear others' experiences with similar intersections between these worlds, or other worlds.
+
+FP Complete is regularly in the business of combining [modern devops practices](https://web.archive.org/web/2025/https://academy.fpblock.com/devops) with [cutting edge functional programming](https://web.archive.org/web/2025/https://academy.fpblock.com/haskell). If you'd like to learn more, check out [our consulting offerings](https://web.archive.org/web/2025/https://academy.fpblock.com/consulting) or reach out for a free consultation.
+
+If you're interested in learning more about Haskell, check out our [Haskell syllabus](https://web.archive.org/web/2025/https://academy.fpblock.com/haskell-syllabus).
+
+## Extra credit
+
+I made a comment above about "almost the same thing" with the two versions of immutable sort. The primary difference is in *safe* versus *unsafe* freezing. In our longer version, we're using the safe variants of both freeze and thaw, which operate by making a new copy of the original buffer. In the case of `thaw`, this ensures that the original, immutable version of the vector is never modified. In the case of `freeze`, this ensures that we don't create a falsely-immutable vector, which can have its values changed when the original, mutable vector is tweaked.
+
+Based on this, our long version of the function does the following operations:
+
+- Create a new memory buffer the same size as the original. Let's call this buffer A.
+- Copy the values into A from the original.
+- Sort the values inside A using mutation.
+- Create a new memory buffer of the same size. Let's call this buffer B.
+- Copy the values from A into B.
+- Make B immutable and return it.
+
+But if you pay close attention, that intermediate memory buffer A can never be modified after the end of our ST block, and therefore making that *extra* B buffer and copying into it is unnecessary. Therefore, the `modify` helper function does an *unsafe* freeze on the A memory buffer, avoiding the unneeded allocation and copy. While this operation may be unsafe in general, we know in our usage it's perfect safe. This is another great tenet of functional programming: wrapping up operations which may be dangerous on their own into helper functions that guarantee safety.
+{% endraw %}

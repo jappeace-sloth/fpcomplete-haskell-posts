@@ -1,0 +1,460 @@
+---
+layout: page
+title: "The RIO Monad"
+---
+{% raw %}
+*By Michael Snoyman, 24 July 2017. Mirrored from FP Complete's blog: [original URL](https://academy.fpblock.com/blog/2017/07/the-rio-monad/) (offline), [Wayback Machine copy](https://web.archive.org/web/20250428045416/https://academy.fpblock.com/blog/2017/07/the-rio-monad/).*
+
+I'd really intended to write a blog post on a different topic this week. But given that I did some significant refactoring in the Stack codebase related to a [number](../readert-design-pattern/) [of](../tale-of-two-brackets/) [recent](../announcing-new-unliftio-library/) posts, let's just knock this one out and get to other topics another time.
+
+I've played with the idea of a `RIO` (Reader + IO) monad a number of times in the past, but never bit the bullet to do it. As I've been hashing out ideas with some people and working through cleanups on Stack, it became clear that the time was right to try this out. And after having explored a bunch of other options, the arguments in favor of this approach are clearer in my head (which hopefully means clearer in this post too).
+
+I'm going to describe the kinds of problems I wanted to address in Stack, look at various alternative solutions, and point out where each fell short. I'm going to talk about Stack because
+
+1.  I've implemented multiple solutions in that codebase
+2.  it's a fairly large application, and
+3.  it makes particularly good usage of multiple environment types, as I'll be explaining shortly.
+
+If you're terribly impatient, you can [take a peek at the code change](https://github.com/commercialhaskell/stack/pull/3281/commits/0de40025c7c9ef6b10262c246ed589457e65250f#diff-748b3631a8e26a9b793853e343ca0577L164). In reality, the diff to the codebase is significantly larger than this: I had to make a number of other refactorings happen to make this one possible, in particular [removing `StackM`](https://github.com/commercialhaskell/stack/pull/3281/commits/513e362b2058ac0c0706ab609049ab560bc2eb7e). But this captures the core idea.
+
+## What's happening in Stack?
+
+When you first run Stack, it knows nothing about your project, your configuration, or anything else. It has to parse environment variables, command line options, and config files to get basic information like "should I be doing a verbose and colored logging output." Before any real work happens (which may involve logging), we need to load up our logging function and other basic settings.
+
+Next, we need to load up some general configuration values, like "do we use the system-wide GHC." This does not include project-specific configuration values for two reasons:
+
+1.  If we don't need project-specific information, the parsing is unneeded overhead
+2.  We'll need the general config in order to load up the project config
+
+Once we have the project information, we need to resolve it into real information about packages in the global database, which actual compiler version is available, and so on.
+
+This creates a hierarchy of loaded configuration information, which we're going to call:
+
+- `Runner`: basic info on logging, whether we're using Docker or Nix, etc
+- `Config`: general config
+- `BuildConfig`: project specific config
+- `EnvConfig`: information on the actual build environment
+
+Each of these configuration values contains its parent, so that a `Config` also knows about logging, and `EnvConfig` also knows project specific config. Awesome. (In the actual codebase, there are a few other levels to this, but this is a good enough explanation to move ahead with for now.)
+
+Some parts of our code base are pure. We'll ignore those for now, and focus only on the parts that perform some kind of `IO`.
+
+## Pass individual values
+
+Let's take the (arguably) simplest approach first. I described some data types above collecting many values together. But what if we completely ignore such helper types, and simply deal directly with their constituent values. For example, consider if we had:
+
+``` haskell
+data Runner = Runner
+  { runnerLog :: Text -> IO () -- print a log message
+  , runnerInDocker :: Bool
+  }
+
+data Config = Config
+  { configRunner :: Runner
+  , configSystemGHC :: Bool
+  }
+
+someFunc
+  :: (Text -> IO ())
+  -> Bool -- ^ system GHC?
+  -> IO ()
+```
+
+Then I could use `someFunc` like so:
+
+``` haskell
+someFunc (runnerLog (configRunner config)) (configSystemGHC config)
+```
+
+There are two nice advantages of this approach:
+
+1.  It's crystal clear exactly which pieces of information a function needs in order to run. For example, we can tell that `someFunc` doesn't care about whether we're running in Docker, but does care about how to log and whether we're using the system GHC.
+2.  There are no complicated concepts at all introduced; someone with the most basic knowledge of Haskell could follow this function signature most likely.
+
+However, there are two major problems as well:
+
+1.  It's really, really tedious. Having to pull out all of the values we need each time we call a function sucks. And if you suddenly need some extra information, you'll need to add that, and potentially add that value to all of the calling functions up the tree.
+2.  I'd argue it's not type safe. Passing around random `Bool`s like that is a recipe for disaster. If you saw `someFunc (runnerLogFunc runner) (runnerInDocker runner)`, you probably wouldn't notice the bug, and GHC wouldn't help either. You can mitigate that with copious usage of `newtype`s, but that's yet more tedium.
+
+## Pass composite values
+
+The solution to those two problems is pretty simple: pass around the `Runner`, `Config`, et al values instead. And since `Runner` is contained inside `Config`, `Config` inside `BuildConfig`, and `BuildConfig` inside `EnvConfig`, we only ever need to pass in one of these values (plus whatever other arguments our function needs). This looks like:
+
+``` haskell
+someFunc :: Config -> IO ()
+```
+
+I also like the fact that, within the function, you'll now be using `configSystemGHC`, which is *very* explicit about what the value represents. Not bad.
+
+But there are downsides here too:
+
+1.  We're giving more information than is strictly needed to these functions (in our example: the `runnerInDocker` value). I'm honestly not too terribly concerned about this. What is slightly more concerning is how easy it is to accidentally depend on a larger value than you need, like using `BuildConfig` in the function signature instead of `Config`. This makes it harder to test functions, harder to understand what they do, and harder to reuse them. But this can be addressed with discipline, code review, and (in theory at some future date) static analysis tools. (That last bit makes more sense the the typeclass approach mentioned later.)
+2.  Let's say we've got `someFunc2 :: BuildConfig -> IO ()` that wants to use `someFunc`. We'll need to explicit extract the `Config` value from the `BuildConfig` to pass it in. This *is* tedious and boilerplate-y, but honestly not that bad.
+3.  With some functions—especially the logging functions—having to pass in the `Runner` value each time feels more tedious. Compare `logInfo "Calling ghc-pkg"` with `logInfo (configRunner config) "Calling ghc-pkg"`. Again, not terrible, but certainly an overhead and line noise.
+
+I want to be clear: this approach isn't bad, and has a lot of simplicity benefits. I know people who advocate for this approach in production software, and I wouldn't argue strongly against it. But I do think we can do better aesthetically and ergonomically. So let's keep going.
+
+## ReaderT IO
+
+There's a pretty well-known approach to passing around an environment like `Config`: the `ReaderT` monad transformer. We can whip that out here easily enough:
+
+``` haskell
+someFunc :: ReaderT Config IO ()
+someFunc2 :: ReaderT BuildConfig IO ()
+logInfo :: Text -> ReaderT Runner IO ()
+```
+
+This solves the problem of explicitly passing around these environments. But we've still got to somehow convert our environments appropriately when calling functions. This may look like:
+
+``` haskell
+someFunc :: ReaderT Config IO ()
+someFunc = do
+  config <- ask
+  liftIO $ runReaderT (logInfo "Inside someFunc") (configRunner config)
+```
+
+Some of this could get extracted to helper functions, but let's face it: this is just ugly.
+
+## MonadLogger
+
+We're using the monad-logger library in Stack, which has a typeclass that looks roughly like this:
+
+``` haskell
+class MonadLogger m where
+  logInfo :: Text -> m ()
+```
+
+We can change around our functions to look like this:
+
+``` haskell
+someFunc :: MonadLogger m => ReaderT Config m ()
+someFunc = logInfo "Inside someFunc"
+```
+
+This works because monad-logger defines an instance for `ReaderT` like so:
+
+``` haskell
+instance MonadLogger m => MonadLogger (ReaderT env m) where
+  logInfo = lift . logInfo
+```
+
+This reads much more nicely, but it's weird that we've got our logging function defined in `Config` *and* in the `m` type variable. Also: which concrete representation of `m` are we going to use at the end of the day? We could use `LoggingT` like so:
+
+``` haskell
+newtype LoggingT m a = LoggingT ((Text -> IO ()) -> m a) -- defined in monad-logger
+
+runMyStack :: Config -> ReaderT Config (LoggingT IO) a -> IO a
+runMyStack config (ReaderT f) = do
+  let LoggingT g = f config
+   in g (runnerLogFunc (configRunner config))
+```
+
+But this is starting to feel clunky. And imagine if we added a bunch of other functionality like logging: the many different layers of transformers would get much worse.
+
+## Custom ReaderT
+
+These are solvable problems:
+
+``` haskell
+newtype MyReaderT env m a = MyReaderT (ReaderT env m a)
+
+instance MonadReader env (MyReaderT env m) where
+  ask = MyReaderT ask
+instance MonadIO m => MonadLogger (MyReaderT Runner m) where
+  logInfo msg = do
+    runner <- ask
+    liftIO $ runnerLogFunc runner msg
+```
+
+And then we'll need a bunch of other instances for `MonadLogger MyReaderT` depending on which concrete environment is used. Ehh.... OK, fair enough. We'll deal with that wrinkle shortly. Our functions now look like:
+
+``` haskell
+someFunc :: MonadIO m => MyReaderT Config m ()
+someFunc = do
+  logInfo "Inside someFunc"
+  config <- ask
+  liftIO $ someFunc3 config
+someFunc3 :: Config -> IO () -- does something else, who cares
+```
+
+Not too terrible I guess.
+
+## Be more general!
+
+It turns out we can generalize our signature even more. After all, why do we need to say anything about `MyReaderT`? We aren't using its implementation at all in `someFunc`. Here's the type that GHC will be able to derive for us:
+
+``` haskell
+someFunc :: (MonadReader Config m, MonadIO m, MonadLogger m) => m ()
+```
+
+Nifty, right? Now we can be blissfully unaware of our concrete implementation and state explicitly what functionality we need via typeclass constraints.
+
+But how exactly are we going to call `someFunc` from `someFunc2`? If we were still using `MyReaderT`, this would look like:
+
+``` haskell
+someFunc2 :: MonadIO m => MyReaderT BuildConfig m ()
+someFunc2 = do
+  buildConfig <- ask
+  let config = bcConfig buildConfig :: Config
+  runMyReaderT someFunc config
+```
+
+But that's relying on knowing the concrete representation. We're trying to avoid that now.
+
+And the other problem: that `MonadLogger` instance was annoying. We'd really rather say "anything `MyReaderT` that has a `Runner` in its environment is a `MonadLogger`." Can we do this?
+
+## Has type classes
+
+Yes we can!
+
+``` haskell
+class HasRunner env where
+  getRunner :: env -> Runner
+instance HasRunner Runner where
+  getRunner = id
+instance HasRunner Config where
+  getRunner = configRunner
+class HasRunner env => HasConfig env where
+  getConfig :: env -> Config
+instance HasConfig Config where
+  getConfig = id
+-- And so on with BuildConfig and EnvConfig
+```
+
+A bit repetitive, but we only need to define these typeclasses and instances once. Let's see what `MonadLogger` looks like:
+
+``` haskell
+instance (MonadIO m, HasRunner env) => MonadLogger (MyReaderT env m) where
+  logInfo msg = do
+    runner <- asks getRunner
+    liftIO $ runnerLogFunc runner msg
+```
+
+Much better, just one instance.
+
+And finally, how does this affect our `someFunc2` problem above?
+
+``` haskell
+someFunc
+  :: (MonadReader env m, HasConfig env, MonadIO m, MonadLogger m)
+  => m ()
+
+someFunc2
+  :: (MonadReader env m, HasBuildConfig env, MonadIO m, MonadLogger m)
+  => m ()
+someFunc2 = someFunc
+```
+
+This works because the `HasBuildConfig` constraint implies the `HasConfig` constraint. This is the general approach that the Stack codebase took until last week, so clearly it works. Our code is fully general, we don't need to do any explicit parameter passing, there's no need to explicitly convert from `BuildConfig` to `Config` or from `Config` to `Runner`. Besides some pretty verbose type signatures, this solves a lot of our problems.
+
+Or does it?
+
+## Exception handling
+
+I just realized that I need to do some exception handling in `someFunc2`. Cool, no big deal:
+
+``` haskell
+someFunc2 :: (MonadReader env m, HasBuildConfig env, MonadIO m, MonadLogger m) => m ()
+someFunc2 =
+  someFunc `catch`
+  \e -> logInfo (T.pack (show (e :: IOException)))
+```
+
+Who sees the problem? Well, which `catch` function are we using? If we're using `Control.Exception`, then it's specialized to `IO` and this won't typecheck. If we're using `Control.Monad.Catch` (the `exceptions` package), then we need to add a `MonadCatch` constraint. And if we're using `Control.Exception.Lifted` (the `lifted-base` package), we need a `MonadBaseControl IO m`.
+
+Alright, let's assume that we're using one of the latter two. Now our type signature looks like this:
+
+``` haskell
+someFunc2
+  :: ( MonadReader env m, HasBuildConfig env, MonadIO m, MonadLogger m
+     , MonadCatch m)
+  => m ()
+```
+
+That's getting a bit long in the tooth, but OK. However, I've now got a bigger problem. As [previously discussed](../tale-of-two-brackets/), `MonadCatch` can play a bit fast-and-loose with monadic state (and `MonadBaseControl` even more so). Sure, in our concrete monad there isn't any monadic state. But this type signature doesn't tell us that, at all. So I'm left worried that someone may call this function with a `StateT` on top and we'll introduce a subtle bug into the code.
+
+Sound far-fetched? In fact, it's worse than you realize. Stack does a lot of code that involves concurrency. It also does a number of things where it defers `IO` actions to be run the first time a value is demanded (check out the [RunOnce module](https://github.com/commercialhaskell/stack/blob/98c545266ed391107fb794d1d2969f00810498fe/src/Data/IORef/RunOnce.hs)). In previous versions of the codebase, we had a number of places where we had to discard intermediate monadic state. Again, this *shouldn't* be a problem in practice, since our concrete monad was isomorphic to `ReaderT`. But the types don't prove it!
+
+## Introducing MonadUnliftIO
+
+[Last week's blog post](../announcing-new-unliftio-library/) gets us closer to the mark. `MonadUnliftIO` is like `MonadCatch` and `MonadBaseControl`, except it witnesses that there is no monadic state. Changing our imports around and then setting our type signature to the following restores sanity:
+
+``` haskell
+someFunc2
+  :: ( MonadReader env m, HasBuildConfig env, MonadLogger m, MonadUnliftIO m
+     )
+  => m ()
+```
+
+With that change, Stack was able to get rid of its state-dropping code wrapping around the monad-control library, which is very nice. But it's not all perfect yet:
+
+- Those type signatures are a mouthful
+- Should we add in extra constraints, like `MonadThrow` or `MonadBaseControl`? It makes it more convenient to use existing library functions, but it makes the type signatures even longer
+- Let's say I want to modify the `env` value a bit (such as temporarily turning off logging). I could use `local`, but (1) it's not even clear from the type signature that using `local` will affect the `MonadLogger` instance, and (2) `local` won't allow us to change the datatype itself (e.g., switch from `BuildConfig` to `Config`)
+
+## More concrete
+
+This is peak generality. We're using typeclasses to constrain both the monad we're using, and the reader environment. Here's the insight I had last week\*: why do both? There are really solid arguments for using the `HasRunner`-style typeclasses on the environment: it avoids explicit conversion and lets a function automatically work in a larger context (i.e., it provides us with subtyping, yay Object Oriented programming).
+
+<span class="small">\* To be fair, I've discussed this idea with others many times in the past, so it's neither a new insight nor my insight. But it helps move the story along if I say it that way :)</span>
+
+But can you make the same argument about allowing the monad to be general? I'm going to argue that, no, you can't. We know the application is always using the same concrete monad under the surface, just with different environments. You may argue that this limits consumers of our API: what if they wanted to use an `RWST` or `ExceptT` monad when calling these functions? Well, two responses:
+
+1.  We're not writing a generally-consumable library. We're writing an application. Our consumers are all within the application (or people crazy enough to use Stack's explicitly unstable API). And within our application, we know this is never happening.
+2.  We've already added a `MonadUnliftIO` constraint on our functions, and stated that we need that constraint for sanity purposes. Guess what: that limits our API to things which are isomorphic to `ReaderT` anyway. So we may as well just force usage of our own variant of `ReaderT` that handles the `MonadLogger` instance.
+
+Here's one version of this idea:
+
+``` haskell
+someFunc :: (HasConfig env, MonadUnliftIO m) => MyReaderT env m ()
+someFunc2 :: (HasBuildConfig env, MonadUnliftIO m) => MyReaderT env m ()
+```
+
+We get our `MonadReader` and `MonadLogger` instances for free from specifying `MyReaderT`. We still get subtyping by using the `Has*` typeclasses on the environment. And by specifying `MonadUnliftIO` on the base monad, we get `MonadUnliftIO` and `MonadIO` too.
+
+## Should we be that general?
+
+We kept an `m` type variable in our signature. Do we need it? In reality, not at all. Concretely, that `m` is always going to turn out to be `IO`. Also, if we had some reason we needed to run in some other monad, we can just do this:
+
+``` haskell
+runMyReaderT :: env -> MyReaderT env m a -> m a
+
+helper :: MonadIO m => env -> MyReaderT env IO a -> m a
+helper env = liftIO . runMyReaderT env
+```
+
+Meaning we can always get back our more general signature. But interestingly, we're doing something even more surprising: the `MonadUnliftIO` constraint has been replaced with `MonadIO`. That's because, inside our `MyReaderT` stack, we're just relying on `IO` itself, and leveraging its lack of monadic state. Then we can `liftIO` that `IO` action into *any* transformer on top of `IO`, even one that doesn't provide `MonadUnliftIO`.
+
+## Do we need a transformer?
+
+Alright, what value is the transformer providing? I'm going to argue *none at all*. Every usage of our `MyReaderT` has `m` specified as `IO`. So let's finally knock out the final simplification and introduce the `RIO` (Reader+IO) monad:
+
+``` haskell
+newtype RIO env a = RIO (env -> IO a)
+runRIO :: MonadIO m => env -> RIO env a -> m a
+runRIO env (RIO f) = liftIO (f env)
+```
+
+This has instances for `Monad`, `MonadReader`, `MonadUnliftIO`, and can even support `MonadThrow`, `MonadCatch`, or `MonadBaseControl`. When using those latter functions, though, we can look at our type signatures and realize that, since `RIO` by definition has no monadic state, they're perfectly safe to use.
+
+Our type signatures look like:
+
+``` haskell
+someFunc :: HasConfig env => RIO env ()
+someFunc2 :: HasBuildConfig env => RIO env ()
+```
+
+The only typeclass constraints we're left with are on the environment, which is exactly what we said (or at least **I** said) we wanted, in order to allow the useful subtyping going on in our application.
+
+I'll argue that we've lost no generality: using `runRIO` makes it trivial to use all of our functions in a different transformer stack. And as opposed to using constraints like `MonadLogger`, it's trivial to fully unwrap our transformer, play with the contents of the environment, and do new actions, e.g.:
+
+``` haskell
+env <- ask
+let runner = getRunner env
+    modRunner = turnOffLogging runner
+runRIO modRunner someActionThatShouldBeQuiet
+```
+
+This approach is currently on the master branch of Stack. I'm biased, but I think it greatly helps readable and approachability for the codebase.
+
+I'm strongly considering spinning off this `newtype RIO` into its own package (or adding it to `unliftio`, where it's a good fit too). I'm also considering extracting the `HasLogFunc` typeclass to the `monad-logger` library.
+
+## The m\*n instance problem
+
+The `MonadLogger` typeclass suffers from what's known as the m\*n instance problem. When I wrote `MonadLogger`, I had to define instances for all of the concrete transformers in the `transformers` package.
+
+When I wrote the `MonadResource` typeclass in `resourcet`, I had to do the same thing. And I had to provide instances for these for each new transformer I wrote, like `HandlerT` in yesod-core and `ConduitM` in conduit. That's a lot of typeclass instances. It gets even worse when you realize that dependency confusion problems and orphan instances that usually result.
+
+By contrast, if we define additional functionality via typeclasses on the environment, this explosion of instances doesn't occur. Every transformer needs to define an instance of `MonadReader`, and then we can replace:
+
+``` haskell
+class MonadLogger m where
+  logInfo :: Text -> m ()
+```
+
+with
+
+``` haskell
+class HasLogFunc env where
+  getLogFunc :: env -> Text -> IO ()
+
+logInfo :: (MonadReader env m, HasLogFunc env, MonadIO m) => Text -> m ()
+logInfo msg = do
+  logFunc <- asks getLogFunc
+  liftIO (logFunc msg)
+```
+
+There is a downside to this approach: it assumes that all transformers have `IO` at their base. I'd argue that for something like `MonadLogger`, this is a fair assumption. But if you wanted to make it more general, you *can* in fact do so with a little more type trickery.
+
+The principle I'm beginning to form around this is: don't define effects with a typeclass on the monad, define it with a typeclass on the environment.
+
+## Why not ReaderT?
+
+I alluded to it, but let me say it explicitly: we need a new type like `RIO` instead of `ReaderT` to make all of this work. That's because typeclasses like `MonadLogger` define their instances on `ReaderT` to defer to the underlying monad. We need a new monad (or transformer) which explicitly takes responsibility for defining its own instances instead of deferring to the underlying monad's behavior.
+
+## Some notes on the Has typeclasses
+
+The `Has*` typeclasses above work best when they properly define superclasses. It would have been much more irritating to write this code if I'd had to say:
+
+``` haskell
+someFunc2 :: (HasRunner env, HasConfig env, HasBuildConfig env) => RIO env ()
+```
+
+The superclasses on `HasBuildConfig` and `HasConfig` allow me to just state `HasBuildConfig`, which is great.
+
+Also, I demonstrated the typeclasses above with accessor functions:
+
+``` haskell
+getRunner :: env -> Runner
+```
+
+In reality, Stack uses lenses for this (from the microlens package):
+
+``` haskell
+runnerL :: Lens' env Runner
+```
+
+This makes it much easier to make modifications to the environment, such as the "silence log messages" example above. (Though I think that example is totally made up and doesn't actually occur in the codebase.)
+
+## How about pure code?
+
+I started off by saying this discussion applies only to `IO` code and doesn't apply to pure code. But what about pure code? One really, really bad option is to just say "don't write pure code." We're Haskellers (at least, I assume only a Haskeller would be enough of a masochist to get this far in the blog post). We know the value of partitioning off effects.
+
+Another option is to rely on mtl-style typeclasses, such as `MonadReader` and `MonadThrow`. E.g.:
+
+``` haskell
+cannotFail :: (MonadReader env m, HasConfig env) => m Foo
+canFail :: (MonadReader env m, HasConfig env, MonadThrow m) => m Bar
+```
+
+This is basically what we do in Stack right now, and has the benefit of unifying with `RIO` without explicitly lifting. Another approach would be to make these more concrete, e.g.:
+
+``` haskell
+cannotFail :: HasConfig env => Reader env Foo
+canFail :: HasConfig env => ReaderT env (Either MyException) Bar
+```
+
+Or even ditching the transformers:
+
+``` haskell
+cannotFail :: HasConfig env => env -> Foo
+canFail :: HasConfig env => env -> Either MyException Bar
+```
+
+Or even ditching the typeclass constraints:
+
+``` haskell
+cannotFail :: Config -> Foo
+canFail :: Config -> Either MyException Bar
+```
+
+I'm frankly undecided on the right way forward. I like the current approach in that it unifies without explicit conversion, while still preserving the ability to use the code purely, test it purely, and see from its type that it has no side effects. Some people (they can speak up for themselves if they want) disagree with the concept of `MonadThrow`, and don't think it should be used. Another advantage of ditching `MonadThrow` is that it can allow more explicit exception types (notice the `MyException` above).
+
+Regardless, take this message: don't use `RIO` as an excuse to dispense with purity. Strive for purity, be disciplined about making pure code pure, and then consider the `RIO` approach when you have to be effectful.
+
+## Using RIO in your application
+
+I think this is a pattern I'd already recommend. It deserves more real world experience, and if I add `RIO` to a library on Hackage it will be easier to get started. There will always be a little bit of upfront cost with this (defining your environment data type and relevant typeclasses/instances), but I think that cost is well worth it.
+
+If you're going to start using `RIO` yourself, please add a comment about it. It would be great to get some standardized effectful typeclasses defined to grow out the ecosystem.
+{% endraw %}

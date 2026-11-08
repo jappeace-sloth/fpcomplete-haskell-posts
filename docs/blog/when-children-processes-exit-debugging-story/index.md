@@ -1,0 +1,213 @@
+---
+layout: page
+title: "When children processes exit - a debugging story"
+---
+{% raw %}
+*By Michael Snoyman, 1 July 2019. Mirrored from FP Complete's blog: [original URL](https://academy.fpblock.com/blog/when-children-processes-exit-debugging-story/) (offline), [Wayback Machine copy](https://web.archive.org/web/20250428062817/https://academy.fpblock.com/blog/when-children-processes-exit-debugging-story/).*
+
+This is a story about how some bad API design on my part caused some ugly race conditions that were very tricky to break down. I’m writing this story as a word of warning to others! The code itself was written in Haskell, but the lessons apply to anyone working with Unix-style processes.
+
+## Introducing `typed-process`
+
+I maintain both the `process` library in Haskell, which is the standard way of launching child processes, as well as the `typed-process` library, which explores some refinements to that API for more user friendliness. The API has two main types: `ProcessConfig` defines settings for launching a process (command name, environment variables, etc), and `Process` represents a running child process that can be interacted with. With that, we have some basic API usage that looks like this:
+
+``` haskell
+let processConfig = proc "some-executable" ["--flag1", "--flag2"]
+process <- startProcess processConfig
+hPut (getStdin process) "Input to the process"
+output <- hGet (getStdout process)
+helperFunction output
+hPut (getStdin process) "quit" -- tell the process to quit
+exitCode <- waitExitCode process
+logInfo $ "Process exited with code " <> displayShow exitCode
+```
+
+This isn’t quite working code, but it gets the idea across pretty nicely.
+
+## Exception safety
+
+There’s a problem with the code above: it’s not exception-safe. Let’s say that the `helperFunction` call fails with a runtime exception. The child process will never receive the `"quit"` input, we’ll never wait for the child process to end, and ultimately we’ll end up with a process that’s sitting around, twiddling its thumbs, unable to ever exit. (You may think this is a zombie process, but zombie has a specific and different meaning in the Unix world.)
+
+The Haskell ecosystem, like many others, has a method for providing exception safety. We call it the *bracket pattern*. You combine together resource allocation and cleanup actions using the helper function `bracket`, and are guaranteed when your block is finished, the cleanup action is called, regardless of how the block finishes.
+
+To make this work, we need a `stopProcess` function. This function is intelligent: if the process has already exited, `stopProcess` doesn’t do anything. However, if the process is still running, `stopProcess` sends it a `SIGTERM` signal, which for most well-behaved programs will cause it to exit. (Unix processes can actually handle `SIGTERM` and continue running, but for our cases we’ll pretend like it’s a process death sentence.)
+
+So let’s rewrite the code above with `bracket`:
+
+``` haskell
+let processConfig = proc "some-executable" ["--flag1", "--flag2"]
+bracket (startProcess processConfig) stopProcess $ \proccess -> do
+  hPut (getStdin process) "Input to the process"
+  output <- hGet (getStdout process)
+  helperFunction output
+  hPut (getStdin process) "quit" -- tell the process to quit
+  exitCode <- waitExitCode process
+  logInfo ("Process exited with code " <> displayShow exitCode)
+```
+
+And just like that, we have type safety, and avoid runaway processes. Neato!
+
+Let’s walk through the cases above. If *any* of the actions in the block throw a runtime exception, `bracket` will trigger `stopProcess`, resulting in a `SIGTERM` being sent to the child. If, on the other hand, no exception occurs, we know that the child process has already exited thanks to the `waitExitCode` call, and therefore `stopProcess` will be a no-op. That’s exactly the behavior we want.
+
+Following Haskell best practices, we can capture this `bracket` call into a helper function called `withProcess`:
+
+``` haskell
+withProcess config = bracket (startProcess config) stopProcess
+
+let processConfig = proc "some-executable" ["--flag1", "--flag2"]
+withProcess processConfig $ \proccess -> do
+  hPut (getStdin process) "Input to the process"
+  output <- hGet (getStdout process)
+  helperFunction output
+  hPut (getStdin process) "quit" -- tell the process to quit
+  exitCode <- waitExitCode process
+  logInfo ("Process exited with code " <> displayShow exitCode)
+```
+
+And exception safety has been achieved!
+
+Finally, one more addition. A common pattern in working with child processes is checking that the exit code is a success, and throwing an exception if it’s anything else. We have a helper function `withProcess_` that performs that exit code checking too. This essentially looks like:
+
+``` haskell
+withProcess_ config = bracket
+  (startProcess config)
+  (\process -> do
+      stopProcess process
+      checkExitCode process)
+```
+
+## Playing with cat
+
+We’re going to perform a cardinal Unix sin: use the `cat` executable when we’re not actually combining together two different files. Please forgive me, it’s for a good reason.
+
+Below is a fully runnable Haskell script. You can [install Stack](https://web.archive.org/web/2025/https://haskell.fpcomplete.com/get-started), copy the code into `Main.hs`, and run `stack Main.hs` to run it. The program does the following:
+
+- Defines a process config where:
+  - The child’s standard input is a new pipe
+  - The child’s standard output is a new pipe
+  - The child command line is `cat` with no arguments
+- Launch the process using `withProcess_`
+- While the process is running, run two Haskell threads concurrently:
+  - Thread 1 will send the string `Hello World!\n` to the child over standard input and then close the pipe
+  - Thread 2 will capture everything from the child’s standard output, until the pipe is closed
+- Print the output captured from the child to the parent’s standard output stream (aka the terminal in the way I’m testing it)
+
+``` haskell
+#!/usr/bin/env stack
+-- stack --resolver lts-13.26 script
+{-# LANGUAGE OverloadedStrings #-}
+import Control.Concurrent.Async (concurrently)
+import qualified Data.ByteString as B
+import System.IO (hClose, stdout)
+import System.Process.Typed
+
+main :: IO ()
+main = do
+  let config = setStdin createPipe
+             $ setStdout createPipe
+             $ proc "cat" []
+  ((), output) <- withProcess_ config $ \process -> concurrently
+    (do B.hPut (getStdin process) "Hello World!\n"
+        hClose (getStdin process))
+    (do B.hGetContents (getStdout process))
+  B.hPut stdout output
+```
+
+When I run this on OS X, I fairly reliably get the expected output:
+
+``` text
+$ stack Main.hs
+Hello World!
+```
+
+However, when I run this on Linux, I will often get the following instead:
+
+``` text
+$ stack Main.hs
+Main.hs: Received ExitFailure (-15) when running
+Raw command: cat
+```
+
+Granted, not always, but often enough. So now we have a weird exit failure and some non-determinism, in what appears to be a really simple program. What gives?!?
+
+## ExitFailure (-15)
+
+The first thing to identify is what this negative exit code is. Haskell—like a few other ecosystems—uses a negative exit code to indicate that the process exited due to a signal. In this case, that means the child process (`cat`) died with signal number 15, which is `SIGTERM`. That’s certainly interesting… where have we seen a `SIGTERM` come up before? Right, in `stopProcess`.
+
+But it doesn’t quite make sense that `stopProcess` would send the signal, since it only does so once the standard output pipe from the child process has been closed. And we know that `cat` exits at *exactly the same time* as it closes its standard output pipe… right?
+
+## Race condition!
+
+Hopefully my scare italics above helped a bit. No, as it turns out, the pipe’s closure and the child’s exit are *not* simultaneous. In fact, our `cat` process will end up doing something like the following:
+
+1.  `read` from stdin
+2.  If there was more data: `write` to stdout and return to step 1
+3.  If there was no more data, exit loop and continue with step 4
+4.  Close `stdin`
+5.  Close `stdout`
+6.  Exit with exit code 0 (indicating success)
+
+The parent process, meanwhile, will repeatedly call `read` on the read end of the child’s `stdout` pipe, and as soon as that `read` indicates end of file (EOF), the block will exit, and `withProcess_` will do two things:
+
+1.  Call `stopProcess`
+2.  Call `checkExitCode` to make sure the process exited successfully
+
+There are multiple interleavings of events that can occur. The success case looks like this:
+
+1.  Child closes `stdout`
+2.  Child exits with exit code 0
+3.  Parent receives EOF on `read`
+4.  Parent calls `stopProcess`, which is a no-op (child is already exited)
+5.  `checkExitCode` gets exit code 0 and is happy
+
+However, it’s also possible with a different process timing to get:
+
+1.  Child closes `stdout`
+2.  Parent receives EOF on `read`
+3.  Parent calls `stopProcess`, which sends a `SIGTERM` to the child
+4.  Child never has a chance to return exit code 0, it’s already dead
+5.  `checkExitCode` sees that the child exited due to a `SIGTERM` and throws an exception
+
+This may seem like a corner case, but it’s already bitten me *twice*: first [in a test suite](https://github.com/snoyberg/conduit/commit/20fd6e2204e84ecf9c1ce99ed3778210a12545ff), and secondly [as a major annoyance in the new Stack release](https://github.com/commercialhaskell/stack/issues/4888).
+
+## Who to blame?
+
+Well, as usually, the person to blame is myself.
+
+![It was me all the time](../../assets/blog/when-children-processes-exit-debugging-story/d31c42eb4de212038e0ed339db4bd66ae9c30beefc7c1864a4ed9f79a5ff4573.png)
+
+Usage of the Unix process API can be tricky to get right, but it’s clearly documented and well executed. And I’d argue that my *usage* of `withProcess_` is the right kind of abstraction. No, the problem is the *implementation* of `withProcess_`. Let’s step through it again:
+
+1.  Launch a process
+2.  Run some block with the process
+3.  However that block exits (normal or exception), call `stopProcess` and then ensure there’s a success exit code
+
+In our first usage above, we called `waitExitCode` in the block, which guaranteed in the success case `stopProcess` would always end up as a no-op. Everything was fine. The problem was I made the assumption that `cat`‘s pipes closing was the same as the child process exiting. We know that’s not true. However, given that this bug hit me twice, it’s fair to say I’ve created an API which encourages misuse.
+
+Instead, here’s what I think is the better implementation for `withProcess_`:
+
+1.  Launch a process
+2.  Run some block with the process
+3.  If that block throws an exception, terminate the child process with `stopProcess`
+4.  If that block succeeds, wait for the process to exit and then check that its exit code is a success
+
+With this tweak to behavior, the code calling `cat` above is safe, and I can sleep better at night.
+
+## Deprecations
+
+Rolling out a new set of behavior which silently (meaning: no compile-time change) modifies behavior at runtime is dangerous. People using `withProcess_` may be relying on exactly its current behavior. Therefore, instead of replacing the current `withProcess_` behavior, the roll-out strategy is:
+
+1.  Introduce a new function `withProcessTerm_`, which has the same behavior as `withProcess_` today
+2.  Introduce a new function `withProcessWait_`, which has the new behavior I just described above
+3.  Deprecate `withProcess_` with a message indicating that the caller should use one of the replacement functions instead
+
+This will encourage users of `typed-process` to analyze their usages of `withProcess_`, see if they are susceptible to the bug described here, and choose the appropriate replacement.
+
+## Further reading
+
+If you’re interested in learning more about any of this, here are some (hopefully) helpful links:
+
+- [typed-process tutorial](../../haskell/library/typed-process/)
+- [Stack bug report](https://github.com/commercialhaskell/stack/issues/4888)
+- [typed-process pull request](https://github.com/fpco/typed-process/pull/26)
+{% endraw %}

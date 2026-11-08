@@ -1,0 +1,132 @@
+---
+layout: page
+title: "Enhancing File Durability in Your Programs"
+---
+{% raw %}
+*By Roman Gonzalez, 12 March 2019. Mirrored from FP Complete's blog: [original URL](https://academy.fpblock.com/blog/enhancing-file-durability-in-programs/) (offline), [Wayback Machine copy](https://web.archive.org/web/20250624220241/https://academy.fpblock.com/blog/enhancing-file-durability-in-programs/).*
+
+## Abstract
+
+At FP Complete, we strive to build systems that endure the direst of situations. An unexpected shutdown (like a kernel panic, or unplugging the power cord) in a machine should not affect the durability of confirmed writes in programs we develop.
+
+As a developer, you'll likely want to have options in regards to guaranteed durable writes; durability is the property that ensures that once an API confirms a write, every read will reflect its changes.
+
+Durable writes are essential for our customers; many of them work in the Financial and Medical Tech industry, and any saved piece of data—whether in a filesystem or a database—must have durability guarantees after we perform a write operation. Otherwise, companies lose money and lives may be at risk.
+
+In this blog post, we will demonstrate that, although our high-level Haskell APIs tell us that it persisted our file writes in the filesystem, a catastrophic failure like an unexpected shutdown may cause us to lose writes that we thought were committed. We will later demonstrate how using low-level C APIs (the ones popular RDBMS databases use) offer better guarantees in write durability; and finally, we’ll show you some prior art we have implemented in the [`rio`](https://web.archive.org/web/2025/https://academy.fpblock.com/blog/rio-standard-library-for-haskell) package , which you can use today to get durable file writes.
+
+## Status Quo of File APIs in Haskell
+
+When performing writes in Haskell programs, we often rely on functions like `writeFile` or `withBinaryFile` in our Haskell codebase; these functions return as soon as the OS Kernel confirms writes happened. However, the kernel does not typically store writes on physical disks right away. Instead, it stores file writes in a cache buffer first, which helps to improve runtime performance of writes.
+
+Often, this behavior is acceptable. Not every piece of data must be durable and if, for some reason, you are dealing with large files, having them being durable by default might be an expensive operation. That said, the durability aspect of filesystem writes must be a conscious decision rather than an afterthought.
+
+## Improving write durability in Haskell
+
+How can we improve the durability situation in our Haskell APIs? First, we need to make use of C functions that will sync writes to the file system. Once writes have been performed to a `Handle` , we need to be able to call the lower-level function `fsync` on the `Handle` internal file descriptor. However, a `fsync` on the file `Handle` alone won’t do. We also must call `fsync` in the file descriptor of the containing directory to sync the file name of our `Handle` in the file metadata system. A great reference to learn interesting/important details about `fsync` might be Xavier Roche’s [excellent blog post](https://blog.httrack.com/blog/2013/11/15/everything-you-always-wanted-to-know-about-fsync/); this blog post document what behavior you should expect in different OS and filesystem formats. (You should check it out, it’s cool, we’ll wait here.)
+
+Developers at FP Complete implemented a new family of functions that use the strategies mentioned above in the `rio` library:
+
+- `withBinaryFileDurable`
+- `withBinaryFileDurableAtomic`
+- `ensureFileDurable`
+
+To implement these functions, we used internal APIs from `GHC.IO.Handle.FD` and `System.Internal.Posix` . We found a few constraints in the existing GHC API that are worth mentioning:
+
+- A `Handle` cannot be built from directory paths
+
+  This limitation makes total sense, as we can only open directories in `ReadMode` , and the `Handle` API doesn’t make sense for directory operations. We made the C file descriptor of directories an internal implementation detail of the high-level functions exported by the `rio` library , the way API users deal with files stays unaffected.
+
+- There is no `fsync` and `openat` foreign imports in the GHC filesystem API
+
+  In our module, we added a few foreign imports to accommodate lower-level APIs for reliable writes. We use a combination of C and internal types from the GHC API to offer a high-level API for users of our library.
+
+You can take a look at the [source code](https://www.stackage.org/haddock/lts-12.22/rio-0.1.6.0/src/RIO.File.html) if you are curious. We are open to feedback, as the usage of low-level APIs can get somewhat tricky at times. We are hoping to at some point in the future makes these functions (or a version of them) part of the standard Haskell `base` , so not only users of the `rio` library can take advantage of this functionality.
+
+## Testing the durability of our file system
+
+Being aware of the durability aspects of our filesystem is nice and dandy, but should we *really* be concerned? Is this issue something that could happen frequently, or are we paranoid? This question is a fair one. We believe this ordeal happens more often than you might expect. We can easily replicate durability concerns using a virtual machine.
+
+When we execute the following program:
+
+``` haskell
+#!/usr/bin/env stack
+{- stack --resolver nightly-2018-12-10 script --package rio --package optparse-generic --package directory --compile -}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeOperators     #-}
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE NamedFieldPuns    #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+module Main where
+
+import RIO
+import RIO.FilePath
+import RIO.File (writeBinaryFileDurable)
+import System.Directory (doesDirectoryExist, removeDirectoryRecursive, createDirectoryIfMissing)
+import Options.Generic
+
+data Cmd w
+  = Normal  (w ::: FilePath <?> "Directory where to write files")
+  | Durable (w ::: FilePath <?> "Directory where to write files")
+  deriving (Generic)
+
+instance ParseRecord (Cmd Wrapped)
+
+executeTest ::
+     (HasLogFunc env, MonadReader env m, MonadIO m)
+  => FilePath
+  -> (FilePath -> ByteString -> m ())
+  -> m ()
+executeTest dirPath writeFileFn = do
+  -- Start with a fresh directory _always_
+  shouldDelete <- liftIO $ doesDirectoryExist dirPath
+  when shouldDelete (liftIO $ removeDirectoryRecursive dirPath)
+  liftIO $ createDirectoryIfMissing True dirPath
+  forM_ ([1..100] :: [Int]) $ \i -> do
+      let filePath = dirPath </> ("file_" <> show i <> ".txt" )
+      writeFileFn filePath ("Input " <> encodeUtf8 (tshow i))
+  logInfo "All files written successfully"
+
+main :: IO ()
+main = do
+  logOptions <- logOptionsHandle stdout False
+  withLogFunc logOptions $ \logFun -> runRIO logFun $ do
+    cmd <- unwrapRecord "durability-test"
+    case cmd of
+      Normal  !dirPath ->
+        executeTest dirPath writeFileBinary
+      Durable !dirPath ->
+        executeTest dirPath writeBinaryFileDurable
+```
+
+In the scenario where we execute this program with the `normal` sub-command and it finishes without errors:
+
+``` bash
+~/test/ $ ./DurabilityTest.hs normal normal
+```
+
+Our program writes new files in the given directory path `normal` ; However, we may all lose all these writes if a hard restart happens merely after our program finishes. The following screencast shows how our program creates 100 files in an empty directory, each file containing a small message. Once our program finishes, we list the files in the specified directory to assert everything is in order, then, we perform a hard reset on the VirtualBox machine, once the machine is booted again, our precious files are no longer present in the file system:
+
+The same algorithm using our durable flavored API doesn’t have this problem after a hard restart; when executing the program above with the `durable` sub-command:
+
+``` bash
+~/test/ $ ./DurabilityTest.hs durable durable
+```
+
+The written files will be kept on disk thanks to the usage of `fsync` . Following a screencast showing this exercise on a VirtualBox machine:
+
+## Summary
+
+In this blog post, we covered some nuances of the durability of file systems and also learned about the importance of using `fsync` in our lower level APIs.
+
+If your system:
+
+- Runs a virtualized environment that can disappear at any time (e.g., Cloud Providers and Hot Spot instances)
+- Is responsible for storing file contents from third parties
+- Belongs to a business domain where write durability is a crucial concern
+
+It is a good practice to make sure file writes are guaranteed to be durable in catastrophic scenarios. FP Complete offers auditing services where we can help you discover this and other various challenges.
+{% endraw %}
