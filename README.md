@@ -12,7 +12,9 @@ Collected 7 and 8 Nov 2026 by cabal@lenovo-tablet.
 
 ## Reading
 
-`index.md` lists every page with its date, author and a Wayback link.
+`index.md` lists every blog post with its date, author and a Wayback link, and
+every Haskell section page with its title and a Wayback link. The Haskell
+section pages carry no byline, so they have no date or author.
 
 For exceptions, read `blog/async-exception-handling-haskell` and
 `haskell/tutorial/exceptions` first. The 2016 best practices post says it was
@@ -32,7 +34,7 @@ rendering as `index.txt`. Stylesheets and images were not archived.
 - `manifest.tsv`: directory, date, author, title, original URL, Wayback capture
   timestamp and why the page was selected.
 
-Dates and authors come from the byline on the post. Three dates are set by hand:
+Dates and authors come from the byline on the post. Four dates are set by hand:
 
 - `blog/haskell-web-server-in-5mb` and `blog/specifying-dependencies` have no
   byline in their captures, so they get the month from the dated URL the post
@@ -40,11 +42,13 @@ Dates and authors come from the byline on the post. Three dates are set by hand:
 - `blog/bitrot-free-scripts` has a byline of August 11, 2015, but the post uses
   `lts-6.11`, which Stackage published on 2016-08-10, and its URL is
   `/blog/2016/08/`. It is dated 2016-08-11.
+- `blog/haskell-from-c` has a byline of March 19, 2013, but it cites GHC ticket
+  7954, opened on 2013-06-02, and its URL is `/blog/2013/06/`. It is dated
+  2013-06, as the day is unknown.
 
-On 15 other posts the `/blog/YYYY/MM/` URL month is later than the byline: by
-one month on 12 posts, two months on 2 and three months on 1
-(`blog/haskell-from-c`). Nothing in those posts contradicts the byline, so the
-byline is used.
+On 14 other posts the `/blog/YYYY/MM/` URL month is later than the byline: by
+one month on 12 posts and two months on 2. Their bylines are used; those posts
+were not checked against their contents.
 
 ## Selection
 
