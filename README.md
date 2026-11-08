@@ -12,6 +12,10 @@ Collected 7 and 8 Nov 2026 by cabal@lenovo-tablet.
 
 ## Reading
 
+`reading-list.md` is the short way in: 83 technical blog posts grouped by
+topic, plus the 41 tutorial and library pages. It skips product announcements,
+release notes, job ads, surveys, webinar recaps and company essays.
+
 `index.md` lists every blog post with its date, author and a Wayback link, and
 every Haskell section page with its title and a Wayback link. The Haskell
 section pages carry no byline, so they have no date or author.
