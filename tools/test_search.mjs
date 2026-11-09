@@ -23,6 +23,15 @@ test('a quoted phrase only matches pages that contain it in that order', () => {
   assert.deepEqual(foundIds(texts, 'async exceptions'), [0, 1])
 })
 
+test('a quoted phrase has to start and end at word edges', () => {
+  assert.deepEqual(foundIds(['use fmap f on a map', 'map fst on a list of f', 'then map f here'], '"map f"'), [2])
+})
+
+test("a quoted phrase also matches the author's name", () => {
+  const pages = [{ id: 0, path: 'page-0/', title: 'Arrays', headings: '', author: 'Alexey Kuleshevich', byline: '', section: '', text: 'about massiv' }]
+  assert.equal(createSearch(pages).run('"alexey kuleshevich"').length, 1)
+})
+
 test('every word of the query has to match', () => {
   assert.deepEqual(foundIds(['bracket and mask', 'bracket alone'], 'bracket mask'), [0])
 })
@@ -48,8 +57,14 @@ test('the snippet prefers the quoted phrase over more loose words', () => {
   assert.deepEqual(markedTexts(excerpt), ['alpha beta'])
 })
 
-test('a term only lights up at the start of a word', () => {
-  assert.deepEqual(markedTexts(snippet('the ratio of IO actions', ['io'])), ['IO'])
+test('a term only lights up as a whole word', () => {
+  assert.deepEqual(markedTexts(snippet('the ratio of an IORef in IO actions', ['io'])), ['IO'])
+})
+
+test('a word after a quote mark lights up and anchors the link', () => {
+  const excerpt = snippet("it is 'pure in a sense", ['pure'])
+  assert.deepEqual(markedTexts(excerpt), ['pure'])
+  assert.equal(excerpt.anchor, 'pure')
 })
 
 test('the published index finds the bracket post', () => {
