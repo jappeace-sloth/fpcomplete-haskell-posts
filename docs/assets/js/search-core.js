@@ -9,6 +9,13 @@ import MiniSearch from './minisearch-7.2.0.js'
 // characters are terms too, so operators such as >>= and <$> can be looked up.
 const TERM = /[\p{L}\p{N}_']+|[!#$%&*+./<=>?@\\^|~:-]{2,}/gu
 const IDENTIFIER_CHARACTER = /[\p{L}\p{N}_']/u
+// A match covers whole tokens, as the index does. It may start after leading primes,
+// which processTerm drops, and end before a trailing one, so "pure" finds 'pure' and
+// "snoyman" finds Snoyman's.
+const IDENTIFIER_START = "(?<=(?:^|[^\\p{L}\\p{N}_'])'*)"
+const IDENTIFIER_END = '(?![\\p{L}\\p{N}_])'
+const OPERATOR_START = '(?<![!#$%&*+./<=>?@\\\\^|~:-])'
+const OPERATOR_END = '(?![!#$%&*+./<=>?@\\\\^|~:-])'
 const PHRASE = /"([^"]+)"/g
 const SNIPPET_BEFORE = 60
 const SNIPPET_LENGTH = 240
@@ -47,14 +54,15 @@ export function createSearch (pages) {
   })
   index.addAll(pages)
   const pagesById = new Map(pages.map(page => [page.id, page]))
-  const lowercased = new Map(pages.map(page => [page.id, (page.title + ' ' + page.text).toLowerCase()]))
   return {
     pageCount: pages.length,
     run (query) {
       const phrases = quotedPhrases(query)
+      const patterns = phrases.map(phrase => needlePattern(phrase, 'iu'))
       return index.search(query)
-        .filter(result => phrases.every(phrase => lowercased.get(result.id).includes(phrase)))
         .map(result => ({ page: pagesById.get(result.id), terms: result.terms, phrases }))
+        .filter(result => patterns.every(pattern =>
+          [result.page.title, result.page.author, result.page.text].some(field => pattern.test(field))))
     }
   }
 }
@@ -63,17 +71,17 @@ function escapeRegExp (text) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-// Terms match at the start of a token, so "io" does not light up the middle of "ratio".
-function needlePattern (needle) {
-  const boundary = IDENTIFIER_CHARACTER.test(needle[0]) ? "(?<![\\p{L}\\p{N}_'])" : '(?<![!#$%&*+./<=>?@\\\\^|~:-])'
-  return new RegExp(boundary + escapeRegExp(needle).replace(/ /g, '\\s+'), 'giu')
+function needlePattern (needle, flags) {
+  const start = IDENTIFIER_CHARACTER.test(needle[0]) ? IDENTIFIER_START : OPERATOR_START
+  const end = IDENTIFIER_CHARACTER.test(needle[needle.length - 1]) ? IDENTIFIER_END : OPERATOR_END
+  return new RegExp(start + escapeRegExp(needle).replace(/ /g, '\\s+') + end, flags)
 }
 
 function occurrences (text, needles) {
   const found = []
   needles.forEach((needle, needleIndex) => {
     let count = 0
-    for (const match of text.matchAll(needlePattern(needle))) {
+    for (const match of text.matchAll(needlePattern(needle, 'giu'))) {
       found.push({ start: match.index, end: match.index + match[0].length, needleIndex })
       count += 1
       if (count >= MAXIMUM_OCCURRENCES_PER_NEEDLE) break
@@ -83,21 +91,21 @@ function occurrences (text, needles) {
 }
 
 // The occurrence whose snippet window holds the most distinct needles, earliest on a
-// tie. A window with a phrase beats any without one: the phrase is what the reader asked for.
-function bestOccurrence (found, needleCount, phraseCount) {
+// tie. When a quoted phrase occurs, the window starts at one: it is what the reader asked for.
+function bestOccurrence (found, phraseCount) {
+  const phraseOccurs = found.some(occurrence => occurrence.needleIndex < phraseCount)
   let best = null
-  let bestScore = 0
+  let bestCount = 0
   for (let first = 0; first < found.length; first++) {
+    if (phraseOccurs && found[first].needleIndex >= phraseCount) continue
     const windowEnd = found[first].start - SNIPPET_BEFORE + SNIPPET_LENGTH
     const seen = new Set()
     for (let other = first; other < found.length && found[other].start < windowEnd; other++) {
       seen.add(found[other].needleIndex)
     }
-    const hasPhrase = Array.from(seen).some(needleIndex => needleIndex < phraseCount)
-    const score = seen.size + (hasPhrase ? needleCount : 0)
-    if (score > bestScore) {
+    if (seen.size > bestCount) {
       best = found[first]
-      bestScore = score
+      bestCount = seen.size
     }
   }
   return best
@@ -130,7 +138,7 @@ export function snippet (text, terms, phrases = []) {
   const quoted = phrases.filter(Boolean)
   const needles = quoted.concat(terms.filter(Boolean))
   const found = occurrences(text, needles)
-  const best = bestOccurrence(found, needles.length, quoted.length)
+  const best = bestOccurrence(found, quoted.length)
   const { start, end } = snippetWindow(text, best)
   const segments = []
   let position = start
