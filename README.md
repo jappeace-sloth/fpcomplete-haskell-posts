@@ -97,6 +97,15 @@ for new images. To preview locally with the Jekyll version GitHub Pages runs:
     nix-shell -p 'ruby.withPackages (ps: with ps; [ jekyll minima jekyll-feed jekyll-seo-tag kramdown-parser-gfm ])' \
       --run 'jekyll serve -s docs'
 
+The search page (`docs/search/`) runs in the browser. The builder writes the
+plain text of every page to `docs/search/pages.json`, and
+`docs/assets/js/search-core.js` indexes it with a vendored copy of
+[MiniSearch](https://github.com/lucaong/minisearch) 7.2.0 (MIT). Words match as
+prefixes and with small typos, every word must occur, and quoted phrases must
+occur as written. The tests run the search logic in Node:
+
+    nix-shell -p nodejs --run 'node --test tools/test_search.mjs'
+
 ## Reopening a page
 
 Use `https://web.archive.org/web/<capture>/<original URL>`, both from

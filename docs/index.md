@@ -9,6 +9,8 @@ The writing belongs to its authors. Every page names its author and links to its
 
 Only the technical posts are here: 83 blog posts and 41 tutorial and library pages. Product announcements, release notes, job ads, surveys and company posts are left out. The [repository](https://github.com/jappeace-sloth/fpcomplete-haskell-posts) keeps the raw captures of all 224 archived Haskell posts.
 
+The search box at the top searches the full text of every page here, code included.
+
 ## Exceptions and resource safety
 
 Start with the 2018 post and `haskell/tutorial/exceptions`. The 2016 best practices post says it was folded into that tutorial, and `haskell/library/safe-exceptions` now points to `UnliftIO.Exception`.

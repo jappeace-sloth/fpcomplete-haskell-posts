@@ -5,7 +5,8 @@ usage: nix-shell -p pandoc --run 'python3 -I tools/build_site.py .'
 Publishes every page listed in reading-list.md, converted to Markdown, grouped
 and ordered as in that file. Dates, authors and captures come from manifest.tsv.
 Images the posts use are fetched from the Wayback Machine once and kept under
-docs/assets/, so later rebuilds only need the network for new images.
+docs/assets/, so later rebuilds only need the network for new images. The plain
+text of every page goes to docs/search/pages.json for the search page.
 """
 import gzip
 import json
@@ -18,12 +19,17 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from html import unescape
 
 FP_HOSTS = {"www.fpcomplete.com", "fpcomplete.com", "tech.fpcomplete.com", "academy.fpblock.com",
             "www.fpblock.com", "fpblock.com"}
 # FP Complete's tutorial sites from before the haskell/ section absorbed them.
 TUTORIAL_HOSTS = {"haskell-lang.org", "www.haskell-lang.org", "haskell.fpcomplete.com"}
 SITE_DIR = "docs"
+SEARCH_PAGES = os.path.join("search", "pages.json")
+HEADING = re.compile(r"<h[1-6]\b[^>]*>(.*?)</h[1-6]>", re.S | re.I)
+# Pandoc draws plain-text tables with rules like +-----+ and =====, which are not words.
+TABLE_RULE = re.compile(r"[-+=]{4,}")
 SHARE_BAR = re.compile(r'<div class="share-bar-wrapper">.*?</div>\s*</div>', re.S)
 CALL_TO_ACTION = re.compile(r'<p class="text-center">\s*<a class=\s*"btn[^>]*>.*?</a>\s*</p>', re.S)
 PRE_BLOCK = re.compile(r"<pre\b([^>]*)>(.*?)</pre>", re.S | re.I)
@@ -299,6 +305,18 @@ def to_markdown(body, directory):
     return markdown
 
 
+def to_plain_text(body):
+    """The page as one line of text, for the search index and its snippets."""
+    result = subprocess.run(["pandoc", "-f", "html-native_divs-native_spans", "-t", "plain", "--wrap=none"],
+                            input=body.encode("utf-8"), capture_output=True, check=True)
+    return " ".join(TABLE_RULE.sub(" ", result.stdout.decode("utf-8")).split())
+
+
+def heading_text(body):
+    headings = [" ".join(unescape(re.sub(r"<[^>]+>", "", heading)).split()) for heading in HEADING.findall(body)]
+    return " ".join(headings)
+
+
 def display_date(date):
     parts = date.split("-")
     if len(parts) == 3:
@@ -308,12 +326,18 @@ def display_date(date):
     raise SystemExit(f"unexpected date {date!r}")
 
 
+def byline(page):
+    """Author and date of a blog post; the Haskell section pages have neither."""
+    if not page["dir"].startswith("blog/"):
+        return ""
+    return f"{page['author'] or 'unknown author'}, {display_date(page['date'])}"
+
+
 def page_header(page):
     archived = wayback_url(page["original_url"], page["capture"])
     links = f"[original URL]({page['original_url']}) (offline), [Wayback Machine copy]({archived})"
     if page["dir"].startswith("blog/"):
-        author = page["author"] or "unknown author"
-        return f"*By {author}, {display_date(page['date'])}. Mirrored from FP Complete's blog: {links}.*"
+        return f"*By {byline(page)}. Mirrored from FP Complete's blog: {links}.*"
     return f"*Mirrored from the Haskell section of FP Complete's site: {links}.*"
 
 
@@ -324,6 +348,20 @@ def write_page(repo, page, markdown):
         handle.write("---\nlayout: page\n")
         handle.write(f"title: {json.dumps(page['title'], ensure_ascii=False)}\n---\n")
         handle.write("{% raw %}\n" + page_header(page) + "\n\n" + markdown.rstrip() + "\n{% endraw %}\n")
+
+
+def search_entry(identifier, page, section, body):
+    return {"id": identifier, "path": page["dir"] + "/", "title": page["title"], "author": page["author"],
+            "byline": byline(page), "section": section, "headings": heading_text(body),
+            "text": to_plain_text(body)}
+
+
+def write_search_pages(repo, entries):
+    path = os.path.join(repo, SITE_DIR, SEARCH_PAGES)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(entries, handle, ensure_ascii=False, separators=(",", ":"))
+        handle.write("\n")
 
 
 def table_cell(text):
@@ -344,7 +382,8 @@ def write_index(repo, sections, manifest):
              f"want it corrected or taken down, please [open an issue]({REPOSITORY}/issues).", "",
              f"Only the technical posts are here: {blog_count} blog posts and {guide_count} tutorial and "
              "library pages. Product announcements, release notes, job ads, surveys and company posts are left "
-             f"out. The [repository]({REPOSITORY}) keeps the raw captures of all 224 archived Haskell posts."]
+             f"out. The [repository]({REPOSITORY}) keeps the raw captures of all 224 archived Haskell posts.", "",
+             "The search box at the top searches the full text of every page here, code included."]
     for heading, intro, pages in sections:
         lines += ["", f"## {heading}", ""]
         if intro:
@@ -369,18 +408,22 @@ def main():
     manifest = load_manifest(repo)
     sections = load_reading_list(repo)
     site_pages = {directory for _, _, pages in sections for directory in pages}
+    section_of = {directory: heading for heading, _, pages in sections for directory in pages}
     missing = sorted(site_pages - set(manifest))
     if missing:
         raise SystemExit(f"reading-list.md pages missing from manifest.tsv: {missing}")
     failures = []
+    search_entries = []
     for directory in sorted(site_pages):
         page = manifest[directory]
         body = extract_body(read_capture(repo, directory), directory)
         body = PRE_BLOCK.sub(normalize_code_block, body)
         body = rewrite_references(body, page, site_pages, repo, failures)
         write_page(repo, page, to_markdown(body, directory))
+        search_entries.append(search_entry(len(search_entries), page, section_of[directory], body))
     write_index(repo, sections, manifest)
-    print(f"wrote {len(site_pages)} pages and the index to {SITE_DIR}/")
+    write_search_pages(repo, search_entries)
+    print(f"wrote {len(site_pages)} pages, the index and {SEARCH_PAGES} to {SITE_DIR}/")
     for failure in failures:
         print("image not archived, linked to the Wayback Machine instead:", failure)
 
